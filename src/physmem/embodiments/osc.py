@@ -362,6 +362,13 @@ class TaskSpaceController:
                 tgt = e['gopen'] + gg * stroke + (0.3 * stroke if gg >= 0.99 else 0.0)
                 Fg = e['gforce']
                 gc = e['cfg'].gripper
+                # travel at the default drive (the closing speed is set by drive / implicit damping); regulate to the
+                # requested squeeze only once the pads touch (a force-regulated gripper)
+                if gg >= 0.5 and 'gforce_travel' in e:
+                    if (self.tick % 5 == 0) or 'pad_n' not in s:
+                        s['pad_n'] = emb.gripper_state(model, data, name)[1]
+                    if s['pad_n'] == 0:
+                        Fg = np.maximum(Fg, e['gforce_travel'])
                 kp = gc.kp if gc.kp > 0 else Fg / (0.1 * np.abs(stroke) + 1e-9)
                 u = np.clip(kp * (tgt - L) - gc.kd_ratio * kp * Ld, -Fg, Fg)
                 lo_g, hi_g = emb.act_lo[e['gacts']] * emb.act_gear[e['gacts']], emb.act_hi[e['gacts']] * emb.act_gear[e['gacts']]

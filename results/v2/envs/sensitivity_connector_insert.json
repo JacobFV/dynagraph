@@ -1,0 +1,665 @@
+{
+ "rows": [
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0003,
+    0.3
+   ],
+   "seed": 1000,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 1.9362373352050781
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0003,
+    0.3
+   ],
+   "seed": 1001,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 3.6299338340759277
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0003,
+    0.3
+   ],
+   "seed": 1002,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 1.6257052421569824
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0003,
+    0.3
+   ],
+   "seed": 1003,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 1.6931579113006592
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0003,
+    0.3
+   ],
+   "seed": 1004,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 2.341339588165283
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0003,
+    0.3
+   ],
+   "seed": 1005,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 2.3995542526245117
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0006,
+    0.3
+   ],
+   "seed": 1000,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 1.2293457984924316
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0006,
+    0.3
+   ],
+   "seed": 1001,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 1.3010156154632568
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0006,
+    0.3
+   ],
+   "seed": 1002,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 1.3563199043273926
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0006,
+    0.3
+   ],
+   "seed": 1003,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 1.5675525665283203
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0006,
+    0.3
+   ],
+   "seed": 1004,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 1.3155086040496826
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0006,
+    0.3
+   ],
+   "seed": 1005,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.7908895015716553
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0009,
+    0.3
+   ],
+   "seed": 1000,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 2.178379535675049
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0009,
+    0.3
+   ],
+   "seed": 1001,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 1.3574724197387695
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0009,
+    0.3
+   ],
+   "seed": 1002,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 3.008122444152832
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0009,
+    0.3
+   ],
+   "seed": 1003,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 1.2283246517181396
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0009,
+    0.3
+   ],
+   "seed": 1004,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 0.7097713947296143
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0009,
+    0.3
+   ],
+   "seed": 1005,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 1.852057695388794
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0012,
+    0.3
+   ],
+   "seed": 1000,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 1.3308465480804443
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0012,
+    0.3
+   ],
+   "seed": 1001,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 1.7405805587768555
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0012,
+    0.3
+   ],
+   "seed": 1002,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 1.596121072769165
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0012,
+    0.3
+   ],
+   "seed": 1003,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 2.0660901069641113
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0012,
+    0.3
+   ],
+   "seed": 1004,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 1.1472666263580322
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0012,
+    0.3
+   ],
+   "seed": 1005,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 1.7350239753723145
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0003,
+    1.0
+   ],
+   "seed": 1000,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 2.899874448776245
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0003,
+    1.0
+   ],
+   "seed": 1001,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 2.759047746658325
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0003,
+    1.0
+   ],
+   "seed": 1002,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 1.5969245433807373
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0003,
+    1.0
+   ],
+   "seed": 1003,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 2.4064154624938965
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0003,
+    1.0
+   ],
+   "seed": 1004,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 2.6161885261535645
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0003,
+    1.0
+   ],
+   "seed": 1005,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 1.2706449031829834
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0006,
+    1.0
+   ],
+   "seed": 1000,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 2.821988344192505
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0006,
+    1.0
+   ],
+   "seed": 1001,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 1.1653778553009033
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0006,
+    1.0
+   ],
+   "seed": 1002,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 2.857841968536377
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0006,
+    1.0
+   ],
+   "seed": 1003,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 3.8854050636291504
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0006,
+    1.0
+   ],
+   "seed": 1004,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 2.3640799522399902
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0006,
+    1.0
+   ],
+   "seed": 1005,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.7612209320068359
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0009,
+    1.0
+   ],
+   "seed": 1000,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 1.0015625953674316
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0009,
+    1.0
+   ],
+   "seed": 1001,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 1.3467602729797363
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0009,
+    1.0
+   ],
+   "seed": 1002,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 2.74004864692688
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0009,
+    1.0
+   ],
+   "seed": 1003,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 1.142789363861084
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0009,
+    1.0
+   ],
+   "seed": 1004,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 1.8020527362823486
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0009,
+    1.0
+   ],
+   "seed": 1005,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 2.768338203430176
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0012,
+    1.0
+   ],
+   "seed": 1000,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 2.7289047241210938
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0012,
+    1.0
+   ],
+   "seed": 1001,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 1.7593467235565186
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0012,
+    1.0
+   ],
+   "seed": 1002,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 1.559868574142456
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0012,
+    1.0
+   ],
+   "seed": 1003,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 2.813344955444336
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0012,
+    1.0
+   ],
+   "seed": 1004,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 1.1942741870880127
+  },
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "value": [
+    0.0012,
+    1.0
+   ],
+   "seed": 1005,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 2.721299171447754
+  }
+ ],
+ "summary": [
+  {
+   "family": "connector_insert",
+   "protocol": "(clearance m, mu)|straight, no wiggle, 15 N",
+   "outcome": "P(success)",
+   "points": [
+    {
+     "value": [
+      0.0003,
+      0.3
+     ],
+     "mean": 0.3333333333333333,
+     "std": 0.4714045207910317,
+     "n": 6
+    },
+    {
+     "value": [
+      0.0006,
+      0.3
+     ],
+     "mean": 0.5,
+     "std": 0.5,
+     "n": 6
+    },
+    {
+     "value": [
+      0.0009,
+      0.3
+     ],
+     "mean": 0.5,
+     "std": 0.5,
+     "n": 6
+    },
+    {
+     "value": [
+      0.0012,
+      0.3
+     ],
+     "mean": 0.6666666666666666,
+     "std": 0.4714045207910317,
+     "n": 6
+    },
+    {
+     "value": [
+      0.0003,
+      1.0
+     ],
+     "mean": 0.3333333333333333,
+     "std": 0.4714045207910317,
+     "n": 6
+    },
+    {
+     "value": [
+      0.0006,
+      1.0
+     ],
+     "mean": 0.5,
+     "std": 0.5,
+     "n": 6
+    },
+    {
+     "value": [
+      0.0009,
+      1.0
+     ],
+     "mean": 0.5,
+     "std": 0.5,
+     "n": 6
+    },
+    {
+     "value": [
+      0.0012,
+      1.0
+     ],
+     "mean": 0.6666666666666666,
+     "std": 0.4714045207910317,
+     "n": 6
+    }
+   ],
+   "range": 0.3333333333333333
+  }
+ ],
+ "n_seeds": 6,
+ "wall_s": 16.86865758895874,
+ "robot": "probe (test-only)"
+}

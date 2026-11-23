@@ -90,10 +90,10 @@ ROBOTS = {
     'tidybot': RobotCfg(
         name='tidybot', kind='mobile_manipulator', xml='menagerie/stanford_tidybot/tidybot.xml',
         effectors=(_f2('hand', tuple(f'joint_{i}' for i in range(1, 8)), 'base',
-                       (-0.5545, 0.8735, 4.3655, -1.2697, -0.8069, -1.5123, 0.5644), pre=''),),
+                       (-0.4756, 0.3033, 3.8863, -1.1031, -0.2098, -1.8072, 1.7669), pre=''),),   # TCP 0.78 m: above a 0.76 m bench
         base_joints=('joint_x', 'joint_y', 'joint_th'),
         torque_override={'joint_x': (-800, 800), 'joint_y': (-800, 800), 'joint_th': (-300, 300), 'fingers_actuator': (-28.0, 28.0)},
-        home_target=(0.55, 0.0, 0.55),
+        home_target=(0.42, 0.0, 0.78),
         reach_m=0.9, payload_kg=4.0, max_ee_speed=0.8, max_ee_force=50.0,
         limits=dict(v=1.0, a=6.0, j=150.0, w=2.5), source=MENAGERIE + ' stanford_tidybot', base_body='base_link'),
 }

@@ -183,7 +183,7 @@ class WholeBody:
         if self.qp is None or self.qp_shape != shape:
             self.qp = proxqp.dense.QP(N, Ae.shape[0], C.shape[0])
             self.qp.settings.eps_abs = 1e-6
-            self.qp.settings.max_iter = 2000
+            self.qp.settings.max_iter = 400
             self.qp.settings.verbose = False
             self.qp.settings.initial_guess = proxqp.InitialGuess.WARM_START_WITH_PREVIOUS_RESULT
             self.qp.init(P, q, Ae if len(be) else None, be if len(be) else None, C, lo, hi)

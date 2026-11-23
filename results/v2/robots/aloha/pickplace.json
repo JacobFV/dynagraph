@@ -2,25 +2,24 @@
  "summary": {
   "robot": "aloha",
   "n": 20,
-  "success": 0.8,
-  "pick_ok": 0.8,
+  "success": 1.0,
+  "pick_ok": 1.0,
   "err_xy": {
-   "n": 16,
-   "mean": 0.0019051687527353435,
-   "p10": 0.0006259123133127238,
-   "p50": 0.001335584453663451,
-   "p90": 0.0038890838854914287,
-   "p95": 0.004388496610290006,
-   "max": 0.004768542998096007,
-   "min": 0.0004659599078261998
+   "n": 20,
+   "mean": 0.001974224743519639,
+   "p10": 0.000433210438163972,
+   "p50": 0.00144238650269654,
+   "p90": 0.00405956440977734,
+   "p95": 0.004309858360041314,
+   "max": 0.00476301155325817,
+   "min": 0.0003512208680837226
   },
   "failures": {
-   "dropped": 4,
    "done": 0
   },
   "integrity_violations": 0,
-  "rt_factor": 8.782889666030577,
-  "mean_duration_s": 7.316299999999579
+  "rt_factor": 4.325852884444311,
+  "mean_duration_s": 8.239199999999496
  },
  "rows": [
   {
@@ -32,22 +31,39 @@
     0.02202291551098891,
     0.021917406786781942
    ],
-   "pick": "dropped",
-   "place": null,
-   "err_xy": 0.12329596542678005,
-   "upright": 1.0,
-   "success": false,
-   "effort_pick": {
-    "torque_sq": 0.6705878883707119,
-    "torque_rate_sq": 360.0251730559947,
-    "joint_jerk_sq": 5018211.682782376,
-    "energy_j": 15.178647841730326,
-    "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.409043826154779,
-    "cost": 538.6460599506252
+   "pick": "done",
+   "pick_log": {
+    "skill": "pick",
+    "closure": 0.29982645910230904,
+    "contacts": 7,
+    "tripped": false,
+    "miss": 3.8647443617061886e-05,
+    "grasp_width_est": 0.037359706088032144,
+    "wall_s": 0.5191640720004216
    },
-   "effort_place": null,
-   "dur": 4.08399999999975,
+   "place": "done",
+   "err_xy": 0.004034403989532903,
+   "upright": 1.0,
+   "success": true,
+   "effort_pick": {
+    "torque_sq": 0.592352490804762,
+    "torque_rate_sq": 165.1724234261333,
+    "joint_jerk_sq": 444755.66711407166,
+    "energy_j": 16.63362568712479,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.40884526620179273,
+    "cost": 61.7514978016965
+   },
+   "effort_place": {
+    "torque_sq": 0.754437903747335,
+    "torque_rate_sq": 664.7779062428916,
+    "joint_jerk_sq": 211245.27971651204,
+    "energy_j": 17.33336330870099,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.4055748845956994,
+    "cost": 88.53009013277472
+   },
+   "dur": 8.137999999999455,
    "integrity": []
   },
   {
@@ -60,27 +76,36 @@
     0.028753208211577494
    ],
    "pick": "done",
+   "pick_log": {
+    "skill": "pick",
+    "closure": 0.2794315631561955,
+    "contacts": 9,
+    "tripped": false,
+    "miss": 4.73880322199738e-05,
+    "grasp_width_est": 0.03909652008976886,
+    "wall_s": 0.563019611116033
+   },
    "place": "done",
-   "err_xy": 0.001026776482517655,
+   "err_xy": 0.0010313789942905385,
    "upright": 1.0,
    "success": true,
    "effort_pick": {
-    "torque_sq": 0.5877278671626075,
-    "torque_rate_sq": 350.298522661634,
-    "joint_jerk_sq": 366530.68452402815,
-    "energy_j": 10.568540448230204,
+    "torque_sq": 0.5686866746259773,
+    "torque_rate_sq": 164.35877680859616,
+    "joint_jerk_sq": 402892.0833484337,
+    "energy_j": 10.602457541513642,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.20876546561142148,
-    "cost": 72.37633399021112
+    "peak_ee_speed": 0.20845730032355997,
+    "cost": 57.3997972657441
    },
    "effort_place": {
-    "torque_sq": 0.8788629599925109,
-    "torque_rate_sq": 671.0538216217539,
-    "joint_jerk_sq": 498517.8691967803,
-    "energy_j": 23.85212906591835,
+    "torque_sq": 0.8788918021950294,
+    "torque_rate_sq": 671.058990985759,
+    "joint_jerk_sq": 470797.9802925313,
+    "energy_j": 23.85799130826045,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.41521178385007573,
-    "cost": 118.07455333250512
+    "peak_ee_speed": 0.4152667734335794,
+    "cost": 115.30316884310666
    },
    "dur": 9.02199999999975,
    "integrity": []
@@ -95,27 +120,36 @@
     0.01984422558428599
    ],
    "pick": "done",
+   "pick_log": {
+    "skill": "pick",
+    "closure": 0.44774840435956115,
+    "contacts": 9,
+    "tripped": false,
+    "miss": 3.15701299561251e-05,
+    "grasp_width_est": 0.02655985832006886,
+    "wall_s": 1.7216100737568922
+   },
    "place": "done",
-   "err_xy": 0.003516353289961519,
+   "err_xy": 0.0035014548534647414,
    "upright": 1.0,
    "success": true,
    "effort_pick": {
-    "torque_sq": 0.6202085456135193,
-    "torque_rate_sq": 350.10614019765814,
-    "joint_jerk_sq": 215781.42425258528,
-    "energy_j": 11.45970184264996,
+    "torque_sq": 0.5825168678270866,
+    "torque_rate_sq": 350.2329514967822,
+    "joint_jerk_sq": 176155.55071515377,
+    "energy_j": 11.445911523425892,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.21088136805765714,
-    "cost": 57.32356200906437
+    "peak_ee_speed": 0.2104109518711524,
+    "cost": 53.33582620425495
    },
    "effort_place": {
-    "torque_sq": 0.6697731204131281,
-    "torque_rate_sq": 582.5260491359049,
-    "joint_jerk_sq": 243402.4456243938,
-    "energy_j": 15.999576943233937,
+    "torque_sq": 0.6697283766887152,
+    "torque_rate_sq": 582.6134626616881,
+    "joint_jerk_sq": 260800.5051926263,
+    "energy_j": 16.002544604247127,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.4024970273860123,
-    "cost": 83.42261836587535
+    "peak_ee_speed": 0.4025727301726146,
+    "cost": 85.17115060816263
    },
    "dur": 8.313999999999513,
    "integrity": []
@@ -129,22 +163,39 @@
     0.015477348776059859,
     0.01608511057686683
    ],
-   "pick": "dropped",
-   "place": null,
-   "err_xy": 0.22759619259937308,
-   "upright": 1.0,
-   "success": false,
-   "effort_pick": {
-    "torque_sq": 0.635411282604869,
-    "torque_rate_sq": 361.5222953690927,
-    "joint_jerk_sq": 4447989.822966907,
-    "energy_j": 17.77629276949849,
-    "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.4036405458163694,
-    "cost": 481.76438604389983
+   "pick": "done",
+   "pick_log": {
+    "skill": "pick",
+    "closure": 0.41381045723506443,
+    "contacts": 7,
+    "tripped": false,
+    "miss": 4.1139683048133896e-05,
+    "grasp_width_est": 0.02900293172356716,
+    "wall_s": 1.4583747212891467
    },
-   "effort_place": null,
-   "dur": 3.6939999999997926,
+   "place": "done",
+   "err_xy": 0.0035915191980147236,
+   "upright": 1.0,
+   "success": true,
+   "effort_pick": {
+    "torque_sq": 0.5932118173262378,
+    "torque_rate_sq": 307.8327262882485,
+    "joint_jerk_sq": 349041.3417683965,
+    "energy_j": 18.865255164561717,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.40370385260177116,
+    "cost": 66.46927117463636
+   },
+   "effort_place": {
+    "torque_sq": 0.9521721888722847,
+    "torque_rate_sq": 605.4984537361961,
+    "joint_jerk_sq": 148735.10435809175,
+    "energy_j": 23.04664156141718,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.40090854563731415,
+    "cost": 76.60599441391524
+   },
+   "dur": 8.259999999999494,
    "integrity": []
   },
   {
@@ -157,29 +208,38 @@
     0.021134139603135888
    ],
    "pick": "done",
+   "pick_log": {
+    "skill": "pick",
+    "closure": 0.3020881488070317,
+    "contacts": 9,
+    "tripped": false,
+    "miss": 9.562222500995334e-05,
+    "grasp_width_est": 0.03741703699791257,
+    "wall_s": 0.4569988019648008
+   },
    "place": "done",
-   "err_xy": 0.0004659599078261998,
+   "err_xy": 0.00044215301485454856,
    "upright": 1.0,
    "success": true,
    "effort_pick": {
-    "torque_sq": 0.6157848556855093,
-    "torque_rate_sq": 352.81848764697565,
-    "joint_jerk_sq": 404032.4020695062,
-    "energy_j": 22.226909129224214,
+    "torque_sq": 0.5923644953068409,
+    "torque_rate_sq": 166.97874573695108,
+    "joint_jerk_sq": 495396.6176259006,
+    "energy_j": 22.24507786777893,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.3937000226301548,
-    "cost": 76.52314291862595
+    "peak_ee_speed": 0.3942803608784974,
+    "cost": 67.05235161026981
    },
    "effort_place": {
-    "torque_sq": 0.8691368052275451,
-    "torque_rate_sq": 664.7693833415309,
-    "joint_jerk_sq": 148734.30198455337,
-    "energy_j": 26.75172142656523,
+    "torque_sq": 0.8703658007330328,
+    "torque_rate_sq": 664.6782670765751,
+    "joint_jerk_sq": 119972.53933709767,
+    "energy_j": 26.740024834567187,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.4068670130946622,
-    "cost": 82.48702255210162
+    "peak_ee_speed": 0.40677917549694015,
+    "cost": 79.60284669044599
    },
-   "dur": 7.967999999999397,
+   "dur": 7.971999999999398,
    "integrity": []
   },
   {
@@ -192,27 +252,36 @@
     0.018098329726049744
    ],
    "pick": "done",
+   "pick_log": {
+    "skill": "pick",
+    "closure": 0.34393936252803387,
+    "contacts": 9,
+    "tripped": false,
+    "miss": 1.9969495546410535e-05,
+    "grasp_width_est": 0.034211125337624715,
+    "wall_s": 0.49597511655883864
+   },
    "place": "done",
-   "err_xy": 0.004768542998096007,
+   "err_xy": 0.00476301155325817,
    "upright": 1.0,
    "success": true,
    "effort_pick": {
-    "torque_sq": 0.5889882675089438,
-    "torque_rate_sq": 350.49903102262823,
-    "joint_jerk_sq": 345626.48799279414,
-    "energy_j": 9.451279390182796,
+    "torque_sq": 0.5577286252728281,
+    "torque_rate_sq": 167.24478486218462,
+    "joint_jerk_sq": 439591.41822632373,
+    "energy_j": 9.481210066302513,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.2491423822189202,
-    "cost": 70.29605296295301
+    "peak_ee_speed": 0.24933207966475918,
+    "cost": 61.33616103478669
    },
    "effort_place": {
-    "torque_sq": 0.8313289266129696,
-    "torque_rate_sq": 665.2968270794775,
-    "joint_jerk_sq": 134471.61763964265,
-    "energy_j": 18.003959124080307,
+    "torque_sq": 0.8313716025442652,
+    "torque_rate_sq": 665.2416607694375,
+    "joint_jerk_sq": 133940.0720571242,
+    "energy_j": 18.01266154735241,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.40140743673967827,
-    "cost": 80.98821298976577
+    "peak_ee_speed": 0.4014061890014692,
+    "cost": 80.92967150067396
    },
    "dur": 7.737999999999348,
    "integrity": []
@@ -227,29 +296,38 @@
     0.02132233473194343
    ],
    "pick": "done",
+   "pick_log": {
+    "skill": "pick",
+    "closure": 0.2736797178007298,
+    "contacts": 9,
+    "tripped": false,
+    "miss": 2.036730631742249e-05,
+    "grasp_width_est": 0.03971852568741337,
+    "wall_s": 1.6283826167345978
+   },
    "place": "done",
-   "err_xy": 0.0020995497154130574,
+   "err_xy": 0.002167390306155214,
    "upright": 1.0,
    "success": true,
    "effort_pick": {
-    "torque_sq": 0.5986095980265589,
-    "torque_rate_sq": 350.77692241637726,
-    "joint_jerk_sq": 126872.91117072754,
-    "energy_j": 14.542145346622592,
+    "torque_sq": 0.5810540561047742,
+    "torque_rate_sq": 164.85910052739482,
+    "joint_jerk_sq": 154412.64466304402,
+    "energy_j": 14.570816916047274,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.4007043978427418,
-    "cost": 48.509014410203264
+    "peak_ee_speed": 0.4008438556008561,
+    "cost": 32.653936744309135
    },
    "effort_place": {
-    "torque_sq": 0.9187380545067336,
-    "torque_rate_sq": 675.435617390854,
-    "joint_jerk_sq": 310400.78931211506,
-    "energy_j": 31.636698685510655,
+    "torque_sq": 0.91936647875288,
+    "torque_rate_sq": 675.4221490806121,
+    "joint_jerk_sq": 311403.5415329904,
+    "energy_j": 31.63266010692688,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.4116977310432661,
-    "cost": 99.81874571165875
+    "peak_ee_speed": 0.41172792586952855,
+    "cost": 99.9182621411824
    },
-   "dur": 8.391999999999538,
+   "dur": 8.39399999999954,
    "integrity": []
   },
   {
@@ -262,29 +340,38 @@
     0.02237300410598005
    ],
    "pick": "done",
+   "pick_log": {
+    "skill": "pick",
+    "closure": 0.3387177210446737,
+    "contacts": 8,
+    "tripped": false,
+    "miss": 6.045722138666466e-05,
+    "grasp_width_est": 0.034376574710404124,
+    "wall_s": 1.7707911794423126
+   },
    "place": "done",
-   "err_xy": 0.004261814481021338,
+   "err_xy": 0.004286008191977269,
    "upright": 1.0,
    "success": true,
    "effort_pick": {
-    "torque_sq": 0.603001466807045,
-    "torque_rate_sq": 350.36067011245166,
-    "joint_jerk_sq": 402547.938250048,
-    "energy_j": 13.68890110826814,
+    "torque_sq": 0.5721504997022957,
+    "torque_rate_sq": 166.10413300470708,
+    "joint_jerk_sq": 408409.5448079152,
+    "energy_j": 13.711042517009142,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.21227520705271674,
-    "cost": 76.03075131413969
+    "peak_ee_speed": 0.21183803098870296,
+    "cost": 58.16062870613462
    },
    "effort_place": {
-    "torque_sq": 0.8172774004291842,
-    "torque_rate_sq": 660.9549502810318,
-    "joint_jerk_sq": 133761.64642248824,
-    "energy_j": 25.8060924680579,
+    "torque_sq": 0.81788800220772,
+    "torque_rate_sq": 660.7900239921589,
+    "joint_jerk_sq": 133014.75161966454,
+    "energy_j": 25.80415716001249,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.4154491463754773,
-    "cost": 80.54699799546177
+    "peak_ee_speed": 0.4154982673561743,
+    "cost": 80.4564071349902
    },
-   "dur": 8.329999999999519,
+   "dur": 8.331999999999518,
    "integrity": []
   },
   {
@@ -297,29 +384,38 @@
     0.020181317402111633
    ],
    "pick": "done",
+   "pick_log": {
+    "skill": "pick",
+    "closure": 0.2954968936071868,
+    "contacts": 7,
+    "tripped": false,
+    "miss": 3.249678952375227e-05,
+    "grasp_width_est": 0.037695901077257524,
+    "wall_s": 1.3951526175951585
+   },
    "place": "done",
-   "err_xy": 0.0006874137152197152,
+   "err_xy": 0.0006051884449964493,
    "upright": 1.0,
    "success": true,
    "effort_pick": {
-    "torque_sq": 0.5968619978753598,
-    "torque_rate_sq": 351.58299763122227,
-    "joint_jerk_sq": 353479.7552423481,
-    "energy_j": 13.328990323509947,
+    "torque_sq": 0.5743698060033824,
+    "torque_rate_sq": 165.70952777085847,
+    "joint_jerk_sq": 427403.9085048482,
+    "energy_j": 13.364633371034394,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.4059147196654514,
-    "cost": 71.2364271884675
+    "peak_ee_speed": 0.40599649474497024,
+    "cost": 60.0193597672844
    },
    "effort_place": {
-    "torque_sq": 0.7186616794506218,
-    "torque_rate_sq": 677.77382011394,
-    "joint_jerk_sq": 336900.3244949008,
-    "energy_j": 26.09789909859284,
+    "torque_sq": 0.7193395464899673,
+    "torque_rate_sq": 677.7780062358823,
+    "joint_jerk_sq": 341713.8651616524,
+    "energy_j": 26.113124536871368,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.41552677491969303,
-    "cost": 102.44705513132064
+    "peak_ee_speed": 0.4155710507155914,
+    "cost": 102.92965793161216
    },
-   "dur": 7.563999999999367,
+   "dur": 7.565999999999367,
    "integrity": []
   },
   {
@@ -331,22 +427,39 @@
     0.020477032726520954,
     0.023708156386687756
    ],
-   "pick": "dropped",
-   "place": null,
-   "err_xy": 0.13706525933703537,
-   "upright": 1.0,
-   "success": false,
-   "effort_pick": {
-    "torque_sq": 0.6040362905972598,
-    "torque_rate_sq": 357.7597027219948,
-    "joint_jerk_sq": 4799091.380926741,
-    "energy_j": 10.918078451855159,
-    "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.3434811379418853,
-    "cost": 516.3983254399894
+   "pick": "done",
+   "pick_log": {
+    "skill": "pick",
+    "closure": 0.3643860851467676,
+    "contacts": 9,
+    "tripped": false,
+    "miss": 2.3076247311351168e-05,
+    "grasp_width_est": 0.032699875982684465,
+    "wall_s": 0.44466070987982675
    },
-   "effort_place": null,
-   "dur": 3.397999999999825,
+   "place": "done",
+   "err_xy": 0.0007945633198172076,
+   "upright": 1.0,
+   "success": true,
+   "effort_pick": {
+    "torque_sq": 0.572944053954344,
+    "torque_rate_sq": 187.64582146267634,
+    "joint_jerk_sq": 424620.4273717127,
+    "energy_j": 11.377994561419685,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.3453424237328346,
+    "cost": 61.91334888300745
+   },
+   "effort_place": {
+    "torque_sq": 0.7653422441991982,
+    "torque_rate_sq": 655.5105695915374,
+    "joint_jerk_sq": 171707.52388507078,
+    "energy_j": 12.773419847261216,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.40165430201386787,
+    "cost": 83.61488579033264
+   },
+   "dur": 7.743999999999347,
    "integrity": []
   },
   {
@@ -359,27 +472,36 @@
     0.027756500089849128
    ],
    "pick": "done",
+   "pick_log": {
+    "skill": "pick",
+    "closure": 0.2803680204631513,
+    "contacts": 9,
+    "tripped": false,
+    "miss": 3.04828480397604e-05,
+    "grasp_width_est": 0.0388878849841648,
+    "wall_s": 0.5600662669748999
+   },
    "place": "done",
-   "err_xy": 0.001505852096572161,
+   "err_xy": 0.0017610257660119393,
    "upright": 1.0,
    "success": true,
    "effort_pick": {
-    "torque_sq": 0.5922223553873573,
-    "torque_rate_sq": 350.199290886675,
-    "joint_jerk_sq": 302374.58152493526,
-    "energy_j": 9.617229221520684,
+    "torque_sq": 0.5726668341863534,
+    "torque_rate_sq": 164.2606034932756,
+    "joint_jerk_sq": 321921.93356873124,
+    "energy_j": 9.64904468465888,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.20857629682774195,
-    "cost": 65.94578188876359
+    "peak_ee_speed": 0.20820811720396684,
+    "cost": 49.28741098723363
    },
    "effort_place": {
-    "torque_sq": 0.7213173821685923,
-    "torque_rate_sq": 666.9743644469733,
-    "joint_jerk_sq": 207086.51084638564,
-    "energy_j": 18.974465366033126,
+    "torque_sq": 0.721360541313046,
+    "torque_rate_sq": 666.930868425983,
+    "joint_jerk_sq": 212596.27258022391,
+    "energy_j": 18.974865492222726,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.4065670068732548,
-    "cost": 88.31714956516481
+    "peak_ee_speed": 0.40656858839577925,
+    "cost": 88.86382329685597
    },
    "dur": 8.373999999999533,
    "integrity": []
@@ -394,29 +516,38 @@
     0.0172454202926268
    ],
    "pick": "done",
+   "pick_log": {
+    "skill": "pick",
+    "closure": 0.44652751427745524,
+    "contacts": 8,
+    "tripped": false,
+    "miss": 2.1550883125387748e-05,
+    "grasp_width_est": 0.026458581695237328,
+    "wall_s": 0.49980817531468347
+   },
    "place": "done",
-   "err_xy": 0.0010823441636087637,
+   "err_xy": 0.0015583591374719035,
    "upright": 1.0,
    "success": true,
    "effort_pick": {
-    "torque_sq": 0.6160673598124183,
-    "torque_rate_sq": 358.7538106858055,
-    "joint_jerk_sq": 1788435.7653591316,
-    "energy_j": 10.153800502542397,
+    "torque_sq": 0.5806314192946358,
+    "torque_rate_sq": 350.60700171831013,
+    "joint_jerk_sq": 402536.47402760555,
+    "energy_j": 11.199153847555545,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.2607384880252963,
-    "cost": 215.43656296933156
+    "peak_ee_speed": 0.2607540794163101,
+    "cost": 76.00697053236176
    },
    "effort_place": {
-    "torque_sq": 0.6171533787839446,
-    "torque_rate_sq": 575.6831061801729,
-    "joint_jerk_sq": 142415.89496482568,
-    "energy_j": 22.61782914608506,
+    "torque_sq": 0.7697420081477805,
+    "torque_rate_sq": 569.7062595362129,
+    "joint_jerk_sq": 130880.45616865488,
+    "energy_j": 21.62562549537255,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.41390556474661416,
-    "cost": 72.65323178474466
+    "peak_ee_speed": 0.41236469474253845,
+    "cost": 71.04466983358829
    },
-   "dur": 6.425999999999492,
+   "dur": 7.821999999999348,
    "integrity": []
   },
   {
@@ -429,29 +560,38 @@
     0.019128581809017782
    ],
    "pick": "done",
+   "pick_log": {
+    "skill": "pick",
+    "closure": 0.46004839225505684,
+    "contacts": 10,
+    "tripped": false,
+    "miss": 7.483934166942892e-05,
+    "grasp_width_est": 0.025863344208122488,
+    "wall_s": 0.49382826464716345
+   },
    "place": "done",
-   "err_xy": 0.0016304718444226326,
+   "err_xy": 0.0013264138679211764,
    "upright": 1.0,
    "success": true,
    "effort_pick": {
-    "torque_sq": 0.6554342887788851,
-    "torque_rate_sq": 351.3101627255039,
-    "joint_jerk_sq": 328759.38575039525,
-    "energy_j": 21.533395655928125,
+    "torque_sq": 0.6174395450209943,
+    "torque_rate_sq": 351.4812541800244,
+    "joint_jerk_sq": 362231.0820944825,
+    "energy_j": 21.508833783351925,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.41006159217437427,
-    "cost": 68.87772309292808
+    "peak_ee_speed": 0.4097423531688901,
+    "cost": 72.20376151030521
    },
    "effort_place": {
-    "torque_sq": 0.9931671592363118,
-    "torque_rate_sq": 590.543007250354,
-    "joint_jerk_sq": 267359.6190569439,
-    "energy_j": 27.95707933197423,
+    "torque_sq": 0.993715232532225,
+    "torque_rate_sq": 590.6217554945648,
+    "joint_jerk_sq": 255931.11321831838,
+    "energy_j": 27.92899680952881,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.4001167956101548,
-    "cost": 87.06300058328586
+    "peak_ee_speed": 0.40011975071119826,
+    "cost": 85.92829207191583
    },
-   "dur": 8.657999999999628,
+   "dur": 8.659999999999627,
    "integrity": []
   },
   {
@@ -464,29 +604,38 @@
     0.013655958697275601
    ],
    "pick": "done",
+   "pick_log": {
+    "skill": "pick",
+    "closure": 0.4708175436918648,
+    "contacts": 9,
+    "tripped": false,
+    "miss": 1.0372355971208543e-05,
+    "grasp_width_est": 0.025129249700488934,
+    "wall_s": 0.5325282168923877
+   },
    "place": "done",
-   "err_xy": 0.003171156711806667,
+   "err_xy": 0.0031584889155124455,
    "upright": 1.0,
    "success": true,
    "effort_pick": {
-    "torque_sq": 0.6175649077550773,
-    "torque_rate_sq": 349.8006969369585,
-    "joint_jerk_sq": 454816.64240892825,
-    "energy_j": 10.944319036081165,
+    "torque_sq": 0.5797273456280404,
+    "torque_rate_sq": 349.99299288476385,
+    "joint_jerk_sq": 493338.0785645053,
+    "energy_j": 10.930411457426457,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.2102177730352898,
-    "cost": 81.18874203270455
+    "peak_ee_speed": 0.20974799554482546,
+    "cost": 85.02213860512921
    },
    "effort_place": {
-    "torque_sq": 0.7109942052182677,
-    "torque_rate_sq": 607.5468244650191,
-    "joint_jerk_sq": 823161.0891787437,
-    "energy_j": 29.510022087270716,
+    "torque_sq": 0.7116315041553771,
+    "torque_rate_sq": 607.7545582501593,
+    "joint_jerk_sq": 801417.3097901918,
+    "energy_j": 29.510604698156484,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.40259584982652935,
-    "cost": 144.07688579046726
+    "peak_ee_speed": 0.40258460208064906,
+    "cost": 141.92392435517206
    },
-   "dur": 7.991999999999405,
+   "dur": 7.993999999999406,
    "integrity": []
   },
   {
@@ -499,29 +648,38 @@
     0.022457658043305434
    ],
    "pick": "done",
+   "pick_log": {
+    "skill": "pick",
+    "closure": 0.33011770408074254,
+    "contacts": 9,
+    "tripped": false,
+    "miss": 2.290714394688776e-05,
+    "grasp_width_est": 0.035646212392154965,
+    "wall_s": 1.7177080242545344
+   },
    "place": "done",
-   "err_xy": 0.0006364655733259888,
+   "err_xy": 0.0006139706342593379,
    "upright": 1.0,
    "success": true,
    "effort_pick": {
-    "torque_sq": 0.5977674526546515,
-    "torque_rate_sq": 349.9872204862317,
-    "joint_jerk_sq": 144700.96405760033,
-    "energy_j": 10.21686116500843,
+    "torque_sq": 0.5699972382676239,
+    "torque_rate_sq": 164.10991909782186,
+    "joint_jerk_sq": 140021.23860911137,
+    "energy_j": 10.246674620823635,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.20641120547885933,
-    "cost": 50.16875451868794
+    "peak_ee_speed": 0.20605389233635685,
+    "cost": 31.085579755169185
    },
    "effort_place": {
-    "torque_sq": 0.6900396733796224,
-    "torque_rate_sq": 665.058354117733,
-    "joint_jerk_sq": 246356.47785389633,
-    "energy_j": 12.187552693487678,
+    "torque_sq": 0.6906603906337269,
+    "torque_rate_sq": 665.2228174588654,
+    "joint_jerk_sq": 242064.92878812677,
+    "energy_j": 12.188221271428985,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.40925106356537533,
-    "cost": 91.95339839747743
+    "peak_ee_speed": 0.4091073732229173,
+    "cost": 91.54131722804723
    },
-   "dur": 8.155999999999459,
+   "dur": 8.157999999999461,
    "integrity": []
   },
   {
@@ -534,27 +692,36 @@
     0.023371236423170263
    ],
    "pick": "done",
+   "pick_log": {
+    "skill": "pick",
+    "closure": 0.3312809931996924,
+    "contacts": 9,
+    "tripped": false,
+    "miss": 2.4641915658534692e-05,
+    "grasp_width_est": 0.03523740838702048,
+    "wall_s": 0.5008751166751608
+   },
    "place": "done",
-   "err_xy": 0.0027336756807414177,
+   "err_xy": 0.0030894252030537507,
    "upright": 1.0,
    "success": true,
    "effort_pick": {
-    "torque_sq": 0.6229962920130603,
-    "torque_rate_sq": 350.9119251506651,
-    "joint_jerk_sq": 323232.8206894063,
-    "energy_j": 20.074817217614093,
+    "torque_sq": 0.5942715422659376,
+    "torque_rate_sq": 165.09996804472382,
+    "joint_jerk_sq": 377482.8478045505,
+    "energy_j": 20.075340498503717,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.4123837516625218,
-    "cost": 68.23821904819637
+    "peak_ee_speed": 0.41202651418978015,
+    "cost": 55.05330653217841
    },
    "effort_place": {
-    "torque_sq": 0.9745268011984815,
-    "torque_rate_sq": 664.6197617132595,
-    "joint_jerk_sq": 119938.48096363859,
-    "energy_j": 21.47329744767691,
+    "torque_sq": 0.9745244569889868,
+    "torque_rate_sq": 664.6127742279161,
+    "joint_jerk_sq": 119556.07151179913,
+    "energy_j": 21.48125755261906,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.39986294839293424,
-    "cost": 79.64508404336507
+    "peak_ee_speed": 0.3998535444920784,
+    "cost": 79.60622160648671
    },
    "dur": 8.747999999999656,
    "integrity": []
@@ -568,22 +735,39 @@
     0.01689864940267244,
     0.021062586036029365
    ],
-   "pick": "dropped",
-   "place": null,
-   "err_xy": 0.09401806922479099,
-   "upright": 1.0,
-   "success": false,
-   "effort_pick": {
-    "torque_sq": 0.6467814300474362,
-    "torque_rate_sq": 357.79157193988186,
-    "joint_jerk_sq": 2327318.8282115953,
-    "energy_j": 17.34878547078575,
-    "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.35740943198037567,
-    "cost": 269.331309299903
+   "pick": "done",
+   "pick_log": {
+    "skill": "pick",
+    "closure": 0.44514457516365846,
+    "contacts": 9,
+    "tripped": false,
+    "miss": 0.0005135513989816329,
+    "grasp_width_est": 0.026757916253941767,
+    "wall_s": 1.610007190844044
    },
-   "effort_place": null,
-   "dur": 3.6279999999998,
+   "place": "done",
+   "err_xy": 0.0003512208680837226,
+   "upright": 1.0,
+   "success": true,
+   "effort_pick": {
+    "torque_sq": 0.6143601663157288,
+    "torque_rate_sq": 351.7425844528254,
+    "joint_jerk_sq": 264240.6062297939,
+    "energy_j": 17.630028109327004,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.35848221549647225,
+    "cost": 62.38897951567093
+   },
+   "effort_place": {
+    "torque_sq": 0.6951745868304626,
+    "torque_rate_sq": 585.5335890332169,
+    "joint_jerk_sq": 261522.9139668822,
+    "energy_j": 18.31619968670684,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.4053397358486765,
+    "cost": 85.58398688370745
+   },
+   "dur": 7.705999999999351,
    "integrity": []
   },
   {
@@ -596,27 +780,36 @@
     0.025886425177742377
    ],
    "pick": "done",
+   "pick_log": {
+    "skill": "pick",
+    "closure": 0.29266521406068646,
+    "contacts": 8,
+    "tripped": false,
+    "miss": 1.8777840535057222e-05,
+    "grasp_width_est": 0.03800018816118177,
+    "wall_s": 1.858599457249511
+   },
    "place": "done",
-   "err_xy": 0.0011156475191781727,
+   "err_xy": 0.0011383742388168334,
    "upright": 1.0,
    "success": true,
    "effort_pick": {
-    "torque_sq": 0.5911711953280766,
-    "torque_rate_sq": 350.0299671559405,
-    "joint_jerk_sq": 192841.7391567352,
-    "energy_j": 9.467723112537907,
+    "torque_sq": 0.5687357098115334,
+    "torque_rate_sq": 164.152883765915,
+    "joint_jerk_sq": 309576.930012285,
+    "energy_j": 9.49699238246148,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.20744861055605837,
-    "cost": 54.97301905772103
+    "peak_ee_speed": 0.20698222719835277,
+    "cost": 48.03668701145615
    },
    "effort_place": {
-    "torque_sq": 0.7002370852005919,
-    "torque_rate_sq": 664.8102891245048,
-    "joint_jerk_sq": 310532.78100119624,
-    "energy_j": 12.344679353804372,
+    "torque_sq": 0.7009037365157957,
+    "torque_rate_sq": 664.8122282449907,
+    "joint_jerk_sq": 309716.58914595866,
+    "energy_j": 12.350006239706476,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.41109982294978437,
-    "cost": 98.35799089130876
+    "peak_ee_speed": 0.41109128028869824,
+    "cost": 98.2772855380078
    },
    "dur": 8.287999999999503,
    "integrity": []
@@ -631,27 +824,36 @@
     0.022683828470260348
    ],
    "pick": "done",
+   "pick_log": {
+    "skill": "pick",
+    "closure": 0.2790458981483614,
+    "contacts": 8,
+    "tripped": false,
+    "miss": 8.241160064235522e-05,
+    "grasp_width_est": 0.038891034314002704,
+    "wall_s": 1.9003854929469526
+   },
    "place": "done",
-   "err_xy": 0.0006153590532994587,
+   "err_xy": 0.0003527272479487829,
    "upright": 1.0,
    "success": true,
    "effort_pick": {
-    "torque_sq": 0.5944391333099104,
-    "torque_rate_sq": 350.41282326341195,
-    "joint_jerk_sq": 252797.26783784456,
-    "energy_j": 14.884719950688082,
+    "torque_sq": 0.5748847831984449,
+    "torque_rate_sq": 164.4677784841244,
+    "joint_jerk_sq": 171657.02016005712,
+    "energy_j": 14.912471762818747,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.21317680388343982,
-    "cost": 61.064295442942445
+    "peak_ee_speed": 0.212873887824928,
+    "cost": 34.336489365244795
    },
    "effort_place": {
-    "torque_sq": 0.8430169260359535,
-    "torque_rate_sq": 665.232332044421,
-    "joint_jerk_sq": 103764.14163067225,
-    "energy_j": 26.687519613463948,
+    "torque_sq": 0.843062329693972,
+    "torque_rate_sq": 665.2429073831962,
+    "joint_jerk_sq": 105663.66974356507,
+    "energy_j": 26.691709975398712,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.4134362542170656,
-    "cost": 78.00953948967992
+    "peak_ee_speed": 0.41344672785771,
+    "cost": 78.2006371421241
    },
    "dur": 8.631999999999618,
    "integrity": []
@@ -666,29 +868,38 @@
     0.029306101904337394
    ],
    "pick": "done",
+   "pick_log": {
+    "skill": "pick",
+    "closure": 0.2732322111291024,
+    "contacts": 8,
+    "tripped": false,
+    "miss": 0.00020741130906607336,
+    "grasp_width_est": 0.03929984638999376,
+    "wall_s": 1.8290587887750007
+   },
    "place": "done",
-   "err_xy": 0.0011653168107547407,
+   "err_xy": 0.0009174171249511242,
    "upright": 1.0,
    "success": true,
    "effort_pick": {
-    "torque_sq": 0.6218855066757187,
-    "torque_rate_sq": 350.5098971875378,
-    "joint_jerk_sq": 367551.83328203246,
-    "energy_j": 14.801476960390577,
+    "torque_sq": 0.6026539258469795,
+    "torque_rate_sq": 164.58749055747646,
+    "joint_jerk_sq": 393218.2867339835,
+    "energy_j": 14.842851283496218,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.2538724591649937,
-    "cost": 72.57607332323664
+    "peak_ee_speed": 0.25403344511689296,
+    "cost": 56.53166016782794
    },
    "effort_place": {
-    "torque_sq": 1.0015054468181943,
-    "torque_rate_sq": 673.9854509639121,
-    "joint_jerk_sq": 376346.33525516116,
-    "energy_j": 36.32198835447992,
+    "torque_sq": 1.0027828776279712,
+    "torque_rate_sq": 673.9776454563064,
+    "joint_jerk_sq": 376564.90517144,
+    "energy_j": 36.3228820722984,
     "time_at_limit_s": 0.0,
-    "peak_ee_speed": 0.40864194283404204,
-    "cost": 106.39790395227031
+    "peak_ee_speed": 0.4086513850536213,
+    "cost": 106.42026676112559
    },
-   "dur": 8.919999999999714,
+   "dur": 8.921999999999716,
    "integrity": []
   }
  ]

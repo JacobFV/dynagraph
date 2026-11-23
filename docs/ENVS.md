@@ -1,6 +1,6 @@
 # ENVS: v2 industrial stations and task families (agent ENVS)
 
-Status 2026-11-23 ~21:30Z. All numbers below were measured on gb10-direct with the **test-only probe robot** unless
+Status 2026-11-23 ~23:00Z (round 2). All numbers below were measured on gb10-direct with the **test-only probe robot** unless
 a row says otherwise (real-embodiment results: section "Robots"). Raw data: `results/v2/envs/sensitivity.json`,
 `results/v2/envs/generation.jsonl`, `data/v2_envs/manifest.json` (remote), stills `results/v2/envs/*.png`.
 
@@ -8,7 +8,7 @@ Code `src/physmem/envs/` (owned by ENVS): `scene.py` (MjSpec builder), `stations
 `families_bulk.py`, `families_fine.py`, `families_logistics.py`, `base.py` (StationEnv = api.IndustrialEnv),
 `sensors.py` (ObservationEvent streams, ActorView), `props.py` (extended Prop vocabulary), `probe.py` (TEST-ONLY
 robot + reference skills), `robots.py` (adapter to ROBOTS' embodiments), `splits.py`. Tests `tests/test_envs.py`
-(47 tests). Scripts: `envs_smoke.py`, `envs_trace.py`, `envs_sensitivity.py`, `envs_generate.py`, `envs_render.py`.
+(54 tests). Scripts: `envs_smoke.py`, `envs_trace.py`, `envs_sensitivity.py`, `envs_generate.py`, `envs_render.py`.
 
 ## API (implements `physmem.v2.api.IndustrialEnv`)
 
@@ -51,13 +51,11 @@ env.idle(T)                                       # harness: let the world run T
 
 ## Observations (record layer `schema.ObservationEvent`)
 
-Standard props (ingestable by `memory.WorldBelief`): POSE2, SIZE, CONTACT. Extended props (`envs/props.py`,
-`XProp` values >= 100; use `props.split_events` or `props.ingest(belief, events, now)` which ingests the standard part
-and returns the rest): POSE3, WRENCH, JOINT, GRIPPER, SHAPE, TACTILE, EE_POSE, REGION (+ label-only ids
-GRIP_FRICTION, RESTITUTION, COMPLIANCE, CLEARANCE, JOINT_FRICTION, never emitted).
-**PROPOSAL to the lead:** promote these into `schema.Prop` with dims `XPROP_DIM` (POSE3 7, WRENCH 6, JOINT 2,
-GRIPPER 3, SHAPE 8, TACTILE 4, EE_POSE 7, REGION 7) and add GRIP_FRICTION/RESTITUTION/COMPLIANCE/CLEARANCE/
-JOINT_FRICTION to LATENT_PROPS.
+All props are now `schema.Prop` (lead approved and applied the extension: POSE3=100, WRENCH, JOINT, GRIPPER, SHAPE,
+TACTILE, EE_POSE, REGION; latent GRIP_FRICTION=120, RESTITUTION, COMPLIANCE, CLEARANCE, JOINT_FRICTION in
+LATENT_PROPS, never emitted). `memory.WorldBelief` ingests every env event directly. `envs/props.py` is a thin alias
+(`XProp is schema.Prop`, `split_events` returns everything as standard). Dense indexing: `schema.PROP_INDEX` /
+`N_PROPS_V2` (`N_PROPS` stays 11 for v1).
 
 | sensor | entity | props | rate | noise / artefacts (per-episode random; in labels.sensor_cfg) |
 |---|---|---|---|---|
@@ -151,7 +149,7 @@ tote/pallet sizes); the success-predicate vocabulary mirrors `packages/domain/wo
 joint_ge, upright, below_m failure, collisions_over_n). Stills: `results/v2/envs/<family>_probe_{reset,end}.png`,
 `contact_sheet_probe.png`.
 
-## Task families (14: 6 bulk, 7 fine, 1 deformable)
+## Task families (16: 6 bulk, 9 fine, 1 deformable)
 
 Success predicates are evaluated on TRUE state after every skill (`env.success()`), documented in each class's
 `success_doc`; hidden variables in `hidden_doc`.
@@ -172,9 +170,11 @@ Success predicates are evaluated on TRUE state after every skill (`env.success()
 | drawer_open | fine (artic.) | g | drawer >= 85 % of 0.20 m travel | frictionloss 2-40 N, damping 5-60 N s/m, contents 1-12 kg, handle mu_grip | grip force vs pull force (pinch tab: capacity 2 mu_g F), pull speed |
 | door_open | fine (artic.) | g | door >= 1.2 rad | hinge frictionloss 0.2-4 N m, damping 0.1-3, mass 1-6 kg, handle mu_grip | grip force, swing speed |
 | pouch_transfer | deformable | i | pouch centroid inside the tote region, released | Young 2e3-3e4 Pa, mass 0.1-0.6 kg, mu | grip force window |
+| twist_lock | fine | e | knob turned >= 90 deg (quarter-turn bayonet), released | breakaway torque 0.03-0.6 N m, damping, knob mu_grip | grip force / twist rate (pinch torque capacity ~2 mu_g F r) |
+| machine_tending | fine (multi-step) | g | blank >= 80 % into the vise socket AND door closed (<= 0.08 rad), released | door frictionloss/damping/mass, blank mass + mu_grip, vise clearance 1-3 mm | door grip, pick force, compliant insert, sequencing (open -> load -> close) |
 
 ### Hidden-variable sensitivity (fixed action, outcome across the hidden range; 6 seeds per point, probe)
-`scripts/envs_sensitivity.py all 6 3` (final code, far-side camera; 87 s on 3 procs, 0 errors). Every protocol fixes the skill parameters (no retries,
+`scripts/envs_sensitivity.py all 6 5` (round-2 code; 76 s on 5 procs, 0 errors; connector protocol now 0.3-1.2 mm). Every protocol fixes the skill parameters (no retries,
 no adaptation) and sweeps ONE hidden variable through `TaskSpec.params`.
 
 | family | fixed action | hidden variable: outcome |
@@ -184,26 +184,33 @@ no adaptation) and sweeps ONE hidden variable through `TaskSpec.params`.
 | singulation | push 0.6 m/s x 5 cm | mu 0.15/0.3/0.5/0.7/0.9: displacement 0.203/0.120/0.086/0.068/0.052 m (3.9x) |
 | bulk_sweep | one sweep 0.5 m/s, 0.1 s stop | mu 0.12/0.25/0.4/0.6/0.8: fraction in target 0.27/0.43/0.47/0.49/0.50 |
 | depalletize | suction 150 N, lift 0.25 m/s | carton 2/6/10/13/16/22 kg: P(hold) .67/.67/.67/0/0/0 |
-| conveyor_sort | intercept assuming 0.075 m/s | belt 0.03/0.05/0.075/0.10/0.12 m/s: P(pick) 1/1/1/0/0 |
+| conveyor_sort | intercept assuming 0.075 m/s | belt 0.03/0.05/0.075/0.10/0.12 m/s: P(pick) 0/.33/1/.67/0 (closed-loop re-aim since round 2) |
 | tote_transfer | grip 40 N, mu_g 0.6 | content 0.5/2/4/7/10/14 kg: P(hold) 1/1/0/0/0/0 |
 | peg_insert | straight insert, no search, 6 N | no chamfer, clearance 0.5/1/1.5/2 mm: P .00/.17/.50/.50; 2 mm chamfer: .83 at every clearance |
-| connector_insert | straight, no wiggle, 15 N | clearance 0.5/1/1.5 mm: mu 0.3: P .50/.83/.83; mu 1.0: .33/.67/.83 (moderate) |
+| connector_insert | straight, no wiggle, 15 N | clearance 0.3/0.6/0.9/1.2 mm: P .33/.50/.50/.67 (same for mu 0.3 and 1.0; module now 48-64 mm long) |
 | tool_return | grip 12 N, mu_g 0.4, carry | head mass 0.1/0.3/0.5/0.7 kg: in-hand tilt 1.4/2.7/4.5/33 deg (0.9 kg: dropped) |
 | fixture_place | grip 20 N, fast carry 0.8 m/s | mu_grip 0.15/0.25/0.4/0.7/1.0: P(+-2 mm) 0/0/1/1/1; mass 0.3/1/2/3/4 kg: 1/1/.83/0/0 |
 | kitting_pocket | plain place (no insert) | clearance 1/1.5/2/3/4 mm: P(seated) .33/.33/.67/.83/.83 |
-| drawer_open | grip 15 N, pull 0.15 m/s | frictionloss 2/5/10/20/40 N: travel 0.167/0.164/0.145/0.002/0.001 m |
-| door_open | grip 8 N | frictionloss 0.2/0.5/1/2/4 N m: angle 1.17/1.17/1.16/1.15/0.03 rad |
+| drawer_open | grip 15 N, pull 0.15 m/s | frictionloss 2/5/10/20/40 N: travel 0.200/0.197/0.174/0.003/0.002 m |
+| door_open | grip 8 N | frictionloss 0.2/0.5/1/2/4 N m: angle 1.40/1.40/1.39/1.38/0.03 rad |
 | pouch_transfer | grip 12 N | Young 2e3/6e3/2e4/6e4 Pa: P(success) 1/1/0/.17 (stiff pouches slip out of a light pinch; 6e4 is outside the final train range) |
+| twist_lock | grip 15 N, mu_g 0.6, 1 rad/s | breakaway 0.03/0.1/0.2/0.4/0.6 N m: knob angle 1.74/1.66/0.50/0.17/0.17 rad |
+| machine_tending | straight insert of the blank (door pre-opened) | vise clearance 1/1.5/2/3 mm: P(seated) .83/.83/1/1 (weak) |
 
 Values of 0.83 / 0.67 instead of 1.0 come from individual layout seeds failing for unrelated reasons (kept, not
 filtered). connector_insert is the weakest family (an earlier run with the near-side camera showed almost no
 clearance effect; with the final code tight + high-friction slots drop to 0.33) - treat its G4 evidence as weak.
 
 ## Scripted heuristic baseline (required baseline; `env.scripted()`)
-Per family: pick the most accessible target from the tracker (highest in bin / most crowded / most downstream),
-default skill parameters (e.g. grip 15 N, lift 0.3 m/s; suction 0.5; straight-ish insertion with 1.5 mm spiral),
-and a "retry harder" rule after a failure on the same target (firm grip / full suction / larger spiral). It never
-reads labels. Success per family / split and episodes per hour: see "Generation" below.
+Round 2 (lead: "a decent engineer's heuristic"): conservative defaults + escalating retries + grasp re-planning,
+never reads labels. Per family: target = most accessible from the tracker (highest in bin / top carton layer /
+front tote / most crowded / most downstream belt part that can still be intercepted); defaults: grip 40 N lift
+0.2 m/s (bins), suction 0.9 lift 0.15 (cartons), grip 80 N lift 0.15 (totes), 40 N (conveyor), compliant spiral
+insertion; after a failure on the same target: firmer grip / full suction / slower lift / larger spiral, grasp axis
+rotated 90 deg, fingers kept parallel to a nearby bin wall, skip a target after 3 failures and come back later;
+bin_clearing moves the arm out of the camera view to look again when nothing is freshly tracked; conveyor waits in
+short (<= 2.5 s) steps and keeps waiting while anything is on the belt; machine_tending keeps holding the blank
+after a jammed insert and searches wider; kitting uses a 3-9 mm spiral at 0.7 Hz. Per-family success: "Generation".
 
 ## Splits (`envs/splits.py`)
 * train / val / test by ROOT SEED: sha256 bucket 80/10/10 decided before generation (no root in two splits).
@@ -214,44 +221,72 @@ reads labels. Success per family / split and episodes per hour: see "Generation"
   (train uses box/cylinder/capsule/sphere), all-cylinder singulation, capsule-heavy bulk, 60 % heavy cartons/items,
   16 kg totes, 16 mm pegs, 1.2 kg tool heads, 5 kg fixtures, 4 kitting parts, 16 kg drawers, 8 kg doors, 5e4 Pa pouches.
 * heldout_family per category: bulk -> tote_transfer, fine -> connector_insert (`make_tasks` refuses train/val).
-* held-out robot: lead (TaskSpec.robot).
+* heldout_robot: `scripts/envs_generate.py --heldout_robot NAME` generates that robot ONLY with split
+  "heldout_robot" (test-bucket seeds, in-distribution params), never in train/val/test (proposed: gen3_2f85).
 Sensor-noise / latency / dropout are randomized per episode in every split (labels.sensor_cfg).
 
-## Generation (`scripts/envs_generate.py`)
-Multiprocessing (one episode per task, deterministic per seed), shards `data/v2_envs/<family>/<split>.pkl.gz`
-(list of episode dicts: task, all ObservationEvents, steps with call/result/effort/metrics/labels), manifest with
-sha256 per file, root seeds, code hash and per-family throughput; one row per episode in
-`results/v2/envs/generation.jsonl` (status observed). Final run (code as committed: far-side camera, 1 ms pouch,
-per-episode 300 s wall guard): `--splits train,val,test,heldout_layout,heldout_objects --n 8 --procs 6` = 528
-episodes in 316 s = **6010 episodes/h on 6 processes**; 0 integrity violations; 1 error (a bin_clearing episode hit
-the 300 s guard - a hang not yet diagnosed; kept as an error row). Earlier runs kept: `data/v2_envs_run1`,
-`results/v2/envs/generation_run1.jsonl` (near-side camera). Scripted-baseline success (n episodes), probe robot:
+## Generation (`scripts/envs_generate.py`, storage `envs/io.py`)
+Streaming multiprocessing (one episode per task, deterministic per seed, `maxtasksperchild=50`, 300 s wall guard per
+episode -> recorded as an error row), chunked shards `<out>/[<robot>/]<family>/<split>_<k>.pkl.gz` (50 episodes
+each: task, events as a compact numpy structured array + string tables, steps with call / ok / status / effort /
+duration / metrics / labels / skill log incl. `cmd`), `manifest.json` (per-run: code hash, args, sha256 + bytes +
+root seeds per file, per (robot, family) stats, episodes/hour, bytes total); one row per episode in
+`results/v2/envs/generation.jsonl`. Load with `physmem.envs.io.iter_episodes("<out>/**/*.pkl.gz")`, which rebuilds
+the exact `ObservationEvent`s (round trip tested). Multi-robot: `--robots a,b,c --matrix working_pairs.json
+--heldout_robot gen3_2f85`.
 
-| bin_clearing | 0.12 (8) | 0.25 (8) | 0.12 (8) | 0.12 (8) | 0.00 (8) | - | 13.4 | 268 | 319 | 24.6 | 105389 | 0 |
-| bulk_sweep | 0.50 (8) | 0.62 (8) | 0.75 (8) | 0.88 (8) | 0.00 (8) | - | 8.8 | 408 | 42 | 8.0 | 13986 | 0 |
-| connector_insert | - | - | - | 1.00 (8) | 1.00 (8) | 0.88 (8) | 0.9 | 3889 | 18 | 3.1 | 5059 | 0 |
-| conveyor_sort | 0.38 (8) | 0.50 (8) | 0.12 (8) | 0.00 (8) | 0.38 (8) | - | 2.4 | 1505 | 65 | 11.2 | 23401 | 0 |
-| depalletize | 0.25 (8) | 0.00 (8) | 0.12 (8) | 0.00 (8) | 0.38 (8) | - | 4.4 | 825 | 110 | 12.1 | 37458 | 0 |
-| door_open | 1.00 (8) | 1.00 (8) | 1.00 (8) | 1.00 (8) | 1.00 (8) | - | 0.2 | 21698 | 8 | 1.0 | 2391 | 0 |
-| drawer_open | 1.00 (8) | 1.00 (8) | 0.88 (8) | 0.88 (8) | 0.88 (8) | - | 0.2 | 16858 | 10 | 1.3 | 2959 | 0 |
-| fixture_place | 1.00 (8) | 0.88 (8) | 0.88 (8) | 1.00 (8) | 0.00 (8) | - | 0.9 | 3863 | 18 | 3.5 | 5172 | 0 |
-| kitting_pocket | 0.50 (8) | 0.12 (8) | 0.25 (8) | 0.25 (8) | 0.12 (8) | - | 4.5 | 798 | 75 | 11.6 | 24395 | 0 |
-| peg_insert | 0.88 (8) | 0.75 (8) | 0.88 (8) | 1.00 (8) | 1.00 (8) | - | 0.9 | 3901 | 18 | 3.1 | 5158 | 0 |
-| pouch_transfer | 1.00 (8) | 1.00 (8) | 1.00 (8) | 0.62 (8) | 0.50 (8) | - | 2.3 | 1569 | 16 | 2.8 | 4822 | 0 |
-| singulation | 0.88 (8) | 0.75 (8) | 0.88 (8) | 0.75 (8) | 0.62 (8) | - | 0.8 | 4776 | 18 | 5.5 | 7124 | 0 |
-| tool_return | 1.00 (8) | 0.75 (8) | 0.88 (8) | 0.88 (8) | 0.00 (8) | - | 1.9 | 1890 | 34 | 4.7 | 9431 | 0 |
-| tote_transfer | - | - | - | 0.00 (8) | 0.00 (8) | 0.12 (8) | 4.5 | 801 | 96 | 7.8 | 31483 | 0 |
+**Current dataset** `gb10-direct:~/dynagraph/data/v2_envs` (probe robot, round-2 code, code hash in manifest):
+`--families all --splits train,val,test,heldout_layout,heldout_objects --n 16 --procs 5` = **1216 episodes in
+1156 s = 3790 episodes/h on 5 processes** (host load ~20 from other agents), **0.50 GB** (~0.41 MB/episode),
+0 errors, 0 integrity violations. Earlier runs kept: `data/v2_envs_run1` (near-side camera), `data/v2_envs_run2`
+(round-1 baselines) and `results/v2/envs/generation_run{1,2}.jsonl`. Scripted-baseline success (n), probe:
 
-[exited with code 0]
+| family | train | val | test | heldout_layout | heldout_objects | heldout_family | heldout_robot | wall s/ep | eps/h/proc | sim s/ep | calls/ep | events/ep | viol |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| bin_clearing | 0.19 (16) | 0.19 (16) | 0.25 (16) | 0.06 (16) | 0.00 (16) | - | - | 16.2 | 223 | 206 | 33.3 | 88673 | 0 |
+| bulk_sweep | 0.56 (16) | 0.56 (16) | 0.75 (16) | 0.75 (16) | 0.00 (16) | - | - | 12.5 | 288 | 44 | 8.3 | 14223 | 0 |
+| connector_insert | - | - | - | 0.50 (16) | 0.62 (16) | 0.44 (16) | - | 2.8 | 1302 | 30 | 4.9 | 8421 | 0 |
+| conveyor_sort | 0.62 (16) | 0.56 (16) | 0.62 (16) | 0.38 (16) | 0.62 (16) | - | - | 4.2 | 848 | 61 | 13.9 | 21751 | 0 |
+| depalletize | 1.00 (16) | 1.00 (16) | 0.94 (16) | 0.00 (16) | 1.00 (16) | - | - | 9.7 | 372 | 154 | 14.0 | 52663 | 0 |
+| door_open | 1.00 (16) | 1.00 (16) | 1.00 (16) | 1.00 (16) | 1.00 (16) | - | - | 0.4 | 9947 | 8 | 1.0 | 2396 | 0 |
+| drawer_open | 1.00 (16) | 1.00 (16) | 1.00 (16) | 0.88 (16) | 0.94 (16) | - | - | 0.6 | 6181 | 10 | 1.2 | 2997 | 0 |
+| fixture_place | 1.00 (16) | 0.94 (16) | 0.88 (16) | 0.88 (16) | 0.19 (16) | - | - | 1.4 | 2594 | 17 | 3.4 | 4928 | 0 |
+| kitting_pocket | 0.25 (16) | 0.50 (16) | 0.31 (16) | 0.25 (16) | 0.12 (16) | - | - | 7.2 | 497 | 82 | 11.5 | 26787 | 0 |
+| machine_tending | 0.69 (16) | 0.69 (16) | 0.94 (16) | 0.75 (16) | 0.94 (16) | - | - | 2.5 | 1413 | 53 | 5.8 | 15436 | 0 |
+| peg_insert | 0.88 (16) | 0.88 (16) | 0.94 (16) | 0.94 (16) | 1.00 (16) | - | - | 1.5 | 2350 | 16 | 2.8 | 4585 | 0 |
+| pouch_transfer | 1.00 (16) | 0.94 (16) | 1.00 (16) | 0.69 (16) | 0.69 (16) | - | - | 3.8 | 943 | 17 | 2.8 | 4873 | 0 |
+| singulation | 0.88 (16) | 0.75 (16) | 0.81 (16) | 0.88 (16) | 0.75 (16) | - | - | 1.4 | 2520 | 19 | 5.8 | 7473 | 0 |
+| tool_return | 0.94 (16) | 0.81 (16) | 0.94 (16) | 0.81 (16) | 0.06 (16) | - | - | 3.3 | 1093 | 35 | 4.7 | 9742 | 0 |
+| tote_transfer | - | - | - | 0.00 (16) | 0.00 (16) | 0.44 (16) | - | 6.6 | 546 | 81 | 7.2 | 26480 | 0 |
+| twist_lock | 0.94 (16) | 0.94 (16) | 0.75 (16) | 1.00 (16) | 0.00 (16) | - | - | 0.6 | 6202 | 14 | 2.4 | 3940 | 0 |
 
-(`scripts/envs_summarize.py` -> `results/v2/envs/generation_summary.json`.) Throughput is per process; the episode
-length is set by the skill budget and the baseline's retries, so a planner that succeeds sooner is faster.
-Held-out-object rows at 0.00 (bin_clearing meshes/ellipsoids, 5 kg fixtures, 1.2 kg tool heads, 1.2e5 Pa pouches,
-capsule-heavy bulk) show these shifts are hard for the fixed-parameter baseline - intended to need adaptation.
+(`scripts/envs_summarize.py <dir>` -> `results/v2/envs/generation_summary.json`.) Round-2 baselines vs round 1
+(train/test): depalletize .25/.12 -> 1.00/.94, conveyor_sort .38/.12 -> .62/.62, tote_transfer (heldout_family)
+.12 -> .44, kitting .50/.25 -> .25/.31 (no gain), bin_clearing .12/.12 -> .19/.25 (still weak: repeated misses on
+small stiff spheres - the pads pass through them, an open contact bug - and slips on heavy/oily parts).
+Held-out-object rows near 0 (bin meshes/ellipsoids, 5 kg fixtures, 1.2 kg tool heads, capsule bulk, 0.9 N m
+twist locks, 3-layer pallets for heldout_layout) are shifts the fixed-parameter baseline cannot absorb.
+
+**LARGE run for MODEL-V2 (>= 20k episodes) - READY, waiting for ROBOTS' family x robot matrix.** Command (one
+process per CPU slot we are allowed, <= 8):
+`python scripts/envs_generate.py --families all --splits train,val,test,heldout_layout,heldout_objects
+ --robots <working robots incl. probe> --matrix <ROBOTS matrix json> --heldout_robot gen3_2f85 --n <N> --procs 8
+ --out data/v2_envs_large --rows results/v2/envs/generation_large.jsonl`. Size estimate: ~0.4 MB/episode ->
+~8 GB per 20k episodes (441 GB free); probe throughput ~3.8k eps/h on 5 procs under load, real arms ~5-10x slower
+per episode (envs_robot_smoke: 1-25 s wall/episode) -> 20k mixed episodes ~ 10-20 h on 8 procs.
 
 ## What failed / limitations (honest list)
-* connector_insert hidden variables are only moderately decision-relevant (see above).
-* One bin_clearing episode (of 40) hung until the generator's 300 s wall guard; root cause not found.
+* connector_insert: clearance now changes the fixed-action outcome monotonically (.33 -> .67) but friction does not;
+  machine_tending's vise clearance effect is weak (.83 -> 1).
+* Not built (lead's breadth list): shelf_restock / aisle pick for the mobile manipulator, bimanual large-panel carry,
+  cable/hose routing with a flex rod - all need real embodiments (the probe is single-arm, fixed) or a stable 1-D
+  flex; not attempted in this round.
+* FIXED (round 2): a bin_clearing episode ran 7000 s of sim time - an overlapping spawn ejected a part 3 m away at
+  reset and the pick skill then chased it. Now: non-overlapping spawn, deterministic scene re-draw if the settle drops
+  an object / goes unstable (also removes the pouch reset instabilities: 0 over all split seeds), probe workspace
+  clamp + 8 s move cap, a 300 s per-episode guard in the generator.
+* OPEN: parallel pads can pass through small stiff spheres (r ~15 mm, solref 0.01) in bin_clearing -> repeated
+  "missed" picks; machine_tending inserts sometimes jam inside the (tracker-occluded) machine.
 * Suction embodiments are not yet usable through the adapter (skills return unreachable); real-robot success is
   low on bin_clearing / kitting / UR5e door + peg (see the robots tables).
 * Scripted baseline is weak on depalletize (drops when a heavy carton slips on the first try), conveyor_sort
@@ -269,3 +304,50 @@ capsule-heavy bulk) show these shifts are hard for the fixed-parameter baseline 
   makes the episode fatal (never silently kept).
 * MjSpec defaults to degrees for joint ranges: `Scene` sets `compiler.degree = False` (an early bug clamped the
   probe yaw to +-4 deg).
+
+### ROBOTS notes on `envs/robots.py` (co-owned by ROBOTS from 2026-11-23 evening; ENVS: please do not edit it, leave notes here)
+Changes by ROBOTS (all actor-legal; numbers in docs/ROBOTS.md "Env matrix"):
+- **Build.** The family integrator is kept when the scene has a flex (pouch_transfer crashed with implicitfast:
+  "flex elasticity is no longer integrated implicitly").
+- **Pick:**
+  - Suction level = the call's `suction` (0..1) × cup gain (now 300 N, a 70 mm foam cup); the probe's semantics.
+  - A tote wider than the fingers is pinched by its near long wall (CAD wall t = 8 mm, rim band).
+  - Moving targets (conveyor) lead by tracker age + the predicted time until the fingers close (approach +
+    guarded descent + close) instead of a fixed 2.5 s, with a faster descent.
+  - `_set_grip_force` uses the calibrated `emb.set_grip_force`.
+- **Insert:**
+  - Search radius at least 4 mm. A real two-finger grasp leaves 1–3 mm of in-hand offset; the probe has none.
+  - Down force at least 6 N.
+  - The TCP yaw aligns the held part with the socket (`reg['yaw']`, `sym`), the same rule as place-align. This
+    fixed connector_insert.
+- **Sweep:** the scripted LINE is swept as the probe blade's band (± blade_half_w) in 24 mm finger-paddle lanes.
+- **Open/close:** the pull runs in TRACK mode (task-space inverse dynamics + bounded integral), followed by a 0.4 s
+  fixed hold. Impedance at 2500 N/m left the Panda at 56–68%.
+- **Mobile park:** the TidyBot hand is pulled back and up (not +0.4 m, which was out of reach). The new TidyBot home
+  TCP is at 0.78 m.
+
+ROBOTS-side fixes that affect envs:
+- IK reachability is a continuation solve with multiple starts (pedestal-mounted arms reaching below their base no
+  longer report `unreachable`).
+- Explicit pick `depth` is honoured (tool shank below the head).
+- The pre-shape opening margin is 30 mm.
+- Suction seal hysteresis (a held seal persists up to 45° cup tilt).
+
+Known geometry limit: TidyBot's arm base is at 0.335 m and its base touches the 0.76 m bench, so bench targets more
+than about 0.45 m deep are out of reach. ENVS may want a lower bench or a closer mobile mount for TidyBot.
+
+### ENVS notes for ROBOTS (adapter issues seen in ENVS runs; ROBOTS owns `envs/robots.py`)
+- Round-2 ENVS run (before the ROBOTS changes listed above), seeds 0-2: ur5e_suction / fr3_suction returned
+  `unreachable` immediately on depalletize, tote_transfer and conveyor_sort, even with the new pedestal `arm` mounts
+  (pallet (0,-0.24,0.75), aisle (0,-0.12,0.7), conveyor (0.3,-0.27,0.8)). Please re-check with the multi-start IK.
+- ur5e_2f85: door_open 0/3 with the tab at the panel top (grasp fails), peg_insert 0/3 (was 2/3), singulation
+  progress 1.0 but fatal (a pushed object left the work area / dropped).
+- panda drawer stalled at 56-68 % with 2500 N/m impedance (ROBOTS since switched to track mode).
+- bin_clearing: guarded descent trips on bin walls/neighbours with Panda/2F-85 hands for 12-30 mm parts.
+- New families to wire: `twist_lock` (`open` on entity kind "knob": `env.handle_path` gives a constant TCP point and
+  a yaw ramp; param `yaw_rate` rad/s) and `machine_tending` (door open/close + pick + insert into region "vise";
+  `insert` may carry `release_on_fail=0` = keep holding after a jam). Skill logs: ENVS probe skills now put the
+  commanded reference in `result.log["cmd"] = (t, pos3, vel3)` (MODEL-V2 request 1); the adapter should do the same.
+- Envs now re-draw a scene deterministically (salted seed) if the settle phase drops an object or goes unstable
+  (`env.reset_attempts`), and `_move`-style durations should be capped (a bad estimate once made a probe skill
+  run for 7000 s of sim time; the probe now clamps targets to its workspace and caps a move at 8 s).

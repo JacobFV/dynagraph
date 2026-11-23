@@ -84,13 +84,15 @@ class BinClearing(StationEnv):
         p = self.parts()
         return sum(self.in_region_true(e, reg, margin=0.01) for e in p) / len(p)
 
-    def _pickable(self):
+    def _pickable(self, stale_ok=False):
         reg = self.scene.regions["source_bin"]
         out = []
         for e in self.parts():
             est = self.est_pose(e)
-            if est is None or self.est_age(e) > 1.0:     # stale (occluded since): may already be in the tote
+            if est is None:
                 continue
+            if self.est_age(e) > 1.0 and not (stale_ok and self.in_region_est(e, reg, margin=0.03)):
+                continue          # stale (occluded since): may already be in the tote
             if self.in_region_est(e, reg, margin=0.03) or (not self.in_region_est(e, self.scene.regions["tote"], 0.01)
                                                            and est[0][2] < self.surface_z + 0.3):
                 out.append((est[0][2], e))
@@ -118,14 +120,37 @@ class BinClearing(StationEnv):
             return self._place_call()
         pk = self._pickable()
         if not pk:
-            return None
+            # nothing freshly seen: move the arm out of the camera's view and look again (twice), then also accept
+            # stale estimates of parts last seen in the source bin
+            self._looks = getattr(self, "_looks", 0) + 1
+            if self._looks <= 2:
+                reg = self.scene.regions["tote"]
+                return SkillCall("reach", dict(x=float(reg["center"][0]), y=float(reg["center"][1]) - 0.3,
+                                               z=float(self.safe_z), speed=0.6, dwell=0.6), target="tote")
+            pk = self._pickable(stale_ok=True)
+            if not pk:
+                return None
+        else:
+            self._looks = 0
         # engineer's heuristic: conservative grip / lift, then escalate; re-plan the grasp axis after a miss;
         # skip a part after 3 failures (come back to it once the others are done)
         cand = [e for e in pk if self.fail_count.get(e, 0) < 3] or pk
         e = cand[0]
         k = self.fail_count.get(e, 0)
-        return _pick_call(e, grip_force=(40.0, 90.0, 100.0, 100.0)[min(k, 3)], lift_speed=(0.2, 0.1, 0.08, 0.08)[min(k, 3)],
-                          dyaw=(0.0, 0.0, math.pi / 2, 0.0)[min(k, 3)], depth=(0.5, 0.5, 0.3, 0.7)[min(k, 3)])
+        kw = dict(grip_force=(40.0, 90.0, 100.0, 100.0)[min(k, 3)], lift_speed=(0.2, 0.1, 0.08, 0.08)[min(k, 3)],
+                  depth=(0.5, 0.5, 0.3, 0.7)[min(k, 3)])
+        # grasp re-planning: near a bin wall close the pads PARALLEL to that wall; after a miss rotate 90 deg
+        est = self.est_pose(e)
+        reg = self.scene.regions["source_bin"]
+        if est is not None and self.in_region_est(e, reg, margin=0.03):
+            gx = reg["half"][0] - abs(est[0][0] - reg["center"][0])
+            gy = reg["half"][1] - abs(est[0][1] - reg["center"][1])
+            if min(gx, gy) < 0.045:
+                base = 0.0 if gx < gy else math.pi / 2
+                kw["close_yaw"] = base + (math.pi / 2 if k % 2 else 0.0)
+        if "close_yaw" not in kw and k % 2 == 1:
+            kw["dyaw"] = math.pi / 2
+        return _pick_call(e, **kw)
 
     def metrics_extra(self):
         return dict(n_parts=len(self.parts()))

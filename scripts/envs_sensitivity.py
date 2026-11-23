@@ -153,6 +153,23 @@ def p_pouch_transfer(seed, y):
     return float(env.success())
 
 
+def p_twist_lock(seed, fl):
+    env = _reset("twist_lock", seed, dict(frictionloss=fl, mu_grip=0.6))
+    env.execute(env._twist(grip_force=15.0, yaw_rate=1.0, travel=1.8))
+    return float(env.q())
+
+
+def p_machine_tending(seed, clr):
+    """load stage only (door opened by a firm pull first): straight insert of the blank into the vise."""
+    env = _reset("machine_tending", seed, dict(clearance=clr, frictionloss=0.3, mu_grip=0.8))
+    env.execute(env._open(travel=1.45, grip_force=60.0))
+    env.execute(env._pick("blank", grip_force=40.0, depth=-0.3))
+    if env.held is None:
+        return float("nan")
+    env.execute(env._insert_call(search_r=0.0, down_force=6.0))
+    return float(env.depth_frac() >= 0.8)
+
+
 PROTOCOLS = {
     "bin_clearing": [("mass_kg|mu_grip=0.5, grip 15 N", p_bin_clearing, [("mass", m) for m in (0.1, 0.5, 1.0, 1.5, 2.5)], "P(hold)"),
                      ("mu_grip|mass=0.5 kg, grip 15 N", p_bin_clearing, [("mu_grip", m) for m in (0.08, 0.15, 0.3, 0.6, 1.0)], "P(hold)")],
@@ -164,7 +181,7 @@ PROTOCOLS = {
     "peg_insert": [("(clearance m, chamfer m)|straight insert, no search", p_peg_insert,
                     [(c, ch) for ch in (0.0, 0.002) for c in (0.0005, 0.001, 0.0015, 0.002)], "P(success)")],
     "connector_insert": [("(clearance m, mu)|straight, no wiggle, 15 N", p_connector_insert,
-                          [(c, mu) for mu in (0.3, 1.0) for c in (0.0005, 0.001, 0.0015)], "P(success)")],
+                          [(c, mu) for mu in (0.3, 1.0) for c in (0.0003, 0.0006, 0.0009, 0.0012)], "P(success)")],
     "tool_return": [("head mass kg|imbalance 0.5, grip 12 N, mu_g 0.4, carry", p_tool_return, [0.1, 0.3, 0.5, 0.7, 0.9], "in-hand tilt deg")],
     "fixture_place": [("mu_grip|mass 1 kg, grip 20 N, fast carry 0.8 m/s", p_fixture_place, [("mu_grip", m) for m in (0.15, 0.25, 0.4, 0.7, 1.0)], "P(+-2mm)"),
                       ("mass kg|mu_g 0.6, grip 20 N, fast carry", p_fixture_place, [("mass", m) for m in (0.3, 1.0, 2.0, 3.0, 4.0)], "P(+-2mm)")],
@@ -172,6 +189,8 @@ PROTOCOLS = {
     "drawer_open": [("frictionloss N|grip 15 N, mu_g 0.6", p_drawer_open, [2.0, 5.0, 10.0, 20.0, 40.0], "drawer travel m")],
     "door_open": [("hinge frictionloss N m|grip 8 N, mu_g 0.6", p_door_open, [0.2, 0.5, 1.0, 2.0, 4.0], "door angle rad")],
     "pouch_transfer": [("Young modulus Pa|grip 12 N", p_pouch_transfer, [2e3, 6e3, 2e4, 6e4], "P(success)")],
+    "twist_lock": [("breakaway torque N m|grip 15 N, mu_g 0.6, 1 rad/s", p_twist_lock, [0.03, 0.1, 0.2, 0.4, 0.6], "knob angle rad")],
+    "machine_tending": [("vise clearance m|straight insert of the blank", p_machine_tending, [0.001, 0.0015, 0.002, 0.003], "P(seated)")],
 }
 
 

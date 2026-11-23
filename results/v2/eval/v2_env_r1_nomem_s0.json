@@ -1,0 +1,28 @@
+{
+ "test:model": {
+  "bin_clearing": {
+   "success_brier": 0.001119219814427197,
+   "success_auc": 0.9506172839506173,
+   "success_rate": 0.0011210762895643711,
+   "effort_log_rmse": 0.8473625779151917,
+   "progress_rmse": 0.17545592784881592,
+   "cont_nll": 31.929367065429688
+  },
+  "bulk_sweep": {
+   "success_brier": 0.05399499461054802,
+   "success_auc": 0.7275412816239963,
+   "success_rate": 0.05985401198267937,
+   "effort_log_rmse": 1.1569844484329224,
+   "progress_rmse": 0.0727226510643959,
+   "cont_nll": -0.6624590158462524
+  },
+  "singulation": {
+   "success_brier": 0.11290886253118515,
+   "success_auc": 0.7214364293572214,
+   "success_rate": 0.13490363955497742,
+   "effort_log_rmse": 1.6222642660140991,
+   "progress_rmse": 0.2552037835121155,
+   "cont_nll": 89.72335815429688
+  }
+ }
+}

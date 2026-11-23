@@ -340,7 +340,7 @@ class MjEmbodiment:
             self.eff[e.name] = dict(cfg=e, dofs=dofs, qadr=qadr, acts=np.array(acts, int), site=site,
                                     body=m.site_bodyid[site], ft_bodies=ft_bodies, ft_geoms=ft_geoms,
                                     gacts=np.array(gacts, int), gopen=np.array(gopen), gclosed=np.array(gclosed),
-                                    gforce=gforce,
+                                    gforce=gforce, gforce_travel=gforce.copy(),
                                     pad=pad, tau_lim=lim, home=np.array(e.home, float))
             all_dofs += list(dofs)
         # base

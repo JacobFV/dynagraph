@@ -9,7 +9,8 @@
   (e.g. convex-mesh + ellipsoid parts in bin_clearing, heavier fixtures, stiffer pouches).
 * heldout_family: one family per category is never generated for train/val: bulk -> tote_transfer,
   fine -> connector_insert (their episodes exist only with split="heldout_family").
-* held-out robot: handled by the lead (TaskSpec.robot).
+* heldout_robot: scripts/envs_generate.py --heldout_robot NAME generates that robot ONLY with split="heldout_robot"
+  (test-bucket seeds, in-distribution params), never in train/val/test.
 """
 from __future__ import annotations
 
@@ -17,10 +18,10 @@ import hashlib
 
 from ..v2.api import TaskSpec
 
-SPLITS = ("train", "val", "test", "heldout_layout", "heldout_objects", "heldout_family")
+SPLITS = ("train", "val", "test", "heldout_layout", "heldout_objects", "heldout_family", "heldout_robot")
 HELDOUT_FAMILIES = {"bulk": "tote_transfer", "fine": "connector_insert"}
 BENCH_FAMILIES = {"bin_clearing", "singulation", "bulk_sweep", "peg_insert", "connector_insert", "tool_return",
-                  "fixture_place", "kitting_pocket", "drawer_open", "door_open"}
+                  "fixture_place", "kitting_pocket", "drawer_open", "door_open", "twist_lock", "machine_tending"}
 TRAIN_SHAPES = ("box", "cylinder", "capsule", "sphere")
 
 # params applied to EVERY split of a family (in-distribution object sets)
@@ -34,7 +35,7 @@ HELDOUT_OBJECTS = {
     "bulk_sweep": dict(mix=(0.1, 0.2)),                   # mostly capsules (they roll sideways)
     "depalletize": dict(heavy_p=0.6),
     "conveyor_sort": dict(heavy_p=0.6),
-    "tote_transfer": dict(content_mass=16.0),
+    "tote_transfer": dict(content_mass=12.0),
     "peg_insert": dict(peg_half=0.016),
     "connector_insert": dict(),
     "tool_return": dict(head_mass=1.2),
@@ -43,6 +44,8 @@ HELDOUT_OBJECTS = {
     "drawer_open": dict(mass=16.0),
     "door_open": dict(mass=8.0),
     "pouch_transfer": dict(young=5e4),
+    "twist_lock": dict(frictionloss=0.9),
+    "machine_tending": dict(mass=8.0),
 }
 COUNT_SHIFT = {"depalletize": dict(layers=3), "conveyor_sort": dict(n_parts=7), "tote_transfer": dict(n_totes=4),
                "pouch_transfer": dict(mass=0.8)}

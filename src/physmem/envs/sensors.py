@@ -87,6 +87,11 @@ class SensorSuite:
             oh = np.zeros(len(SHAPES))
             oh[SHAPES.index(info.shape) if info.shape in SHAPES else 0] = 1
             self.ev(eid, XProp.SHAPE, oh, [0.0] * len(SHAPES), t, 0.0, "tracker")
+        for eid, info in env.scene.entities.items():      # articulated links: first joint reading always arrives
+            if info.etype == EntityType.LINK:
+                q = float(env.d.qpos[env.m.jnt_qposadr[env.m.joint(info.meta["joint"]).id]])
+                sig = 0.01 if info.kind in ("door", "knob") else 0.001
+                self.ev(eid, XProp.JOINT, (q + self.rng.normal(0, sig), 0.0), (sig ** 2, 1.0), t, c["latency"])
         for name, reg in env.scene.regions.items():
             cx, cy, cz = reg["center"]
             hx, hy, hz = reg["half"]

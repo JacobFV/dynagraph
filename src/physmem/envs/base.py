@@ -133,6 +133,7 @@ class StationEnv:
         self.n_calls += 1
         before = self.progress()
         res: SkillResult = self.skills.run(self, call)
+        self.last_call, self.last_result = call, res
         if not res.ok and call.target is not None:
             self.fail_count[call.target] = self.fail_count.get(call.target, 0) + 1
         ev = self.sensors.flush()
@@ -500,6 +501,10 @@ class StationEnv:
             px = hpos[0] + c * hx - s * hy
             py = hpos[1] + s * hx + c * hy
             return np.array([px, py, hpos[2] + hz - 0.03]), wrap(a + math.pi / 2)
+        if info.kind == "knob":
+            # TCP 3 mm above the knob base so the pads cover the cylinder; the hand yaw follows the knob angle
+            p = np.asarray(info.meta["pos"], float) + np.array([0.0, 0.0, 0.003])
+            return p, wrap(q)
         raise ValueError(info.kind)
 
     def objects(self, kind=None):

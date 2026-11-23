@@ -1,0 +1,149 @@
+{
+ "summary": {
+  "n": 10,
+  "success": 1.0,
+  "falls": 0
+ },
+ "rows": [
+  {
+   "seed": 0,
+   "side": "right",
+   "mass": 0.151,
+   "size": 0.045,
+   "status": "done",
+   "lifted_m": 0.133,
+   "fell": false,
+   "success": true,
+   "qp": {
+    "solved": 4638,
+    "fallback": 4,
+    "no_ranges": 2
+   }
+  },
+  {
+   "seed": 1,
+   "side": "left",
+   "mass": 0.291,
+   "size": 0.058,
+   "status": "done",
+   "lifted_m": 0.126,
+   "fell": false,
+   "success": true,
+   "qp": {
+    "solved": 4638
+   }
+  },
+  {
+   "seed": 2,
+   "side": "right",
+   "mass": 0.138,
+   "size": 0.042,
+   "status": "done",
+   "lifted_m": 0.118,
+   "fell": false,
+   "success": true,
+   "qp": {
+    "solved": 4638,
+    "fallback": 1
+   }
+  },
+  {
+   "seed": 3,
+   "side": "left",
+   "mass": 0.255,
+   "size": 0.049,
+   "status": "done",
+   "lifted_m": 0.126,
+   "fell": false,
+   "success": true,
+   "qp": {
+    "solved": 4638,
+    "fallback": 1
+   }
+  },
+  {
+   "seed": 4,
+   "side": "right",
+   "mass": 0.274,
+   "size": 0.048,
+   "status": "done",
+   "lifted_m": 0.128,
+   "fell": false,
+   "success": true,
+   "qp": {
+    "solved": 4638,
+    "fallback": 3,
+    "no_ranges": 1
+   }
+  },
+  {
+   "seed": 5,
+   "side": "left",
+   "mass": 0.116,
+   "size": 0.049,
+   "status": "done",
+   "lifted_m": 0.126,
+   "fell": false,
+   "success": true,
+   "qp": {
+    "solved": 4638,
+    "fallback": 1,
+    "no_ranges": 1
+   }
+  },
+  {
+   "seed": 6,
+   "side": "right",
+   "mass": 0.185,
+   "size": 0.04,
+   "status": "done",
+   "lifted_m": 0.117,
+   "fell": false,
+   "success": true,
+   "qp": {
+    "solved": 4638
+   }
+  },
+  {
+   "seed": 7,
+   "side": "left",
+   "mass": 0.218,
+   "size": 0.053,
+   "status": "done",
+   "lifted_m": 0.127,
+   "fell": false,
+   "success": true,
+   "qp": {
+    "solved": 4638
+   }
+  },
+  {
+   "seed": 8,
+   "side": "right",
+   "mass": 0.299,
+   "size": 0.049,
+   "status": "done",
+   "lifted_m": 0.132,
+   "fell": false,
+   "success": true,
+   "qp": {
+    "solved": 4638,
+    "fallback": 1,
+    "no_ranges": 1
+   }
+  },
+  {
+   "seed": 9,
+   "side": "left",
+   "mass": 0.22,
+   "size": 0.053,
+   "status": "done",
+   "lifted_m": 0.128,
+   "fell": false,
+   "success": true,
+   "qp": {
+    "solved": 4638
+   }
+  }
+ ]
+}

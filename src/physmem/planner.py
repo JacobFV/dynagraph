@@ -70,9 +70,10 @@ class CEMPlanner:
 
     # --------------------------------------------------------- model plumbing
     @torch.no_grad()
-    def _prepare(self, history, frame, emb):
+    def _prepare(self, history, frame, emb, query_target=None):
         m = self.model
-        b = single_batch(history, frame, emb, np.zeros((1, S.CALL_DIM), np.float32), device=self.dev)
+        b = single_batch(history, frame, emb, np.zeros((1, S.CALL_DIM), np.float32), device=self.dev,
+                         query_target=query_target)
         b = m.norm_batch(b)
         ctx, tgt = m.scene(b.ent, b.ent_mask, b.target, b.emb)
         mem = m.memory(b, tgt)
@@ -91,7 +92,7 @@ class CEMPlanner:
         g = torch.Generator(device=self.dev).manual_seed(1234)
         n = self.cfg.n_z
         eps = torch.randn(n, L, device=self.dev, generator=g)
-        Z = mu[None] + torch.exp(0.5 * lv)[None] * eps
+        Z = (mu[None] + torch.exp(0.5 * lv)[None] * eps).clamp(-4.0, 4.0)   # stay inside the physical range
         if self.mode == "oracle" and true_z is not None:
             tz = torch.as_tensor(true_z, device=self.dev, dtype=torch.float32)
             tm = torch.as_tensor(true_mask, device=self.dev, dtype=torch.bool)
@@ -136,7 +137,7 @@ class CEMPlanner:
             calls = self._vec(skill, keys, pop)
             cost, _ = self._costs(ctx, zin, calls)
             score = cost.mean(1) + c.lam_unc * (cost.std(1) if cost.shape[1] > 1 else 0)
-            sc = score.cpu().numpy()
+            sc = np.nan_to_num(score.cpu().numpy(), nan=1e9, posinf=1e9)
             allpop.append(pop.copy()); allcost.append(cost)
             order = np.argsort(sc)
             if sc[order[0]] < best_score:
@@ -157,8 +158,8 @@ class CEMPlanner:
     # --------------------------------------------------------- decision
     @torch.no_grad()
     def decide(self, history, frame, emb, skill: str, bounds: dict, rng, probe_params: Optional[list] = None,
-               true_z=None, true_mask=None, slot_override=None, init_params=None) -> Decision:
-        ctx, mem = self._prepare(history, frame, emb)
+               true_z=None, true_mask=None, slot_override=None, init_params=None, query_target=None) -> Decision:
+        ctx, mem = self._prepare(history, frame, emb, query_target)
         zin, Z = self._latent_inputs(mem, true_z, true_mask, slot_override)
         keys, best, best_score, allpop, allcost = self._cem(ctx, zin, skill, bounds, rng, init_params)
         params = {k: float(v) for k, v in zip(keys, best)}

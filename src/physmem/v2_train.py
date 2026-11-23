@@ -362,7 +362,7 @@ def calibrate(model, stores, bs=1024):
     for l in range(S.N_LATENT):
         r = torch.cat(R[l]) if R[l] else torch.zeros(0)
         if len(r) > 50:
-            model.z_var_scale[l] = float((torch.quantile(r.float(), 0.8) / 1.2816) ** 2)
+            model.z_var_scale[l] = float(np.clip((torch.quantile(r.float(), 0.8) / 1.2816) ** 2, 0.25, 10.0))
     return model.z_var_scale.cpu().numpy()
 
 
@@ -450,7 +450,8 @@ def closed_loop(args):
         for fam in fams:
             t0 = time.time()
             tasks = [api.TaskSpec(fam, Y.FAMILY_CATEGORY[fam], 5_000_000 + SEED_BASE[split] + i,
-                                  robots[i % len(robots)], split) for i in range(args.episodes)]
+                                  robots[i % len(robots)], split, params={"lot": args.lot} if args.lot > 1 else {})
+                     for i in range(args.episodes)]
             res = H.paired_eval(Y.SynthEnv, tasks, pols, seed=args.seed)
             summ = H.summarize(res)
             out[f"{split}:{fam}"] = dict(summary=summ, episodes=res)
@@ -467,6 +468,7 @@ def closed_loop(args):
             print(f"== {split} {fam} ({time.time() - t0:.0f}s)", flush=True)
             for name, sm in summ.items():
                 print(f"  {name:26s} succ={sm['success'][0]:.2f} [{sm['success'][1]:.2f},{sm['success'][2]:.2f}] "
+                      f"items={sm['items_done'][0]:.2f} eff/item={sm['effort_per_item']:.3f} "
                       f"effort={sm['effort'][0]:.3f} (med {sm['effort_median']:.3f}) risk={sm['risk_events'][0]:.2f} "
                       f"steps={sm['steps']:.2f} probes={sm['probes']:.2f}", flush=True)
     write_rows(rows)
@@ -558,6 +560,7 @@ def main(argv=None):
     c.add_argument("--seed", type=int, default=0)
     c.add_argument("--splits", default="test,test_robot")
     c.add_argument("--extra", default=None)
+    c.add_argument("--lot", type=int, default=1)
     c.add_argument("--no-voi-variant", action="store_true")
     c.add_argument("--lam-effort", type=float, default=None)
     c.add_argument("--lam-unc", type=float, default=None)

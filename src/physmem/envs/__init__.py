@@ -24,6 +24,8 @@ _REG = {
     "conveyor_sort": ("families_logistics", "ConveyorSort"),
     "tote_transfer": ("families_logistics", "ToteTransfer"),
     "pouch_transfer": ("families_logistics", "PouchTransfer"),
+    "twist_lock": ("families_extra", "TwistLock"),
+    "machine_tending": ("families_extra", "MachineTending"),
 }
 
 FAMILIES = tuple(_REG)

@@ -663,6 +663,9 @@ class SynthEnv:
         self.state = init_state(fam, self.rng, self.lat)
         self.bias = self.rng.normal(0, ROBOTS[task.robot].ft_bias, 6)
         self.k, self.t, self.done = 0, 0.0, False
+        # "lot" protocol: L items with the SAME hidden properties processed in sequence (evidence carries over)
+        self.lot = int(task.params.get("lot", 1))
+        self.items_done = 0
         self.exec_rng = np.random.default_rng(task.seed + 7919)
         return []
 
@@ -695,10 +698,18 @@ class SynthEnv:
                              f"env-{self.task.seed}", self.k, self.t)
         self.k += 1
         self.t = inter.t_end + 0.5
-        self.done = st.success or self.k >= MAX_STEPS[fam] or (fam == "sweep" and len(self.state["particles"]) == 0)
+        item_success = st.success
+        if item_success:
+            self.items_done += 1
+            if self.items_done < self.lot:           # next item from the same lot: fresh geometry, same latents
+                self.state = init_state(fam, self.rng, self.lat)
+        all_done = self.items_done >= self.lot
+        budget = MAX_STEPS[fam] * self.lot
+        self.done = all_done or self.k >= budget or (fam == "sweep" and len(self.state["particles"]) == 0 and not item_success)
         res = api.SkillResult(ok=st.status == "done", status=st.status, effort=st.effort, duration_s=st.duration,
                               log=dict(segment=dict(x=st.seg, t0=self.t, t1=self.t + st.duration),
                                        skill=call.skill, params=params, target=call.target, interaction=inter))
         inter.labels = {}  # the actor-side copy carries no labels
-        return api.StepOut(events=[], result=res, done=self.done, success=st.success, metrics=st.metrics,
+        metrics = dict(st.metrics, item_success=int(item_success), items_done=self.items_done, lot=self.lot)
+        return api.StepOut(events=[], result=res, done=self.done, success=all_done, metrics=metrics,
                            labels=dict(self.lat))

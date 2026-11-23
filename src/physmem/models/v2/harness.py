@@ -66,7 +66,7 @@ def decide_env(planner: CEMPlanner, ad, hist, emb, rng, n_cand=32):
         bounds = {k: (float(lo), float(hi) if hi > lo else float(lo) + 1e-6) for k, lo, hi in zip(keys, vals.min(0), vals.max(0))}
         true_z, true_m = S.labels_to_z(ad.oracle_latents(target)) if planner.mode == "oracle" else (None, None)
         d = planner.decide(hist, ad.frame(target), emb, skill, bounds, rng, probe_params=None, true_z=true_z,
-                           true_mask=true_m, init_params=rel)
+                           true_mask=true_m, init_params=rel, query_target="|".join(sorted(ad.target_ids(target))))
         if best is None or d.info["score"] < best[0]:
             best = (d.info["score"], api.SkillCall(skill, d.params, target=target), cs[0], d)
     return best
@@ -88,7 +88,8 @@ def run_episode(env, task: api.TaskSpec, policy: str, planner: Optional[CEMPlann
         planner.reset()
     true_z, true_m = S.labels_to_z(getattr(env, "lat", {}))
     t = 0.0
-    for k in range(max_steps or Y.MAX_STEPS.get(fam, 6)):
+    lot = int(task.params.get("lot", 1))
+    for k in range(max_steps or Y.MAX_STEPS.get(fam, 6) * lot):
         frame = env.frame()
         skill = Y.FAMILY_SKILL.get(fam)
         if policy == "heuristic":
@@ -112,6 +113,7 @@ def run_episode(env, task: api.TaskSpec, policy: str, planner: Optional[CEMPlann
         rec["effort"] += out.result.effort.cost()
         rec["duration"] += out.result.duration_s
         rec["risk_events"] += int(sum(int(out.metrics.get(kk, 0) or 0) > 0 for kk in RISK_KEYS))
+        rec["items_done"] = int(out.metrics.get("items_done", int(out.success)))
         if out.success:
             rec["success"] = True
         if out.done:
@@ -178,7 +180,9 @@ def summarize(res: dict, ref: str = "planner_typed"):
         out[name] = dict(n=len(eps), success=bootstrap_ci(s), effort=bootstrap_ci(eff), effort_median=float(np.median(eff)),
                          risk_events=bootstrap_ci(risk), steps=float(np.mean([e["steps"] for e in eps])),
                          duration=float(np.mean([e["duration"] for e in eps])),
-                         probes=float(np.mean([e["probes"] for e in eps])))
+                         probes=float(np.mean([e["probes"] for e in eps])),
+                         items_done=bootstrap_ci([e.get("items_done", int(e["success"])) for e in eps]),
+                         effort_per_item=float(np.sum(eff) / max(1, sum(e.get("items_done", int(e["success"])) for e in eps))))
         if ref in res and name != ref:
             r = res[ref]
             ds = np.array([a["success"] for a in r], float) - s

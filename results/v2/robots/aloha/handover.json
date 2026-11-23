@@ -2,10 +2,9 @@
  "summary": {
   "robot": "aloha",
   "n": 10,
-  "success": 0.8,
+  "success": 1.0,
   "statuses": {
-   "dropped": 2,
-   "done": 8
+   "done": 10
   }
  },
  "rows": [
@@ -14,15 +13,15 @@
    "pick": "done",
    "handover": "done",
    "success": true,
-   "z": 0.17188496312119114,
+   "z": 0.1719818612832784,
    "effort": {
-    "torque_sq": 3.199233265525685,
-    "torque_rate_sq": 823.9176216507169,
-    "joint_jerk_sq": 218021.2293276081,
-    "energy_j": 90.3205870090911,
+    "torque_sq": 3.1992507856394186,
+    "torque_rate_sq": 823.916423536087,
+    "joint_jerk_sq": 217550.00288475805,
+    "energy_j": 90.32482000824635,
     "time_at_limit_s": 0.21600000000000016,
-    "peak_ee_speed": 0.19293950173754504,
-    "cost": 108.5123242334491
+    "peak_ee_speed": 0.1929385571361115,
+    "cost": 108.46514162780637
    },
    "integrity": []
   },
@@ -31,15 +30,15 @@
    "pick": "done",
    "handover": "done",
    "success": true,
-   "z": 0.17304365482801515,
+   "z": 0.17315023911556052,
    "effort": {
-    "torque_sq": 3.189043049826817,
-    "torque_rate_sq": 823.8997157494209,
-    "joint_jerk_sq": 197152.89680649285,
-    "energy_j": 88.08572938172597,
+    "torque_sq": 3.189069123094298,
+    "torque_rate_sq": 823.8998173268316,
+    "joint_jerk_sq": 197341.24037631068,
+    "energy_j": 88.0903647650779,
     "time_at_limit_s": 0.21600000000000016,
-    "peak_ee_speed": 0.19292998066405503,
-    "cost": 106.39116159923545
+    "peak_ee_speed": 0.19292997826242328,
+    "cost": 106.4100785410593
    },
    "integrity": []
   },
@@ -48,15 +47,15 @@
    "pick": "done",
    "handover": "done",
    "success": true,
-   "z": 0.1746426720640431,
+   "z": 0.17471691957764635,
    "effort": {
-    "torque_sq": 3.2146854107597953,
-    "torque_rate_sq": 823.9812968332681,
-    "joint_jerk_sq": 257725.88612100127,
-    "energy_j": 93.74892817743275,
+    "torque_sq": 3.2146917649508566,
+    "torque_rate_sq": 823.9815020326462,
+    "joint_jerk_sq": 258715.04223536194,
+    "energy_j": 93.75025554533944,
     "time_at_limit_s": 0.21600000000000016,
-    "peak_ee_speed": 0.19289713952331825,
-    "cost": 112.53889298796106
+    "peak_ee_speed": 0.19289638686639185,
+    "cost": 112.63784874720506
    },
    "integrity": []
   },
@@ -65,25 +64,33 @@
    "pick": "done",
    "handover": "done",
    "success": true,
-   "z": 0.17432748393197758,
+   "z": 0.17430348375926974,
    "effort": {
-    "torque_sq": 3.2071753688950695,
-    "torque_rate_sq": 823.8988685804059,
-    "joint_jerk_sq": 132057.32421500148,
-    "energy_j": 91.99234585654985,
+    "torque_sq": 3.2071187856141097,
+    "torque_rate_sq": 823.8980531790528,
+    "joint_jerk_sq": 136298.69707819654,
+    "energy_j": 91.97953368738098,
     "time_at_limit_s": 0.21600000000000016,
-    "peak_ee_speed": 0.19291363357481436,
-    "cost": 99.93871810700129
+    "peak_ee_speed": 0.19291317694272642,
+    "cost": 100.36258914821285
    },
    "integrity": []
   },
   {
    "seed": 4,
-   "pick": "dropped",
-   "handover": null,
-   "success": false,
-   "z": 0.03989224457978383,
-   "effort": null,
+   "pick": "done",
+   "handover": "done",
+   "success": true,
+   "z": 0.17419039926503935,
+   "effort": {
+    "torque_sq": 3.2161556802472684,
+    "torque_rate_sq": 823.9800633606185,
+    "joint_jerk_sq": 266849.52460113476,
+    "energy_j": 94.08142505501037,
+    "time_at_limit_s": 0.21600000000000016,
+    "peak_ee_speed": 0.1929103672024518,
+    "cost": 113.4559287269727
+   },
    "integrity": []
   },
   {
@@ -91,15 +98,15 @@
    "pick": "done",
    "handover": "done",
    "success": true,
-   "z": 0.17399547886333794,
+   "z": 0.17413646633422716,
    "effort": {
-    "torque_sq": 3.193095785561733,
-    "torque_rate_sq": 823.9582170022531,
-    "joint_jerk_sq": 232370.49346187277,
-    "energy_j": 88.86445051270375,
+    "torque_sq": 3.193081754930003,
+    "torque_rate_sq": 823.9587333841193,
+    "joint_jerk_sq": 233224.56963007135,
+    "energy_j": 88.86095123427066,
     "time_at_limit_s": 0.21600000000000016,
-    "peak_ee_speed": 0.19291088337246456,
-    "cost": 109.93061133710137
+    "peak_ee_speed": 0.19290893800741193,
+    "cost": 110.0160215686918
    },
    "integrity": []
   },
@@ -108,25 +115,33 @@
    "pick": "done",
    "handover": "done",
    "success": true,
-   "z": 0.1734465798763398,
+   "z": 0.1735619964636279,
    "effort": {
-    "torque_sq": 3.2088104143594323,
-    "torque_rate_sq": 823.9488837322235,
-    "joint_jerk_sq": 223542.90028652013,
-    "energy_j": 92.38055657966976,
+    "torque_sq": 3.2087995043636646,
+    "torque_rate_sq": 823.9492400301277,
+    "joint_jerk_sq": 223967.1596254372,
+    "energy_j": 92.37867280559047,
     "time_at_limit_s": 0.21600000000000016,
-    "peak_ee_speed": 0.19292251970713398,
-    "cost": 109.0977943820305
+    "peak_ee_speed": 0.19292041650356279,
+    "cost": 109.14022619797606
    },
    "integrity": []
   },
   {
    "seed": 7,
-   "pick": "dropped",
-   "handover": null,
-   "success": false,
-   "z": 0.03989224457978384,
-   "effort": null,
+   "pick": "done",
+   "handover": "done",
+   "success": true,
+   "z": 0.17427835005535935,
+   "effort": {
+    "torque_sq": 3.2109393065560905,
+    "torque_rate_sq": 824.0146188511463,
+    "joint_jerk_sq": 416822.99026498006,
+    "energy_j": 92.56326813491305,
+    "time_at_limit_s": 0.21600000000000016,
+    "peak_ee_speed": 0.19301536795404686,
+    "cost": 128.43633289951788
+   },
    "integrity": []
   },
   {
@@ -134,15 +149,15 @@
    "pick": "done",
    "handover": "done",
    "success": true,
-   "z": 0.17297719323041186,
+   "z": 0.17305419580109896,
    "effort": {
-    "torque_sq": 3.1931470036401306,
-    "torque_rate_sq": 823.9379801839448,
-    "joint_jerk_sq": 274104.2783207575,
-    "energy_j": 88.89825085450586,
+    "torque_sq": 3.1931864552797355,
+    "torque_rate_sq": 823.9381419710988,
+    "joint_jerk_sq": 274512.9255805252,
+    "energy_j": 88.90688187665289,
     "time_at_limit_s": 0.21600000000000016,
-    "peak_ee_speed": 0.19294901268455844,
-    "cost": 114.10235536265542
+    "peak_ee_speed": 0.1929478592449576,
+    "cost": 114.14336202920866
    },
    "integrity": []
   },
@@ -151,15 +166,15 @@
    "pick": "done",
    "handover": "done",
    "success": true,
-   "z": 0.17478455933849754,
+   "z": 0.1748887718441315,
    "effort": {
-    "torque_sq": 3.204786445327102,
-    "torque_rate_sq": 823.870424857344,
-    "joint_jerk_sq": 36958.00754655255,
-    "energy_j": 91.48480318273646,
+    "torque_sq": 3.2048019344691085,
+    "torque_rate_sq": 823.8704076444476,
+    "joint_jerk_sq": 37461.59242049115,
+    "energy_j": 91.48816783951203,
     "time_at_limit_s": 0.21600000000000016,
-    "peak_ee_speed": 0.1929318583160463,
-    "cost": 90.41847771754412
+    "peak_ee_speed": 0.1929306197682628,
+    "cost": 90.4688836193581
    },
    "integrity": []
   }

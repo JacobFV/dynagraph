@@ -186,7 +186,8 @@ def pickplace(robot, n=20, seed=100):
         err = float(np.hypot(p[0] - tgt[0], p[1] - tgt[1]))
         upright = abs(p[2] - B['table_z'] - half[2]) < 0.005
         ok = bool(r1.ok and r2 is not None and r2.ok and err < 0.02 and upright)
-        rows.append(dict(seed=seed + s, eff=eff, mass=mass, half=half, pick=r1.status, place=None if r2 is None else r2.status,
+        rows.append(dict(seed=seed + s, eff=eff, mass=mass, half=half, pick=r1.status, pick_log={k: v for k, v in r1.log.items() if k != 'peaks'},
+                         place=None if r2 is None else r2.status,
                          err_xy=err, upright=upright, success=ok, effort_pick=r1.effort.as_dict(),
                          effort_place=None if r2 is None else r2.effort.as_dict(), dur=r1.duration_s + (r2.duration_s if r2 else 0),
                          integrity=TB.integrity(m, d)))

@@ -1,416 +1,493 @@
 {
  "matrix": {
+  "bin_clearing": {
+   "panda": {
+    "n": 5,
+    "success": 0,
+    "progress": 0.12,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 26.5,
+    "sim_mean": 133.1
+   },
+   "ur5e_2f85": {
+    "n": 5,
+    "success": 0,
+    "progress": 0.61,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 30.7,
+    "sim_mean": 181.5
+   },
+   "gen3_2f85": {
+    "n": 5,
+    "success": 0,
+    "progress": 0.41,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 24.8,
+    "sim_mean": 169.5
+   },
+   "aloha": {
+    "n": 5,
+    "success": 0,
+    "progress": 0.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 22.2,
+    "sim_mean": 135.2
+   }
+  },
   "singulation": {
    "panda": {
-    "n": 2,
-    "success": 1,
+    "n": 5,
+    "success": 4,
+    "progress": 0.92,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 6.4,
+    "sim_mean": 24.8
+   },
+   "ur5e_2f85": {
+    "n": 5,
+    "success": 2,
+    "progress": 1.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 6.1,
+    "sim_mean": 23.4
+   },
+   "gen3_2f85": {
+    "n": 5,
+    "success": 3,
     "progress": 0.8,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 5.2,
-    "sim_mean": 16.5
+    "wall_mean": 5.1,
+    "sim_mean": 21.0
    },
-   "ur5e_2f85": {
-    "n": 2,
-    "success": 0,
-    "progress": 1.0,
+   "aloha": {
+    "n": 5,
+    "success": 3,
+    "progress": 0.72,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 4.8,
-    "sim_mean": 24.1
-   },
-   "ur5e_suction": {
-    "n": 2,
-    "success": 1,
-    "progress": 1.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 4.2,
-    "sim_mean": 11.6
-   }
-  },
-  "bin_clearing": {
-   "panda": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.23,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 19.2,
-    "sim_mean": 93.8
-   },
-   "ur5e_2f85": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.46,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 19.0,
-    "sim_mean": 118.8
-   },
-   "ur5e_suction": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.25,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 4.4,
-    "sim_mean": 26.0
+    "wall_mean": 4.5,
+    "sim_mean": 20.8
    }
   },
   "bulk_sweep": {
    "panda": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.1,
+    "n": 5,
+    "success": 2,
+    "progress": 0.83,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 24.4,
-    "sim_mean": 61.9
+    "wall_mean": 146.3,
+    "sim_mean": 346.9
    },
    "ur5e_2f85": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.03,
+    "n": 5,
+    "success": 1,
+    "progress": 0.82,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 15.1,
-    "sim_mean": 62.4
+    "wall_mean": 187.1,
+    "sim_mean": 368.8
    },
-   "ur5e_suction": {
-    "n": 2,
+   "gen3_2f85": {
+    "n": 5,
     "success": 0,
-    "progress": 0.0,
+    "progress": 0.63,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 7.8,
-    "sim_mean": 16.1
+    "wall_mean": 122.6,
+    "sim_mean": 441.8
    }
   },
   "peg_insert": {
    "panda": {
-    "n": 2,
-    "success": 1,
-    "progress": 0.5,
+    "n": 5,
+    "success": 5,
+    "progress": 1.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 27.6,
-    "sim_mean": 51.6
+    "wall_mean": 6.9,
+    "sim_mean": 13.9
    },
    "ur5e_2f85": {
-    "n": 2,
+    "n": 5,
+    "success": 5,
+    "progress": 1.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 5.9,
+    "sim_mean": 15.3
+   },
+   "gen3_2f85": {
+    "n": 5,
+    "success": 5,
+    "progress": 1.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 12.1,
+    "sim_mean": 30.2
+   }
+  },
+  "connector_insert": {
+   "panda": {
+    "n": 5,
+    "success": 1,
+    "progress": 0.36,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 27.0,
+    "sim_mean": 53.4
+   },
+   "ur5e_2f85": {
+    "n": 5,
+    "success": 5,
+    "progress": 1.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 10.9,
+    "sim_mean": 22.1
+   },
+   "gen3_2f85": {
+    "n": 5,
+    "success": 4,
+    "progress": 0.8,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 9.5,
+    "sim_mean": 24.7
+   }
+  },
+  "tool_return": {
+   "panda": {
+    "n": 5,
+    "success": 1,
+    "progress": 0.2,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 12.9,
+    "sim_mean": 49.4
+   },
+   "ur5e_2f85": {
+    "n": 5,
+    "success": 4,
+    "progress": 0.8,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 18.3,
+    "sim_mean": 36.1
+   },
+   "gen3_2f85": {
+    "n": 5,
+    "success": 2,
+    "progress": 0.4,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 25.0,
+    "sim_mean": 71.1
+   }
+  },
+  "fixture_place": {
+   "panda": {
+    "n": 5,
+    "success": 5,
+    "progress": 1.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 2.9,
+    "sim_mean": 11.5
+   },
+   "ur5e_2f85": {
+    "n": 5,
+    "success": 5,
+    "progress": 1.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 5.1,
+    "sim_mean": 11.8
+   },
+   "gen3_2f85": {
+    "n": 5,
+    "success": 5,
+    "progress": 1.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 4.0,
+    "sim_mean": 11.7
+   }
+  },
+  "kitting_pocket": {
+   "panda": {
+    "n": 5,
+    "success": 3,
+    "progress": 0.73,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 18.6,
+    "sim_mean": 62.0
+   },
+   "ur5e_2f85": {
+    "n": 5,
+    "success": 4,
+    "progress": 0.9,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 22.6,
+    "sim_mean": 52.9
+   },
+   "gen3_2f85": {
+    "n": 5,
+    "success": 1,
+    "progress": 0.6,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 27.7,
+    "sim_mean": 85.1
+   }
+  },
+  "drawer_open": {
+   "panda": {
+    "n": 5,
+    "success": 4,
+    "progress": 0.94,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 2.7,
+    "sim_mean": 17.6
+   },
+   "ur5e_2f85": {
+    "n": 5,
+    "success": 5,
+    "progress": 1.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 2.1,
+    "sim_mean": 10.9
+   },
+   "gen3_2f85": {
+    "n": 5,
+    "success": 3,
+    "progress": 0.94,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 4.1,
+    "sim_mean": 24.3
+   }
+  },
+  "door_open": {
+   "panda": {
+    "n": 5,
+    "success": 5,
+    "progress": 1.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 2.6,
+    "sim_mean": 28.4
+   },
+   "ur5e_2f85": {
+    "n": 5,
     "success": 0,
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 16.8,
-    "sim_mean": 50.8
+    "wall_mean": 4.4,
+    "sim_mean": 24.6
    },
-   "ur5e_suction": {
-    "n": 2,
+   "gen3_2f85": {
+    "n": 5,
+    "success": 0,
+    "progress": 0.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 2.8,
+    "sim_mean": 24.8
+   }
+  },
+  "depalletize": {
+   "panda": {
+    "n": 5,
+    "success": 0,
+    "progress": 0.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 0.4,
+    "sim_mean": 0.2
+   },
+   "ur5e_2f85": {
+    "n": 5,
     "success": 0,
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
     "wall_mean": 0.6,
     "sim_mean": 0.2
-   }
-  },
-  "fixture_place": {
-   "panda": {
-    "n": 2,
-    "success": 2,
-    "progress": 1.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 5.0,
-    "sim_mean": 11.3
    },
-   "ur5e_2f85": {
-    "n": 2,
-    "success": 2,
-    "progress": 1.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 3.7,
-    "sim_mean": 11.3
-   },
-   "ur5e_suction": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.5,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 5.0,
-    "sim_mean": 15.3
-   }
-  },
-  "tool_return": {
-   "panda": {
-    "n": 2,
+   "gen3_2f85": {
+    "n": 5,
     "success": 0,
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 13.9,
-    "sim_mean": 43.6
-   },
-   "ur5e_2f85": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 11.1,
-    "sim_mean": 43.6
-   },
-   "ur5e_suction": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 0.5,
-    "sim_mean": 0.2
-   }
-  },
-  "kitting_pocket": {
-   "panda": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 9.2,
-    "sim_mean": 35.0
-   },
-   "ur5e_2f85": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 31.4,
-    "sim_mean": 70.5
-   },
-   "ur5e_suction": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 1.1,
-    "sim_mean": 0.2
-   }
-  },
-  "drawer_open": {
-   "panda": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.62,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 3.8,
-    "sim_mean": 39.3
-   },
-   "ur5e_2f85": {
-    "n": 2,
-    "success": 2,
-    "progress": 1.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 1.9,
-    "sim_mean": 10.5
-   },
-   "ur5e_suction": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.66,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 2.3,
-    "sim_mean": 27.8
-   }
-  },
-  "door_open": {
-   "panda": {
-    "n": 2,
-    "success": 2,
-    "progress": 1.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 3.0,
-    "sim_mean": 19.7
-   },
-   "ur5e_2f85": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 3.0,
-    "sim_mean": 24.6
-   },
-   "ur5e_suction": {
-    "n": 2,
-    "success": 2,
-    "progress": 1.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 1.6,
-    "sim_mean": 9.5
-   }
-  },
-  "depalletize": {
-   "panda": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 0.3,
-    "sim_mean": 0.2
-   },
-   "ur5e_2f85": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 0.7,
-    "sim_mean": 0.2
-   },
-   "ur5e_suction": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 6.0,
-    "sim_mean": 27.8
-   }
-  },
-  "tote_transfer": {
-   "panda": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 0.5,
-    "sim_mean": 0.2
-   },
-   "ur5e_2f85": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 0.5,
-    "sim_mean": 0.2
-   },
-   "ur5e_suction": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 4.2,
-    "sim_mean": 25.9
-   }
-  },
-  "pouch_transfer": {
-   "panda": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.0,
-    "errors": 2,
-    "violations": 0,
-    "wall_mean": 0.2,
-    "sim_mean": 0.0
-   },
-   "ur5e_2f85": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.0,
-    "errors": 2,
-    "violations": 0,
-    "wall_mean": 0.5,
-    "sim_mean": 0.0
-   },
-   "ur5e_suction": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.0,
-    "errors": 1,
-    "violations": 0,
-    "wall_mean": 5.3,
-    "sim_mean": 12.9
-   }
-  },
-  "connector_insert": {
-   "panda": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 30.8,
-    "sim_mean": 56.2
-   },
-   "ur5e_2f85": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 22.6,
-    "sim_mean": 57.0
-   },
-   "ur5e_suction": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 1.1,
+    "wall_mean": 0.4,
     "sim_mean": 0.2
    }
   },
   "conveyor_sort": {
    "panda": {
-    "n": 2,
+    "n": 5,
     "success": 0,
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 5.4,
-    "sim_mean": 34.9
+    "wall_mean": 7.4,
+    "sim_mean": 56.7
    },
    "ur5e_2f85": {
-    "n": 2,
-    "success": 0,
-    "progress": 0.0,
+    "n": 5,
+    "success": 1,
+    "progress": 0.32,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 12.1,
-    "sim_mean": 63.7
+    "wall_mean": 13.7,
+    "sim_mean": 54.2
    },
-   "ur5e_suction": {
-    "n": 2,
+   "gen3_2f85": {
+    "n": 5,
     "success": 0,
-    "progress": 0.0,
+    "progress": 0.15,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 3.0,
-    "sim_mean": 14.2
+    "wall_mean": 5.7,
+    "sim_mean": 42.8
+   }
+  },
+  "tote_transfer": {
+   "panda": {
+    "n": 5,
+    "success": 1,
+    "progress": 0.53,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 7.7,
+    "sim_mean": 38.6
+   },
+   "ur5e_2f85": {
+    "n": 5,
+    "success": 3,
+    "progress": 0.73,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 7.6,
+    "sim_mean": 38.0
+   },
+   "gen3_2f85": {
+    "n": 5,
+    "success": 1,
+    "progress": 0.4,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 4.1,
+    "sim_mean": 29.9
+   }
+  },
+  "pouch_transfer": {
+   "panda": {
+    "n": 5,
+    "success": 4,
+    "progress": 0.8,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 6.7,
+    "sim_mean": 18.6
+   },
+   "ur5e_2f85": {
+    "n": 5,
+    "success": 3,
+    "progress": 0.6,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 9.3,
+    "sim_mean": 22.3
+   },
+   "gen3_2f85": {
+    "n": 5,
+    "success": 2,
+    "progress": 0.4,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 10.6,
+    "sim_mean": 23.9
+   }
+  },
+  "twist_lock": {
+   "panda": {
+    "n": 5,
+    "success": 4,
+    "progress": 0.88,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 2.1,
+    "sim_mean": 22.3
+   },
+   "ur5e_2f85": {
+    "n": 5,
+    "success": 5,
+    "progress": 1.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 2.5,
+    "sim_mean": 20.8
+   },
+   "gen3_2f85": {
+    "n": 5,
+    "success": 5,
+    "progress": 1.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 1.8,
+    "sim_mean": 13.5
+   }
+  },
+  "machine_tending": {
+   "panda": {
+    "n": 5,
+    "success": 1,
+    "progress": 0.67,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 13.6,
+    "sim_mean": 69.2
+   },
+   "ur5e_2f85": {
+    "n": 5,
+    "success": 3,
+    "progress": 0.73,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 9.8,
+    "sim_mean": 57.8
+   },
+   "gen3_2f85": {
+    "n": 5,
+    "success": 1,
+    "progress": 0.53,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 10.1,
+    "sim_mean": 68.4
    }
   }
  },
  "robots": [
   "panda",
   "ur5e_2f85",
-  "ur5e_suction"
+  "gen3_2f85",
+  "aloha"
  ],
  "families": [
   "bin_clearing",
@@ -422,11 +499,13 @@
   "drawer_open",
   "fixture_place",
   "kitting_pocket",
+  "machine_tending",
   "peg_insert",
   "pouch_transfer",
   "singulation",
   "tool_return",
-  "tote_transfer"
+  "tote_transfer",
+  "twist_lock"
  ],
- "source": "results/v2/robots/env_runs_base.jsonl"
+ "source": "results/v2/robots/env_runs_final.jsonl"
 }

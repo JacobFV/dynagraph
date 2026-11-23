@@ -284,3 +284,4 @@ class Interaction:
     outcome_events: Optional[np.ndarray] = None  # (N_EVENTS,) {0,1}
     outcome_events_mask: Optional[np.ndarray] = None
     labels: dict = field(default_factory=dict)  # EVALUATOR-ONLY latent truths {LATENT name: SI}
+    target_id: str = ""             # opaque target entity id; the model only uses EQUALITY with the query target

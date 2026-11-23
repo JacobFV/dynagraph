@@ -460,15 +460,16 @@ class ProbeSkills:
         """params: dx, dy (grasp offset in object frame, m), dyaw (rad), grip_force (N) | suction (0..1),
         lift_speed (m/s), depth (fraction of object half height below its centre for the TCP, parallel),
         lift_height (m), approach_speed (m/s), vx, vy (m/s: ESTIMATED target velocity -> intercept a moving
-        part; the hand matches that velocity while closing)."""
+        part; the hand matches that velocity while closing), close_yaw (rad, world yaw of the hand: pads close
+        along (-sin, cos); overrides the narrow-axis choice, e.g. to keep the fingers off a bin wall)."""
         r, p = self.r, call.params
         est = env.est_pose(call.target)
         if est is None:
             return "not_observed", {}
         pos, yaw = est[0].copy(), est[2]
         half = env.est_size(call.target)
-        if pos[2] < env.surface_z - 0.25 or not np.all(np.isfinite(pos)):
-            return "unreachable", dict(reason="target below the work surface")
+        if pos[2] < 0.03 or not np.all(np.isfinite(pos)):
+            return "unreachable", dict(reason="target on the floor")
         v = np.array([p.get("vx", 0.0), p.get("vy", 0.0)])
         moving = float(np.linalg.norm(v)) > 1e-4
         c, s = math.cos(yaw), math.sin(yaw)
@@ -476,8 +477,9 @@ class ProbeSkills:
         gx, gy = pos[0] + c * dx - s * dy, pos[1] + s * dx + c * dy
         gyaw = yaw + p.get("dyaw", 0.0)
         if r.tool == "parallel":
-            if moving:
-                gyaw = math.atan2(v[1], v[0])           # hand x along the motion: the part slides between the pads
+            if moving or "close_yaw" in p:
+                # moving: hand x along the motion (the part slides between the pads); close_yaw: explicit hand yaw
+                gyaw = math.atan2(v[1], v[0]) if moving else float(p["close_yaw"])
                 n = np.array([-math.sin(gyaw), math.cos(gyaw)])
                 cc, ss = math.cos(-yaw), math.sin(-yaw)
                 span = abs(cc * n[0] - ss * n[1]) * half[0] + abs(ss * n[0] + cc * n[1]) * half[1]
@@ -514,11 +516,15 @@ class ProbeSkills:
         if moving:    # re-aim from a fresh tracker estimate before the last 3 cm (closed-loop intercept)
             est2 = env.est_pose(call.target)
             if est2 is not None:
-                T3 = self._T(0.03, 0.1)
-                lead2 = env.est_age(call.target) + T3 + 0.1
-                gx = est2[0][0] + c * dx - s * dy + v[0] * lead2
-                gy = est2[0][1] + s * dx + c * dy + v[1] * lead2
-        self._move(env, (gx, gy, z_tcp), gyaw, 0.1)
+                tcp_now = np.asarray(r.tcp()[0])
+                bx, by = est2[0][0] + c * dx - s * dy, est2[0][1] + s * dx + c * dy
+                lead2 = env.est_age(call.target) + 0.7
+                for _ in range(4):     # fixed point: the descent duration depends on the re-aim distance
+                    ax, ay = bx + v[0] * lead2, by + v[1] * lead2
+                    T3 = self._T(float(np.linalg.norm([ax - tcp_now[0], ay - tcp_now[1], 0.03])), 0.15)
+                    lead2 = env.est_age(call.target) + T3 + 0.1
+                gx, gy = bx + v[0] * lead2, by + v[1] * lead2
+        self._move(env, (gx, gy, z_tcp), gyaw, 0.15 if moving else 0.1)
         if r.tool == "parallel":
             r.set_grip("force", p.get("grip_force", 40.0))
             if moving:     # ride along with the part while the fingers close
@@ -732,7 +738,7 @@ class ProbeSkills:
         r.fz_mode = None
         r.kscale = np.ones(4)
         r.ref[2] = r.q()[2]
-        if p.get("release", True):
+        if p.get("release", True) and (ok or p.get("release_on_fail", 1)):
             if r.tool == "parallel":
                 r.set_grip("open", min(2 * r.max_open, r.grip_width() + 0.03))
             else:
@@ -741,6 +747,9 @@ class ProbeSkills:
             env.held = None
             tcp, yy = r.tcp()
             self._move(env, (tcp[0], tcp[1], sz), yy, 0.2)
+        elif not ok:      # keep holding: back off 1 cm so the next insert can search again
+            tcp, yy = r.tcp()
+            self._move(env, (tcp[0], tcp[1], tcp[2] + 0.01), yy, 0.05)
         return ("done" if ok else "jammed"), dict(depth_reached=ok)
 
     # -------------------------------------------------------------- open / close articulated
@@ -762,7 +771,9 @@ class ProbeSkills:
         self.wait_closed(env)
         sp = p.get("speed", 0.1)
         seg_len = [np.linalg.norm(np.subtract(pts[i + 1], pts[i])) for i in range(len(pts) - 1)]
-        Ts = [max(0.05, L / max(sp, 1e-3) * 1.2) for L in seg_len]
+        yr = p.get("yaw_rate", 1.0)        # rad/s (twist-type joints rotate the hand in place)
+        Ts = [max(0.05, L / max(sp, 1e-3) * 1.2, abs(wrap(yaws[i + 1] - yaws[i])) / max(yr, 1e-3))
+              for i, L in enumerate(seg_len)]
         r.kscale = np.array([0.35, 0.35, 1.0, 0.5])   # compliant so the arc errors do not fight the joint
         r.command([(pts[i + 1], yaws[i + 1]) for i in range(len(pts) - 1)], Ts)
         env.run(sum(Ts) + 0.3, stop=r.done)

@@ -56,7 +56,9 @@ def run_episode(task, keep_events=True):
     except Exception as e:      # keep failures
         err = repr(e)
     success = bool(env.success()) if err is None else False
-    rec = dict(task=asdict(task), episode_id=env.episode_id, events=env.events_all if keep_events else None,
+    from physmem.envs.io import events_to_array
+    rec = dict(task=asdict(task), episode_id=env.episode_id,
+               events=events_to_array(env.events_all) if keep_events else None,
                n_events=len(env.events_all), steps=steps, success=success, sim_t=env.t, wall_s=time.time() - t0,
                final_metrics=(out.metrics if out else {}), error=err, goal=env.goal())
     return rec
@@ -70,10 +72,14 @@ def _alarm(signum, frame):
     raise _Timeout()
 
 
-def _job(task, limit_s=300):
+LIMIT_S = 300
+
+
+def _job(task, limit_s=None):
     """one episode with a wall-time guard: a hung episode is recorded as an error row, never silently dropped."""
     import signal
     signal.signal(signal.SIGALRM, _alarm)
+    limit_s = limit_s or LIMIT_S
     signal.alarm(limit_s)
     try:
         return run_episode(task)
@@ -94,64 +100,109 @@ def main():
     ap.add_argument("--robot", default="probe")
     ap.add_argument("--out", default="data/v2_envs")
     ap.add_argument("--base_seed", type=int, default=0)
+    ap.add_argument("--rows", default="results/v2/envs/generation.jsonl", help="per-episode results rows ('' = none)")
+    ap.add_argument("--robots", default="", help="comma list; overrides --robot (multi-robot generation)")
+    ap.add_argument("--matrix", default="", help="json {robot: [families]} of WORKING pairs (ROBOTS' matrix)")
+    ap.add_argument("--heldout_robot", default="", help="robot held out ENTIRELY: only split=heldout_robot episodes")
+    ap.add_argument("--limit_s", type=int, default=300, help="per-episode wall-time guard")
     a = ap.parse_args()
     fams = list(FAMILIES) if a.families == "all" else a.families.split(",")
     splits = a.splits.split(",")
+    robots = a.robots.split(",") if a.robots else [a.robot]
+    matrix = json.load(open(a.matrix)) if a.matrix else None
+    global LIMIT_S
+    LIMIT_S = a.limit_s
     tasks = []
-    for f in fams:
-        for s in splits:
-            heldout = f in HELDOUT_FAMILIES.values()
-            if heldout and s in ("train", "val"):
+    for rob in robots:
+        rfams = [f for f in fams if matrix is None or f in matrix.get(rob, [])]
+        for f in rfams:
+            if rob == a.heldout_robot:      # held-out robot: never in train/val/test; its own split only
+                tasks += make_tasks(f, "heldout_robot", a.n, rob, a.base_seed)
                 continue
-            ss = "heldout_family" if (heldout and s == "test") else s
-            tasks += make_tasks(f, ss, a.n, a.robot, a.base_seed)
+            for s in splits:
+                heldout = f in HELDOUT_FAMILIES.values()
+                if heldout and s in ("train", "val"):
+                    continue
+                ss = "heldout_family" if (heldout and s == "test") else s
+                tasks += make_tasks(f, ss, a.n, rob, a.base_seed)
     os.makedirs(a.out, exist_ok=True)
-    os.makedirs("results/v2/envs", exist_ok=True)
+    if a.rows:
+        os.makedirs(os.path.dirname(a.rows) or ".", exist_ok=True)
+    created = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    manifest = dict(created=created, code_hash=code_hash(), robots=robots, heldout_robot=a.heldout_robot,
+                    procs=a.procs, files={}, families={}, n_tasks=len(tasks), args=vars(a))
+    rows = open(a.rows if a.rows else os.devnull, "a")
+    buf, chunk_i, stats = {}, {}, {}
+    CH = 50
+
+    def flush(key, final=False):
+        recs = buf.get(key, [])
+        if not recs or (len(recs) < CH and not final):
+            return
+        rob, f, sp = key
+        sub = os.path.join(a.out, f) if len(robots) == 1 else os.path.join(a.out, rob, f)
+        os.makedirs(sub, exist_ok=True)
+        k = chunk_i.get(key, 0)
+        chunk_i[key] = k + 1
+        path = os.path.join(sub, f"{sp}_{k:04d}.pkl.gz")
+        with gzip.open(path, "wb", compresslevel=4) as fh:
+            pickle.dump(recs, fh, protocol=4)
+        manifest["files"][path] = dict(sha256=hashlib.sha256(open(path, "rb").read()).hexdigest(), n=len(recs),
+                                       bytes=os.path.getsize(path), seeds=[r["task"]["seed"] for r in recs])
+        buf[key] = []
+
     t0 = time.time()
-    with Pool(a.procs) as pool:
-        recs = pool.map(_job, tasks, chunksize=1)
-    wall = time.time() - t0
-    manifest = dict(created=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), code_hash=code_hash(), robot=a.robot,
-                    procs=a.procs, wall_s=wall, files={}, families={})
-    rows = open("results/v2/envs/generation.jsonl", "a")
-    for f in fams:
-        fr = [r for r in recs if r["task"]["family"] == f]
-        for s in sorted({r["task"]["split"] for r in fr}):
-            sr = [r for r in fr if r["task"]["split"] == s]
-            os.makedirs(os.path.join(a.out, f), exist_ok=True)
-            path = os.path.join(a.out, f, f"{s}.pkl.gz")
-            with gzip.open(path, "wb") as fh:
-                pickle.dump(sr, fh, protocol=4)
-            manifest["files"][path] = dict(sha256=hashlib.sha256(open(path, "rb").read()).hexdigest(), n=len(sr),
-                                           seeds=[r["task"]["seed"] for r in sr])
-        ws = np.array([r["wall_s"] for r in fr])
-        manifest["families"][f] = dict(n=len(fr), success_rate=float(np.mean([r["success"] for r in fr])),
-                                       mean_wall_s=float(ws.mean()), episodes_per_hour_per_proc=float(3600 / ws.mean()),
-                                       mean_sim_s=float(np.mean([r["sim_t"] for r in fr])),
-                                       mean_calls=float(np.mean([len(r["steps"]) for r in fr])),
-                                       mean_events=float(np.mean([r["n_events"] for r in fr])),
-                                       errors=sum(r["error"] is not None for r in fr),
-                                       violations=int(sum(r["final_metrics"].get("integrity_violations", 0) for r in fr)))
-        for r in fr:
+    n_done = 0
+    with Pool(a.procs, maxtasksperchild=50) as pool:
+        for r in pool.imap_unordered(_job, tasks, chunksize=1):
+            n_done += 1
+            t = r["task"]
+            key = (t["robot"], t["family"], t["split"])
+            buf.setdefault(key, []).append(r)
+            st = stats.setdefault((t["robot"], t["family"]), dict(n=0, succ=0, wall=0.0, sim=0.0, calls=0, events=0,
+                                                                  errors=0, viol=0))
             m = r["final_metrics"]
-            rows.write(json.dumps(dict(run_id=f"envs-gen-{manifest['created']}", model="scripted_heuristic",
-                                       family=f, split=r["task"]["split"], seed=r["task"]["seed"], robot=a.robot,
+            st["n"] += 1
+            st["succ"] += int(r["success"])
+            st["wall"] += r["wall_s"]
+            st["sim"] += r["sim_t"]
+            st["calls"] += len(r["steps"])
+            st["events"] += r["n_events"]
+            st["errors"] += int(r["error"] is not None)
+            st["viol"] += int(m.get("integrity_violations", 0) or 0)
+            rows.write(json.dumps(dict(run_id=f"envs-gen-{created}", model="scripted_heuristic", family=t["family"],
+                                       split=t["split"], seed=t["seed"], robot=t["robot"],
                                        config_hash=manifest["code_hash"], status="observed", success=r["success"],
                                        progress=m.get("progress"), calls=len(r["steps"]), sim_t=r["sim_t"],
                                        wall_s=r["wall_s"], effort_cost=sum(s["effort"]["cost"] for s in r["steps"]),
                                        collisions=m.get("collisions"), violations=m.get("integrity_violations"),
                                        drops=m.get("drops"), error=r["error"])) + "\n")
-        print(f"{f:16s} n={len(fr):3d} success={manifest['families'][f]['success_rate']:.2f} "
-              f"wall/ep={ws.mean():.1f}s eps/h/proc={3600 / ws.mean():.0f} calls={manifest['families'][f]['mean_calls']:.1f} "
-              f"errors={manifest['families'][f]['errors']} viol={manifest['families'][f]['violations']}")
+            flush(key)
+            if n_done % 200 == 0:
+                rows.flush()
+                print(f"[{n_done}/{len(tasks)}] {time.time() - t0:.0f}s", flush=True)
+    for key in list(buf):
+        flush(key, final=True)
+    wall = time.time() - t0
     rows.close()
-    manifest["episodes_per_hour_total"] = len(recs) / wall * 3600
+    for (rob, f), st in sorted(stats.items()):
+        n = max(st["n"], 1)
+        manifest["families"][f"{rob}/{f}"] = dict(n=st["n"], success_rate=st["succ"] / n, mean_wall_s=st["wall"] / n,
+                                                 episodes_per_hour_per_proc=3600 * n / max(st["wall"], 1e-9),
+                                                 mean_sim_s=st["sim"] / n, mean_calls=st["calls"] / n,
+                                                 mean_events=st["events"] / n, errors=st["errors"], violations=st["viol"])
+        print(f"{rob:14s} {f:16s} n={st['n']:4d} success={st['succ'] / n:.2f} wall/ep={st['wall'] / n:.1f}s "
+              f"calls={st['calls'] / n:.1f} errors={st['errors']} viol={st['viol']}")
+    manifest["wall_s"] = wall
+    manifest["episodes"] = n_done
+    manifest["episodes_per_hour_total"] = n_done / wall * 3600
+    manifest["bytes_total"] = sum(v["bytes"] for v in manifest["files"].values())
     mpath = os.path.join(a.out, "manifest.json")
     old = json.load(open(mpath)) if os.path.exists(mpath) else {}
     old.setdefault("runs", []).append(manifest)
     json.dump(old, open(mpath, "w"), indent=1)
-    print(f"total {len(recs)} episodes in {wall:.0f}s on {a.procs} procs = {manifest['episodes_per_hour_total']:.0f} eps/h")
-
+    print(f"total {n_done} episodes in {wall:.0f}s on {a.procs} procs = {manifest['episodes_per_hour_total']:.0f} eps/h, "
+          f"{manifest['bytes_total'] / 1e9:.2f} GB")
 
 if __name__ == "__main__":
     main()

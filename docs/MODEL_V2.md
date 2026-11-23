@@ -203,3 +203,64 @@ correct sign 100%; slide friction -> realised travel correct sign only 56% (weak
 Typed memory is better where latents decide outcomes and are identifiable (slide, insert, drawer); equal on lift
 (generic memory also learns mass from the F/T stream — the typed advantage there is interpretability /
 intervenability, not accuracy). Oracle >> typed on insert = the remaining value of better offset/clearance estimates.
+
+### 5d. G3 closed loop on the synthetic world (paired: identical task seeds for every policy; 100 episodes per
+family per split; 95% bootstrap CIs; cost weights c_prog = 2.0 with lam_effort in {0.03, 0.1}, selected on VAL
+seeds before any test run; rows `experiment=v2_g3_closed_loop`, JSON `results/v2/closed_loop/`)
+
+Single-item episodes (test, lam_effort 0.03 unless noted):
+| family | heuristic succ (effort) | typed planner | generic-memory planner | no-memory planner | oracle (labelled) |
+|---|---|---|---|---|---|
+| lift | 0.95 [0.90,0.99] (21.9) | 0.99 (16.8; 11.8 @ lam_e 0.1) | 0.99 (14.7; 8.3) | 0.99 (14.5; 9.6) | 0.99 (17.2; 10.9) |
+| lift, held-out robot | 0.99 (23.3) | 1.00 (23.0; 16.7) | 1.00 (19.6; 11.7) | 1.00 (19.8; 10.7) | 1.00 (25.1; 13.9) |
+| insert | 0.95 [0.91,0.99] (0.049) | 1.00 (0.090 with VOI probe; 0.029 without) | 1.00 (0.031) | 1.00 (0.017) | 1.00 (0.065) |
+| sweep | 1.00 (0.174) | 0.99 (0.204; 0.082 @ 0.1) | 1.00 (0.049) | 1.00 (0.051) | 1.00 (0.264) |
+| slide | 0.91 [0.85,0.96] (3.33) | 0.78 [0.70,0.85] (3.45); **0.86** (2.53) @ lam_e 0.1 | 0.46 (11.0) | 0.90 (4.07) | 0.77 (3.13) |
+| slide, held-out robot | 0.95 (3.29) | 0.82 (3.26); 0.90 (2.45) @ 0.1 | 0.52 (10.6) | 0.90 (3.48) | 0.79 (3.10) |
+| drawer | 0.54 [0.44,0.64] (378) | 0.47 [0.37,0.57] (204) | **0.89 [0.83,0.95]** (253) | 0.50 (109) | 0.47 (165) |
+| drawer, held-out robot | 0.62 (463) | 0.40 (328) | **0.78** (320) | 0.50 (274) | 0.34 (393) |
+
+"Lot" protocol (4 items with the SAME hidden properties in sequence; evidence from earlier items is decision-relevant
+for later ones), test, items completed / effort per item:
+| family | heuristic | typed | generic | no-memory | oracle (labelled) |
+|---|---|---|---|---|---|
+| slide | 3.67 / 3.90 | 3.45 / 4.10 | 1.54 / 35.4 | **3.83** / 4.32 | 3.38 / 4.15 |
+| lift | 3.80 / 23.1 (0.80 risk events) | 3.96 / 19.3 | 3.96 / **12.5** | 3.96 / 14.4 | 3.96 / 16.6 |
+| insert | 3.80 / 0.051 | **4.00** / 0.060 | 4.00 / 0.030 | 4.00 / **0.017** | 4.00 / 0.061 |
+| drawer | 3.02 / 511 | 1.11 / 842 (4.9 collisions) | **3.15 / 366** | 1.08 / 456 | 1.05 / 863 (4.9 collisions) |
+| sweep | 4.00 / 0.175 | 3.96 / 0.216 | 4.00 / 0.078 | 4.00 / **0.051** | 3.95 / 0.229 |
+(held-out robot: same pattern; drawer typed 0.54 items, generic 1.94, heuristic 3.17.)
+
+**Verdict G3 (synthetic): NOT met.** The typed planner matches or beats the scripted heuristic on success for lift,
+insert, sweep (0.99-1.00 vs 0.95-1.00) with lower effort on lift, but it does not beat the generic / no-memory
+planners, and loses badly on drawer-lot and slide. Diagnosis (measured, not assumed):
+1. typed ~= oracle everywhere -> latent estimation is NOT the bottleneck; the outcome head + planner are.
+2. first actions are taken before any interaction evidence exists, and the heuristic's margins already cover the
+   latent range, so EVPI is small: VOI probing triggered mostly on insert, where it only added effort.
+3. the head is miscalibrated on narrow success windows (drawer +-2 cm, slide +-1.5 cm: p_success 0.1-0.3 where
+   the simulator succeeds; opening itself is predicted to ~1 cm) and on out-of-distribution state/history
+   combinations (lot resets: drawer at x = 0 with a long history -> typed and oracle both slam the end stop).
+   The generic model, whose latent input is a learned memory vector, is less brittle there.
+4. with uncertain slots the typed/oracle planner samples latents -> more conservative (higher grip force) than the
+   plug-in generic/no-memory planners, which succeed anyway because the synthetic lift task is forgiving.
+
+### 5e. G5 transfer (synthetic)
+- held-out ROBOT (`synth_mobile`, zero-shot, no adapter data): latent recovery unchanged (5a) and closed-loop
+  success within noise of in-distribution (e.g. lift 1.00, insert 1.00, sweep 1.00, slide 0.82 vs 0.78) -> met.
+- held-out FAMILY (slide; typed trained on the other 4 families, then a 2000-step fine-tune on 200 slide episodes =
+  2.5% of the normal data): latent recovery transfers (friction corr 0.78 @1, 0.83 @2 interactions; mass 0.96), but
+  the outcome head does not: closed-loop success zero-shot 0.04, adapter 0.14 (test) / 0.01 (held-out robot) vs
+  0.78 in-distribution -> **G5 family transfer NOT met** (needs a more physics-structured head or more adapter data).
+
+## 6. Bugs found and fixed during the run (kept for the record)
+- raw-SI SkillCall vectors (aims ~0.004 m next to forces ~100 N) -> per-skill call normalization (before r0).
+- r0: head trained on posterior *moments* but the planner fed posterior *samples* (out of distribution, p_success
+  0.28 -> 0.10); risk summed unsupervised event logits (drawer "jam" p ~0.4). Fixed in r1: sample-form slot input,
+  n/a events supervised as 0, risk only over supervised events.
+- linear effort cost let one painful action outweigh failure -> log(1 + effort/effort_ref).
+- FD clipping (friction below 0 in the simulator), family discovery skipping held-out-robot splits, calibration
+  temperature blow-up (x400) -> clamp [0.25, 10] and clamp latent samples to |z| <= 4.
+- ENVS data: ~8-10% of bin_clearing episodes have simulator blow-ups (F/T up to 6e4 N, non-finite poses; MuJoCo
+  QACC warnings) -> whole episodes dropped at load (`v2_train.sanitize`, counts logged) + input clamps.
+- ENVS data: history from OTHER objects was fused into the current target's slots (all interactions were marked
+  on-target) -> per-interaction `target_id`, on-target computed by equality at gather time (r2 data).

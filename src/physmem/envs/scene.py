@@ -338,6 +338,25 @@ class Scene:
                         rgba=DARK)
         return b, info
 
+    def knob(self, eid, pos, radius=0.012, height=0.025, frictionloss=0.2, damping=0.02, mass=0.1, rng_rot=(0.0, 3.2),
+             mu_grip=0.8):
+        """Twist-lock knob: a cylinder on a vertical hinge (quarter-turn bayonet). Breakaway torque = frictionloss."""
+        b = self.spec.worldbody.add_body(name=eid, pos=list(pos))
+        b.add_joint(name=eid + "_hinge", type=mujoco.mjtJoint.mjJNT_HINGE, axis=[0, 0, 1], damping=damping,
+                    frictionloss=frictionloss, range=list(rng_rot), limited=True, armature=0.002)
+        g = b.add_geom(type=G.mjGEOM_CYLINDER, size=[radius, height / 2, 0], pos=[0, 0, height / 2],
+                       rgba=[0.85, 0.2, 0.2, 1], friction=[FIX_MU, 0.005, 0.0001], name=eid + "_handle")
+        g.mass = mass
+        b.add_geom(type=G.mjGEOM_BOX, size=[radius * 0.9, 0.002, 0.001], pos=[0, 0, height + 0.001], rgba=[1, 1, 1, 1],
+                   contype=0, conaffinity=0, name=eid + "_mark")
+        info = EntityInfo(eid, "knob", EntityType.LINK, eid, "cylinder", (radius, radius, height / 2),
+                          dict(frictionloss=frictionloss, damping=damping, mass=mass, mu_grip=mu_grip), movable=True,
+                          graspable=True, geoms=[eid + "_handle"],
+                          meta=dict(joint=eid + "_hinge", pos=tuple(pos), height=height, radius=radius))
+        self.entities[eid] = info
+        self.grip_pairs_objects.append(eid)
+        return b, info
+
     def flex_pouch(self, eid, center, size, count=(4, 6, 3), mass=0.2, young=3e4, poisson=0.3, damping=0.002,
                    mu=0.6, radius=0.004):
         """Soft pouch: MuJoCo 3-D flexcomp grid (finite elements). Attached into the world."""
@@ -447,10 +466,11 @@ def rotate_station(scene: "Scene", alpha: float, center=(0.0, 0.0)):
             x, y = R(m["hinge_pos"][0], m["hinge_pos"][1])
             m["hinge_pos"] = (x, y, m["hinge_pos"][2])
             m["closed_yaw"] = m["closed_yaw"] + alpha
-        if "axis_yaw" in m:
+        if "axis_yaw" in m or info.kind == "knob":
             x, y = R(m["pos"][0], m["pos"][1])
             m["pos"] = (x, y, m["pos"][2])
-            m["axis_yaw"] = m["axis_yaw"] + alpha
+            if "axis_yaw" in m:
+                m["axis_yaw"] = m["axis_yaw"] + alpha
 
 
 # ---------------------------------------------------------------------- randomization helpers

@@ -104,7 +104,7 @@ def build_family_arrays(episodes, emb_of_robot, rng=None):
     """episodes: list of (family, robot, list of steps) where each step is dict(frame=EntityFrame, inter=Interaction).
     Returns numpy dict for one family (all episodes must share the family)."""
     rows = dict(seg=[], call=[], an=[], tend=[], on_t=[], cont=[], cont_mask=[], events=[], events_mask=[],
-                effort=[], z=[], z_mask=[], ep_start=[], k=[], robot=[], ent=[], nent=[], emb=[], ep_index=[])
+                effort=[], z=[], z_mask=[], ep_start=[], k=[], robot=[], ent=[], nent=[], emb=[], ep_index=[], tgt=[])
     nmax = 0
     r = 0
     for ei, (fam, robot, steps) in enumerate(episodes):
@@ -117,6 +117,9 @@ def build_family_arrays(episodes, emb_of_robot, rng=None):
                                                   else S.resample_segment(it.segment)))
             rows["tend"].append(it.t_end)
             rows["on_t"].append(it.target_is_query)
+            # per-episode local target index by first appearance (equality only; no id semantics)
+            tmap = rows.setdefault("_tmap", {}).setdefault(ei, {})
+            rows["tgt"].append(tmap.setdefault(getattr(it, "target_id", "") or "", len(tmap)))
             rows["cont"].append(it.outcome_cont)
             rows["cont_mask"].append(it.outcome_cont_mask)
             rows["events"].append(it.outcome_events)
@@ -139,7 +142,7 @@ def build_family_arrays(episodes, emb_of_robot, rng=None):
     ent = np.zeros((n, nmax, S.ENT_DIM), np.float16)
     for i, t in enumerate(rows["ent"]):
         ent[i, :len(t)] = t
-    out = {k: np.asarray(v) for k, v in rows.items() if k not in ("ent", "robot")}
+    out = {k: np.asarray(v) for k, v in rows.items() if k not in ("ent", "robot", "_tmap")}
     out["ent"] = ent
     out["robot"] = np.array(rows["robot"])
     return out
@@ -158,6 +161,8 @@ class FamilyStore:
         self.an = torch.as_tensor(arrays["an"], device=dv)
         self.tend = torch.as_tensor(arrays["tend"], device=dv, dtype=torch.float32)
         self.on_t = torch.as_tensor(arrays["on_t"], device=dv)
+        self.tgt = torch.as_tensor(arrays["tgt"] if "tgt" in arrays else np.zeros(self.n, np.int64), device=dv,
+                                   dtype=torch.long)
         self.cont = torch.as_tensor(arrays["cont"], device=dv)
         self.cont_mask = torch.as_tensor(arrays["cont_mask"], device=dv)
         self.events = torch.as_tensor(arrays["events"], device=dv)
@@ -192,7 +197,7 @@ class FamilyStore:
         age = (tq[:, None] - self.tend[hidx]).clamp(min=0) * hmask
         nmask = torch.arange(self.ent.shape[1], device=dv)[None] < self.nent[idx][:, None]
         b = V2Batch(seg=self.seg[hidx].float(), seg_mask=hmask, seg_call=self.call[hidx], seg_an=self.an[hidx],
-                    seg_age=age, seg_on_target=self.on_t[hidx] & hmask, ent=self.ent[idx].float(), ent_mask=nmask,
+                    seg_age=age, seg_on_target=(self.tgt[hidx] == self.tgt[idx][:, None]) & hmask, ent=self.ent[idx].float(), ent_mask=nmask,
                     target=torch.zeros_like(idx), emb=self.emb[idx], call=self.call[idx])
         lab = V2Labels(z=self.z[idx], z_mask=self.z_mask[idx], cont=self.cont[idx], cont_mask=self.cont_mask[idx],
                        events=self.events[idx], events_mask=self.events_mask[idx], effort=self.effort[idx],
@@ -201,7 +206,7 @@ class FamilyStore:
 
 
 def single_batch(history, frame: S.EntityFrame, emb: np.ndarray, calls: np.ndarray, device="cpu",
-                 now: Optional[float] = None, on_target=None) -> V2Batch:
+                 now: Optional[float] = None, on_target=None, query_target: Optional[str] = None) -> V2Batch:
     """record path for closed loop: history = list of Interaction (actor copy), frame, emb vector, calls (Q,24)
     -> V2Batch with B=Q (memory repeated per candidate)."""
     hist = history[-K_MAX:]
@@ -220,7 +225,12 @@ def single_batch(history, frame: S.EntityFrame, emb: np.ndarray, calls: np.ndarr
         call[i] = it.call_vec
         m[i] = True
         age[i] = max(now - it.t_end, 0.0)
-        ont[i] = it.target_is_query if on_target is None else on_target[i]
+        if on_target is not None:
+            ont[i] = on_target[i]
+        elif query_target is not None:
+            ont[i] = (getattr(it, "target_id", "") or "") == query_target
+        else:
+            ont[i] = it.target_is_query
     tok, tgt = frame_tokens(frame)
     Q = len(calls)
     t = lambda a, dt=torch.float32: torch.as_tensor(np.asarray(a), dtype=dt, device=device)

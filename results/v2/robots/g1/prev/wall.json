@@ -1,0 +1,104 @@
+[
+ {
+  "mode": "guarded",
+  "v": 0.05,
+  "fell": false,
+  "tripped": true,
+  "peak_force_n": 24.3,
+  "qp": {
+   "solved": 2904
+  },
+  "com_exc_mm": 36.6,
+  "pelvis_z": 0.759
+ },
+ {
+  "mode": "guarded",
+  "v": 0.1,
+  "fell": false,
+  "tripped": true,
+  "peak_force_n": 49.2,
+  "qp": {
+   "solved": 2080
+  },
+  "com_exc_mm": 37.7,
+  "pelvis_z": 0.759
+ },
+ {
+  "mode": "guarded",
+  "v": 0.2,
+  "fell": false,
+  "tripped": true,
+  "peak_force_n": 95.6,
+  "qp": {
+   "solved": 1669
+  },
+  "com_exc_mm": 40.6,
+  "pelvis_z": 0.759
+ },
+ {
+  "mode": "guarded",
+  "v": 0.3,
+  "fell": false,
+  "tripped": true,
+  "peak_force_n": 132.9,
+  "qp": {
+   "solved": 1531
+  },
+  "com_exc_mm": 39.2,
+  "pelvis_z": 0.759
+ },
+ {
+  "mode": "track",
+  "v": 0.05,
+  "fell": false,
+  "tripped": false,
+  "peak_force_n": 27.6,
+  "qp": {
+   "solved": 5022
+  },
+  "com_exc_mm": 58.8,
+  "pelvis_z": 0.763
+ },
+ {
+  "mode": "track",
+  "v": 0.1,
+  "fell": false,
+  "tripped": false,
+  "peak_force_n": 49.2,
+  "qp": {
+   "solved": 3136,
+   "fallback": 7,
+   "no_ranges": 3
+  },
+  "com_exc_mm": 60.7,
+  "pelvis_z": 0.763
+ },
+ {
+  "mode": "track",
+  "v": 0.2,
+  "fell": false,
+  "tripped": false,
+  "peak_force_n": 110.4,
+  "qp": {
+   "solved": 2193,
+   "fallback": 43,
+   "no_ranges": 23
+  },
+  "com_exc_mm": 58.7,
+  "pelvis_z": 0.762
+ },
+ {
+  "mode": "track",
+  "v": 0.3,
+  "fell": false,
+  "tripped": false,
+  "peak_force_n": 154.0,
+  "qp": {
+   "solved": 1879,
+   "fallback": 33,
+   "no_ranges": 22
+  },
+  "com_exc_mm": 60.5,
+  "pelvis_z": 0.763
+ }
+]

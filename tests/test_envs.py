@@ -217,7 +217,7 @@ def test_conveyor_belt_is_driven():
 
 # ------------------------------------------------------------------ solvable by the scripted baseline
 @pytest.mark.parametrize("fam", ["singulation", "peg_insert", "drawer_open", "door_open", "fixture_place",
-                                 "connector_insert", "kitting_pocket", "bulk_sweep"])
+                                 "connector_insert", "kitting_pocket", "bulk_sweep", "twist_lock", "depalletize"])
 def test_scripted_solves_some_seeds(fam):
     ok = 0
     for seed in range(3):
@@ -252,3 +252,32 @@ def test_heldout_layout_rotates_station():
     b.reset(TaskSpec("peg_insert", "fine", 11, "probe", "train", dict(layout="rot180")))
     ra, rb = a.region("hole")["center"], b.region("hole")["center"]
     assert np.allclose([ra[0], ra[1]], [-rb[0], -rb[1]], atol=1e-9)
+
+
+def test_compact_event_storage_roundtrip():
+    from physmem.envs.io import events_from_array, events_to_array
+    env = make_env("drawer_open")
+    ev = env.reset(task("drawer_open", 2))
+    ev += env.execute(env.scripted()).events
+    back = events_from_array(events_to_array(ev))
+    assert len(back) == len(ev)
+    for a, b in zip(ev, back):
+        assert a.event_id == b.event_id and a.entity_id == b.entity_id and a.property_type == b.property_type
+        assert np.allclose(a.value, b.value, atol=1e-5) and a.measured_at == b.measured_at
+        assert a.source_id == b.source_id and a.provenance == b.provenance
+
+
+def test_reset_redraws_scenes_that_drop_objects():
+    for s in range(6):
+        env = make_env("bin_clearing")
+        env.reset(task("bin_clearing", s))
+        assert env.metrics_acc["drops"] == 0 and env.metrics_acc["sim_instabilities"] == 0
+
+
+def test_skill_log_has_commanded_reference():
+    env = make_env("singulation")
+    env.reset(task("singulation", 0))
+    out = env.execute(env.scripted())
+    t, pos, vel = out.result.log["cmd"]
+    assert len(t) > 10 and pos.shape == (len(t), 3) and vel.shape == (len(t), 3)
+    assert {"slip", "jam", "stall", "drop", "collision"} <= set(out.metrics)

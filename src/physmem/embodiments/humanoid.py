@@ -36,7 +36,8 @@ G1_GAINS = dict(com_kp=50.0, root_z_kp=100.0, root_kp=200.0, torso_kp=100.0, han
                 hand_i_max=0.004, hand_e_max=0.05, hand_kr=200.0, hand_w=3000.0, hand_wr=300.0, post_kp=40.0,
                 post_w=0.2, imp_k=300.0, imp_kr=10.0, guard_n=15.0, force_kd=30.0, force_ki=4.0,
                 finger_kp=6.0, finger_kd=0.15, balance_w=1000.0, root_w=300.0, torso_w=30.0,
-                f_cap=15.0, f_back=0.3, ext_total=80.0, com_shift=0.06)
+                f_cap=15.0, f_back=0.3, ext_total=80.0, com_shift=0.06,
+                qp_period=0.004)   # QP rate 250 Hz; between solves the torques are held + gravity/Coriolis updated
 
 
 def _hand_val(side, j, table):
@@ -180,8 +181,26 @@ class G1Embodiment:
                                tau_lim=np.column_stack([self.act_lo[acts], self.act_hi[acts]]) * self.act_gear[acts][:, None],
                                home=np.array(e.home, float))
         self.hand_dofs = set(hand_dofs)
+        # the hands' kinematic chains include the waist (yaw/roll/pitch): the whole-body QP bends the waist to reach,
+        # so reachability (ik.solve_ik over e['dofs']) must too. Both chains share the waist dofs.
+        wj = [m.joint(P + 'waist_pitch_joint').id]   # pitch only: yaw/roll at their limits toppled the robot
+        for e in self.eff.values():
+            e['arm_dofs'], e['arm_qadr'] = e['dofs'], e['qadr']
+            e['dofs'] = np.concatenate([[m.jnt_dofadr[j] for j in wj], e['dofs']]).astype(int)
+            e['qadr'] = np.concatenate([[m.jnt_qposadr[j] for j in wj], e['qadr']]).astype(int)
+        # boolean geom lookups (np.isin per tick was a hot spot)
+        self.own_mask = np.zeros(m.ngeom, bool)
+        self.own_mask[self.geoms] = True
+        for e in self.eff.values():
+            e['ft_mask'] = np.zeros(m.ngeom, bool)
+            e['ft_mask'][e['ft_geoms']] = True
+            pg = [g for g in e['ft_geoms'] if m.geom_bodyid[g] in e['pad']]
+            e['pad_mask'] = np.zeros(m.ngeom, bool)
+            e['pad_mask'][pg] = True
+        self.feet_mask = np.zeros(m.ngeom, bool)
         self.dofs = np.array(sorted(int(d) for d in self.act_dof), int)
         self.feet_bodies = [m.body(P + f'{s}_ankle_roll_link').id for s in SIDES]
+        self.feet_mask[[g for g in range(m.ngeom) if m.geom_bodyid[g] in set(self.feet_bodies)]] = True
         self._ctrl = None
 
     def reset(self, model, data, home=True):
@@ -218,8 +237,9 @@ class G1Embodiment:
         if data.ncon == 0:
             return F, Tq, 0
         g1, g2 = data.contact.geom1, data.contact.geom2
-        in1, in2 = np.isin(g1, e['ft_geoms']), np.isin(g2, e['ft_geoms'])
-        own1, own2 = np.isin(g1, self.geoms), np.isin(g2, self.geoms)
+        fm, om = e['ft_mask'], self.own_mask
+        in1, in2 = fm[g1], fm[g2]
+        own1, own2 = om[g1], om[g2]
         sel = np.where((in1 & ~own2) | (in2 & ~own1))[0]
         f6 = np.zeros(6)
         p0 = data.site_xpos[e['site']]
@@ -240,10 +260,22 @@ class G1Embodiment:
         c = float(np.mean((q[mask] - e['gopen'][mask]) / st[mask]))
         n = 0
         if data.ncon:
-            pg = np.array([g for g in e['ft_geoms'] if model.geom_bodyid[g] in e['pad']], int)
+            pm, om = e['pad_mask'], self.own_mask
             g1, g2 = data.contact.geom1, data.contact.geom2
-            n = int(np.sum((np.isin(g1, pg) & ~np.isin(g2, self.geoms)) | (np.isin(g2, pg) & ~np.isin(g1, self.geoms))))
+            n = int(np.sum((pm[g1] & ~om[g2]) | (pm[g2] & ~om[g1])))
         return c, n
+
+    def set_grip_force(self, eff, newtons):
+        """Dex3: per-finger torque limit scaled so the pinch squeezes ~newtons (nominal 10 N at full joint torque);
+        returns the force set (N)."""
+        e = self.eff[eff]
+        full = self.act_hi[e['gacts']] * self.act_gear[e['gacts']]
+        k = float(np.clip(newtons / 10.0, 0.05, 1.0))
+        e['gforce'] = full * k
+        return 10.0 * k
+
+    def max_grip_force(self, eff):
+        return 10.0
 
     def proprio(self, data) -> dict:
         m = self.model
@@ -404,15 +436,13 @@ class WholeBodyController:
         if data.ncon == 0:
             return ext
         g1, g2 = data.contact.geom1, data.contact.geom2
-        feet = set(emb.feet_bodies)
         f6 = np.zeros(6)
-        own1, own2 = np.isin(g1, emb.geoms), np.isin(g2, emb.geoms)
+        om, fm = emb.own_mask, emb.feet_mask
+        own1, own2 = om[g1], om[g2]
         tot = np.zeros(3)
-        for k in np.where(own1 ^ own2)[0]:
+        for k in np.where((own1 ^ own2) & ~(fm[g1] | fm[g2]))[0]:
             g = int(g1[k]) if own1[k] else int(g2[k])
             b = int(model.geom_bodyid[g])
-            if b in feet:
-                continue
             mujoco.mj_contactForce(model, data, int(k), f6)
             fw = data.contact.frame[k].reshape(3, 3).T @ f6[:3]  # on geom2
             if own1[k]:
@@ -430,8 +460,11 @@ class WholeBodyController:
     def step(self, model, data) -> np.ndarray:
         self._ensure(model, data)
         emb, g, wb = self.emb, self.g, self.wb
-        dt = self.dt
         self.t = float(data.time)
+        nsk = max(1, int(round(g['qp_period'] / self.dt)))
+        if self.tick % nsk and getattr(self, '_held_tau', None) is not None:
+            return self._held_step(model, data)
+        dt = self.dt * nsk
         qd = data.qvel
         tasks = []
         ext = self._sensed_ext(model, data)
@@ -585,6 +618,7 @@ class WholeBodyController:
             tasks.append((jp, dp @ qd, clip_norm(a_lin, 40.0), g['hand_w']))
             tasks.append((jr, dr @ qd, clip_norm(a_rot, 200.0), g['hand_wr'] * e['cfg'].rot_weight))
         self._fext = fext
+        self._ee_speed = ee_speed
         # ---- posture (every QP joint toward its reset value; the arms' home)
         Jpost, apost, wpost = [], [], []
         arm_dofs = self.arm_dofs
@@ -617,9 +651,31 @@ class WholeBodyController:
             self._tau_qp_ok = tau_qp
         self.qp_status[status] = self.qp_status.get(status, 0) + 1
         tau_act = np.zeros(len(emb.act_ids))
-        for dof, t in zip(wb.adofs, tau_qp):
-            k = self.k_of_dof[int(dof)]
-            tau_act[k] = t / emb.act_gear[k]
+        ks = self._ks if hasattr(self, '_ks') else np.array([self.k_of_dof[int(dof)] for dof in wb.adofs], int)
+        self._ks = ks
+        tau_act[ks] = np.asarray(tau_qp) / emb.act_gear[ks]
+        # held between QP solves: these body torques + the change of gravity/Coriolis since this solve
+        self._held_tau = tau_act.copy()
+        self._bias0 = data.qfrc_bias[wb.adofs].copy()
+        self._fingers(data, tau_act)
+        tau_act = np.clip(tau_act, emb.act_lo, emb.act_hi)
+        self._meter(model, data, tau_act, ee_speed)
+        return tau_act
+
+    def _held_step(self, model, data):
+        """a tick between QP solves: hold the body torques, add the change in gravity/Coriolis (bias) since the
+        solve, run the finger PD; the hand/balance feedback runs at the QP rate (qp_period)."""
+        emb, wb = self.emb, self.wb
+        tau_act = self._held_tau.copy()
+        ks = self._ks
+        tau_act[ks] += (data.qfrc_bias[wb.adofs] - self._bias0) / emb.act_gear[ks]
+        self._fingers(data, tau_act)
+        tau_act = np.clip(tau_act, emb.act_lo, emb.act_hi)
+        self._meter(model, data, tau_act, getattr(self, '_ee_speed', 0.0))
+        return tau_act
+
+    def _fingers(self, data, tau_act):
+        emb, g = self.emb, self.g
         # ---- fingers: torque-limited joint PD toward open..power-grasp posture, plus their own bias
         for name, e in emb.eff.items():
             s = self.st[name]
@@ -632,9 +688,6 @@ class WholeBodyController:
             u = g['finger_kp'] * (tgt - qh) - g['finger_kd'] * vh + data.qfrc_bias[e['gdofs']]
             lim = e['gforce']
             tau_act[e['gacts']] = np.clip(u, -lim, lim) / emb.act_gear[e['gacts']]
-        tau_act = np.clip(tau_act, emb.act_lo, emb.act_hi)
-        self._meter(model, data, tau_act, ee_speed)
-        return tau_act
 
     def apply(self, model, data):
         u = self.step(model, data)
@@ -717,6 +770,12 @@ def g1_pinch_pick(ctx, side, est_pos, half, lift=0.10, guard=8.0, squeeze=1.0):
     cl, n = emb.gripper_state(ctx.model, ctx.data, eff)
     if c.fallen(ctx.data):
         return 'fell'
+    if n > 0:
+        # grasp memory in the format physmem.skills.primitives uses (place / insert / the env adapter read it)
+        if not hasattr(ctx, 'held'):
+            ctx.held = {}
+        ctx.held[eff] = dict(offset=float(here[2] - (est[2] - half[2])), half_size=tuple(half), side=False,
+                             width=float(2 * min(half[0], half[1])), obj_in_tcp=tuple(PINCH_CENTRE * [1, 1, 0]))
     return 'done' if n > 0 else 'dropped'
 
 

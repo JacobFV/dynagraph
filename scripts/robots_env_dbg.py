@@ -15,7 +15,7 @@ for k in emb.eff:
     print('tcp', k, p.round(3))
 c = env.scripted()
 print('first call', c)
-if c is not None and c.target in env.scene.entities:
+if c is not None and c.target in env.scene.entities and env.est_pose(c.target) is not None and False:
     est = env.est_pose(c.target)
     print('est', np.round(est[0], 3), 'size', np.round(env.est_size(c.target), 3))
     eff = r.eff
@@ -43,7 +43,7 @@ while calls < int(sys.argv[4]) if len(sys.argv) > 4 else 6:
         env._last_pick = c.target
     elif getattr(env, '_last_pick', None):
         b = env.m.body(env.scene.entities[env._last_pick].body).id
-        line += ['last-picked true', env.d.xpos[b].round(3).tolist(), 'region', {k: (np.round(v, 3).tolist() if hasattr(v, '__len__') else v) for k, v in env.region(c.target).items()} if c.target else None]
+        line += ['last-picked true', env.d.xpos[b].round(3).tolist(), 'region', {k: v for k, v in env.region(c.target).items()} if c.target and env.region(c.target) else None]
     line += ['tcp', r.emb.tcp_pose(env.d, r.eff)[0].round(3).tolist()]
     print(*line)
     if out.done:

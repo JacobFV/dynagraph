@@ -122,18 +122,19 @@ class PegInsert(_FineBase):
 class ConnectorInsert(PegInsert):
     family = "connector_insert"
     success_doc = "the connector module is seated >= 80% of the slot depth (yaw-critical thin slot)"
-    hidden_doc = ("clearance 0.5-1.5 mm on a 10 mm thin axis, chamfer 0-1 mm, high friction 0.3-1.0, random slot yaw: "
-                  "1 deg of yaw error = 0.35 mm at the module ends -> needs yaw wiggle + compliance")
+    hidden_doc = ("clearance 0.3-1.2 mm on a 10 mm thin axis, chamfer 0 (60 %) or 0.3-1 mm, friction 0.3-1.0, random slot "
+                  "yaw, 48-64 mm long module: 1 deg of yaw error = 0.5 mm at its ends -> needs yaw wiggle + compliance")
     obj = "module"
     region_name = "slot"
 
     def geometry(self, rng, params):
-        return dict(half=(float(rng.uniform(0.016, 0.024)), 0.005, 0.035), sym=math.pi, depth=0.02, random_yaw=True)
+        # long thin module: a yaw error e displaces its ends by half_x * e (1 deg -> 0.5 mm at 30 mm half length)
+        return dict(half=(float(rng.uniform(0.024, 0.032)), 0.005, 0.035), sym=math.pi, depth=0.025, random_yaw=True)
 
     def build(self, scene, rng, params):
         params = dict(params)
-        params.setdefault("clearance", float(rng.uniform(0.0005, 0.0015)))
-        params.setdefault("chamfer", 0.0 if rng.random() < 0.4 else float(rng.uniform(0.0003, 0.001)))
+        params.setdefault("clearance", float(rng.uniform(0.0003, 0.0012)))
+        params.setdefault("chamfer", 0.0 if rng.random() < 0.6 else float(rng.uniform(0.0003, 0.001)))
         params.setdefault("mu", float(rng.uniform(0.3, 1.0)))
         super().build(scene, rng, params)
 
@@ -404,8 +405,8 @@ class KittingPocket(_FineBase):
     def scripted(self):
         if self.held is not None:
             k = self.fail_count.get(self.pockets[self.held]["region"], 0)
-            return self._insert(self.pockets[self.held]["region"], search_r=0.003 * (1 + k), down_force=4.0,
-                                compliance=0.3, timeout=5.0)
+            return self._insert(self.pockets[self.held]["region"], search_r=0.003 * (1 + k), search_hz=0.7,
+                                down_force=4.0, compliance=0.3, timeout=8.0)
         todo = self._todo()
         if not todo:
             return None
@@ -441,7 +442,7 @@ class DrawerOpen(_FineBase):
         return float(self.d.qpos[self.m.jnt_qposadr[self.m.joint("drawer_slide").id]])
 
     def goal_extra(self):
-        ent = "door" if self.family.startswith("door") else "drawer"
+        ent = "door" if "door" in self.scene.entities else "drawer"
         thr = 1.2 if ent == "door" else 0.85 * self.travel
         info = self.scene.entities[ent]
         return dict(joint_goal={ent: dict(min=thr, unit="rad" if ent == "door" else "m")},

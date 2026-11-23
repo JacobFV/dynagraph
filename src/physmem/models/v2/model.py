@@ -271,7 +271,7 @@ class PhysMemV2(nn.Module):
         p = torch.sigmoid(o["ev_logits"])
         ri = [S.OUT_EVENTS.index(e) for e in S.RISK_EVENTS if bool(self.ev_supervised[S.OUT_EVENTS.index(e)])]
         risk = 1 - torch.prod(1 - p[:, ri], -1) if ri else torch.zeros_like(p[:, 0])
-        logc = o["eff_mu"] * self.eff_std + self.eff_mean
+        logc = (o["eff_mu"] * self.eff_std + self.eff_mean).clamp(-10, 15)
         eff = torch.exp(logc + 0.5 * torch.exp(o["eff_logvar"]) * self.eff_std ** 2) - 1e-3
         return dict(cont=cm, cont_var=cv, p=p, risk=risk, effort=eff.clamp(min=0), log_effort=logc,
                     success=p[:, S.OUT_EVENTS.index("success")])

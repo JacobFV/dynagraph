@@ -58,8 +58,9 @@ class Depalletize(StationEnv):
         self.n = k
         self.half = (hx, hy, hz)
         top = 0.144 + layers * 2 * hz
-        self.safe_z = max(top + 2 * hz + 0.08, tz + 2 * hz + 0.1)
-        standard_mounts(scene, (0.0, -0.2), 0.0, (0.6, 0.35), gantry_h=1.9)
+        # TCP transit height: a carried carton (2hz below the cup) must clear the stack AND cartons already placed
+        self.safe_z = max(top, tz + 2 * hz) + 2 * hz + 0.08
+        standard_mounts(scene, (0.0, -0.2), 0.0, (0.6, 0.35), gantry_h=1.75)
         scene.mounts["humanoid"] = [((0.0, -0.15, 0.0), math.pi / 2)]
         scene.mounts["arm"] = [((0.0, -0.24, 0.75), math.pi / 2)]    # pedestal between outfeed and pallet
         scene.camera = dict(pos=(0.0, -0.5, 2.4), lookat=(0.0, 0.0, 0.3), view_pos=(1.6, -1.9, 1.9),
@@ -235,10 +236,13 @@ class ConveyorSort(StationEnv):
             est = self.est_pose(e)
             if est is None or self.held == e:
                 continue
-            if abs(est[0][1]) < 0.16 and reg["center"][0] - reg["half"][0] < est[0][0] < reg["center"][0] + reg["half"][0] \
+            # reachable stretch of the belt: the pick window plus the last 0.25 m before the reject chute
+            if abs(est[0][1]) < 0.16 and reg["center"][0] - reg["half"][0] - 0.05 < est[0][0] < 0.45 \
                     and est[0][2] > self.surface_z:
                 out.append((est[0][0], e))
-        return [e for _, e in sorted(out, reverse=True)]     # most downstream first
+        # most downstream first, but skip parts too close to the belt end to be intercepted
+        ok = [(x, e) for x, e in out if x < 0.33]
+        return [e for _, e in sorted(ok or out, reverse=True)]
 
     def _upstream(self):
         out = []
@@ -287,12 +291,15 @@ class ConveyorSort(StationEnv):
             return self._pick_call(win[0], grip_force=(40.0, 80.0, 100.0)[min(k, 2)], lift_speed=(0.25, 0.15, 0.1)[min(k, 2)])
         up = self._upstream()
         if not up:
-            return None
+            # anything still on the belt (e.g. just past the window)? wait briefly and re-check rather than give up
+            on = [e for e in self.items() if (lambda est: est is not None and abs(est[0][1]) < 0.16
+                                               and est[0][2] > self.surface_z and est[0][0] < 0.6)(self.est_pose(e))]
+            return self._wait_call(0.5) if on and self.n_calls < self.budget - 1 else None
         v = max(self._belt_v()[0], 0.02)
         x = up[0][0]
         reg = self.scene.regions["pick_window"]
         dwell = (reg["center"][0] - reg["half"][0] + 0.25 - x) / v
-        return self._wait_call(float(np.clip(dwell, 0.3, 8.0)))
+        return self._wait_call(float(np.clip(dwell, 0.3, 2.5)))     # short waits: re-check the window often
 
     def labels_extra(self):
         return dict(belt_speed=self.belt_speed, where={e: self._where(e) for e in self.items()})
@@ -304,10 +311,10 @@ class ToteTransfer(StationEnv):
     category = "bulk"
     station = "shelving_aisle"
     tool = "parallel"
-    probe_kw = dict(max_open=0.125, grip_max=120.0)
+    probe_kw = dict(max_open=0.125, grip_max=150.0)
     settle_s = 0.8
     success_doc = "every tote is moved from the flow rack to the cart and rests upright inside the cart footprint"
-    hidden_doc = ("tote content mass 0.3-14 kg (ballast, invisible), tote<->gripper friction 0.4-0.9, tote<->shelf "
+    hidden_doc = ("tote content mass 0.3-9 kg (ballast, invisible), tote<->gripper friction 0.4-0.9, tote<->shelf "
                   "friction 0.2-0.6: grip capacity 2*mu_g*F vs m(g+a) -> grip force / lift speed")
 
     def build(self, scene, rng, params):
@@ -330,7 +337,7 @@ class ToteTransfer(StationEnv):
         order = rng.permutation(len(slots))[:n]
         for k, si in enumerate(order):
             (y, z), x = slots[si]
-            content = float(params.get("content_mass", np.exp(rng.uniform(np.log(0.3), np.log(14.0)))))
+            content = float(params.get("content_mass", np.exp(rng.uniform(np.log(0.3), np.log(9.0)))))
             boxes = [((0, 0, -hz + t / 2), (hx, hy, t / 2)),
                      ((hx - t / 2, 0, 0), (t / 2, hy, hz)), ((-hx + t / 2, 0, 0), (t / 2, hy, hz)),
                      ((0, hy - t / 2, 0), (hx - t, t / 2, hz)), ((0, -hy + t / 2, 0), (hx - t, t / 2, hz))]
@@ -406,7 +413,7 @@ class ToteTransfer(StationEnv):
         cand = [e for e in rem if self.fail_count.get(e, 0) < 3] or rem
         e = cand[0]
         k = self.fail_count.get(e, 0)
-        return self._pick_call(e, grip_force=(80.0, 120.0, 120.0)[min(k, 2)], lift_speed=(0.15, 0.06, 0.04)[min(k, 2)],
+        return self._pick_call(e, grip_force=(80.0, 140.0, 150.0)[min(k, 2)], lift_speed=(0.15, 0.06, 0.04)[min(k, 2)],
                                depth=(0.5, 0.5, 0.3)[min(k, 2)])
 
 

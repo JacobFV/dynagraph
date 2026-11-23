@@ -140,12 +140,22 @@ def _reachable(ctx, eff, pos, q, tol=0.01):
         return True
     # continuation: solve from above and step down (the way the arm actually approaches); escapes local minima of a
     # single solve started at home (e.g. reaching down below a pedestal-mounted base)
-    q0 = None
-    for dz in (0.3, 0.2, 0.12, 0.06, 0.0):
-        q0, ok, ep, er = solve_ik(ctx.emb, ctx.model, ctx.data, eff, np.asarray(pos) + [0, 0, dz], q, q0=q0, iters=300,
-                                  scratch=ctx._ikd)
-    ctx._ik_last = (ep, er)
-    return good(ep, er)
+    starts = [None]
+    if len(e['home']):
+        starts.append(np.asarray(e['home'], float))
+    for q_start in starts:
+        if q_start is not None:
+            _, ok, ep, er = solve_ik(ctx.emb, ctx.model, ctx.data, eff, pos, q, q0=q_start, iters=300, scratch=ctx._ikd)
+            if good(ep, er):
+                return True
+        q0 = q_start
+        for dz in (0.3, 0.2, 0.12, 0.06, 0.0):
+            q0, ok, ep, er = solve_ik(ctx.emb, ctx.model, ctx.data, eff, np.asarray(pos) + [0, 0, dz], q, q0=q0,
+                                      iters=300, scratch=ctx._ikd)
+        ctx._ik_last = (ep, er)
+        if good(ep, er):
+            return True
+    return False
 
 
 # ============================================================================ reach
@@ -186,13 +196,14 @@ def pick(ctx: SkillContext, call, est: ObjectEstimate):
         ctx.ctrl.set_mode('track', eff)
         ctx.ctrl.set_gripper(eff, 0.0)
         if not side:
-            depth = min(p.get('depth', float(np.clip(hz, 0.015, 0.035))), gc.link_h - 0.004)  # keep linkage/palm above the top
+            # default: keep the linkage/palm above a flat top; an explicit depth (e.g. a shank below a head) is honoured
+            depth = p['depth'] if 'depth' in p else min(float(np.clip(hz, 0.015, 0.035)), gc.link_h - 0.004)
             gz = max(bottom + gc.tip + p.get('clear', 0.003), top - depth)
             y0 = _near_yaw(ctx, eff, cy)
             base_xy = np.asarray(getattr(ctx.emb, 'mount_pose', (np.zeros(3),))[0], float)[:2]
             rad = est.p[:2] - base_xy
             rad = np.array([*(rad / (np.linalg.norm(rad) + 1e-9)), 0.0])
-            tilts = (0.0,) if ctx.emb.eff[eff]['cfg'].rot_weight >= 0.5 else (0.0, 0.35, 0.7)
+            tilts = (0.0, 0.35, 0.7)     # vertical first; tilted (outward) approaches only if out of reach / limits
             cands = [(yq, tl) for tl in tilts for yq in (y0, y0 + math.pi)]
             for yq, tl in cands:     # nearer yaw first; the other yaw / a tilted approach only if out of reach
                 q = down_quat(yq)
@@ -220,7 +231,7 @@ def pick(ctx: SkillContext, call, est: ObjectEstimate):
             return r.result(False, 'unreachable', target=g.tolist(), ik=getattr(ctx, '_ik_last', None))
         hover = pre + np.array([0, 0, 0.02])
         # pre-shape: open only as far as needed (a wide-swinging jaw would hit the part or the table)
-        g_pre = float(np.clip(1.0 - (width + p.get('open_margin', 0.015)) / gc.max_width, 0.0, 0.6))
+        g_pre = float(np.clip(1.0 - (width + p.get('open_margin', 0.015 if gc.jaw_dir else 0.03)) / gc.max_width, 0.0, 0.6))
         st = _move(ctx, eff, [hover, pre], v, q, gripper=g_pre)
         if st not in ('done',):
             return r.result(False, st, phase='approach')
@@ -324,7 +335,7 @@ def place(ctx: SkillContext, call, est: ObjectEstimate = None):
         ctx.ctrl.set_mode('track', eff)
         gc = _grip_cfg(ctx, eff)
         # release by opening just past the part (a wide, fast jaw swing knocks light parts away)
-        g_rel = 0.0 if gc.kind == 'suction' or not held else \
+        g_rel = 0.0 if gc.kind == 'suction' or not held or not gc.jaw_dir else \
             float(np.clip(1.0 - (held['width'] + p.get('open_margin', 0.015)) / gc.max_width, 0.0, 0.6))
         ctx.ctrl.set_gripper(eff, g_rel)
         ctx.wait(gc.close_time + 0.1)
@@ -471,7 +482,7 @@ def insert(ctx: SkillContext, call, est: ObjectEstimate):
         Fn = p.get('force', min(10.0, 0.3 * ctx.emb.spec.max_ee_force))
         entry = est.p.copy()
         _, q = _tcp(ctx, eff)
-        q = down_quat(_near_yaw(ctx, eff, _yaw_of_closing(q)))
+        q = down_quat(p['yaw'] if 'yaw' in p else _near_yaw(ctx, eff, _yaw_of_closing(q)))
         ctx.ctrl.set_mode('track', eff)
         above = entry + np.array([0, 0, off + 0.02])
         cur = _tcp(ctx, eff)[0]

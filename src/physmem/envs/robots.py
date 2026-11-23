@@ -160,7 +160,7 @@ class EmbodimentRobot:
             if self.spec.kind in ("arm",):
                 park = mpos + 0.15 * f + np.array([0, 0, 0.2])
             elif self.spec.kind == "mobile_manipulator":
-                park = p + np.array([0, 0, 0.4])          # home TCP is below bench height: lift before driving in
+                park = p + np.array([-0.12, 0, 0.12])     # home TCP is ~bench height: pull back + up before driving in
             else:
                 park = p + np.array([0, 0, 0.05])
             self.ctrl.command(BlendedTrajectory(effector=k, waypoints=[(park, q)], durations=[0.6]))
@@ -277,6 +277,40 @@ class EmbodimentSkills:
         r.grip_k[eff] = 1.0
         r.grip_cmd = ("force", float(got if got > 0 else grip_force))
 
+    def _clutter_yaw(self, env, target, est, gcfg):
+        """0 or pi/2 (closing across the narrow or the wide side): the one whose finger landing spots are farther from
+        the other parts' ESTIMATED footprints (tracker poses + size estimates; actor-legal). 0 if not cluttered."""
+        R = est.R
+        hx, hy = est.half_size[0], est.half_size[1]
+        yaw_o = math.atan2(R[1, 0], R[0, 0])
+        narrow = (yaw_o, 2 * hx) if hx <= hy else (yaw_o + math.pi / 2, 2 * hy)
+        wide = (narrow[0] + math.pi / 2, 2 * max(hx, hy))
+        others = []
+        for eid in env.scene.entities:
+            if eid == target or eid not in env.scene.grip_pairs_objects:
+                continue
+            e2 = env.est_pose(eid)
+            if e2 is None:
+                continue
+            h2 = env.est_size(eid)
+            try:
+                r2 = float(np.hypot(h2[0], h2[1]))
+            except Exception:
+                continue
+            if np.linalg.norm(np.asarray(e2[0][:2]) - np.asarray(est.pos[:2])) < 0.15:
+                others.append((np.asarray(e2[0][:2], float), r2))
+        if not others:
+            return 0.0
+
+        def clearance(yc, w):
+            if w > 0.9 * gcfg.max_width:
+                return -1.0
+            u = np.array([math.cos(yc), math.sin(yc)])
+            spots = [np.asarray(est.pos[:2]) + sgn * (w / 2 + 0.012) * u for sgn in (-1, 1)]
+            return min(float(np.linalg.norm(sp - c)) - r for sp in spots for c, r in others)
+        c0, c1 = clearance(*narrow), clearance(*wide)
+        return math.pi / 2 if c1 > c0 + 0.004 else 0.0
+
     def run(self, env, call):
         from physmem.skills import run_skill
         r = self.r
@@ -318,15 +352,49 @@ class EmbodimentSkills:
         dx, dy = p.get("dx", 0.0), p.get("dy", 0.0)
         pos[:2] += [c * dx - s * dy, s * dx + c * dy]
         v = np.array([p.get("vx", 0.0), p.get("vy", 0.0)])
-        if np.linalg.norm(v) > 1e-4:     # moving target: lead by tracker age + a nominal pick approach time
-            lead = env.est_age(call.target) + float(p.get("lead_s", 2.5))
+        if np.linalg.norm(v) > 1e-4:
+            # moving target: lead by tracker age + the PREDICTED time until the fingers close (approach move from the
+            # current TCP, guarded descent, close), iterated once since the intercept point moves the approach
+            tcp, _ = self.r.tcp(eff)
+            sp = float(p.get("approach_speed", 0.3))
+            lead = env.est_age(call.target) + float(p.get("lead_s", 0.0))
+            for _ in range(2):
+                tgt = pos[:2] + v * lead
+                d_xy = float(np.linalg.norm(tgt - tcp[:2]))
+                t_pred = max(0.3, 1.875 * (d_xy + 0.1) / sp) + 1.875 * 0.1 / 0.15 + 0.6
+                lead = env.est_age(call.target) + t_pred
             pos[:2] += v * lead
         est.pos = tuple(pos)
+        gcfg = self.r.emb.eff[eff]["cfg"].gripper
+        info = env.scene.entities.get(call.target)
+        wall_pinch = False
+        if info is not None and getattr(info, "shape", "") == "tote" and gcfg.kind != "suction" and \
+                2 * min(est.half_size[:2]) > 0.95 * gcfg.max_width:
+            # a tote wider than the fingers open: pinch its NEAR long wall from above (CAD meta: wall t = 8 mm).
+            # The estimate handed to pick becomes the wall (centre, thin width); the tote's bottom stays the support.
+            hx, hy, hzt = est.half_size
+            t = 0.008
+            R2 = np.array([[c, -s], [s, c]])
+            long_x = hx >= hy
+            wall_n = R2[:, 1] if long_x else R2[:, 0]                       # wall normal (unit, horizontal)
+            base = np.asarray(self.r.mount[0][:2], float)
+            sgn = 1.0 if float((base - pos[:2]) @ wall_n) > 0 else -1.0      # the wall facing the robot
+            off = (hy if long_x else hx) - t / 2
+            pos[:2] = pos[:2] + sgn * off * wall_n
+            est.pos = tuple(pos)
+            est.half_size = ((hx, t / 2, hzt) if long_x else (t / 2, hy, hzt))
+            wall_pinch = True
         hz = est.half_size[2]
+        dyaw_n = self._clutter_yaw(env, call.target, est, gcfg) if (gcfg.kind == "parallel" and not wall_pinch) else 0.0
         q = dict(speed=p.get("approach_speed", 0.3), lift=p.get("lift_height", 0.10),
-                 lift_speed=p.get("lift_speed", 0.2), yaw=p.get("dyaw", 0.0))
+                 lift_speed=p.get("lift_speed", 0.2), yaw=p.get("dyaw", 0.0) + dyaw_n)
+        if np.linalg.norm(v) > 1e-4:
+            q["approach_speed"] = 0.15        # faster guarded descent onto a moving part (timing above assumes it)
+            q["pre"] = 0.05
         if "depth" in p:
             q["depth"] = float(np.clip(hz * (1 + p["depth"]), 0.005, 2 * hz))
+        if wall_pinch:
+            q["depth"] = min(0.035, hz)   # pinch the rim band of the wall
         self._set_grip_force(eff, p.get("grip_force", 40.0))
         if self.r.emb.eff[eff]["cfg"].gripper.kind == "suction":
             self.r.emb.eff[eff]["suction_level"] = float(np.clip(p.get("suction", 1.0), 0.0, 1.0))
@@ -376,9 +444,16 @@ class EmbodimentSkills:
         p = call.params
         gc = self.r.emb.eff[eff]["cfg"].gripper
         a = math.atan2(p["y1"] - p["y0"], p["x1"] - p["x0"])
-        q = dict(x0=p["x0"], y0=p["y0"], x1=p["x1"], y1=p["y1"], direction=a, surface_z=env.surface_z,
+        # the scripted sweep is a LINE for the probe's flat blade (half width blade_half_w); a real gripper sweeps that
+        # band with overlapping finger-paddle lanes (bounding box of the band; the skill lanes it across `direction`)
+        bh = float(getattr(env, "probe_kw", {}).get("blade_half_w", 0.08))
+        n = np.array([-math.sin(a), math.cos(a)])
+        pts = np.array([[p["x0"], p["y0"]], [p["x1"], p["y1"]]])
+        band = np.vstack([pts + n * bh, pts - n * bh])
+        q = dict(x0=float(band[:, 0].min()), y0=float(band[:, 1].min()), x1=float(band[:, 0].max()),
+                 y1=float(band[:, 1].max()), direction=a, surface_z=env.surface_z,
                  height=gc.tip + max(0.002, p.get("height", 0.002)), speed=p.get("speed", 0.25), margin=0.0,
-                 overshoot=0.0)
+                 overshoot=0.0, lane=0.024)
         return run_skill(ctx, SkillCall("sweep", q, effector=eff), None)
 
     def sk_insert(self, env, call, ctx, eff, run_skill):
@@ -396,8 +471,18 @@ class EmbodimentSkills:
                 if np.all(np.abs(off) < 0.02):
                     hx, hy = hx - off[0], hy - off[1]
         est = ObjectEstimate(pos=(hx, hy, reg["support_z"]))
-        q = dict(depth=0.9 * reg.get("depth", 0.02), force=p.get("down_force", 6.0),
-                 search_r=max(p.get("search_r", 0.002), 0.001), release=p.get("release", True))
+        yaw_q = {}
+        if env.held is not None and "yaw" in reg:
+            # align the held part with the socket (sym = the socket's symmetry): closing-axis yaw for the TCP
+            sym = reg.get("sym", math.pi)
+            _, tyaw = self.r.tcp(eff)
+            dyw = _wrap(reg["yaw"] - (tyaw + env.held_yaw_offset()))
+            dyw = (dyw + sym / 2) % sym - sym / 2
+            yaw_q = dict(yaw=tyaw + dyw + math.pi / 2)
+        # a real two-finger grasp leaves 1-3 mm of in-hand offset along the finger axis (the probe's is ~0): the spiral
+        # must cover it, so the search radius is at least 4 mm (ROBOTS insert gate: 4 mm)
+        q = dict(depth=0.9 * reg.get("depth", 0.02), force=max(p.get("down_force", 6.0), 6.0),
+                 search_r=max(p.get("search_r", 0.002), 0.004), release=p.get("release", True), **yaw_q)
         res = run_skill(ctx, SkillCall("insert", q, target=call.target, effector=eff), est)
         if p.get("release", True) and (res.ok or True):
             if not res.ok:        # ROBOTS insert keeps holding on failure: let go like the probe does
@@ -426,6 +511,13 @@ class EmbodimentSkills:
             gc = self.r.emb.eff[eff]["cfg"].gripper
             dz = 0.03 - 0.008                  # probe TCP sits 3 cm below the tab centre; grip 8 mm below centre
             P_ = [np.asarray(x, float) + np.array([0, 0, dz]) for x in pts]
+            # wide grippers (2F-85 base/linkage ~ +-3.5 cm across the fingers) hit the panel when centred on the 6 cm
+            # tab: grasp it nearer its outer tip, i.e. shift along the initial pull direction (outward)
+            if gc.link_h < 0.045 and len(P_) >= 2:
+                u = P_[1] - P_[0]
+                u[2] = 0.0
+                u = u / max(float(np.linalg.norm(u)), 1e-9)
+                P_ = [x + p.get("tab_out", 0.018) * u for x in P_]
             Q = [down_quat(P._near_yaw(ctx, eff, y + math.pi / 2)) for y in yaws]
             ctx.ctrl.set_mode("track", eff)
             st = P._move(ctx, eff, [P_[0] + np.array([0, 0, 0.12]), P_[0] + np.array([0, 0, 0.04])], 0.3, Q[0],
@@ -444,7 +536,12 @@ class EmbodimentSkills:
                 return run.result(False, "grasp_failed", closure=c)
             # stiff impedance (600 N/m lagged drawer friction: Panda stalled at 77-82 %) + 2 cm overshoot of the last
             # waypoint so the pull continues until the joint stop / the target
-            ctx.ctrl.set_mode("impedance", eff, stiffness=p.get("stiffness", 2500.0), rot_stiffness=30.0)
+            # ROBOTS: pull in TRACK mode (task-space ID + bounded integral) - impedance (even 2500 N/m) left the Panda
+            # at 56-68 % against 2-40 N drawer friction; the path is the CAD handle path, so stiff tracking is safe
+            if p.get("pull_mode", "track") == "track":
+                ctx.ctrl.set_mode("track", eff)
+            else:
+                ctx.ctrl.set_mode("impedance", eff, stiffness=p.get("stiffness", 2500.0), rot_stiffness=30.0)
             sp = p.get("speed", 0.1)
             if len(P_) >= 2:
                 dlast = P_[-1] - P_[-2]
@@ -453,6 +550,7 @@ class EmbodimentSkills:
             durs = [max(0.05, 1.2 * l / max(sp, 1e-3)) for l in L]
             ctx.ctrl.command(BlendedTrajectory(effector=eff, waypoints=list(zip(P_[1:], Q[1:])), durations=durs))
             ctx.run(max_t=sum(durs) * 2 + 1.0, effector=eff)
+            ctx.wait(0.4)        # fixed hold at the path end (lets a lagging joint catch up; not a convergence wait)
             c2, n2 = ctx.emb.gripper_state(ctx.model, ctx.data, eff)
             ctx.ctrl.set_mode("track", eff)
             here, hq = P._tcp(ctx, eff)

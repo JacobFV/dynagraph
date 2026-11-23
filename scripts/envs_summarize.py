@@ -4,13 +4,20 @@ import gzip
 import json
 import os
 import pickle
+import re
+import sys
 
 import numpy as np
 
+root = sys.argv[1] if len(sys.argv) > 1 else "data/v2_envs"
 out = {}
-for path in sorted(glob.glob("data/v2_envs/*/*.pkl.gz")):
-    fam, split = path.split("/")[-2], os.path.basename(path)[:-7]
-    recs = pickle.load(gzip.open(path))
+acc = {}
+for path in sorted(glob.glob(f"{root}/**/*.pkl.gz", recursive=True)):
+    rel = os.path.relpath(path, root).split(os.sep)
+    fam = "/".join(rel[:-1])
+    split = re.sub(r"_\d{4}$", "", os.path.basename(path)[:-7])
+    acc.setdefault((fam, split), []).extend(pickle.load(gzip.open(path)))
+for (fam, split), recs in acc.items():
     out.setdefault(fam, {})[split] = dict(
         n=len(recs), success=float(np.mean([r["success"] for r in recs])),
         wall_s=float(np.mean([r["wall_s"] for r in recs])), sim_s=float(np.mean([r["sim_t"] for r in recs])),
@@ -19,7 +26,7 @@ for path in sorted(glob.glob("data/v2_envs/*/*.pkl.gz")):
         violations=int(sum(r["final_metrics"].get("integrity_violations", 0) for r in recs)),
         events=float(np.mean([r["n_events"] for r in recs])))
 json.dump(out, open("results/v2/envs/generation_summary.json", "w"), indent=1)
-splits = ["train", "val", "test", "heldout_layout", "heldout_objects", "heldout_family"]
+splits = ["train", "val", "test", "heldout_layout", "heldout_objects", "heldout_family", "heldout_robot"]
 print("| family | " + " | ".join(splits) + " | wall s/ep | eps/h/proc | sim s/ep | calls/ep | events/ep | viol |")
 print("|---" * (len(splits) + 6) + "|")
 for fam, d in out.items():
