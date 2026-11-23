@@ -440,6 +440,40 @@ stiffness-aware pouch rule, conveyor intercept tolerance, singulation target dis
   for the lead: `v2/api.py SkillCall.vector()` does not list "move_base" (names.index would raise) - please add it
   before ENVS builds the aisle family.
 
+### envs-r5-dev: ROBOTS round-5 fixes + shelf_restock (dev tree + local repo; ENV_VERSION "envs-r5-dev"; not frozen,
+### not in any tranche yet - the next tranche that uses it will record it in its manifest)
+1. **depalletize stale re-picks:** actor memory of cartons this robot released on the outfeed after a successful
+   place; they are not re-targeted unless a FRESH (< 0.5 s) estimate shows them back on the pallet side. Same memory
+   for tote_transfer (cart).
+2. **depalletize flagging:** no longer on a failure count. The scripted policy hefts each carton (pick with a 4 cm lift)
+   and estimates its mass from its own tared wrist F/T and suction command (`env.held_mass_evidence()`: hold
+   Fz ~ m g - F_suction_cmd, verified: 18.0 kg read for an 18 kg carton). Above `payload_kg` it puts the carton back
+   (place on CAD region `pallet` at the pick estimate) and flags it (`handover`); a carton that slips even at
+   suction s gives a lower bound m > s*gain/(g + a) and is flagged only when that bound exceeds the payload. Probe
+   (payload 20 kg): 6/6 seeds; all-25 kg pallet -> all 4 flagged and solved; all-18 kg -> all delivered.
+3. **Timeout integrity (ROBOTS: 3 violations after a mid-skill timeout):** the episode runner moved to
+   `physmem.envs.rollout` (`run_episode`, `run_with_timeout`, `choose`, `perturb`); the wall-clock timeout is
+   `EpisodeTimeout(BaseException)`, so skill-level `except Exception` handlers (the real-robot adapter) can no longer
+   swallow it; the runner ends the episode at once (no further calls) with `error="timeout"`, `aborted=True`. Test
+   `test_episode_timeout_aborts_cleanly_even_through_skill_exception_handlers`. The generator also flushes all
+   buffers and writes a partial manifest on SIGTERM now (the stopped tranche 2 lost ~2400 buffered episodes).
+   NOTE: the running r4 tranches use the frozen r4 copy, which still has the old timeout class.
+4. **singulation A/B (UR5e, seeds 0-4; n small):** A envs-r3 + old ROBOTS stack 2/5; D current env with the r4
+   bounded area / cycle limit OFF + old stack (r3-era embodiments, skills, adapter) 3/5; E same with them ON 1/5;
+   B current env, OFF, new ROBOTS stack 1/5; C current env, ON, new stack 1/5. Both changes cost about 2 of 5: the
+   r4 bounded-area/cycle fatal conditions (D -> E) and the new robot stack (pads/adapter; D -> B, failures are pushes
+   that throw parts far). Since the bounded area did not create a decision gap, envs-r5 restores the wide area
+   (0.45 x 0.3) and no cycle limit by default (opt-in params `work_half_x/y`, `cycle_limit`, `crush_n`).
+   ROBOTS: B's failures are pushes after which a part leaves even the wide area - please check push stroke /
+   release with the new pad contacts.
+5. **shelf_restock** (new family, category bulk/logistics): a 2.2 m aisle - cart at the start, a shelf with 3 bays
+   (0.62 m), 3-5 items with visible bay assignments (meta) and hidden mass / grip friction / fragility. Mobile robots
+   drive with ROBOTS' `move_base` (`SkillCall("move_base", {x, y, yaw, speed, arm})`; encode with
+   `SkillCall.vector(dim=32)`); the gantry probe works without driving. Success: every item upright in its bay, none
+   damaged/dropped. Probe seeds 0-2: progress 1.0 / 0.75 / 1.0, 1 solved (the fails are fragile items crushed by the
+   scripted 30 N grip). TidyBot not yet run on it.
+Tests: 62/62 on envs-r5-dev.
+
 ### Requests to ROBOTS (from ENVS, round 4)
 1. **Pad contact settings:** please adopt the ENVS pad-pair settings for the real grippers' explicit pad<->object
    pairs: `solref=(0.004, 1.0)`, `solimp=(0.95, 0.99, 0.001, 0.5, 2.0)`, `margin=0` (probe: `envs/probe.py`

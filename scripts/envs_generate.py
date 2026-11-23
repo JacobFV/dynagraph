@@ -35,102 +35,16 @@ def code_hash():
     return h.hexdigest()[:16]
 
 
-JITTER_KEYS = ("speed", "force", "grip", "suction", "lift", "depth", "approach", "release_h", "search", "compliance",
-               "stop_time", "distance", "travel", "rate", "timeout", "height")
-
-
-def perturb(call, rng, frac=0.3):
-    """jitter the scripted call's speed / force / grasp / approach params by U(1-frac, 1+frac) (positive scalars)."""
-    from dataclasses import replace
-    p = dict(call.params)
-    for k, v in p.items():
-        if isinstance(v, (int, float)) and not isinstance(v, bool) and v > 0 and any(j in k for j in JITTER_KEYS):
-            p[k] = float(v * rng.uniform(1 - frac, 1 + frac))
-    return replace(call, params=p)
-
-
-def choose(env, rng, mode):
-    """policy mixture: 'scripted' (pure baseline), 'mixed' (0.4 scripted / 0.4 random feasible candidate / 0.2
-    perturbed scripted), 'explore' (random candidates). Returns (call, policy_source) or (None, None)."""
-    if mode == "scripted":
-        c = env.scripted()
-        return c, "scripted"
-    u = rng.random() if mode == "mixed" else 0.5
-    if u >= 0.4 and u < 0.8 or mode == "explore":
-        cands = env.candidate_skills(None, 8, rng)
-        if cands:
-            return cands[int(rng.integers(len(cands)))], "random_candidate"
-    c = env.scripted()
-    if c is None:
-        cands = env.candidate_skills(None, 8, rng)
-        return (cands[int(rng.integers(len(cands)))], "random_candidate") if cands else (None, None)
-    if u >= 0.8:
-        return perturb(c, rng), "perturbed_scripted"
-    return c, "scripted"
-
-
-def run_episode(task, keep_events=True):
-    import hashlib as _h
-    t0 = time.time()
-    env = make_env(task.family)
-    ev0 = env.reset(task)
-    mode = task.params.get("policy", "scripted")
-    prng = np.random.default_rng(int.from_bytes(_h.sha256(f"policy|{task.family}|{task.seed}|{task.robot}|{task.split}"
-                                                          .encode()).digest()[:8], "little"))
-    steps = []
-    out = None
-    err = None
-    try:
-        while True:
-            call, src = choose(env, prng, mode)
-            if call is None:
-                break
-            t_start = env.t
-            out = env.execute(call)
-            log = {k: v for k, v in out.result.log.items()}
-            steps.append(dict(call=asdict(call), policy_source=src, t_start=t_start, t_end=env.t, ok=out.result.ok,
-                              status=out.result.status, effort=out.result.effort.as_dict(),
-                              duration_s=out.result.duration_s, done=out.done, success=out.success,
-                              metrics=out.metrics, labels=out.labels, log=log))
-            if out.done:
-                break
-    except Exception as e:      # keep failures
-        err = repr(e)[:500]
-    success = bool(env.solved()) if err is None else False
-    from physmem.envs.io import events_to_array
-    rec = dict(task=asdict(task), episode_id=env.episode_id, policy=mode,
-               events=events_to_array(env.events_all) if keep_events else None,
-               n_events=len(env.events_all), steps=steps, success=success, sim_t=env.t, wall_s=time.time() - t0,
-               final_metrics=(out.metrics if out else {}), error=err, goal=env.goal(),
-               reset_attempts=getattr(env, "reset_attempts", 1))
-    return rec
-
-
-class _Timeout(Exception):
-    pass
-
-
-def _alarm(signum, frame):
-    raise _Timeout()
+from physmem.envs.rollout import EpisodeTimeout, choose, perturb, run_episode, run_with_timeout  # noqa: F401
 
 
 LIMIT_S = 300
 
 
 def _job(task, limit_s=None):
-    """one episode with a wall-time guard: a hung episode is recorded as an error row, never silently dropped."""
-    import signal
-    signal.signal(signal.SIGALRM, _alarm)
-    limit_s = limit_s or LIMIT_S
-    signal.alarm(limit_s)
-    try:
-        return run_episode(task)
-    except _Timeout:
-        return dict(task=asdict(task), episode_id=f"{task.family}-{task.split}-{task.seed}", events=None, n_events=0,
-                    steps=[], success=False, sim_t=0.0, wall_s=float(limit_s), final_metrics={},
-                    error=f"timeout>{limit_s}s", goal={})
-    finally:
-        signal.alarm(0)
+    """one episode with a wall-time guard: a timed-out episode ends at once (EpisodeTimeout is a BaseException, so
+    skill-level `except Exception` handlers cannot swallow it) and is recorded with error='timeout', aborted=True."""
+    return run_with_timeout(task, limit_s or LIMIT_S)
 
 
 def main():

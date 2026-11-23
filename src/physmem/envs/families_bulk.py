@@ -202,12 +202,14 @@ class Singulation(StationEnv):
             k += 1
         # envs-r4: bounded work area (fixture plate, marked): pushing a part off it fails the episode, so how far a
         # push carries (speed vs hidden friction) matters, not only that parts separate
-        wh = (float(params.get("work_half_x", 0.2)), float(params.get("work_half_y", 0.17)))
+        # envs-r5: back to the wide work area by default (the bounded 0.2 x 0.17 area of r4 did not create a decision
+        # gap and cost UR5e 3/5 -> 1/5 in the A/B, docs/ENVS.md); bounded area / cycle limit are opt-in params
+        wh = (float(params.get("work_half_x", 0.45)), float(params.get("work_half_y", 0.3)))
         scene.region("work", (0.0, 0.02, top + 0.03), (wh[0], wh[1], 0.05), support_z=top)
         scene.marker((0.0, 0.02), wh, top, rgba=(0.2, 0.6, 0.9, 0.35))
         self.budget = int(params.get("budget", 3 * n))
         # r5: cycle-time limit (pushes ~3 s, a pick + place ~11 s with the probe): picking everything does not fit
-        self.cycle_limit = float(params.get("cycle_limit", 7.0 * n))
+        self.cycle_limit = float(params.get("cycle_limit", 1e9))
 
     def _gaps(self):
         m, d = self.m, self.d

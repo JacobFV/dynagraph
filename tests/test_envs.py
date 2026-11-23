@@ -331,3 +331,34 @@ def test_resimulate_is_deterministic_and_interventions_change_outcome():
     d = env.resimulate(snap, {e: {"mu_grip": 0.08}}, call)      # oily: slips
     assert not d.result.ok
     assert env.metrics_acc["integrity_violations"] == 0
+
+
+def test_episode_timeout_aborts_cleanly_even_through_skill_exception_handlers(monkeypatch):
+    """ROBOTS round 5: a wall-clock timeout fired mid-skill and the episode continued from a broken state. The
+    timeout is a BaseException: skill code that catches Exception (like the real-robot adapter) cannot swallow it,
+    and the runner issues no further calls."""
+    from physmem.envs import base as B
+    from physmem.envs import probe as PR
+    from physmem.envs.rollout import EpisodeTimeout, run_episode
+    calls = {"n": 0}
+    orig_run = B.StationEnv.run
+
+    def run(self, T, stop=None):
+        if getattr(self, "_settling", False) is False and self.n_calls >= 2:
+            raise EpisodeTimeout()
+        return orig_run(self, T, stop)
+    orig_skill = PR.ProbeSkills.run
+
+    def skill(self, env, call):          # adapter-style: converts Exceptions into failed results
+        calls["n"] += 1
+        try:
+            return orig_skill(self, env, call)
+        except Exception as ex:          # noqa: BLE001
+            from physmem.v2.api import EffortMeter, SkillResult
+            return SkillResult(False, f"error:{ex!r}", EffortMeter(), 0.0)
+    monkeypatch.setattr(B.StationEnv, "run", run)
+    monkeypatch.setattr(PR.ProbeSkills, "run", skill)
+    rec = run_episode(task("bin_clearing", 3, policy="scripted"), keep_events=False)
+    assert rec["aborted"] and rec["error"] == "timeout"
+    assert calls["n"] == 2 and len(rec["steps"]) == 1          # the interrupted call is not recorded, none after it
+    assert not rec["success"]

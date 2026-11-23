@@ -184,8 +184,13 @@ def add_suction_cup(child, site='attachment_site', stem=0.07, radius=0.035, dp=6
     gain = dp * np.pi * radius ** 2
     for k, (cx, cy) in enumerate(cups):
         cb = b.add_body(name=f'cup{k}', pos=[cx, cy, stem])
-        cb.add_geom(name=f'cup{k}_disk', type=mujoco.mjtGeom.mjGEOM_CYLINDER, size=[radius, 0.004, 0], pos=[0, 0, 0.004],
-                    contype=0, conaffinity=0, mass=0.02, rgba=[0.12, 0.12, 0.12, 1])
+        # cup body: a solid disk recessed 1 mm behind the lip plane - the pushing/side face of the cup (a ring of lip
+        # spheres alone lets part corners hook into the gaps when the cup is used as a pusher). A/B switch:
+        # PHYSMEM_CUP_DISK=0 makes it visual-only (round-4/5 behaviour).
+        solid = os.environ.get('PHYSMEM_CUP_DISK', '1') != '0'
+        cb.add_geom(name=f'cup{k}_disk', type=mujoco.mjtGeom.mjGEOM_CYLINDER, size=[radius * 0.95, 0.0035, 0],
+                    pos=[0, 0, 0.0035], contype=1 if solid else 0, conaffinity=1 if solid else 0, mass=0.02,
+                    rgba=[0.12, 0.12, 0.12, 1], friction=[0.8, 0.01, 0.001])
         for j in range(RIM_N):
             a = 2 * np.pi * j / RIM_N
             cb.add_geom(name=f'cup{k}_lip{j}', type=mujoco.mjtGeom.mjGEOM_SPHERE, size=[0.004, 0, 0],

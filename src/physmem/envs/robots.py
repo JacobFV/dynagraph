@@ -20,6 +20,7 @@ emb.max_grip_force(eff)); suction embodiments (ur5e_suction, fr3_suction) ignore
 from __future__ import annotations
 
 import math
+import os
 
 import mujoco
 import numpy as np
@@ -125,9 +126,12 @@ class EmbodimentRobot:
                     # squeeze push small stiff spheres through the pads; a 1 mm margin made parts stick after release)
                     # suction lips need a contact MARGIN: MuJoCo adhesion acts only through existing contacts, so with
                     # margin 0 the lip contact vanishes at the first micron of separation and the vacuum cannot hold
-                    s.add_pair(geomname1=pg, geomname2=gname, condim=4, friction=[mu, mu, 0.005, 0.0001, 0.0001],
-                               solref=[max(0.004, 2.5 * ts), 1.0], solimp=[0.9, 0.95, 0.001, 0.5, 2.0],
-                               margin=0.002 if "_lip" in pg else 0.0)
+                    if os.environ.get("PHYSMEM_PAD_PAIRS", "envs") == "legacy":     # A/B switch: default pair contact
+                        s.add_pair(geomname1=pg, geomname2=gname, condim=4, friction=[mu, mu, 0.005, 0.0001, 0.0001])
+                    else:
+                        s.add_pair(geomname1=pg, geomname2=gname, condim=4, friction=[mu, mu, 0.005, 0.0001, 0.0001],
+                                   solref=[max(0.004, 2.5 * ts), 1.0], solimp=[0.9, 0.95, 0.001, 0.5, 2.0],
+                                   margin=0.002 if "_lip" in pg else 0.0)
             for bn in pad_bodies:
                 s.add_exclude(bodyname1=info.body, bodyname2=bn)
 

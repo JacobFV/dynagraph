@@ -567,17 +567,18 @@ def onpolicy(args):
     cfg = PlannerConfig(pop=args.pop, iters=args.iters, n_z=args.n_z, c_prog=2.0, lam_effort=0.03, voi=False)
     for r in range(args.rounds + 1):
         model, c = load_model(ck, dev)
-        pl = CEMPlanner(model, "typed", cfg)
+        pl = CEMPlanner(model, c["variant"], cfg)       # typed / generic / nomem: same loop, same budget
         # --- val closed-loop success of the current model (fixed val seeds, same every round)
         for fam in fams:
             tasks = [api.TaskSpec(fam, "", 5_000_000 + SEED_BASE["val"] + i, Y.TRAIN_ROBOTS[i % 4], "val",
                                   params={"lot": args.lot} if args.lot > 1 else {}) for i in range(args.val_episodes)]
             res = H.paired_eval(Y.SynthEnv, tasks, {"planner_typed": ("planner", pl), "heuristic": ("heuristic", None)})
+            # (key "planner_typed" = the planner of THIS run's variant; variant recorded in the row)
             sm = H.summarize(res)
             for name in sm:
                 for key in ("success", "items_done", "effort"):
                     v = sm[name][key]
-                    rows.append(dict(run_id=f"{args.run}-round{r}", experiment="v2_onpolicy", model=name, variant="typed",
+                    rows.append(dict(run_id=f"{args.run}-round{r}", experiment="v2_onpolicy", model=name, variant=c["variant"],
                                      stratum=f"val:{fam}", metric=key, value=v[0], ci_lo=v[1], ci_hi=v[2], round=r,
                                      n_episodes=sm[name]["n"], status="observed", time_utc=_utc(), lot=args.lot))
             print(f"[round {r}] val {fam}: typed succ={sm['planner_typed']['success'][0]:.2f} "
@@ -614,7 +615,7 @@ def onpolicy(args):
                 if os.path.exists(src) and not os.path.exists(os.path.join(dr, f"{fam}_{split}.npz")):
                     os.symlink(os.path.abspath(src), os.path.join(dr, f"{fam}_{split}.npz"))
         run_r = f"{args.run}_round{r + 1}"
-        targs = argparse.Namespace(data=dr, variant="typed", run=run_r, steps=args.steps, bs=512, lr=3e-4, d=c["d"],
+        targs = argparse.Namespace(data=dr, variant=c["variant"], run=run_r, steps=args.steps, bs=512, lr=3e-4, d=c["d"],
                                    seed=args.seed, tf_prob=0.5, drop_hist=0.15, holdout_family=None, families=None,
                                    max_episodes=None, init=ck, freeze=None, log_every=500, eval_every=10 ** 9,
                                    no_amp=False, no_test=True, no_phys=not c.get("phys", False))

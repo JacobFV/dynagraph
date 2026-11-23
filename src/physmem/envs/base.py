@@ -142,6 +142,7 @@ class StationEnv:
         self.n_calls += 1
         before = self.progress()
         self.last_held_before = self.held
+        self.last_t0 = self.t
         res: SkillResult = self.skills.run(self, call)
         self.last_call, self.last_result = call, res
         if not res.ok and call.target is not None:
@@ -455,7 +456,8 @@ class StationEnv:
     _SNAP_FIELDS = ("t", "held", "_held_off", "n_calls", "fail_count", "metrics_acc", "damaged", "_dropped",
                     "_coll_pairs", "_last_q", "_prev_full_q", "_prev_v", "_step_i", "_n_badqacc", "_drops_before",
                     "_coll_before", "last_call", "last_result", "last_held_before", "_believe", "_sorted",
-                    "_seated_belief", "flagged", "_ow_attempts", "_looks", "_sq_ema", "_dent_ema", "_flex_ema")
+                    "_seated_belief", "flagged", "_ow_attempts", "_looks", "_sq_ema", "_dent_ema", "_flex_ema", "last_t0",
+                    "_placed_mem", "_mass_ev", "_pick_xy")
 
     def snapshot(self):
         """Full evaluator-side state: MuJoCo integration state + env bookkeeping + sensor/actor caches + robot
@@ -615,6 +617,18 @@ class StationEnv:
         A = np.stack([t - t.mean(), np.ones_like(t)], 1)
         sol, *_ = np.linalg.lstsq(A, P, rcond=None)
         return sol[0]
+
+    def held_mass_evidence(self, window=0.6):
+        """ACTOR-LEGAL mass estimate of the held object from the robot's own tared wrist F/T in the last `window` s
+        and its own suction command: hold Fz ~ m g - F_suction_cmd (probe convention, world z). None if no data."""
+        from ..schema import Prop
+        evs = [e for e in self.view.buf.get(("robot/hand", int(Prop.WRENCH)), ())
+               if e.available_at <= self.t + 1e-9 and e.measured_at >= self.t - window]
+        if not evs:
+            return None
+        fz = float(np.median([e.value[2] for e in evs]))
+        f_cmd = float(getattr(self.robot, "suction_cmd", 0.0)) * float(getattr(self.robot, "suction_max", 0.0))
+        return max(0.0, (fz + f_cmd) / 9.81)
 
     def est_pose_avg(self, eid, window=0.3):
         """mean of the tracker POSE3 packets measured in the last `window` s (actor-legal); None if none."""

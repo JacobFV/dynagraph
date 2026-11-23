@@ -40,6 +40,7 @@ class Depalletize(StationEnv):
                 scene.static_box((ox + sx * 0.55, oy + sy * 0.18, (tz - 0.04) / 2), (0.025, 0.025, (tz - 0.04) / 2),
                                  rgba=DARK)
         scene.region("outfeed", (ox, oy, tz + 0.1), (0.6, 0.22, 0.2), support_z=tz)
+        scene.region("pallet", (px, py, 0.144 + 0.1), (0.6, 0.4, 0.3), support_z=0.144)
         self.surface_z = tz
         hx, hy, hz = rng.uniform(0.12, 0.15), rng.uniform(0.09, 0.11), rng.uniform(0.07, 0.11)
         layers = int(params.get("layers", rng.integers(1, 3)))
@@ -157,8 +158,22 @@ class Depalletize(StationEnv):
             if est is None:
                 continue
             if est[0][1] > -0.2 and e not in self.flagged:     # still on the pallet side, not flagged
+                # placed by this robot (actor memory) and not freshly seen back on the pallet -> not a target
+                if e in self._placed_memory() and self.est_age(e) > 0.5:
+                    continue
                 out.append((est[0][2], e))
         return [e for _, e in sorted(out, reverse=True)]
+
+    def _placed_memory(self):
+        """actor memory: cartons this robot released on the outfeed after a successful place (ROBOTS round 5: stale,
+        occluded estimates made the scripted policy re-pick cartons already delivered)."""
+        mem = getattr(self, "_placed_mem", set())
+        lc, lr = getattr(self, "last_call", None), getattr(self, "last_result", None)
+        held = getattr(self, "last_held_before", None)
+        if lc is not None and lc.skill == "place" and lc.target == "outfeed" and lr is not None and lr.ok and held:
+            mem.add(held)
+        self._placed_mem = mem
+        return mem
 
     def _pick_call(self, e, rng=None, **kw):
         p = dict(suction=0.5, lift_speed=0.25, approach_speed=0.5, lift_height=0.1)
@@ -189,17 +204,50 @@ class Depalletize(StationEnv):
         return out
 
     def scripted(self):
-        """baseline: lift every carton; after two failed lifts of the same carton, flag it (handover)."""
+        """baseline (envs-r5): heft every carton with a short lift, estimate its mass from the wrist F/T and the
+        suction command (env.held_mass_evidence), deliver it if within payload, else put it back and flag it.
+        A carton that cannot be lifted even at full suction gives a LOWER bound m > F_suction / g; it is flagged only
+        when that bound exceeds the payload (never on a failure count alone)."""
+        payload = self.payload()
+        ev = getattr(self, "_mass_ev", {})
+        self._mass_ev = ev
+        lc, lr = getattr(self, "last_call", None), getattr(self, "last_result", None)
+        if lc is not None and lc.skill == "pick" and lc.target in self.scene.entities and lr is not None:
+            if lr.ok:
+                m = self.held_mass_evidence()
+                if m is not None:
+                    ev[lc.target] = m
+            else:
+                f_cmd = float(lc.params.get("suction", 0.5)) * float(getattr(self.robot, "suction_max", 0.0))
+                ev[lc.target] = max(ev.get(lc.target, 0.0), f_cmd / (9.81 + 2.0))   # lower bound (g + lift accel)
+        if lc is not None and lc.skill == "place" and lc.target == "pallet" and lr is not None and lr.ok:
+            put_back = getattr(self, "last_held_before", None)
+            if put_back is not None:
+                return SkillCall("handover", dict(reason="F/T mass estimate above payload"), target=put_back)
         if self.held is not None:
+            if ev.get(self.held, 0.0) > payload:                # heavier than the robot may carry: put it back
+                return self._put_back_call()
             return self._place_call()
         rem = self._remaining()
         if not rem:
             return None
-        e = rem[0]                                           # top layer first
+        cand = [e for e in rem if self.fail_count.get(e, 0) < 3] or rem
+        e = cand[0]                                           # top layer first
+        if ev.get(e, 0.0) > payload and self.held is None:
+            return SkillCall("handover", dict(reason="F/T lower bound above payload"), target=e)
         k = self.fail_count.get(e, 0)
-        if k >= 2:
-            return SkillCall("handover", dict(reason="lift failed twice"), target=e)
-        return self._pick_call(e, suction=(0.9, 1.0)[min(k, 1)], lift_speed=(0.15, 0.06)[min(k, 1)])
+        est = self.est_pose(e)
+        if est is not None:
+            self._pick_xy = dict(getattr(self, "_pick_xy", {}), **{e: (float(est[0][0]), float(est[0][1]))})
+        return self._pick_call(e, suction=(0.9, 1.0, 1.0)[min(k, 2)], lift_speed=(0.15, 0.06, 0.04)[min(k, 2)],
+                               lift_height=0.04)
+
+    def _put_back_call(self):
+        """release the held carton back where it was picked (CAD pallet region; dx/dy from the pick estimate)."""
+        reg = self.scene.regions["pallet"]
+        p0 = getattr(self, "_pick_xy", {}).get(self.held, reg["center"][:2])
+        return SkillCall("place", dict(dx=float(p0[0] - reg["center"][0]), dy=float(p0[1] - reg["center"][1]),
+                                       release_h=0.003, speed=0.15, lower_speed=0.05), target="pallet")
 
 
 # ====================================================================== (b) conveyor sort
@@ -466,10 +514,17 @@ class ToteTransfer(StationEnv):
         return self.metrics_acc["drops"] > 0
 
     def _remaining(self):
+        # actor memory of totes this robot already put on the cart (stale estimates are not re-targeted)
+        mem = getattr(self, "_placed_mem", set())
+        lc, lr = getattr(self, "last_call", None), getattr(self, "last_result", None)
+        held = getattr(self, "last_held_before", None)
+        if lc is not None and lc.skill == "place" and lc.target == "cart" and lr is not None and lr.ok and held:
+            mem.add(held)
+        self._placed_mem = mem
         out = []
         for e in self.totes():
             est = self.est_pose(e)
-            if est is not None and est[0][1] > -0.1:
+            if est is not None and est[0][1] > -0.1 and not (e in mem and self.est_age(e) > 0.5):
                 out.append((est[0][1], e))        # front tier first
         return [e for _, e in sorted(out)]
 
