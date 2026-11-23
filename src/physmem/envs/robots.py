@@ -82,7 +82,9 @@ class EmbodimentRobot:
             cy = float(scene.camera.get("view_lookat", scene.camera["lookat"])[1])
             pos, yaw = np.array([cx, cy, float(ms[0][0][2])]), 0.0
         elif self.spec.kind == "humanoid":
-            pass    # station humanoid mounts stand 0.15 m behind the bench edge (G1 arm reach 0.55 m)
+            # station humanoid mounts stand 0.15 m behind the bench edge; with the G1's short arms the work sat ~4 cm
+            # out of reach even with waist pitch -> step 0.12 m closer (ROBOTS G1 sub-agent finding)
+            pos = pos + 0.12 * np.array([math.cos(yaw), math.sin(yaw), 0.0])
         elif self.spec.kind == "arm" and pos[2] > 0.05:
             # pedestal under a fixed-base arm mounted at work-surface height (static, visual + contact)
             scene.static_box((pos[0], pos[1], pos[2] / 2), (0.09, 0.09, pos[2] / 2 - 0.002), rgba=(0.3, 0.3, 0.32, 1))

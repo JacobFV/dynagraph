@@ -265,7 +265,7 @@ def test_harness_paired_episode_runs():
 
 
 # ----------------------------------------------------------------- learned-model gates (need a trained checkpoint)
-CK = sorted(glob.glob("results/v2/checkpoints/v2_synth_typed_s*.pt"))
+CK = sorted(glob.glob("results/v2/checkpoints/v2_synth_r1_typed_s[0-9].pt"))
 
 
 @pytest.mark.skipif(not CK or not os.path.exists("data/v2_synth/slide_test.npz"), reason="no trained synth checkpoint")

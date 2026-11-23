@@ -100,6 +100,12 @@ def build_segment(idx: EventIndex, t0, t1, target_ids, p0, hand="robot/hand", ma
     obs_t, obs_v = [], []
     for eid in target_ids:
         t, v = idx.series(eid, XProp.POSE3, t0, t1)
+        if len(t) == 0:      # articulated target observed through its joint coordinate (drawer / door)
+            t, v = idx.series(eid, XProp.JOINT, t0, t1)
+            v = np.concatenate([v[:, :1], np.zeros((len(v), 2))], 1) if len(v) else np.zeros((0, 3))
+            obs_t.append(t)
+            obs_v.append(v + p0[None] if len(v) else v)
+            continue
         obs_t.append(t)
         obs_v.append(v[:, :3] if len(v) else np.zeros((0, 3)))
     held = np.zeros(3)
@@ -151,7 +157,7 @@ class EnvAdapter:
 
     def target_ids(self, target):
         objs = self.object_ids()
-        if target in objs:
+        if target in objs or target in self.idx.entities(XProp.JOINT):
             return [target]
         held = getattr(self.env, "held", None)      # place/transport skills act on the held object
         if held in objs:
@@ -161,6 +167,10 @@ class EnvAdapter:
     def target_pos(self, target):
         ps = [self.idx.latest(e, XProp.POSE3, self.now) for e in self.target_ids(target)]
         ps = [p[:3] for p in ps if p is not None]
+        if not ps and target is not None:      # articulated: use the env's actor-legal handle estimate if any
+            reg = self.idx.latest(target, XProp.REGION, self.now)
+            if reg is not None:
+                ps = [np.asarray(reg[:3])]
         return np.mean(ps, 0) if ps else np.zeros(3)
 
     def frame(self, target=None) -> S.EntityFrame:
@@ -294,12 +304,21 @@ def map_labels(labels: dict, target_ids) -> dict:
     """ENVS evaluator labels -> spec latent dict for the queried target (pile: total mass, mean friction)."""
     hid = labels.get("hidden", {})
     rows = [hid[t] for t in target_ids if t in hid]
-    if not rows:
-        return {}
     out = {}
+    # fit / articulation latents live on the mating or articulated entity (hole, drawer): merge when unique
+    for key in ("clearance", "damping", "frictionloss"):
+        vals = [h[key] for h in hid.values() if isinstance(h, dict) and np.isscalar(h.get(key, None))]
+        if len(vals) == 1:
+            out[HIDDEN_MAP[key]] = float(vals[0])
+    th = labels.get("task_hidden", {}) or {}
+    for key in ("clearance", "damping", "frictionloss"):      # task-level fit/articulation latents (ENVS task_hidden)
+        if np.isscalar(th.get(key, None)) and HIDDEN_MAP[key] not in out:
+            out[HIDDEN_MAP[key]] = float(th[key])
+    if not rows:
+        return out
     if len(rows) == 1:
         for k, v in rows[0].items():
-            if k in HIDDEN_MAP and np.isscalar(v):
+            if k in HIDDEN_MAP and np.isscalar(v) and v is not None:
                 out[HIDDEN_MAP[k]] = float(v)
     else:
         if all("mass" in r for r in rows):

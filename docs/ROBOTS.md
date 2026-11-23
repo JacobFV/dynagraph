@@ -380,3 +380,118 @@ therefore cost 0.6–2 s of wall time per CPU process.
 (pick → place → push, 640x480, 30 fps). Also `results/v2/robots/g1/g1_dex3_strokes.mp4` and
 `g1_dex3_fixed_strokes.mp4`.
 
+
+
+## 6. Env matrix: scripted policy x real robots in the ENVS stations
+
+`scripts/robots_env_matrix.py` (multi-process, 300 s wall guard per episode) runs `env.scripted()` until done.
+Each cell is successes/5 seeds (mean final progress). Measured 2026-11-23 evening with the co-owned
+`envs/robots.py` adapter.
+
+Files:
+- Raw: `results/v2/robots/env_runs_final.jsonl`.
+- Matrix: `results/v2/robots/env_matrix.json` (`--summarize`).
+- Launcher: `scripts/robots_env_final.sh`.
+
+Run details:
+- Suction arms ran on 5 relevant families, Z1 and SO-100 on 7.
+- Families with no row for a robot were not run.
+- 0 integrity violations and 0 errors in 520 episodes.
+- sim/wall per process: 2.0–4.4x (Panda 3.4, UR5e 3.8, Gen3 4.3, ALOHA 3.5, TidyBot 2.8).
+
+| family | panda | ur5e_2f85 | gen3_2f85 | aloha | tidybot | ur5e_suction | fr3_suction | z1 | so100 |
+|---|---|---|---|---|---|---|---|---|---|
+| bin_clearing | 0/5 (0.09) | 0/5 (0.57) | 0/5 (0.47) | 0/5 (0.00) | 0/5 (0.00) | - | - | 0/5 (0.00) | 0/5 (0.00) |
+| bulk_sweep | 2/5 (0.83) | 1/5 (0.82) | 0/5 (0.63) | 0/5 (0.00) | 0/5 (0.01) | 0/5 (0.00) | 0/5 (0.00) | - | - |
+| connector_insert | 1/5 (0.66) | 5/5 (1.00) | 4/5 (0.80) | 0/5 (0.00) | 0/5 (0.00) | - | - | - | - |
+| conveyor_sort | 0/5 (0.00) | 0/5 (0.24) | 0/5 (0.16) | 0/5 (0.00) | 0/5 (0.00) | - | - | - | - |
+| depalletize | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.05) | 0/5 (0.00) | - | - |
+| door_open | 4/5 (0.85) | 5/5 (1.00) | 5/5 (1.00) | 0/5 (0.00) | 5/5 (1.00) | - | - | 0/5 (0.00) | 0/5 (0.00) |
+| drawer_open | 3/5 (0.84) | 5/5 (1.00) | 3/5 (0.90) | 4/5 (0.80) | 5/5 (1.00) | - | - | 4/5 (0.80) | 0/5 (0.00) |
+| fixture_place | 5/5 (1.00) | 5/5 (1.00) | 5/5 (1.00) | 0/5 (0.00) | 0/5 (0.00) | 1/5 (0.20) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) |
+| kitting_pocket | 3/5 (0.67) | 3/5 (0.83) | 1/5 (0.50) | 0/5 (0.00) | 0/5 (0.00) | - | - | - | - |
+| machine_tending | 0/5 (0.47) | 4/5 (0.93) | 1/5 (0.40) | 0/5 (0.00) | 0/5 (0.33) | - | - | - | - |
+| peg_insert | 5/5 (1.00) | 5/5 (1.00) | 5/5 (1.00) | 0/5 (0.00) | 0/5 (0.00) | - | - | 0/5 (0.00) | 0/5 (0.00) |
+| pouch_transfer | 4/5 (0.80) | 3/5 (0.60) | 2/5 (0.40) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) |
+| singulation | 4/5 (0.92) | 2/5 (1.00) | 3/5 (0.80) | 3/5 (0.72) | 3/5 (0.80) | 3/5 (0.75) | 2/5 (0.92) | 3/5 (0.73) | 0/5 (0.07) |
+| tool_return | 0/5 (0.00) | 4/5 (0.80) | 1/5 (0.20) | 2/5 (0.40) | 0/5 (0.00) | - | - | - | - |
+| tote_transfer | 1/5 (0.53) | 2/5 (0.53) | 0/5 (0.33) | 0/5 (0.00) | 0/5 (0.00) | - | - | - | - |
+| twist_lock | 4/5 (0.88) | 5/5 (1.00) | 5/5 (1.00) | 2/5 (0.50) | 1/5 (0.37) | - | - | - | - |
+| **total** | 36/80 | 49/80 | 35/80 | 11/80 | 14/80 | 4/25 | 2/25 | 7/35 | 0/35 |
+
+For reference, the probe-robot scripted baseline (docs/ENVS.md, train split) is roughly:
+
+| family | probe success |
+|---|---|
+| bin_clearing | 0.12 |
+| bulk_sweep | 0.50 |
+| conveyor_sort | 0.38 |
+| depalletize | 0.25 |
+| kitting_pocket | 0.50 |
+| peg_insert | 0.88 |
+| singulation | 0.88 |
+| door_open, drawer_open, fixture_place, pouch_transfer, tool_return | 1.0 |
+
+**What was fixed to get here.** Before these fixes, Panda / UR5e / suction scored 6/28, 4/28 and 3/28 on 2 seeds.
+- **Suction IK:** reachability was a single IK solve from home, which hit local minima. It is now a continuation
+  plus multi-start solve, so pedestal arms and suction no longer report `unreachable`.
+- **Pouch integrator:** the flex scene keeps its integrator (pouch_transfer had crashed).
+- **Suction level:** the scripted `suction` level × a 300 N cup, with seal hysteresis.
+- **Tote wall pinch:** totes are pinched by the near wall (tote_transfer went from too_wide to 2/2 at first).
+- **Conveyor lead:** the conveyor lead uses the predicted time to grasp.
+- **Insertion search:** search radius at least 4 mm. Peg_insert: UR5e 0/3 → 5/5, Panda 5/5.
+- **Insert yaw alignment:** insertion aligns yaw to the socket, which solves connector_insert (UR5e 5/5).
+- **Explicit grasp depth:** an explicit grasp depth is honoured (tool_return shank, UR5e 4/5).
+- **Sweep band:** the probe blade's band is swept in finger lanes.
+- **Drawer pull:** the drawer pull runs in track mode (Panda drawer 56–68% → 3/5 at 0.84).
+- **Clutter yaw:** in clutter, the closing yaw is chosen against neighbouring estimates (bin_clearing UR5e progress
+  .46 → .57; one seed reached .875).
+- **Gripper close:** the gripper closes at full drive until pad contact and only then regulates to the requested
+  squeeze. Low grip forces (20 N) used to make the 2F-85 take about 5 s to close, so UR5e/Gen3 door_open went
+  0/5 → 5/5. The 2F-85 also grasps the door tab toward its tip.
+- **ALOHA pre-shape:** ALOHA pick/place is back to 20/20 and handover 10/10 (the pre-shape opening margin is now
+  30 mm).
+- **TidyBot home:** home TCP 0.78 m (was 0.54, below the bench).
+
+**Remaining failures (diagnosed, not fixed):**
+- **depalletize:** 0 for every robot. Success needs all 8 cartons. Hidden heavy cartons (12–22 kg) exceed the
+  scripted 50% suction level and drop off the pallet edge, which is fatal; the probe also only reaches 0.25.
+  Parallel grippers cannot hold 0.29 m cartons.
+- **conveyor_sort:** picks of moving parts. The descent does not track the moving item (no visual servoing in
+  `pick`), so grasps land behind it.
+- **bin_clearing:** 0 successes but progress up to 0.57–0.875. The call budget runs out after re-grasps on parts
+  wedged against walls; the probe gets 0.12.
+- **TidyBot:** the arm base is at 0.335 m and its base touches the 0.76 m bench, so targets more than about 0.45 m
+  deep are unreachable (fixture/peg/kitting 0). Drawer and door 5/5.
+- **ALOHA in envs:** 11/80. Its bench-centre layout puts most targets at the edge of the vx300s reach.
+- **Z1 and SO-100:** weak grippers and short reach (Z1 drawer 4/5; SO-100 0/35).
+- **tool_return with Panda:** 0/5. The small pads let the head-imbalanced tool rotate (the family's hidden
+  variable); the TCP-depth check reports `done`.
+- **Panda placement:** in `tests/test_skills.py` the box lands 12 mm from target (< 15 mm); round 1 was about 2 mm.
+  It appeared after the grip-force/pad-friction changes; not investigated.
+- **G1 (sub-agent, `scripts/robots_g1_envsweep.py`, `results/v2/robots/env_matrix_g1.json`).**
+  - **Speed-up:** the whole-body QP runs at 250 Hz with torques held and bias-corrected between solves; contact
+    lookups use boolean masks; ProxQP max_iter is 400, warm-started.
+    - Stroke bench: 3.5x → 5.5x real time.
+    - Env episodes: minutes → 1.4–3.1x (floating), 5.7x (fixed).
+  - **Gates after the speed-up:** strokes still pass (error p95 5.4 mm, ratio 0.971–1.028, 0 falls); no wall-impact
+    falls; pinch pick 10/10; tote carry 7/10 (misses lifted 7.8–7.98 cm); peak torque-rate 113 /s (was 49).
+  - **Env (5 seeds × 7 families, before the mount change):** floating 0/35 (fixture_place progress 0.49); fixed base
+    drawer_open 3/5 and the rest 0.
+  - **Main causes:** the humanoid mount was about 4 cm out of reach, and Dex3 pinch grasps fail on 16 mm pegs and
+    heavy fixtures. The adapter now steps the humanoid 0.12 m closer.
+  - **Rerun with the closer mount** (5 seeds; `env_runs_g1_mount.jsonl`, `env_matrix_g1_mount.json`):
+
+    | family | g1_dex3 (floating) | g1_dex3_fixed |
+    |---|---|---|
+    | door_open | 0/5 | 3/5 |
+    | drawer_open | 0/5 | 4/5 |
+    | fixture_place | 0/5 | 0/5 (0.54) |
+    | peg_insert | 0/5 | 0/5 |
+    | singulation | 0/5 | 0/5 (0.20) |
+
+    Floating-base failure modes: push `unreachable` 84, pick `grasp_failed` 66, open `grasp_failed` 45, pick `fell`
+    14. The floating G1 is not usable for data generation yet; the fixed-base fallback is, for articulated tasks.
+  - **API fixes:** `set_grip_force` / `max_grip_force` added (the Dex3 is nominally 10 N); `g1_pinch_pick` fills
+    `ctx.held`; the hand IK chain includes waist pitch (effector dofs/home are 8 long, waist first; arm-only versions
+    as `arm_*`).

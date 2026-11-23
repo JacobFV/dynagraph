@@ -188,6 +188,8 @@ class G1Embodiment:
             e['arm_dofs'], e['arm_qadr'] = e['dofs'], e['qadr']
             e['dofs'] = np.concatenate([[m.jnt_dofadr[j] for j in wj], e['dofs']]).astype(int)
             e['qadr'] = np.concatenate([[m.jnt_qposadr[j] for j in wj], e['qadr']]).astype(int)
+            e['arm_home'] = e['home']
+            e['home'] = np.concatenate([[self._posture().get('waist_pitch_joint', 0.0)], e['home']])   # same layout as qadr
         # boolean geom lookups (np.isin per tick was a hot spot)
         self.own_mask = np.zeros(m.ngeom, bool)
         self.own_mask[self.geoms] = True

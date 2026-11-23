@@ -39,6 +39,11 @@ robot: 75–150 raw rows per skill, 0 collection failures). Remaining small requ
    (`env_adapter.HIDDEN_MAP`); add `stiffness` in N/m if compliance matters (timeconst is not mapped);
    for bulk the adapter uses `labels["mu_mean"]` and the summed part mass;
 5. candidate params that are world coordinates must use keys matching `x|y|z|x0|y1|*_x` (made target-relative).
+6. (20:30Z) **simulator blow-ups**: ~8-10% of bin_clearing episodes (probe robot) contain MuJoCo QACC instabilities
+   (F/T up to 6e4 N, non-finite tracker poses). The model drops such episodes (`v2_train.sanitize`, counted), but
+   please flag them (`metrics["unstable"]`) or fix the contact parameters.
+7. labels are read from `hidden[target]`, unique `clearance/damping/frictionloss` on any entity, and
+   `task_hidden` (peg_insert clearance). Articulated targets (drawer/door) are observed through JOINT events.
 
 ### 1b. per step (StepOut)
 - `result.effort` : `api.EffortMeter` (we train on `effort.cost()` and the components).
@@ -264,3 +269,37 @@ planners, and loses badly on drawer-lot and slide. Diagnosis (measured, not assu
   QACC warnings) -> whole episodes dropped at load (`v2_train.sanitize`, counts logged) + input clamps.
 - ENVS data: history from OTHER objects was fused into the current target's slots (all interactions were marked
   on-target) -> per-interaction `target_id`, on-target computed by equality at gather time (r2 data).
+
+## 7. API (for ENVS / lead / report)
+```python
+from physmem.models.v2 import spec, synth, tensorize, harness, env_adapter
+from physmem.models.v2.model import PhysMemV2          # variants "typed" | "generic" | "nomem"
+from physmem.planner import CEMPlanner, PlannerConfig   # modes "typed" | "generic" | "nomem" | "oracle"
+from physmem.v2_train import load_model
+
+m, ck = load_model("results/v2/checkpoints/v2_synth_r1_typed_s0.pt")
+b = tensorize.single_batch(history_interactions, entity_frame, spec.embodiment_vector(robot_spec), calls (Q,24),
+                           query_target=target_id)          # actor-legal only; labels never enter
+o = m(b)                                                     # o["mem"]["z_mu"/"z_logvar"] = typed slots (B,10)
+d = m.decode(o)                                              # success, p (6 events), risk, effort, cont (8)
+o2 = m(b, z_override=(mu, logvar), z_mask_override=mask)     # intervention on typed slots
+pl = CEMPlanner(m, "typed", PlannerConfig(c_prog=2.0, lam_effort=0.03))
+dec = pl.decide(history, frame, emb, skill, bounds, rng, probe_params=[...])   # -> Decision(params, is_probe, info)
+ad = env_adapter.EnvAdapter(make_env(fam)); harness.run_episode(ad, task, "planner", pl)   # ENVS stations
+```
+CLI: `python -m physmem.v2_train gen|collect|train|eval|calibrate|closedloop|interv ...` (see module docstring);
+scripts: `scripts/v2/run_g3.sh`, `run_lot.sh`, `run_pilot.sh`, `sweep_cost.sh`, `env_closed_loop.py`,
+`test_adapter.py`, `inspect_env.py`, `debug_*.py`. Tests: `tests/test_v2_model.py` (25 tests; the trained-model
+gate test runs when a checkpoint + data exist).
+
+## 8. Pending / next (ranked)
+1. Outcome head is now the bottleneck (typed ~= oracle in closed loop): add a physics-structured head path
+   (e.g. predict displacement / required-force margins and derive success analytically from goal geometry, instead of
+   a free success logit over narrow windows), train with planner-distribution data (DAgger-style rollouts of the
+   planner itself) so lot-reset / late-history states are in distribution.
+2. Real-station data with ROBOTS embodiments (only the test-only `probe` gantry exists in ENVS so far); held-out
+   robot / family on real stations; real-station G4 interventions vs MuJoCo finite differences (need ENVS to expose
+   a labelled "re-simulate with modified latent" hook).
+3. Weakly identifiable latents (grip friction, clearance, hole offset): needs informative probes (slip test,
+   compliant search) in the skill library + VOI that actually pays; currently VOI rarely helps.
+4. Multi-seed repeats of the r1 synthetic results (single training seed so far).
