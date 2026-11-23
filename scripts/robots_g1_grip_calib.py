@@ -24,9 +24,15 @@ for kp in kps:
         c = emb.controller()
         if kp is not None:
             c.g['finger_kp'] = kp
+        import os
+        if os.environ.get('GRIP_N'):
+            emb.set_grip_force(side, float(os.environ['GRIP_N']))
         c.set_gripper(side, 1.0)
-        for _ in range(1000):
+        trace = []
+        for it in range(1000):
             c.apply(m, d); mujoco.mj_step(m, d)
+            if it % 100 == 99:
+                trace.append((round(emb.pad_normal(m, d, side) / 2, 1), round(c.st[side].get('grip_kt', -1), 2)))
         gb = m.geom('blk').id
         per, f6 = {}, np.zeros(6)
         for k in range(d.ncon):
@@ -42,6 +48,8 @@ for kp in kps:
         row = dict(side=side, kp=kp if kp is not None else c.g['finger_kp'], width=w,
                    pinch_n=round(min(th, fi), 2), thumb_n=round(th, 1), fingers_n=round(fi, 1), per_link={k: round(v, 1) for k, v in per.items()},
                    tau_frac=np.round(np.abs(tau) / (emb.act_hi[e['gacts']] * emb.act_gear[e['gacts']]), 2).tolist(),
-                   closure=round(emb.gripper_state(m, d, side)[0], 2))
+                   closure=round(emb.gripper_state(m, d, side)[0], 2), trace=trace,
+                   q_at_limit=[bool(abs(d.qpos[a] - m.jnt_range[j][0]) < 0.02 or abs(d.qpos[a] - m.jnt_range[j][1]) < 0.02)
+                               for j, a in zip([m.dof_jntid[x] for x in emb.eff[side]['gdofs']], emb.eff[side]['gqadr'])])
         out.append(row)
         print(json.dumps(row))

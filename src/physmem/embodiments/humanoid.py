@@ -281,7 +281,23 @@ class G1Embodiment:
         full = self.act_hi[e['gacts']] * self.act_gear[e['gacts']]
         k = float(np.clip(newtons / self.DEX3_PINCH_N, 0.05, 1.0))
         e['gforce'] = full * k
+        e['grip_req'] = float(min(newtons, self.DEX3_PINCH_N))   # tactile squeeze target (WholeBodyController._fingers)
+        e['grip_k'] = k
         return self.DEX3_PINCH_N * k
+
+    def pad_normal(self, model, data, eff):
+        """tactile: total normal force (N) between this hand's pads and non-robot geoms (Dex3-1 has 33 tactile cells)."""
+        e = self.eff[eff]
+        if not data.ncon:
+            return 0.0
+        pm, om = e['pad_mask'], self.own_mask
+        g1, g2 = data.contact.geom1, data.contact.geom2
+        idx = np.where((pm[g1] & ~om[g2]) | (pm[g2] & ~om[g1]))[0]
+        f6, tot = np.zeros(6), 0.0
+        for k in idx:
+            mujoco.mj_contactForce(model, data, int(k), f6)
+            tot += abs(f6[0])
+        return tot
 
     def max_grip_force(self, eff):
         return self.DEX3_PINCH_N
@@ -696,12 +712,27 @@ class WholeBodyController:
             vh = data.qvel[e['gdofs']]
             u = g['finger_kp'] * (tgt - qh) - g['finger_kd'] * vh + data.qfrc_bias[e['gdofs']]
             lim = e['gforce']
+            full = emb.act_hi[e['gacts']] * emb.act_gear[e['gacts']]
             if gg >= 0.5:
-                # close at full torque until the pads touch, then regulate to the requested squeeze (gforce)
+                # close at full torque until the pads touch, then regulate the SQUEEZE from tactile feedback: the
+                # finger torque limit adapts so (pad normal force / 2) tracks the requested grip force. A torque limit
+                # alone over-squeezes thin parts: contacts near the joints see ~3x the fingertip force (8 mm door
+                # tab: 60-75 N per link at full torque vs 20 N fingertip calibration).
                 if self.tick % 5 == 0 or 'pad_n' not in s:
                     s['pad_n'] = emb.gripper_state(self.m, data, name)[1]
+                    if s['pad_n'] > 0 and e.get('grip_req'):
+                        sq = emb.pad_normal(self.m, data, name) / 2.0
+                        # first contact: start low (thin parts see ~3x the fingertip force) and ramp up to the target
+                        kt = s.get('grip_kt', 0.3 * e.get('grip_k', 1.0))
+                        kt *= float(np.clip(e['grip_req'] / max(sq, 1e-3), 0.6, 1.08))
+                        s['grip_kt'] = float(np.clip(kt, 0.05, 1.0))
                 if s['pad_n'] == 0:
-                    lim = np.maximum(lim, emb.act_hi[e['gacts']] * emb.act_gear[e['gacts']])
+                    lim = np.maximum(lim, full)
+                    s.pop('grip_kt', None)
+                elif 'grip_kt' in s:
+                    lim = full * s['grip_kt']
+            else:
+                s.pop('grip_kt', None)
             tau_act[e['gacts']] = np.clip(u, -lim, lim) / emb.act_gear[e['gacts']]
 
     def apply(self, model, data):

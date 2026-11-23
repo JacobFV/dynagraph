@@ -706,7 +706,7 @@ The first two are in ENVS's scripted policy / tracker (reported to ENVS); the th
 - **Push force limit:** `f_max` (N) + `comply` (bool). Abort (`force_limited`) or finish compliantly at
   K = f_max / 0.02 m.
 - **Pad contacts:**
-  - Named pad geoms `<body>_pad<k>`, margin 0, solref (max(0.004, 2.5·dt), 1), solimp (0.9, 0.95, 0.001, 0.5, 2).
+  - Named pad geoms `<body>_pad<k>`, margin 0, solref (max(0.004, 5·dt), 1), solimp (0.9, 0.95, 0.001, 0.5, 2).
   - ENVS's (0.95, 0.99) solimp ejected a 70 N Panda pinch at 2 ms, so it was not adopted. Regression gates are below.
 
 
@@ -757,3 +757,83 @@ clean skill abort on the guard; not fixed.
 - **singulation:** UR5e 1/5 (r5: 5/5), Panda 0/5 (r5: 1/5). The failing episodes end `fatal` after 2–18 calls.
   ENVS changed singulation after r5 (new fatal conditions: a cycle-time limit and every object staying in the work
   region). The pad change could also contribute; the A/B was not run.
+
+## 11. Round 7: regression attribution, suction hold bench, TidyBot base
+
+**A/B attribution (same current envs, 5 seeds; `results/v2/robots/ab_*.jsonl`).**
+
+| question | robot / cells | A | B | verdict |
+|---|---|---|---|---|
+| single-cup suction regression | ur5e_suction singulation | lip-ring cup (round 4/5) 2/5 | + recessed solid cup disk as pusher face 1/5 (fr3 1/5) | round-3 envs gave 3/5 and 2/5; the regression follows ENVS's r5 singulation fatal conditions (cycle limit, work region), not the cup model |
+| G1 regression | g1_dex3 door + drawer | legacy pad pairs 0/10 | current pad pairs 1/10 | pad pairs are not the cause; dominant `open:grasp_failed` on the Dex3 tab pinch; handed to the G1 sub-agent (env vs robot) |
+
+Other notes:
+- Single-cup suction on fixture_place fails the same way in both rounds: `too_small`, because a fixture face is
+  smaller than the cup plus the 8 mm lip margin. That is a physical limit, not a regression.
+- The solid disk is kept (default on; `PHYSMEM_CUP_DISK=0` gives the old behaviour), because a ring of lip spheres
+  lets part corners hook into the gaps when the cup pushes.
+
+**Suction hold bench** (`scripts/robots_suction_bench.py`, gantry_vacuum, `results/v2/robots/suction_bench_gantry_vacuum.json`):
+- **Grid:** pick, then a 0.6 m transfer and place of a 0.28 × 0.21 × 0.20 m carton, over mass 5/15/22 kg × lip
+  friction 0.9/0.2 (slick) × suction level 0.6/1.0 × max_acc 0.8/2/4 m/s².
+- **Result:** 35/36 hold. Every suction-1.0 configuration holds, including 22 kg slick cartons at 4 m/s².
+- **Single failure:** 22 kg, μ 0.9, level 0.6, max_acc 0.8, a pick-time seal loss. Not a peel-vs-acceleration
+  effect.
+- **Physics reference:** vacuum 749 N at level 0.6 and 1249 N at level 1.0 (4 × 302 N + 42 N). Shear capacity
+  μ(F_vac − mg) is 107 N for the 22 kg slick carton at 0.6, against m·a = 88 N at 4 m/s².
+- **Takeaway:** a correct choice (suction 1.0, slow lift) succeeds. The model's decision space (suction level, lift
+  acceleration) is meaningful on slick and heavy cartons at lower suction levels.
+- **Not reproduced:** the in-env seal losses seen earlier come from the scripted policy (stale re-picks, early
+  flagging) and table/neighbour interactions; the bench does not reproduce them.
+
+**TidyBot base (ENVS requests):**
+- **No blind drive-in at reset.** It pushed the base into the bench (round 5: about 60 contact events per episode)
+  and into the shelf in shelf_restock (about 100 events over 150 N).
+- **Pre-skill alignment:** works around the CURRENT base pose (no ±0.6 m window; ±2 m per step) and is skipped
+  after an explicit `move_base`.
+- **Forward close-in:** only by target depth − 0.42 m, capped at 0.3 m, with a bumper. The base move stops at the
+  first contact over 20 N between any robot geom and static station geometry.
+- **Effect:** fixture_place contact steps over 150 N dropped from 77k to 44 (picks/places succeed); shelf_restock
+  reset is contact-free (0 events).
+
+**Bellows cup (item 4): not done.** MuJoCo adhesion acts only on its own body's contacts, so independently compliant
+lip segments would need one adhesion actuator per segment and a rework of the zone logic. Conveyor parts are
+therefore served by `gantry_clamp`.
+
+### Round 7 re-run of the affected cells (`results/v2/robots/env_runs_current.jsonl` → `env_matrix.json`)
+
+This is round 5 with these cells replaced: TidyBot (all families), single-cup suction (singulation, depalletize,
+fixture_place) and G1 (sub-agent round 6).
+
+| robot | before | after | detail |
+|---|---|---|---|
+| ur5e_suction | 0/15 | 2/15 | singulation 2/5 (0.89) |
+| fr3_suction | 0/15 | 2/15 | singulation 2/5 (0.67) |
+| G1 floating | 1/20 | 4/20 | door 2/5 (0.84), drawer 2/5 |
+| TidyBot | 23/90 | 13/95 | contact-free base; see below |
+
+**G1 (sub-agent).** Cause: ENVS r5 hidden crush limits on handle tabs (door 20–60 N per pad, drawer 40–120 N),
+plus `solved()` requiring nothing damaged. On the robot side, a torque-limited Dex3 pinch squeezed 60–100 N on the
+8 mm tab and the pull wedged it at 70–150 N.
+- **Fixes:** tactile squeeze regulation (Dex3 pad force / 2 tracks the requested grip force) and a 25 N pull
+  force cap.
+- **Remaining:** door seeds that open fully but are still marked damaged by pull-phase wedge forces. Fixing that
+  needs a hook-style hold, or an ENVS ruling on whether pull loads count as crush.
+
+**TidyBot regression: a trade-off made on purpose.** Round 5's numbers relied on a blind 0.35 m drive-in at reset.
+That pushed the arm's shoulder link under the 0.62 m bench top (about 60 contact events per episode) and, in
+shelf_restock, into the shelf. With the bumper (stop at 120 N, below the env's 150 N collision count) the base
+stops about 7 cm further back, and the deep bench targets become unreachable:
+- peg_insert 4/5 → 0/5;
+- connector_insert 3/5 → 0/5;
+- tool_return 2/5 → 0/5.
+
+Unchanged: drawer 5/5, fixture_place 4/5; shelf_restock resets contact-free. Contact events in the tasks
+themselves are unchanged (about 490 per episode; they come from task motions, not the base). Recommendation to
+ENVS: more under-bench clearance (or a 0.55 m bench) for TidyBot, so the shoulder link fits under the top as a real
+TidyBot at a counter would.
+
+**Pad contact time constant, final.** solref = max(0.004, 5·dt). At 2 ms a 0.005 s constant (2.5·dt) still let a
+70 N Panda pinch squeeze a 50 mm box out (`tests/test_skills.py::test_pick_place_panda`); 0.01 s holds. That is
+0.005 s at ENVS's 1 ms. The round-7 TidyBot/suction re-runs above used 2.5·dt; the pick/place gates after the change
+are Panda 20/20 and UR5e 20/20, and the 22 tests pass.

@@ -130,7 +130,7 @@ class EmbodimentRobot:
                         s.add_pair(geomname1=pg, geomname2=gname, condim=4, friction=[mu, mu, 0.005, 0.0001, 0.0001])
                     else:
                         s.add_pair(geomname1=pg, geomname2=gname, condim=4, friction=[mu, mu, 0.005, 0.0001, 0.0001],
-                                   solref=[max(0.004, 2.5 * ts), 1.0], solimp=[0.9, 0.95, 0.001, 0.5, 2.0],
+                                   solref=[max(0.004, 5.0 * ts), 1.0], solimp=[0.9, 0.95, 0.001, 0.5, 2.0],
                                    margin=0.002 if "_lip" in pg else 0.0)
             for bn in pad_bodies:
                 s.add_exclude(bodyname1=info.body, bodyname2=bn)
@@ -174,7 +174,7 @@ class EmbodimentRobot:
             if self.spec.kind in ("arm",):
                 park = mpos + 0.15 * f + np.array([0, 0, 0.2])
             elif self.spec.kind == "mobile_manipulator":
-                park = p + np.array([-0.12, 0, 0.12])     # home TCP is ~bench height: pull back + up before driving in
+                park = p - 0.12 * f + np.array([0, 0, 0.12])   # pull the hand back along the heading and up
             elif self.spec.kind == "humanoid":
                 # hands up above the bench top first, then forward over it (the stand pose holds them below the
                 # top, behind the edge: a straight move to a target would cut the bench edge)
@@ -204,10 +204,9 @@ class EmbodimentRobot:
             else:
                 park = p + np.array([0, 0, 0.05])
             self.ctrl.command(BlendedTrajectory(effector=k, waypoints=[(park, q)], durations=[0.6]))
-        if self.emb.base is not None:
-            # drive the holonomic base 0.35 m toward the station (base joints are in the mount frame, +x = forward)
-            qb = d.qpos[self.emb.base["qadr"]].copy()
-            self.ctrl.command_base(qb + np.array([0.35, 0.0, 0.0]), 1.5)
+        # (no automatic drive-in any more: ENVS mounts the mobile base 0.25 m from the bench / in the aisle lane; driving
+        #  0.35 m 'forward' at reset pushed TidyBot into the shelf -> ~100 contact events > 150 N in shelf_restock)
+        self.base_explicit = False
 
     # ------------------------------------------------------------------ effort (cumulative meter of the controller)
     @property
@@ -356,6 +355,8 @@ class EmbodimentSkills:
         line with the target estimate / region centre; the forward (depth) coordinate is kept - the base already
         stands at the bench. Min-jerk base move through the controller; actor-legal (estimates, regions)."""
         r = self.r
+        if getattr(r, "base_explicit", False):
+            return          # an explicit move_base placed the base: respect it (no automatic re-alignment)
         tgt = None
         if call.target in env.scene.entities:
             e = env.est_pose(call.target)
@@ -372,13 +373,39 @@ class EmbodimentSkills:
         Rm = np.array([[math.cos(yaw), -math.sin(yaw)], [math.sin(yaw), math.cos(yaw)]])
         qb = r.d.qpos[r.emb.base["qadr"]].copy()
         want = Rm.T @ (tgt - mpos)                 # target in the mount frame (x forward, y lateral)
-        lat = float(np.clip(want[1], -0.6, 0.6))
-        if abs(lat - qb[1]) < 0.03:
+        lat = float(qb[1] + np.clip(want[1] - qb[1], -2.0, 2.0))   # around the CURRENT base pose (full aisle)
+        # forward: close in only as far as needed (target depth - ~0.42 m comfortable arm reach), never back off, at
+        # most 0.3 m beyond the mount pose (ENVS mounts the base 0.25 m from the bench edge)
+        fwd = float(np.clip(want[0] - 0.42, qb[0], 0.3))
+        if abs(lat - qb[1]) < 0.03 and abs(fwd - qb[0]) < 0.03:
             return
-        tgt_q = np.array([qb[0], lat, qb[2]])
-        dur = max(0.8, 1.875 * abs(lat - qb[1]) / 0.3)
+        tgt_q = np.array([fwd, lat, qb[2]])
+        dur = max(0.8, 1.875 * max(abs(lat - qb[1]), abs(fwd - qb[0])) / 0.2)
         ctx.ctrl.command_base(tgt_q, dur)
-        ctx.run(max_t=dur + 0.5)
+        # bumper: stop (hold the current base pose) at the first robot contact with static station geometry > 120 N
+        m, d = env.m, env.d
+        bgeoms = getattr(r, "_base_geoms", None)
+        if bgeoms is None:      # ANY robot geom (base, shoulder, arm) against STATIC station geometry
+            bgeoms = r._base_geoms = np.array(sorted(r.robot_geoms), int)
+        f6 = np.zeros(6)
+
+        def bumped(c):
+            if not d.ncon:
+                return False
+            g1, g2 = d.contact.geom1, d.contact.geom2
+            for i in np.where(np.isin(g1, bgeoms) ^ np.isin(g2, bgeoms))[0]:
+                other = g2[i] if g1[i] in bgeoms else g1[i]
+                if other in r.robot_geoms or m.body_weldid[m.geom_bodyid[other]] != 0:
+                    continue    # only static (welded-to-world) station geometry bumps; parts / held objects do not
+                mujoco.mj_contactForce(m, d, int(i), f6)
+                if f6[0] > float(os.environ.get("PHYSMEM_BUMPER_N", 120.0)):   # below the env's 150 N collision count
+                    return True
+            return False
+        st = ctx.run(until=bumped, max_t=dur + 0.5)
+        if st == "until":
+            qh = d.qpos[r.emb.base["qadr"]].copy()
+            ctx.ctrl.command_base(qh - np.array([0.01, 0.0, 0.0]) * np.sign(fwd - qb[0] + 1e-9), 0.3)   # back off 1 cm
+            ctx.run(max_t=0.6)
 
     def run(self, env, call):
         from physmem.skills import run_skill
@@ -390,7 +417,7 @@ class EmbodimentSkills:
             if est is not None:
                 r.eff = min(r.effs, key=lambda k: float(np.linalg.norm(r.emb.tcp_pose(env.d, k)[0][:2] - est[0][:2])))
         eff = call.effector or r.eff
-        if r.emb.base is not None and call.skill != "move_base":
+        if r.emb.base is not None and call.skill not in ("move_base", "insert"):   # no base motion before mm-precision inserts
             self._base_approach(env, call, ctx)
         fn = getattr(self, "sk_" + call.skill, None)
         if fn is None:
@@ -647,10 +674,18 @@ class EmbodimentSkills:
             # waypoint so the pull continues until the joint stop / the target
             # ROBOTS: pull in TRACK mode (task-space ID + bounded integral) - impedance (even 2500 N/m) left the Panda
             # at 56-68 % against 2-40 N drawer friction; the path is the CAD handle path, so stiff tracking is safe
-            if p.get("pull_mode", "track") == "track":
+            pull_mode = p.get("pull_mode", "track")   # humanoid impedance pull (stiffness 400, soft wrist) tested: no better
+            if self.r.spec.kind == "humanoid" and pull_mode == "impedance":
+                # G1: compliant pull - a stiffly tracked hand fights the door arc / drawer rail through the hooked
+                # Dex3 fingers (70-100 N on the tab, beyond ENVS r5's 20-60 N crush limit)
+                ctx.ctrl.set_mode("impedance", eff, stiffness=p.get("stiffness", 400.0), rot_stiffness=p.get("rot_stiffness", 2.0),
+                                  f_cap=float(p.get("pull_fcap", 25.0)))
+            elif pull_mode == "track":
                 ctx.ctrl.set_mode("track", eff)
                 if self.r.spec.kind == "humanoid":
-                    ctx.ctrl.set_mode("track", eff, f_cap=60.0)   # G1: the default 15 N hand-force cap yields to the pull
+                    # G1: hand-force cap during the pull. 60 N let the pull load reach ~80-100 N on the thumb/index
+                    # (ENVS r5 counts robot contact force/2 on the tab against its hidden 20-60 N crush limit) -> 25 N
+                    ctx.ctrl.set_mode("track", eff, f_cap=float(p.get("pull_fcap", 25.0)))
             else:
                 ctx.ctrl.set_mode("impedance", eff, stiffness=p.get("stiffness", 2500.0), rot_stiffness=30.0)
             sp = p.get("speed", 0.1)
@@ -710,6 +745,7 @@ class EmbodimentSkills:
 
     def sk_move_base(self, env, call, ctx, eff, run_skill):
         """mobile base motion: params x, y, yaw (station = world frame), speed, yaw_rate, arm ('keep'|'tuck')."""
+        self.r.base_explicit = True
         return run_skill(ctx, SkillCall("move_base", dict(call.params), effector=eff), None)
 
     def sk_open(self, env, call, ctx, eff, run_skill):

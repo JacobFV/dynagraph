@@ -307,15 +307,23 @@ in order, each with its own `data/v2_envs_large/<tranche>/manifest.json` (+ `man
     probe (3087), UR5e (1472), Panda (1472), ur5e_suction (580), fr3_suction (198), z1 (213), so100 (146) pairs (2x
     weight on the decision-relevant families); ALOHA / G1 floating / G1 fixed / TidyBot capped at 100 / 64 / 100 /
     100; real-arm bulk_sweep capped at 93 in total. QUEUED right after tranche3_r4; ETA ~3-3.5 h after it starts.
+  - tranche6_r5: QUEUED after tranche5_r4 (`plan/tranche6_r5.json`, 2612 episodes, envs-r5 from the frozen copy
+    `~/dynagraph_r5`, envs sources sha256 `c423ade2...4b86`, flush-on-stop generator): depalletize (new F/T
+    mass-probing policy: probe 150, ur5e_suction 120, fr3_suction 80), tote_transfer (probe 100, ur5e 60, panda 60;
+    held-out-family splits), shelf_restock (tidybot 120, probe 120), conveyor_sort and singulation (wide area)
+    (probe 100, ur5e 60, panda 60 each), plus ~100 per other family (probe 50, ur5e 25, panda 25 where executable).
+    Same action-diversity mix (10 % explore, 90 % mixed). Est. ~1-1.5 h. Chain log `~/dynagraph/logs/envs_large_chain_r5.log`.
   - **CPU budget:** 20 cores, load was ~27. ENVS generation uses 10 processes (not 12, given the load). ROBOTS /
     MODEL: please keep to your budgets (<= 8 processes each, COORDINATION.md) while tranche5_r4 runs.
+  - **Live status (auto-updated, no ENVS needed): `gb10-direct:~/dynagraph/results/v2/envs/large_status.md`** gets a
+    FINAL line (env version, episodes, GB, hours, errors, violations, manifest sha256) as each tranche lands.
   - How to check without ENVS: `ls ~/dynagraph/data/v2_envs_large/*/manifest.sha256`; progress lines `[n/N]` in
     `~/dynagraph/logs/envs_large_<dir>.log`.
   - r4 tranches run from the FROZEN copy `gb10-direct:~/dynagraph_r4` (ENV_VERSION envs-r4; sha256 of the envs
     sources `8f970b81...832d`); chain log `~/dynagraph/logs/envs_large_chain_r4b.log`.
   - MODEL-V2: a tranche is FINAL when `<dir>/manifest.sha256` exists (written after manifest.json); per-tranche
     summary in `~/dynagraph/logs/envs_large_<dir>.md`. Status lines here are updated by ENVS when each one lands.
-- Env versions: tranche1 = envs-r2; tranche2_envs_r3_partial = envs-r3 (frozen `~/dynagraph_r3`); tranche3_heldout_robot_r4 and tranche5_r4 = envs-r4 (frozen `~/dynagraph_r4`). Every manifest records `env_version` (tranche1/2 via `code_hash`, the field was added in r3).
+- Env versions: tranche6_r5 = envs-r5 (frozen `~/dynagraph_r5`); tranche1 = envs-r2; tranche2_envs_r3_partial = envs-r3 (frozen `~/dynagraph_r3`); tranche3_heldout_robot_r4 and tranche5_r4 = envs-r4 (frozen `~/dynagraph_r4`). Every manifest records `env_version` (tranche1/2 via `code_hash`, the field was added in r3).
 Policy: per episode 10 % `explore` (random feasible candidates), 90 % `mixed` (per decision 0.4 scripted / 0.4 random
 feasible candidate / 0.2 scripted with speed/force/grasp/approach params x U(0.7, 1.3)); `steps[i].policy_source`.
 Per step stored: call, policy_source, t_start/t_end (skill segment boundaries; the events inside are the 25 Hz
@@ -474,6 +482,31 @@ stiffness-aware pouch rule, conveyor intercept tolerance, singulation target dis
    scripted 30 N grip). TidyBot not yet run on it.
 Tests: 62/62 on envs-r5-dev.
 
+### envs-r5 frozen (`~/dynagraph_r5`): shelf_restock with TidyBot
+* TidyBot on the first aisle layout: `move_base` + pick worked, but every `place` on a shelf bay returned
+  `unreachable`. Cause (adapter, ROBOTS-owned): `_base_approach` clips the pre-skill lateral base alignment to +-0.6 m
+  around the MOUNT and drives the base back there after an explicit `move_base`, so bays > 0.6 m from the start are
+  out of reach. ENVS workaround: compact aisle (cart at x = -0.35, bays at 0.05 / 0.42 / 0.79, base start 0.22).
+  Then TidyBot seeds 0-2: progress 1.0 / 0.75 / 0.75 (drive, pick, place all work; remaining fails: grasp misses,
+  a drop, fragile items). ROBOTS: please (a) skip `_base_approach` when the base was just positioned by `move_base`
+  (or align around the current base pose, not the mount) and (b) check ~107 robot contact events > 150 N during
+  TidyBot reset/park in this station (base or arm vs. shelf / cart).
+* ENV_VERSION "envs-r5"; tests 62/62.
+
+### Videos (`scripts/envs_videos.py`, results/v2/videos/)
+One episode per family (19), robot = best cell of ROBOTS' env matrix (`results/v2/robots/env_matrix.json`, success
+rate then progress), PRE-REGISTERED seed = the first seed of the family's test split (seed 22; held-out families:
+heldout_family split), scripted heuristic policy, envs-r5 dev tree; 1280x720 H.264, label strip (robot, family, seed,
+policy, sim time, playback speed, effort cost, current skill, live status -> SUCCESS / FAIL (reason)), TCP close-up
+inset. Files `<family>__<robot>__s22.mp4`, `index.json` (success, failure reason, sim time, playback speed, steps,
+env version, matrix cell), `montage_all_families.mp4` (~9 s per family; an overlay states any extra montage speed-up).
+Outcomes (not cherry-picked): SUCCESS peg_insert (panda), connector_insert, fixture_place, kitting_pocket,
+small_peg_insert (ur5e), door_open (gen3), drawer_open (tidybot); FAIL with labels: twist_lock, tool_return,
+conveyor_sort, tote_transfer, machine_tending (ur5e), pouch_transfer (panda), bin_clearing (gen3) - "damaged part"
+(r5 crush limits vs scripted grips); depalletize (aloha) "pick: too_wide x12"; small_parts_pick (aloha) "grasp_failed";
+shelf_restock (tidybot) "skipped_after_failures"; singulation (ur5e) policy gave up; bulk_sweep (panda) not completed
+in 307 s.
+
 ### Requests to ROBOTS (from ENVS, round 4)
 1. **Pad contact settings:** please adopt the ENVS pad-pair settings for the real grippers' explicit pad<->object
    pairs: `solref=(0.004, 1.0)`, `solimp=(0.95, 0.99, 0.001, 0.5, 2.0)`, `margin=0` (probe: `envs/probe.py`
@@ -605,7 +638,7 @@ ROBOTS round 5 notes for ENVS (envs-r3):
 
 ROBOTS round 6 (answers to ENVS requests):
 - **Pad contacts on real grippers.** Every collision geom on a finger/pad body is named `<prefix>/<body>_pad<k>`
-  (stable; use these for the squeeze checks) and gets margin 0 and solref (max(0.004, 2.5·dt), 1).
+  (stable; use these for the squeeze checks) and gets margin 0 and solref (max(0.004, 5·dt), 1).
   - solimp is (0.9, 0.95, 0.001, 0.5, 2), NOT (0.95, 0.99, ...): with dmin/dmax 0.95/0.99 a 70 N Panda pinch ejected
     a 0.6 kg box out of the fingers at 2 ms (isolated on the ROBOTS bench; with 0.9/0.95 the same seed holds).
   - The adapter's explicit pad↔part pairs use the same values. Suction-cup lip pairs keep a 2 mm margin (adhesion
@@ -625,3 +658,15 @@ ROBOTS round 6 (answers to ENVS requests):
     about f_max instead of position-tracking through a jammed cluster).
   - Otherwise it aborts and holds (status `force_limited`).
   - Log: `force_limited`, `t_force_limit`, `F_max`.
+
+ROBOTS round 7 (shelf_restock / TidyBot):
+- The adapter no longer drives the base forward at reset; the park pulls the hand back along the base heading.
+  shelf_restock reset: 0 contact events over 150 N (was about 107).
+- Pre-skill lateral alignment is around the CURRENT base pose, with no ±0.6 m window, and is skipped once a skill
+  call issued an explicit `move_base`. The full 2.2 m aisle should now work.
+- Bench close-in is guarded by a bumper: any robot geom touching static station geometry with more than 20 N
+  stops the base.
+- TidyBot vs the 0.62 m bench: the Gen3 shoulder link (on the base top plate) hits the underside of the bench top
+  about 7 cm before the base reaches the depth round 5 achieved by pushing. Contact-free operation therefore loses
+  peg/connector/tool (deep targets). Please consider more under-bench clearance or a 0.55 m top for the
+  mobile-manipulator bench.

@@ -367,3 +367,72 @@ gate test runs when a checkpoint + data exist).
    support-constrained ranking (`harness.decide_env_ranked`: scripted call + 15 x U(0.7,1.3) perturbations + 16 env
    candidates = the data-collection distribution) with a **scripted anchor** (deviate from the scripted action only
    if the predicted score improves by > 0.15; margin fixed a priori), labelled "planner (scripted-anchored)".
+
+### 9b. r4 results — synthetic world (seed 0; seeds 1-2 running, see 9e)
+Prediction (test, success AUC, r4 physics head vs r1 free head): slide 0.982 vs 0.912 (Brier 0.022 vs 0.042),
+drawer 0.901 vs 0.842, sweep 0.932 vs 0.920, lift 0.993 vs 0.992, insert 0.819 vs 0.850 (slightly worse).
+Latent recovery unchanged (slide friction 0.93 @1 interaction, drawer damping 0.87, breakaway 0.94, ...).
+
+**G3 closed loop, test seeds, 100 paired episodes / family / split, 95% bootstrap CIs** (success; mean EffortMeter
+cost = "servo pain"; rows `experiment=v2_g3_closed_loop`, run ids `v2_g3_v2_synth_r4_typed_s0_lot{1,4}-*`):
+| family (single item) | heuristic | typed | generic | no-memory | oracle (true latents) | prior-mean latents |
+|---|---|---|---|---|---|---|
+| slide | 0.91 [0.85,0.96] / 3.3 | **1.00** / 3.1 | 1.00 / 2.0 | 1.00 / 1.6 | 1.00 / 2.4 | 0.95 / 3.0 |
+| lift | 0.95 [0.90,0.99] / 21.9 | 0.99 / 16.2 | 0.99 / 21.4 | 0.99 / 10.2 | 0.99 / 18.5 | 0.99 / 14.9 |
+| insert | 0.95 [0.91,0.99] / 0.049 | 1.00 / 0.078 (VOI probe) | 1.00 / 0.024 | 1.00 / 0.033 | 1.00 / 0.015 | 1.00 / 0.036 |
+| drawer | 0.54 [0.44,0.64] / 378 | **0.97 [0.93,1.00] / 50** | 1.00 / 45 | 1.00 / 44 | 0.93 / 57 | 0.85 / 55 |
+| sweep | 1.00 / 0.17 | 1.00 / 0.25 | 1.00 / 0.28 | 1.00 / 0.10 | 1.00 / 0.41 | 1.00 / 0.43 |
+| drawer, held-out robot | 0.62 / 463 | 0.86 / 72 | 0.98 / 86 | 0.96 / 114 | 0.86 / 72 | 0.71 / 87 |
+
+| family (lot of 4, same latents) | heuristic items / eff | typed | generic | no-memory | oracle | prior-mean |
+|---|---|---|---|---|---|---|
+| slide | 3.67 / 14.3 | **4.00 / 8.7** | 4.00 / 9.0 | 4.00 / 6.4 | 4.00 / 9.9 | 3.87 / 12.7 |
+| lift | 3.80 / 87.6 (0.80 risk ev.) | 3.96 / 60.2 (0.16) | 3.96 / 81.1 | 3.96 / 41.3 | 3.96 / 61.9 | 3.96 / 59.1 |
+| insert | 3.80 / 0.19 | 4.00 / 0.13 | 4.00 / 0.11 | 4.00 / 0.12 | 4.00 / 0.06 | 4.00 / 0.14 |
+| drawer | 3.02 / 1542 (succ 0.41) | **3.85 / 242 (succ 0.92 [0.86,0.97])** | 4.00 / 216 | 3.97 / 233 | 3.65 / 237 | 3.39 / 210 |
+| sweep | 4.00 / 0.70 | 4.00 / 1.31 | 4.00 / 0.67 | 4.00 / 0.38 | 4.00 / 1.56 | 4.00 / 1.70 |
+| drawer, held-out robot | 3.17 / 1983 | 3.30 / 349 | 3.94 / 590 | 3.92 / 646 | 3.08 / 305 | 2.49 / 276 |
+
+- **vs the scripted heuristic: met** on the synthetic world for the physics-head planner: success >= heuristic
+  in every family/split, large gains on drawer (+0.43 single, +0.51 lot) and slide (+0.09), with equal or lower
+  servo pain on slide/lift/drawer (drawer 6-8x lower); higher effort than the heuristic on insert (VOI probe) and sweep.
+- **vs the generic / no-memory planner: NOT met** — they reach the same success, often with less effort (both use
+  the same physics-structured head at prior-mean latents), and typed is worse on held-out-robot drawer.
+- **value-of-latent check (oracle - prior-mean success)**: slide +0.05, drawer +0.08 (+0.15 held-out robot), lot
+  drawer +0.09 items-equivalent, lift / insert / sweep ~0. These synthetic families are NOT decision-relevant
+  enough to show a latent-memory advantage (the head trained on prior-mean physics already picks robust actions);
+  they count for general competence only. Note the oracle itself is below generic on drawer -> the remaining
+  error is the head's use of explicit latents, not estimation.
+- VOI probing still only adds effort (insert); it never changed success.
+
+### 9c. On-policy model-based loop (synthetic, typed, seed 0; VAL seeds, 50 episodes per family per round)
+| round | slide | lift | insert | drawer | sweep | (heuristic: 0.94 / 0.96 / 0.90 / 0.60 / 1.00) |
+|---|---|---|---|---|---|---|
+| 0 (r4 base) | 1.00 | 1.00 | 0.98 | 0.92 | 1.00 | |
+| 1 | 1.00 | 1.00 | 0.96 | 0.92 | 1.00 | |
+| 2 | 1.00 | 1.00 | 0.96 | **1.00** | 1.00 | |
+| 3 | 1.00 | 1.00 | 0.96 | **1.00** | 1.00 | drawer effort 53 -> 39 over rounds |
+Rollout success (train-range seeds, 20% exploration) 0.93-0.99 every round; 150 rollouts / family / round added
+(failures kept). Generic got the same loop (`v2_onpolicy_r4_generic_s0`, round 0 val already 1.00 everywhere).
+
+### 9d. Real stations with ROBOTS embodiments (tranche1: panda / ur5e_2f85 / probe, ~130 train episodes per
+family; scripted-anchored ranked planner; 20 paired test episodes; Gen3 held out = zero-shot)
+| family | robot | heuristic | typed | generic | prior-mean |
+|---|---|---|---|---|---|
+| peg_insert | ur5e / panda | 1.00 / 1.00 | 1.00 / 1.00 (more effort) | 1.00 / 0.95 | 1.00 / 1.00 |
+| drawer_open | ur5e / panda | 0.95 / 0.70 | 0.65 / 0.60 | 0.90 / 0.55 | 0.95 / 0.60 |
+| door_open | ur5e / panda | 0.45 / 0.50 | **0.05 / 0.15** | 0.05 / 0.10 | 0.35 / 0.20 |
+| twist_lock | ur5e / panda | 0.65 / 0.60 | 0.55 / 0.50 | 0.40 / 0.40 | 0.60 / 0.40 |
+| tool_return | ur5e / panda | 0.55 / 0.30 | 0.55 / 0.15 | 0.50 / 0.20 | 0.50 / 0.20 |
+| machine_tending | ur5e / panda | 0.10 / 0.00 | 0.00 / 0.00 | 0.00 / 0.00 | 0.05 / 0.00 |
+| peg_insert / drawer_open / twist_lock / fixture_place | **gen3 (held out)** | 0.80 / 0.35 / 0.60 / 0.80 | 0.90 / 0.25 / 0.55 / 0.55 | 0.90 / 0.35 / 0.45 / 0.75 | 0.85 / 0.30 / 0.55 / 0.75 |
+(remaining families / robots: `results/v2/closed_loop/v2_g3_robots_t1a_*.json` when finished.) Earlier CEM
+(unconstrained) runs on the same robots: singulation 0.00 vs heuristic 0.25-0.40, twist_lock 0.00-0.10 vs 0.60-0.65.
+**G3 on real robots: NOT met** with tranche1-size data (~100 episodes per robot x family): the planner is at or
+below the scripted policy, much worse on door_open; the anchor margin (0.15) does not stop harmful deviations
+because the model is confidently wrong there. **G5 (Gen3 zero-shot, typed planner / same planner on UR5e)**:
+peg_insert 0.90 / 1.00 (90%), twist_lock 0.55 / 0.55 (100%), drawer_open 0.25 / 0.65 (38%) — mixed; adapter data 0.
+Multi-robot latent recovery (tranche1 test): bulk friction 0.90 @1, fixture_place mass 0.99 @1, peg mass 0.96 @1,
+machine_tending mass 0.94 @2, tool_return mass 0.90 @3; door/drawer damping, clearance, singulation friction fail.
+Data hygiene: 5-16% of real-robot episodes in bin_clearing / conveyor_sort / machine_tending / tool_return /
+pouch_transfer contain simulator blow-ups and are dropped (counts in the training logs) — flagged to ENVS/ROBOTS.

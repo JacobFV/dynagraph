@@ -95,6 +95,66 @@ def decide_env_ranked(planner: CEMPlanner, ad, hist, emb, rng, n_cand=16, n_pert
     return best
 
 
+class ResidualPlanner:
+    """safe residual planner on real stations (lead request): the scripted action is the default; candidates are
+    the scripted call, small perturbations of it and the env's feasible candidates; each is scored by an ENSEMBLE of
+    models (independent training seeds). Deviate from scripted only when the lower confidence bound of the predicted
+    improvement, mean_m(dC) - k * std_m(dC), is > 0 (epistemic uncertainty = ensemble disagreement)."""
+
+    def __init__(self, planners, k=1.0, n_pert=15, n_cand=16, pert=0.15):
+        self.planners, self.k, self.n_pert, self.n_cand, self.pert = planners, k, n_pert, n_cand, pert
+        self.mode = planners[0].mode
+        self.search = "residual"
+        self.log = []
+
+    def reset(self):
+        for p in self.planners:
+            p.reset()
+
+    def decide(self, ad, hist, emb, rng):
+        from .env_adapter import rel_params
+        sc = ad.env.scripted() if hasattr(ad.env, "scripted") else None
+        pool = list(ad.candidate_skills(None, self.n_cand, rng))
+        if sc is None:
+            return pool[0] if pool else None, {}
+        pool = [sc] + [api.SkillCall(sc.skill, {k: (v * float(rng.uniform(1 - self.pert, 1 + self.pert)) if np.isscalar(v)
+                                                    and not isinstance(v, bool) else v) for k, v in sc.params.items()},
+                                     target=sc.target, effector=sc.effector) for _ in range(self.n_pert)] + pool
+        scores = np.full((len(self.planners), len(pool)), np.nan)
+        lat_sd = np.zeros((len(self.planners), len(pool)))
+        for (skill, target) in {(c.skill, c.target) for c in pool}:
+            idx = [i for i, c in enumerate(pool) if c.skill == skill and c.target == target]
+            p0 = ad.target_pos(target)
+            qt = (lambda t: t[0] if len(t) == 1 else f"pile:{target}")(ad.target_ids(target))
+            frame = ad.frame(target)
+            calls = np.stack([S.named_call_vector(skill, rel_params(pool[i].params, p0)) for i in idx])
+            for m, pl in enumerate(self.planners):
+                true_z, true_m = S.labels_to_z(ad.oracle_latents(target)) if pl.mode == "oracle" else (None, None)
+                ctx, mem = pl._prepare(hist, frame, emb, qt)
+                zin, Z = pl._latent_inputs(mem, true_z, true_m)
+                ct = torch.as_tensor(calls, device=pl.dev)
+                pl.eff_ref = 1.0
+                _, p_ = pl._costs(ctx, zin, ct)
+                pl.eff_ref = float(p_["effort"].median().clamp(min=1e-6))
+                cost, _ = pl._costs(ctx, zin, ct)
+                sc_ = cost.mean(1) + pl.cfg.lam_unc * (cost.std(1) if cost.shape[1] > 1 else 0)
+                scores[m, idx] = torch.nan_to_num(sc_, nan=1e9).cpu().numpy()
+                if cost.shape[1] > 1:
+                    lat_sd[m, idx] = cost.std(1).cpu().numpy()
+        d = scores[:, :1] - scores                       # improvement over scripted, per model
+        ens_sd = d.std(0) if len(self.planners) > 1 else np.zeros(d.shape[1])
+        sd = np.sqrt(ens_sd ** 2 + (lat_sd.mean(0) ** 2 + lat_sd.mean(0)[0] ** 2))   # epistemic + latent spread
+        lcb = d.mean(0) - self.k * sd
+        lcb[0] = 0.0
+        j = int(np.nanargmax(lcb))
+        if not lcb[j] > 0:
+            j = 0
+        info = dict(chosen=j, deviated=j != 0, lcb=float(lcb[j]), mean_impr=float(d.mean(0)[j]),
+                    scripted=dict(sc.params), chosen_params=dict(pool[j].params), chosen_skill=pool[j].skill)
+        self.log.append(info)
+        return pool[j], info
+
+
 def decide_env(planner: CEMPlanner, ad, hist, emb, rng, n_cand=32):
     """real-station decision: group the env's candidates by (skill, target); CEM per group over target-relative scalar
     params (bounds = group candidate range, population seeded with them); return the best (call, is_probe, info)."""
@@ -202,6 +262,13 @@ def run_env_episode(ad, task, policy, planner=None, rng_seed=0, max_steps=None, 
             c0 = cs[int(rng.integers(len(cs)))]
             frame0 = ad.frame(c0.target)
             out = ad.execute(c0, relative=False)
+        elif getattr(planner, "search", "cem") == "residual":
+            call, info = planner.decide(ad, hist, emb, rng)
+            if call is None:
+                break
+            frame0 = ad.frame(call.target)
+            out = ad.execute(call, relative=False)
+            rec["deviations"] = rec.get("deviations", 0) + int(info.get("deviated", False))
         elif getattr(planner, "search", "cem") == "ranked":
             best = decide_env_ranked(planner, ad, hist, emb, rng)
             if best is None:

@@ -282,7 +282,10 @@ class ShelfRestock(StationEnv):
     probe_kw = dict(max_open=0.06, grip_max=100.0)
     settle_s = 0.8
     SHELF_Y, TOP = 0.35, 0.62
-    BAYS = (-0.2, 0.35, 0.9)
+    # compact aisle (r5): cart and bays within +-0.6 m of the mobile base start (x = 0.22), because the real-robot
+    # adapter's pre-skill lateral base alignment is clipped to +-0.6 m around the mount
+    BAYS = (0.05, 0.42, 0.79)
+    CART_X, BASE_X = -0.35, 0.22
     success_doc = ("every item rests upright inside its assigned bay region on the shelf; none damaged or dropped")
     hidden_doc = ("item mass (incl. heavy x3-6), item<->gripper friction (oily), fragile items (crush 15-45 N): grip "
                   "force / lift speed; drive distance (time) along the aisle")
@@ -292,18 +295,18 @@ class ShelfRestock(StationEnv):
         from .stations import standard_mounts
         top, sy = self.TOP, self.SHELF_Y
         # shelf (one tier, robot side open) along the aisle + the source cart at the start of the aisle
-        scene.static_box((0.35, sy, top - 0.015), (0.85, 0.15, 0.015), rgba=(0.7, 0.55, 0.2, 1), name="shelf")
-        for x in (-0.48, 1.18):
+        scene.static_box((0.42, sy, top - 0.015), (0.55, 0.15, 0.015), rgba=(0.7, 0.55, 0.2, 1), name="shelf")
+        for x in (-0.11, 0.95):
             scene.static_box((x, sy, (top - 0.03) / 2), (0.02, 0.13, (top - 0.03) / 2), rgba=DARK)
-        scene.static_box((0.35, sy + 0.16, top + 0.15), (0.85, 0.01, 0.15), rgba=(0.55, 0.45, 0.2, 1))
-        cx = -0.85
-        scene.static_box((cx, sy, top - 0.015), (0.2, 0.15, 0.015), rgba=(0.5, 0.52, 0.55, 1), name="cart")
-        for dx in (-0.17, 0.17):
+        scene.static_box((0.42, sy + 0.16, top + 0.15), (0.55, 0.01, 0.15), rgba=(0.55, 0.45, 0.2, 1))
+        cx = self.CART_X
+        scene.static_box((cx, sy, top - 0.015), (0.18, 0.15, 0.015), rgba=(0.5, 0.52, 0.55, 1), name="cart")
+        for dx in (-0.15, 0.15):
             scene.static_box((cx + dx, sy, (top - 0.03) / 2), (0.02, 0.12, (top - 0.03) / 2), rgba=DARK)
-        scene.region("cart", (cx, sy, top + 0.05), (0.2, 0.15, 0.06), support_z=top)
+        scene.region("cart", (cx, sy, top + 0.05), (0.18, 0.15, 0.06), support_z=top)
         for i, bx in enumerate(self.BAYS):
-            scene.region(f"bay{i}", (bx, sy, top + 0.05), (0.2, 0.12, 0.08), support_z=top)
-            scene.marker((bx, sy), (0.2, 0.12), top, rgba=(0.1, 0.8, 0.2, 0.3))
+            scene.region(f"bay{i}", (bx, sy, top + 0.05), (0.16, 0.12, 0.08), support_z=top)
+            scene.marker((bx, sy), (0.16, 0.12), top, rgba=(0.1, 0.8, 0.2, 0.3))
         self.surface_z = top
         self.safe_z = top + 0.25
         n = int(params.get("n_items", rng.integers(3, 6)))
@@ -318,7 +321,7 @@ class ShelfRestock(StationEnv):
             oily = rng.random() < 0.15
             bay = int(rng.integers(len(self.BAYS)))
             eid = f"item{k}"
-            x = cx + (k % 3 - 1) * 0.11 + rng.uniform(-0.01, 0.01)
+            x = cx + (k % 3 - 1) * 0.1 + rng.uniform(-0.01, 0.01)
             y = sy + (k // 3 - 0.5) * 0.1 + rng.uniform(-0.01, 0.01)
             scene.part(eid, shape, tuple(h), (x, y, top + h[2] + 0.002), yaw=rng.uniform(-0.3, 0.3), mass=mass,
                        mu=float(rng.uniform(0.3, 0.8)), mu_grip=float(rng.uniform(0.08, 0.2) if oily else rng.uniform(0.4, 1.0)),
@@ -326,13 +329,14 @@ class ShelfRestock(StationEnv):
                        extra_hidden=dict(heavy=bool(heavy), oily=bool(oily), crush_n=fragility(rng, 0.3, 15, 45, params)))
             self.assign[eid] = f"bay{bay}"
         standard_mounts(scene, (0.0, 0.0), top, (1.2, sy - 0.15), gantry_h=1.5)
-        scene.mounts["gantry"] = [((0.1, sy - 0.05, 1.45), 0.0)]
-        scene.mounts["mobile_manipulator"] = [((cx, sy - 0.55, 0.0), math.pi / 2)]
+        scene.mounts["gantry"] = [((0.22, sy - 0.05, 1.45), 0.0)]
+        lane_off = float(params.get("lane_offset", 0.45))           # base centre distance from the shelf line
+        scene.mounts["mobile_manipulator"] = [((self.BASE_X, sy - lane_off, 0.0), math.pi / 2)]
         scene.mounts["arm"] = [((cx, sy - 0.32, top), math.pi / 2)]
         scene.camera = dict(pos=(0.1, -0.9, 1.9), lookat=(0.1, sy, top), view_pos=(0.3, -1.6, 1.6),
                             view_lookat=(0.1, sy, top))
         self.budget = int(params.get("budget", 5 * n + 4))
-        self.lane_y = sy - 0.55
+        self.lane_y = sy - lane_off
 
     def items(self):
         return self.objects("part")
@@ -390,7 +394,7 @@ class ShelfRestock(StationEnv):
         bay = self.assign.get(self.held, "bay0")
         p = dict(dx=0.0, dy=0.0, release_h=0.01, speed=0.35, lower_speed=0.1)
         r = rng if rng is not None else self.rng
-        p.update(dx=float(r.uniform(-0.12, 0.12)), dy=float(r.uniform(-0.05, 0.05)))
+        p.update(dx=float(r.uniform(-0.09, 0.09)), dy=float(r.uniform(-0.04, 0.04)))
         return SkillCall("place", p, target=bay)
 
     def candidates(self, n, rng):

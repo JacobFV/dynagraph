@@ -344,9 +344,9 @@ class MjEmbodiment:
 
     def build(self, mjspec: mujoco.MjSpec, mount_pose=((0, 0, 0), (1, 0, 0, 0))) -> None:
         child = self.load_child()
-        # pad contact time constant: 0.004 s (ENVS convention at 1 ms) but never below 2.5 x the scene timestep
+        # pad contact time constant: 0.004 s (ENVS convention) but never below 5 x the scene timestep
         # (at 2 ms a 0.004 s constant is marginal and a 70 N pinch can eject a part)
-        tc = max(0.004, 2.5 * float(mjspec.option.timestep))
+        tc = max(0.004, 5.0 * float(mjspec.option.timestep))
         for e in self.cfg.effectors:
             if e.gripper.kind == 'suction':
                 continue

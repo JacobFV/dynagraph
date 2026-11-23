@@ -348,7 +348,14 @@ def train(args):
         frac = min(step / max(args.steps * 0.3, 1), 1.0)
         fam = fam_list[step % len(fam_list)]
         st = tr[fam]
-        idx = torch.randint(0, st.n, (args.bs,), device=dev, generator=gen)
+        if args.robot_balance:
+            if not hasattr(st, "_w"):
+                rob = st.robot
+                _, inv, cnt = np.unique(rob, return_inverse=True, return_counts=True)
+                st._w = torch.as_tensor(1.0 / cnt[inv], device=dev, dtype=torch.float32)
+            idx = torch.multinomial(st._w, args.bs, replacement=True, generator=gen)
+        else:
+            idx = torch.randint(0, st.n, (args.bs,), device=dev, generator=gen)
         b, lab = st.gather(idx, drop_hist=args.drop_hist, gen=gen)
         with torch.autocast("cuda", dtype=torch.bfloat16, enabled=amp):
             loss, logs = v2_loss(model, b, lab, tf_prob=args.tf_prob * (1.5 - 0.5 * frac))
@@ -382,7 +389,7 @@ def train(args):
     write_rows(rows)
     print(f"[{args.run}] done in {elapsed:.0f}s ({args.steps * args.bs / elapsed:.0f} samples/s) -> {ck}", flush=True)
     if not args.no_test:
-        run_eval(ck, args.data, splits=("test", "test_robot", "test_stress"),
+        run_eval(ck, args.data, splits=tuple(args.eval_splits.split(",")),
                  families=args.families.split(",") if args.families else None)
     return ck
 
@@ -618,7 +625,8 @@ def onpolicy(args):
         targs = argparse.Namespace(data=dr, variant=c["variant"], run=run_r, steps=args.steps, bs=512, lr=3e-4, d=c["d"],
                                    seed=args.seed, tf_prob=0.5, drop_hist=0.15, holdout_family=None, families=None,
                                    max_episodes=None, init=ck, freeze=None, log_every=500, eval_every=10 ** 9,
-                                   no_amp=False, no_test=True, no_phys=not c.get("phys", False))
+                                   no_amp=False, no_test=True, no_phys=not c.get("phys", False), robot_balance=False,
+                                   eval_splits="test")
         ck = train(targs)
     write_rows(rows)
     print("onpolicy done", flush=True)
@@ -652,6 +660,8 @@ def main(argv=None):
     t.add_argument("--eval-every", type=int, default=5000)
     t.add_argument("--no-amp", action="store_true")
     t.add_argument("--no-phys", action="store_true", help="r1-style free head (no physics margins)")
+    t.add_argument("--eval-splits", default="test,test_robot,test_stress")
+    t.add_argument("--robot-balance", action="store_true", help="sample rows with inverse robot frequency per family")
     t.add_argument("--no-test", action="store_true")
     cb = sp.add_parser("calibrate")
     cb.add_argument("--ckpt", required=True)

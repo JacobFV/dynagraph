@@ -16,9 +16,13 @@ for name, ck in cks.items():
     pols[f"planner_{name}"] = ("planner", CEMPlanner(m, name, cfg))
     if name == "typed":
         pols["planner_oracle(labelled)"] = ("planner", CEMPlanner(m, "oracle", cfg))
-        pols["planner_prior_mean"] = ("planner", CEMPlanner(m, "prior", cfg))
+        if os.environ.get("NO_PRIOR", "0") != "1":
+            pols["planner_prior_mean"] = ("planner", CEMPlanner(m, "prior", cfg))
+RES = [c for c in os.environ.get("RESIDUAL", "").split(",") if c]     # ensemble checkpoints (training seeds)
+if RES:
+    pols["planner_residual"] = ("planner", H.ResidualPlanner([CEMPlanner(load_model(c)[0], "typed", cfg) for c in RES]))
 for _, pl_ in pols.values():
-    if pl_ is not None:
+    if pl_ is not None and not isinstance(pl_, H.ResidualPlanner):
         pl_.search = os.environ.get("SEARCH", "ranked")      # real stations: support-constrained ranking by default
         am = os.environ.get("ANCHOR", "0.15")                 # scripted-anchored margin ("none" = pure ranking)
         pl_.anchor_margin = None if am == "none" else float(am)
@@ -28,11 +32,12 @@ for fam in fams:
     robot, split = os.environ.get("ROBOT", "probe"), os.environ.get("SPLIT", "test")
     tasks = [api.TaskSpec(fam, "", SEED_BASE.get(split, 2_000_000) + 900_000 + i, robot, split) for i in range(n)]
     res = H.paired_eval(lambda: EnvAdapter(make_env(fam)), tasks, pols)
-    summ = H.summarize(res)
+    summ = H.summarize(res, ref="heuristic")
     out[fam] = dict(summary=summ, episodes=res)
     print(f"== {fam} ({time.time() - t0:.0f}s)", flush=True)
     for name, sm in summ.items():
-        print(f"  {name:26s} succ={sm['success'][0]:.2f} [{sm['success'][1]:.2f},{sm['success'][2]:.2f}] effort={sm['effort'][0]:.2f} "
+        dev = np.mean([e.get("deviations", 0) / max(e["steps"], 1) for e in res[name]])
+        print(f"  {name:26s} succ={sm['success'][0]:.2f} [{sm['success'][1]:.2f},{sm['success'][2]:.2f}] effort={sm['effort'][0]:.2f} dev={dev:.2f} "
               f"risk={sm['risk_events'][0]:.2f} steps={sm['steps']:.1f}", flush=True)
         for k, v in sm.items():
             if isinstance(v, tuple):
