@@ -232,7 +232,8 @@ def test_single_batch_matches_store_and_ignores_labels():
     hist = [s["inter"] for s in ep.steps[:2]]
     for h in hist:
         h.labels = {"offset_x": 123.0}    # must not matter (labels never enter V2Batch)
-    b = single_batch(hist, ep.steps[2]["frame"], _emb(ep.robot), ep.steps[2]["inter"].call_vec[None])
+    it2 = ep.steps[2]["inter"]
+    b = single_batch(hist, ep.steps[2]["frame"], _emb(ep.robot), S.named_call_vector(it2.skill, it2.params)[None])
     b2, _ = st.gather(torch.tensor([i]))
     assert torch.allclose(b.seg[0, :2], b2.seg[0, :2], atol=2e-3)
     assert torch.allclose(b.call, b2.call)
@@ -325,3 +326,23 @@ def test_env_adapter_params_segment_and_labels():
     assert lab == {"mass": 1.2, "friction": 0.4, "grip_friction": 0.7}
     pile = A.map_labels({"hidden": {"a": {"mass": 0.1, "mu": 0.3}, "b": {"mass": 0.2, "mu": 0.5}}}, ["a", "b"])
     assert abs(pile["mass"] - 0.3) < 1e-9 and abs(pile["bulk_friction"] - 0.4) < 1e-9
+
+
+def test_named_call_and_physics_margins_direction():
+    """physics margins move the right way with the slot values (independent of training)."""
+    from physmem.models.v2.physics import physics_features, PHYS_NAMES
+    v = S.named_call_vector("pick", {"grip_force": 30.0, "accel": 2.0, "height": 0.12, "speed": 0.3})
+    assert v[S.SKILLS.index("pick")] == 1 and v[len(S.SKILLS) + S.P_INDEX["grip_force"]] == 30.0
+    call = torch.as_tensor(np.stack([v, v]))
+    z = torch.zeros(2, S.N_LATENT)
+    z[1, S.LATENT_INDEX["mass"]] = 1.0                      # heavier object in sample 1
+    emb = torch.as_tensor(np.stack([_emb("synth_arm_a")] * 2))
+    ent = torch.zeros(2, 1, S.ENT_DIM)
+    phi, base, bm = physics_features(z, call, emb, ent, torch.ones(2, 1, dtype=torch.bool))
+    gi = PHYS_NAMES.index("grip_margin")
+    assert phi[1, gi] < phi[0, gi] - 0.9                     # log-margin drops by ~1 (mass x e)
+    vp = S.named_call_vector("push", {"dir": 1.0, "dist": 0.1, "speed": 0.5})
+    z = torch.zeros(2, S.N_LATENT)
+    z[1, S.LATENT_INDEX["friction"]] = 1.0                   # higher friction -> shorter travel
+    phi, base, bm = physics_features(z, torch.as_tensor(np.stack([vp, vp])), emb, ent, torch.ones(2, 1, dtype=torch.bool))
+    assert bm[0, 0] and base[1, 0] < base[0, 0]

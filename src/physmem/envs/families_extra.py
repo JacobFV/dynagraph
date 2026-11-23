@@ -29,7 +29,9 @@ class TwistLock(_FineBase):
         x, y = rng.uniform(-0.15, 0.15), rng.uniform(-0.05, 0.12)
         base_h = 0.03
         scene.static_box((x, y, top + base_h / 2), (0.04, 0.04, base_h / 2), rgba=(0.35, 0.37, 0.4, 1))
-        scene.knob("knob", (x, y, top + base_h), frictionloss=fl, damping=dmp, mu_grip=mug)
+        _, kinfo = scene.knob("knob", (x, y, top + base_h), frictionloss=fl, damping=dmp, mu_grip=mug)
+        from .scene import fragility
+        kinfo.hidden["crush_n"] = fragility(rng, 0.6, 20, 70, params)      # plastic knob: too hard a pinch cracks it
         self.hidden_task = dict(frictionloss=fl, mu_grip=mug, damping=dmp)
         self.target = math.pi / 2
         self.budget = int(params.get("budget", 5))
@@ -178,7 +180,7 @@ class MachineTending(DoorOpen):
 # Everything within ~0.25 m of the `arm` mount at the near bench edge (0, -0.45, bench top); parts <= 30 mm, <= 80 g.
 from .families_bulk import BinClearing                      # noqa: E402
 from .families_fine import PegInsert                        # noqa: E402
-from .scene import sample_part_params                       # noqa: E402
+from .scene import fragility, sample_part_params            # noqa: E402
 
 LIGHT_ZONE_Y = -0.24
 
@@ -196,7 +198,7 @@ class SmallPartsPick(BinClearing):
         top = bench_station(scene)
         self.surface_z = top
         self.safe_z = top + 0.12
-        n = int(params.get("n_parts", rng.integers(3, 7)))
+        n = int(params.get("n_parts", rng.integers(2, 5)))
         sx, sy = -0.08 + rng.uniform(-0.01, 0.01), LIGHT_ZONE_Y + rng.uniform(-0.01, 0.01)
         tray = (0.055, 0.045)
         fz = scene.open_box((sx, sy, top), tray, 0.03, prefix="srcbin", t=0.005)
@@ -221,7 +223,7 @@ class SmallPartsPick(BinClearing):
             z = fz + 0.02 + 0.03 * (i // 4)
             scene.part(f"part{i:02d}", pp["shape"], pp["half"], (x, y, z), yaw=rng.uniform(-math.pi, math.pi), mass=mass,
                        mu=pp["mu"], mu_grip=pp["mu_grip"], restitution=pp["restitution"], timeconst=pp["timeconst"],
-                       extra_hidden=dict(heavy=pp["heavy"], oily=pp["oily"]))
+                       extra_hidden=dict(heavy=pp["heavy"], oily=pp["oily"], crush_n=fragility(rng, 0.4, 6, 20, params)))
         self.budget = int(params.get("budget", 4 * n))
         # SO-100-class robots mount at the near edge; the light zone is within ~0.25 m of that mount
         scene.camera = dict(pos=(0.0, LIGHT_ZONE_Y + 0.4, top + 0.6), lookat=(0.0, LIGHT_ZONE_Y, top),

@@ -28,7 +28,7 @@ for fam in fams:
         if out.done:
             break
     b = env.render(width=640, height=480)
-    succ = env.success()
+    succ = env.solved()
     iio.imwrite(f"results/v2/envs/{fam}_{robot}_reset.png", a)
     iio.imwrite(f"results/v2/envs/{fam}_{robot}_end.png", b)
     tiles.append(np.concatenate([a, b], 1)[::2, ::2])

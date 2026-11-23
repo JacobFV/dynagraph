@@ -36,6 +36,7 @@ def build_gantry(tool='vacuum'):
     """-> child MjSpec of the gantry (+ tool), origin = beam height at the work-area centre."""
     from physmem.embodiments.core import add_suction_cup
     s = mujoco.MjSpec()
+    s.compiler.degree = False          # joint ranges below are in radians (MjSpec defaults to degrees)
     base = s.worldbody.add_body(name='gantry_base')
     # (no frame visuals: the bridge/rails would sit between the station's tracker camera and the work area; the frame
     # is implied - masses live on small hidden spheres)
@@ -62,7 +63,7 @@ def build_gantry(tool='vacuum'):
     tool_b = yw.add_body(name='cup' if tool == 'vacuum' else 'clamp', pos=[0, 0, -0.03], quat=[0, 1, 0, 0])
     if tool == 'vacuum':
         add_suction_cup(s, parent_body=tool_b, stem=0.10, radius=0.04, dp=60e3, mass=6.0,
-                        cups=[(-0.08, -0.05), (0.08, -0.05), (-0.08, 0.05), (0.08, 0.05)], plate=2.0)
+                        cups=[(-0.065, -0.04), (0.065, -0.04), (-0.065, 0.04), (0.065, 0.04)], plate=2.0)
         # centre small cup (zone 4) for small parts: its own body/actuator, 6 mm proud of the big lips
         cb = tool_b.add_body(name='cup4', pos=[0, 0, 0.10])   # flush with the big cups
         cb.add_geom(name='cup4_disk', type=G.mjGEOM_CYLINDER, size=[0.015, 0.004, 0], pos=[0, 0, 0.004], contype=0,

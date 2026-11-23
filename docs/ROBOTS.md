@@ -660,3 +660,41 @@ Round-4 changes:
   - **Door/drawer:** hand-over-hand (a 6 cm tab cannot take two Dex3 pinches at once). Door 2/5 (0.54), drawer 3/5
     (0.71); the dominant failure is still `grasp_failed` on the tab.
   - **Totals:** G1 floating 5/20 (singulation 1/5 → 0/5).
+
+## 9. Round 5: gantry drop diagnosis, conveyor tools, envs-r3 matrix
+
+### Gantry depalletize: what the "3rd-placement drop" was, and the other bugs found
+`scripts/robots_depal_trace.py` logs per-cup seal state, lip contacts, vacuum commands, carton height/tilt, TCP
+acceleration and wrist force:
+1. **Not a vacuum failure: a collision in transit.** At the drop the carried carton was still sealed on all 5 cups
+   (8/8 lip contacts, tilt 0°). The "drop" was the *previously placed* neighbour (env: any object touching the floor),
+   pushed off the outfeed by the carried carton, whose underside passed below the neighbour's top. **Fix:** `place`
+   now carries the part so its underside clears the surface by the part's own height + 5 cm before the vertical
+   descent.
+2. **Gantry yaw locked at ±3.2°.** A fresh `MjSpec` defaults to DEGREES, so the yaw range ±3.2 compiled to
+   ±0.056 rad. Cup rows could not align with cartons, and IK reported wrong-yaw targets as unreachable. **Fix:**
+   `compiler.degree = False` in `gantry.py`. This affected all earlier gantry numbers.
+3. **Adhesion through zero-margin pairs.** With the envs-r3 pad pairs (margin 0), the cup-lip contact vanishes at the
+   first micron of separation, so MuJoCo adhesion (which acts only through existing contacts) cannot lift: every
+   cup "peels" at once on lift-off. **Fix:** lip pairs keep a 2 mm margin (ENVS's stiff solref/solimp kept).
+4. **Zone mask too lenient / plate too wide.** Lips overhung carton edges under tracker noise (2 of 5 cups half
+   sealed). **Fix:** the whole lip must sit at least 8 mm inside the estimated face, and the plate is compact
+   (cups at x ±0.065, y ±0.04) so all 4 big cups fit the smallest carton (0.24 × 0.19 m).
+5. **Held criterion:** a suction pick is held while ANY enabled cup is sealed (was "> 50% of enabled cups").
+
+**Oracle-knob depalletize** (envs-r3 redefinition: payload 30 kg, so nothing is overweight for the gantry; slick-film
+cartons; ORACLE = evaluator-only mass and slick flags used ONLY to choose suction 1.0, lift_speed 0.05,
+max_acc 0.8): **0/5 success (target was ≥ 4/5), progress 0.25–0.62.** Heavy 15–22 kg cartons now lift and place
+(seed 2: the 15.4 kg carton placed). Remaining failures:
+- the env's scripted policy re-picks cartons already on the outfeed from stale tracker estimates (the carried carton
+  and the quill occlude them), undoing progress;
+- it flags liftable cartons after two failed lifts, which fails the task for a 30 kg-payload robot;
+- residual seal losses on some heavy or slick cartons, not yet isolated.
+The first two are in ENVS's scripted policy / tracker (reported to ENVS); the third needs more tracing.
+
+### Conveyor tools for the gantry
+- The belt-tracking pick now also drives suction: zone selection from the estimated face, cup pressed onto the moving
+  part, vacuum on at grasp height, seal check.
+- **gantry_vacuum:** conveyor parts are small and often cylindrical; a flat 30 mm cup lip does not seal on curved
+  tops, so it is a poor tool for that family.
+- **gantry_clamp:** places parts (2 in the first smoke episode) with collisions against the belt rails.

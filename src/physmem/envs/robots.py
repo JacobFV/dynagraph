@@ -121,9 +121,13 @@ class EmbodimentRobot:
             mu = info.hidden.get("mu_grip", 0.8)
             for gname in info.geoms:
                 for pg in pad_geoms:
-                    # (tried stiff small-margin pairs for the ENVS 'pads pass through small spheres' issue: parts then
-                    # stuck between the pads after release -> reverted; default pair contact)
-                    s.add_pair(geomname1=pg, geomname2=gname, condim=4, friction=[mu, mu, 0.005, 0.0001, 0.0001])
+                    # stiff pad pairs with NO margin (ENVS envs-r3 PAD_SOLREF/PAD_SOLIMP: the default 0.02 s pair let a
+                    # squeeze push small stiff spheres through the pads; a 1 mm margin made parts stick after release)
+                    # suction lips need a contact MARGIN: MuJoCo adhesion acts only through existing contacts, so with
+                    # margin 0 the lip contact vanishes at the first micron of separation and the vacuum cannot hold
+                    s.add_pair(geomname1=pg, geomname2=gname, condim=4, friction=[mu, mu, 0.005, 0.0001, 0.0001],
+                               solref=[0.004, 1.0], solimp=[0.95, 0.99, 0.001, 0.5, 2.0],
+                               margin=0.002 if "_lip" in pg else 0.0)
             for bn in pad_bodies:
                 s.add_exclude(bodyname1=info.body, bodyname2=bn)
 

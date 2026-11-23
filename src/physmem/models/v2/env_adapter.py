@@ -356,3 +356,89 @@ def collect_episode(env, task, policy="mixed", rng=None, max_steps=None):
         if out.done:
             break
     return task.family, task.robot, steps
+
+
+# ----------------------------------------------------------------- offline conversion of stored ENVS episodes
+class _ReplayEnv:
+    """minimal env stand-in for EnvAdapter's actor-legal helpers during offline replay (time cursor + held object,
+    the latter tracked from the actor's OWN successful picks/places, never from labels)."""
+
+    def __init__(self):
+        self.t = 0.0
+        self.held = None
+
+
+_SPEC_CACHE = {}
+
+
+def robot_spec(name):
+    """EmbodimentSpec for a robot name (ROBOTS registry; ENVS test-only probe)."""
+    if name in _SPEC_CACHE:
+        return _SPEC_CACHE[name]
+    spec = None
+    try:
+        import physmem.embodiments as E
+        spec = E.make(name).spec
+    except Exception:
+        pass
+    if spec is None:   # ENVS test-only gantry (docs/ENVS.md)
+        spec = api.EmbodimentSpec(name=name, kind="arm", effectors=("hand",), gripper="parallel", reach_m=1.0,
+                                  payload_kg=20.0, max_ee_speed=1.0, max_ee_force=250.0, dof=6, floating_base=False,
+                                  source="envs-probe")
+    _SPEC_CACHE[name] = spec
+    return spec
+
+
+def convert_episode(ep: dict):
+    """stored ENVS episode dict (physmem.envs.io) -> (family, robot, steps[dict(frame, inter)]) with labels."""
+    task = ep["task"]
+    fam, robot = task["family"], task["robot"]
+    ad = EnvAdapter.__new__(EnvAdapter)
+    ad.env = _ReplayEnv()
+    ad.task = api.TaskSpec(fam, task.get("category", ""), task["seed"], robot, task["split"], task.get("params", {}))
+    ad.idx = EventIndex()
+    ad.idx.add(ep["events"])
+    ad.k, ad.lat = 0, {}
+    ad.pool = []
+    steps, prev = [], {}
+    for k, st in enumerate(ep["steps"]):
+        c = st["call"]
+        call = api.SkillCall(c["skill"], dict(c["params"]), target=c.get("target"), effector=c.get("effector"))
+        ad.pool = [call]
+        ad.env.t = float(st["t_start"])
+        tids = ad.target_ids(call.target)
+        frame = ad.frame(call.target)
+        p0 = ad.target_pos(call.target)
+        seg = build_segment(ad.idx, float(st["t_start"]), float(st["t_end"]), tids, p0)
+        ad.env.t = float(st["t_end"])
+        p1 = ad.target_pos(call.target)
+        m = st["metrics"]
+        peak = float(np.abs(seg[:, 12:15]).max()) if len(seg) else 0.0
+        cont = np.array([*(p1 - p0), float(m.get("progress", 0.0)), peak / 50.0, float(st.get("duration_s", 0.0)),
+                         float(m.get("progress_delta", 0.0)), float(m.get("max_robot_contact_n", 0.0)) / 150.0],
+                        np.float32)
+        evs = np.zeros(S.N_EVENTS, np.float32)
+        emask = np.ones(S.N_EVENTS, bool)
+        evs[0] = float(st.get("success", False) or m.get("success", False))
+        evs[1] = float(bool(m.get("slip", False)))
+        evs[2] = float(bool(m.get("drop", False)) or m.get("drops", 0) > prev.get("drops", 0))
+        evs[3] = float(bool(m.get("jam", False)))
+        evs[4] = float(bool(m.get("collision", False)) or m.get("collisions", 0) > prev.get("collisions", 0))
+        evs[5] = float(bool(m.get("stall", False)) or st.get("status") in ("guard_tripped", "timeout", "unreachable"))
+        prev = m
+        eff = st.get("effort", {})
+        rcall = replace(call, params=rel_params(call.params, p0))
+        tid = tids[0] if len(tids) == 1 else f"pile:{call.target}"
+        inter = S.Interaction(episode_id=ep.get("episode_id", ""), step=k, family=fam, robot=robot,
+                              call_vec=rcall.vector(), skill=call.skill, params=rcall.params, target_is_query=True,
+                              segment=seg, effort_cost=float(eff.get("cost", 0.0)), effort=dict(eff),
+                              t_end=float(st["t_end"]), outcome_cont=cont, outcome_cont_mask=np.ones(S.N_CONT, bool),
+                              outcome_events=evs, outcome_events_mask=emask,
+                              labels=map_labels(st.get("labels", {}), tids), target_id=tid)
+        steps.append(dict(frame=frame, inter=inter))
+        # actor-side held-object bookkeeping (own commands + own result status)
+        if call.skill == "pick" and st.get("ok", False) and not evs[2]:
+            ad.env.held = tids[0] if len(tids) == 1 else None
+        elif call.skill in ("place", "handover"):
+            ad.env.held = None
+    return fam, robot, steps

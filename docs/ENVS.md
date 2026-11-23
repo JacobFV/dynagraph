@@ -294,14 +294,14 @@ in order, each with its own `data/v2_envs_large/<tranche>/manifest.json` (+ `man
   train on it); its rows moved to `results/v2/envs/generation_large_aborted_tranche2.jsonl`.
 - **From tranche 2 on, every tranche runs from a FROZEN code copy `gb10-direct:~/dynagraph_r3`** (envs + embodiments
   + skills; nobody syncs into it; sha256 of the envs sources = `7095b278...0388`), env version **envs-r3**:
-  - tranche2_envs_r3: 16887 episodes (same plan as above) - RUNNING since 21:37Z (est. 4-6 h)
+  - tranche2_envs_r3: 16887 episodes (same plan as above) - RUNNING since 21:37Z, progress [5200/16887] 2634s (log-time s) at ~23:10Z; probe-heavy start, real-arm tail slower (est. 3-5 h more)
   - tranche3_heldout_robot_envs_r3: 712 episodes gen3_2f85 - queued
   - tranche4_envs_r3: 3830 episodes (redesigned depalletize: probe 200, ur5e_suction 200, fr3_suction 200; fixed
     conveyor_sort; small_parts_pick + small_peg_insert for probe/ur5e/panda/so100/z1; TidyBot on the lower bench:
     peg/fixture/bin/kitting/connector/tool/machine_tending/conveyor; gen3 heldout_robot 120) - queued
   Each finishes with `<dir>/manifest.json` (contains `env_version`, `code_hash`) + `manifest.sha256`, logs
   `~/dynagraph/logs/envs_large_<dir>.{log,md}`.
-- Env versions: tranche1 = envs-r2 (code hash in its manifest); tranche2/3/4 = envs-r3.
+- Env versions: tranche1 = envs-r2 (code hash in its manifest); tranche2/3/4 = envs-r3 (frozen copy). envs-r4 (fragility, resimulate, redesigned bin_clearing/singulation) is in the local repo + `~/dynagraph_dev` only and is NOT in any tranche yet - a tranche 5 on r4 is the next step.
 Policy: per episode 10 % `explore` (random feasible candidates), 90 % `mixed` (per decision 0.4 scripted / 0.4 random
 feasible candidate / 0.2 scripted with speed/force/grasp/approach params x U(0.7, 1.3)); `steps[i].policy_source`.
 Per step stored: call, policy_source, t_start/t_end (skill segment boundaries; the events inside are the 25 Hz
@@ -341,6 +341,61 @@ generated.
    ur5e small_peg 2/2; so100 executes both (small_parts progress 0.2, small_peg 0/2).
 6. shelf_restock with a TidyBot driving along an aisle: NOT done (time); needs base-motion skills from ROBOTS.
 Also: `ENV_VERSION` in `physmem.envs` recorded in each manifest; tests 59/59 pass on envs-r3.
+
+## Round 4 (envs-r4, dev tree; NOT in the running large-generation tranches, which are envs-r3)
+* **Fragile parts / force limits** (so "use max force" is no longer dominant): hidden `crush_n` (N per pad) on
+  bin_clearing parts (35 % fragile, 15-45 N), conveyor items (30 %, 15-45 N), kitting parts (30 %, 15-45 N),
+  fixture blocks (50 %, 25-80 N), tools (50 %, 20-60 N), totes (50 %, 60-140 N), twist-lock knobs (60 %, 20-70 N),
+  small parts (40 %, 6-20 N), drawer tabs (40-120 N) and door tabs (20-60 N). The env monitors the robot's
+  sustained squeeze on each fragile body (sum of robot contact normal forces / 2, EMA over ~30 ms so closing impacts
+  do not count); above the limit the part is DAMAGED (`metrics.damaged`, `labels.damaged`). Episode success is now
+  `env.solved()` = family predicate AND no damaged part (`StepOut.success` uses it).
+* **Interventions** (EVALUATOR-ONLY): `snap = env.snapshot()` (MuJoCo integration state + env bookkeeping +
+  sensor/ActorView caches + robot controller state + rng states + hidden labels), `env.restore(snap)`,
+  `env.set_hidden({eid: {mass, mu, mu_grip, frictionloss, damping, crush_n}})` (edits the compiled model's
+  parameters - body mass/inertia, geom friction, pad-pair friction, joint frictionloss/damping - never poses) and
+  `out = env.resimulate(snap, overrides, call)` = restore + set_hidden + execute. Deterministic: two resimulations
+  of the same branch give identical states; tested that mass 3 kg or mu_grip 0.08 flips a 15 N pick to a slip,
+  with 0 integrity violations.
+* **Decision relevance** (`scripts/envs_decision_relevance.py`): oracle-parameterized scripted (rule-chosen
+  grip / suction / lift-vs-flag / intercept speed / push speed / sweep stop time / search radius from TRUE latents)
+  vs the same rule on PRIOR latents (population medians from 30 train resets, `results/v2/envs/latent_priors.json`)
+  vs the plain scripted baseline; paired seeds, bootstrap 95 % CI of the success gap.
+
+**Decision-relevance table** (envs-r4, probe, 20 paired seeds per family, 1084 s on 4 procs,
+`results/v2/envs/decision_relevance.json`):
+
+| family | oracle-param (true latents) | prior-param (median latents) | plain scripted | gap oracle-prior [95 % CI] | damaged (oracle/prior) | verdict |
+|---|---|---|---|---|---|---|
+| bin_clearing | 0.35 | 0.00 | 0.15 | +0.35 [+0.15, +0.55] | 0.25/0.10 | RELEVANT |
+| singulation | 0.25 | 0.25 | 0.50 | +0.00 [+0.00, +0.00] | 0.00/0.00 | ~0: not relevant yet |
+| bulk_sweep | 0.60 | 0.30 | 0.45 | +0.30 [+0.10, +0.50] | 0.00/0.00 | RELEVANT |
+| peg_insert | 0.95 | 0.90 | 0.95 | +0.05 [-0.10, +0.20] | 0.00/0.00 | ~0: not relevant yet |
+| connector_insert | 0.75 | 0.25 | 0.70 | +0.50 [+0.30, +0.70] | 0.00/0.00 | RELEVANT |
+| tool_return | 0.75 | 0.55 | 0.95 | +0.20 [+0.05, +0.40] | 0.00/0.00 | RELEVANT |
+| fixture_place | 0.95 | 0.80 | 0.75 | +0.15 [+0.00, +0.30] | 0.00/0.00 | borderline |
+| kitting_pocket | 0.30 | 0.00 | 0.40 | +0.30 [+0.10, +0.50] | 0.00/0.00 | RELEVANT |
+| drawer_open | 1.00 | 0.70 | 1.00 | +0.30 [+0.10, +0.50] | 0.00/0.00 | RELEVANT |
+| door_open | 1.00 | 0.75 | 1.00 | +0.25 [+0.05, +0.45] | 0.00/0.00 | RELEVANT |
+| depalletize | 0.95 | 0.35 | 0.90 | +0.60 [+0.40, +0.80] | 0.00/0.00 | RELEVANT |
+| conveyor_sort | 0.00 | 0.00 | 0.00 | +0.00 [+0.00, +0.00] | 0.05/0.00 | ~0: not relevant yet |
+| tote_transfer | 0.30 | 0.15 | 0.20 | +0.15 [-0.05, +0.35] | 0.15/0.00 | borderline |
+| pouch_transfer | 0.30 | 0.50 | 0.85 | -0.20 [-0.40, -0.05] | 0.00/0.00 | NEGATIVE (rule wrong) |
+| twist_lock | 0.90 | 0.75 | 0.65 | +0.15 [+0.00, +0.30] | 0.00/0.00 | borderline |
+| machine_tending | 0.60 | 0.40 | 0.00 | +0.20 [-0.05, +0.45] | 0.00/0.00 | borderline |
+| small_parts_pick | 0.00 | 0.00 | 0.05 | +0.00 [+0.00, +0.00] | 0.30/0.30 | ~0: not relevant yet |
+| small_peg_insert | 0.50 | 0.50 | 0.80 | +0.00 [+0.00, +0.00] | 0.00/0.00 | ~0: not relevant yet |
+
+Reading: 8 families have a gap whose 95 % CI excludes 0 (depalletize +0.60, connector_insert +0.50, bin_clearing
++0.35, bulk_sweep +0.30, kitting_pocket +0.30, drawer_open +0.30, door_open +0.25, tool_return +0.20); fixture_place
+and twist_lock are borderline (+0.15, CI touches 0); tote_transfer / machine_tending positive but not significant at
+n=20. ~0: peg_insert and small_peg_insert (a spiral search makes the clearance irrelevant - needs a time/jam cost),
+singulation (even with the bounded work area the push-speed rule does not change outcomes), small_parts_pick and
+conveyor_sort (both rules fail: fragile tiny parts are damaged by the pads' closing and the intercept rule does not
+fix the conveyor baseline), pouch_transfer (NEGATIVE: the mass-based grip rule ignores stiffness; the right rule is
+grip vs Young's modulus). Families redesigned in r4 for this: bin_clearing 0 -> +0.35 (3-6 parts, pad-only squeeze
+damage), singulation (bounded work area: still ~0). Next redesigns needed (not done): insertion time/jam costs,
+stiffness-aware pouch rule, conveyor intercept tolerance, singulation target displacement.
 
 ## What failed / limitations (honest list)
 * connector_insert: clearance now changes the fixed-action outcome monotonically (.33 -> .67) but friction does not;
@@ -445,3 +500,15 @@ ROBOTS round 3 notes (adapter + skills), for ENVS:
   with tilt but seal on an edge.
 - **TidyBot.** The adapter drives the base laterally (along the bench) to line up with each target. Depth is still
   bench-limited (arm base 0.335 m, about 0.45 m reach into a 0.76 m bench).
+
+ROBOTS round 5 notes for ENVS (envs-r3):
+- **Pad pairs:** applied to the real pads (solref 0.004, solimp as yours, margin 0). Suction-cup LIP pairs keep a
+  2 mm margin, because MuJoCo adhesion acts only through existing contacts; with margin 0 every cup peels at
+  lift-off.
+- **depalletize scripted policy** (seen with a 30 kg-payload gantry and oracle knobs):
+  - It re-picks cartons that are already on the outfeed when their tracker estimate is stale (occluded by the
+    carried carton or the gantry quill), which takes them off the outfeed.
+  - It flags liftable cartons after two failed lifts, which fails the task for a robot with payload >= carton mass.
+  - Suggestion: remember placed cartons (as for conveyor_sort), and base flagging on the robot's payload or
+    measured lift force rather than on failure count.
+- **tote_transfer:** the same stale-estimate re-target was seen after a successful tote place.

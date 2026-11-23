@@ -21,6 +21,7 @@ import torch.nn.functional as F
 
 from . import spec as S
 from .tensorize import V2Batch, V2Labels
+from .physics import K_PHYS, physics_features
 
 L = S.N_LATENT
 TF_LOGVAR = math.log(0.05 ** 2)   # slot log-variance used when a latent is "known" (teacher forcing / oracle)
@@ -50,7 +51,7 @@ class SegmentEncoder(nn.Module):
         self.tf = nn.TransformerEncoder(el, layers)
         self.pool_q = nn.Parameter(torch.randn(1, 1, d) * 0.02)
         self.pool = nn.MultiheadAttention(d, 4, batch_first=True)
-        self.call = mlp(S.CALL_DIM, d, d)
+        self.call = mlp(S.CALLN_DIM, d, d)
         self.an = mlp(S.N_AN, d, d)
         self.emb = mlp(S.EMB_DIM, d, d)
         self.out = mlp(4 * d, 2 * d, d)
@@ -120,26 +121,37 @@ class SceneEncoder(nn.Module):
 
 
 class FiLMHead(nn.Module):
-    """skill-conditioned outcome / effort / risk head. Latent physics enters ONLY via zin (typed slots) through
-    FiLM at every layer + concatenation at the input."""
+    """skill-conditioned outcome / effort / risk head.
+    r4 (physics-structured): event logits = MarginNet(physics margins, skill) + sigmoid(gate) * residual;
+    continuous outcomes with a physics prediction (base_mask) = physics base + sigmoid(gate) * residual;
+    the learned residual trunk is FiLM-modulated by the typed slots + physics features. Latent physics enters ONLY
+    through zin (typed-slot values) and the physics features computed from them."""
 
-    def __init__(self, d=128, h=256, n_layers=3, zdim=2 * L):
+    def __init__(self, d=128, h=256, n_layers=3, zdim=2 * L, phys=True):
         super().__init__()
-        self.call = mlp(S.CALL_DIM, d, d)
-        self.inp = nn.Linear(2 * d + zdim, h)
+        self.phys = phys
+        kp = K_PHYS if phys else 0
+        self.call = mlp(S.CALLN_DIM, d, d)
+        self.inp = nn.Linear(2 * d + zdim + kp, h)
         self.layers = nn.ModuleList([nn.Linear(h, h) for _ in range(n_layers)])
         self.norms = nn.ModuleList([nn.LayerNorm(h, elementwise_affine=False) for _ in range(n_layers + 1)])
-        self.film = mlp(zdim + S.CALL_DIM, h, 2 * h * (n_layers + 1))
+        self.film = mlp(zdim + kp + S.CALLN_DIM, h, 2 * h * (n_layers + 1))
         self.n_layers = n_layers
         self.cont = nn.Linear(h, 2 * S.N_CONT)
         self.ev = nn.Linear(h, S.N_EVENTS)
         self.eff = nn.Linear(h, 2)
         nn.init.zeros_(self.film[-1].weight)
         nn.init.zeros_(self.film[-1].bias)
+        if phys:
+            self.margin = mlp(K_PHYS + len(S.SKILLS), 64, S.N_EVENTS + 1, n=3)   # events + effort base
+            self.gate_ev = nn.Parameter(torch.tensor(-1.0))
+            self.gate_cont = nn.Parameter(torch.tensor(-1.0))
 
-    def forward(self, ctx, call, zin):
-        x = self.inp(torch.cat([ctx, self.call(call), zin], -1))
-        gb = self.film(torch.cat([zin, call], -1)).chunk(2 * (self.n_layers + 1), -1)
+    def forward(self, ctx, call, zin, phys=None):
+        """phys = (phi (B,K), base_norm (B,N_CONT), base_mask (B,N_CONT)) or None."""
+        extra = [phys[0]] if self.phys else []
+        x = self.inp(torch.cat([ctx, self.call(call), zin] + extra, -1))
+        gb = self.film(torch.cat([zin] + extra + [call], -1)).chunk(2 * (self.n_layers + 1), -1)
         for i in range(self.n_layers + 1):
             x = self.norms[i](x) * (1 + gb[2 * i]) + gb[2 * i + 1]
             x = F.gelu(x)
@@ -147,18 +159,30 @@ class FiLMHead(nn.Module):
                 x = x + self.layers[i](x)
         c = self.cont(x)
         e = self.eff(x)
-        return dict(cont_mu=c[:, :S.N_CONT], cont_logvar=c[:, S.N_CONT:].clamp(-12, 6), ev_logits=self.ev(x),
-                    eff_mu=e[:, 0], eff_logvar=e[:, 1].clamp(-8, 4))
+        cont_mu, ev, eff_mu = c[:, :S.N_CONT], self.ev(x), e[:, 0]
+        out = {}
+        if self.phys:
+            phi, base, bmask = phys
+            mg = self.margin(torch.cat([phi, call[:, :len(S.SKILLS)]], -1))
+            ge, gc = torch.sigmoid(self.gate_ev), torch.sigmoid(self.gate_cont)
+            out["ev_res"], out["cont_res"] = ev, torch.where(bmask, cont_mu, torch.zeros_like(cont_mu))
+            ev = mg[:, :S.N_EVENTS] + ge * ev
+            eff_mu = mg[:, S.N_EVENTS] + eff_mu
+            cont_mu = torch.where(bmask, base + gc * cont_mu, cont_mu)
+        out.update(cont_mu=cont_mu, cont_logvar=c[:, S.N_CONT:].clamp(-12, 6), ev_logits=ev,
+                   eff_mu=eff_mu, eff_logvar=e[:, 1].clamp(-8, 4))
+        return out
 
 
 class PhysMemV2(nn.Module):
-    def __init__(self, variant="typed", d=128, n_slots=8, seg_layers=2):
+    def __init__(self, variant="typed", d=128, n_slots=8, seg_layers=2, phys=True):
         super().__init__()
         assert variant in ("typed", "generic", "nomem")
         self.variant = variant
+        self.phys = phys
         self.seg = SegmentEncoder(d, seg_layers) if variant != "nomem" else None
         self.scene = SceneEncoder(d, n_slots)
-        self.head = FiLMHead(d)
+        self.head = FiLMHead(d, phys=phys)
         if variant == "typed":
             self.est = mlp(d, d, 2 * L)
             self.prior = mlp(d + S.EMB_DIM, d, 2 * L)            # prior from target token + embodiment
@@ -167,7 +191,7 @@ class PhysMemV2(nn.Module):
             self.mem = mlp(d + 1, d, d)
             self.to_z = nn.Linear(d, 2 * L)
         # info head: predicted per-latent log-variance a candidate call would yield (planner VOI)
-        self.info = mlp(d + S.CALL_DIM, d, L) if variant == "typed" else None
+        self.info = mlp(d + S.CALLN_DIM, d, L) if variant == "typed" else None
         # outcome scalers (raw = norm*std + mean), fit on train
         self.register_buffer("cont_mean", torch.zeros(S.N_CONT))
         self.register_buffer("cont_std", torch.ones(S.N_CONT))
@@ -176,19 +200,30 @@ class PhysMemV2(nn.Module):
         # per-skill call-parameter scalers (SkillCall.vector carries raw SI params of very different scales)
         self.register_buffer("ev_supervised", torch.ones(S.N_EVENTS, dtype=torch.bool))  # events with training labels
         self.register_buffer("z_var_scale", torch.ones(L))   # post-hoc per-latent variance temperature (fit on val)
-        self.register_buffer("call_mean", torch.zeros(len(S.SKILLS), S.CALL_DIM))
-        self.register_buffer("call_std", torch.ones(len(S.SKILLS), S.CALL_DIM))
+        # per-NAME param scalers for the named call encoding [skill(10), values(P), mask(P)]
+        self.register_buffer("call_mean", torch.zeros(S.N_PARAM))
+        self.register_buffer("call_std", torch.ones(S.N_PARAM))
 
     def norm_call(self, call):
-        sk = call[..., :len(S.SKILLS)].argmax(-1)
-        mu, sd = self.call_mean[sk], self.call_std[sk]
-        nk = len(S.SKILLS)
-        return torch.cat([call[..., :nk], ((call[..., nk:] - mu[..., nk:]) / sd[..., nk:]).clamp(-8, 8)], -1)
+        nk, P = len(S.SKILLS), S.N_PARAM
+        vals = ((call[..., nk:nk + P] - self.call_mean) / self.call_std).clamp(-8, 8) * call[..., nk + P:]
+        return torch.cat([call[..., :nk], vals, call[..., nk + P:]], -1)
+
+    def head_eval(self, ctx, call_raw, zin, emb, ent, ent_mask):
+        """the ONLY path from (context, candidate call, typed-slot values) to outcomes; physics features are computed
+        from the typed-slot values (typed variant) or from prior means (generic / nomem: no typed memory)."""
+        phys = None
+        if self.phys:
+            zv = zin[:, :L] if self.variant == "typed" else torch.zeros_like(zin[:, :L])
+            phi, base, bmask = physics_features(zv, call_raw, emb, ent, ent_mask)
+            phys = (phi, (base - self.cont_mean) / self.cont_std, bmask)
+        return self.head(ctx, self.norm_call(call_raw), zin, phys)
 
     def norm_batch(self, b: V2Batch) -> V2Batch:
         if getattr(b, "_normed", False):
             return b
         nb = V2Batch(**{f: getattr(b, f) for f in b.__dataclass_fields__})
+        nb.call_raw = b.call
         nb.call = self.norm_call(b.call)
         nb.seg_call = self.norm_call(b.seg_call)
         nb.seg = torch.nan_to_num(b.seg).clamp(-200, 200)         # robustness to simulator blow-ups
@@ -259,7 +294,7 @@ class PhysMemV2(nn.Module):
                 lv = torch.where(z_mask_override, lv, mem["z_logvar"])
             zin = self.slot_input(mu, lv)
             mem = dict(mem, z_mu=mu, z_logvar=lv, zin=zin)
-        o = self.head(ctx, b.call, zin)
+        o = self.head_eval(ctx, b.call_raw, zin, b.emb, b.ent, b.ent_mask)
         o["ctx"] = ctx
         o["mem"] = mem
         return o
@@ -329,7 +364,7 @@ def v2_loss(model: PhysMemV2, b: V2Batch, lab: V2Labels, tf_prob=0.5, w_sysid=1.
                 logs["l_info"] = l_info.item()
     else:
         zin = mem["zin"]
-    o = model.head(ctx, b.call, zin)
+    o = model.head_eval(ctx, b.call_raw, zin, b.emb, b.ent, b.ent_mask)
     yc = (lab.cont - model.cont_mean) / model.cont_std
     l_cont = gauss_nll(o["cont_mu"], o["cont_logvar"], yc, lab.cont_mask)
     em = lab.events_mask.float()
@@ -338,5 +373,9 @@ def v2_loss(model: PhysMemV2, b: V2Batch, lab: V2Labels, tf_prob=0.5, w_sysid=1.
     ye = (lab.effort - model.eff_mean) / model.eff_std
     l_eff = gauss_nll(o["eff_mu"], o["eff_logvar"], ye, torch.ones_like(ye, dtype=torch.bool))
     loss = loss + l_cont + l_ev + 0.5 * l_eff
+    if "ev_res" in o:   # keep the learned residual small: physics margins should carry the decision
+        l_res = 0.01 * ((o["ev_res"] ** 2).mean() + (o["cont_res"] ** 2).mean())
+        loss = loss + l_res
+        logs["l_res"] = l_res.item()
     logs.update(l_cont=l_cont.item(), l_ev=l_ev.item(), l_eff=l_eff.item(), loss=float(loss.item()))
     return loss, logs

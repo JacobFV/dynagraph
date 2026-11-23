@@ -285,3 +285,37 @@ class Interaction:
     outcome_events_mask: Optional[np.ndarray] = None
     labels: dict = field(default_factory=dict)  # EVALUATOR-ONLY latent truths {LATENT name: SI}
     target_id: str = ""             # opaque target entity id; the model only uses EQUALITY with the query target
+
+
+# ----------------------------------------------------------------- named skill-parameter encoding (v2 model r4+)
+# api.SkillCall.vector() places params by SORTED KEY POSITION, so e.g. grip_force lands in different slots in
+# different families. The model (r4+) uses a fixed NAME vocabulary instead: [skill one-hot (10), values (P), mask (P)].
+PARAM_VOCAB = sorted({
+    # synthetic world
+    "dir", "dist", "speed", "accel", "grip_force", "height", "aim_x", "aim_y", "search_r", "duration", "force",
+    "depth", "stroke",
+    # ENVS stations (tranche1 scan)
+    "close_yaw", "dx", "dy", "dyaw", "lift_speed", "release_h", "dwell", "x", "y", "z", "yaw", "x0", "x1", "y0", "y1",
+    "stop_time", "approach_speed", "lift_height", "vx", "vy", "suction", "lower_speed", "travel", "align", "correct",
+    "compliance", "down_force", "search_hz", "timeout", "wiggle", "release_on_fail", "distance", "phi", "theta",
+    "yaw_rate",
+})
+P_INDEX = {n: i for i, n in enumerate(PARAM_VOCAB)}
+N_PARAM = len(PARAM_VOCAB)
+CALLN_DIM = len(SKILLS) + 2 * N_PARAM
+
+
+def named_call_vector(skill: str, params: dict) -> np.ndarray:
+    v = np.zeros(CALLN_DIM, np.float32)
+    v[SKILLS.index(skill)] = 1.0
+    o = len(SKILLS)
+    for k, x in params.items():
+        if k in P_INDEX and np.isscalar(x) and x is not None:
+            try:
+                f = float(x)
+            except (TypeError, ValueError):
+                continue
+            if np.isfinite(f):
+                v[o + P_INDEX[k]] = f
+                v[o + N_PARAM + P_INDEX[k]] = 1.0
+    return v

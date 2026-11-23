@@ -20,10 +20,11 @@ for seed in seeds:
         p = dict(c.params)
         if c.skill == 'pick':
             m = float(env.scene.entities[c.target].hidden.get('mass', 0.0))   # ORACLE (evaluator label)
-            heavy_now = m > 8.0
-            p.update(suction=1.0, lift_speed=0.05 if heavy_now else 0.15, max_acc=1.0 if heavy_now else 3.0)
+            slick = bool(env.scene.entities[c.target].hidden.get('slick', False))           # ORACLE (evaluator label)
+            heavy_now = m > 8.0 or slick
+            p.update(suction=1.0, lift_speed=0.05 if heavy_now else 0.15, max_acc=0.8 if heavy_now else 3.0)
         elif c.skill == 'place' and heavy_now:
-            p.update(speed=0.15, max_acc=1.0)
+            p.update(speed=0.15, max_acc=0.8)
         out = env.execute(SkillCall(c.skill, p, target=c.target, effector=c.effector))
         tgt = c.target if c.skill == 'pick' else last
         last = tgt

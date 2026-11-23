@@ -69,8 +69,8 @@ def test_skill_vector_encoding():
 
 
 def test_suction_pick_place_ur5e():
-    m, d, emb, ctx, B = _bench('ur5e_suction', half=(0.04, 0.04, 0.03), mass=2.0)
-    est = TB.estimate(m, d, 'obj', (0.04, 0.04, 0.03), np.random.default_rng(2))
+    m, d, emb, ctx, B = _bench('ur5e_suction', half=(0.05, 0.05, 0.03), mass=2.0)   # cup lip 8 mm inside the face
+    est = TB.estimate(m, d, 'obj', (0.05, 0.05, 0.03), np.random.default_rng(2))
     r = run_skill(ctx, SkillCall('pick', dict(speed=0.3), target='obj', effector='hand'), est)
     assert r.ok, r.status
     assert emb.gripper_state(m, d, 'hand')[0] > 0.5          # sealed and vacuum on

@@ -474,6 +474,14 @@ def rotate_station(scene: "Scene", alpha: float, center=(0.0, 0.0)):
 
 
 # ---------------------------------------------------------------------- randomization helpers
+def fragility(rng, p, lo, hi, params=None):
+    """hidden crush limit (N per pad) of a part: fragile with probability p, else unbreakable (inf).
+    params['crush_n'] overrides (evaluator studies)."""
+    if params is not None and "crush_n" in params:
+        return float(params["crush_n"])
+    return float(rng.uniform(lo, hi)) if rng.random() < p else float("inf")
+
+
 def sample_part_params(rng, half_range=(0.012, 0.035), shapes=("box", "cylinder", "capsule", "sphere", "mesh"),
                        density_range=(400, 2500), heavy_p=0.1, heavy_mult=(4, 8), mu_range=(0.2, 0.9),
                        mu_grip_range=(0.3, 1.0), oily_p=0.1, restitution_range=(0.0, 0.4), soft_p=0.2):

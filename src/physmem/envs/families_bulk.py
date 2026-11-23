@@ -8,7 +8,7 @@ import numpy as np
 
 from ..v2.api import SkillCall
 from .base import StationEnv
-from .scene import BENCH_H, PALETTE, sample_part_params
+from .scene import BENCH_H, PALETTE, fragility, sample_part_params
 from .stations import bench_station
 
 PICK_DEFAULT = dict(grip_force=15.0, lift_speed=0.3, depth=0.5)
@@ -40,7 +40,8 @@ class BinClearing(StationEnv):
         top = bench_station(scene)
         self.surface_z = top
         self.safe_z = top + 0.24
-        n = int(params.get("n_parts", rng.integers(6, 13)))
+        # envs-r4: 3-6 parts per bin so each part's grip decision (mass / grip friction / crush limit) decides success
+        n = int(params.get("n_parts", rng.integers(3, 7)))
         shapes = tuple(params.get("shapes", ("box", "cylinder", "capsule", "sphere", "mesh")))
         sx, sy = -0.2 + rng.uniform(-0.03, 0.03), 0.05 + rng.uniform(-0.03, 0.03)
         bin_half = (0.17, 0.12)
@@ -68,7 +69,8 @@ class BinClearing(StationEnv):
             z = floor_z + 0.045 + 0.075 * layer + rng.uniform(0, 0.01)
             scene.part(f"part{i:02d}", pp["shape"], pp["half"], (x, y, z), yaw=rng.uniform(-math.pi, math.pi),
                        mass=pp["mass"], mu=pp["mu"], mu_grip=pp["mu_grip"], restitution=pp["restitution"],
-                       timeconst=pp["timeconst"], extra_hidden=dict(heavy=pp["heavy"], oily=pp["oily"]))
+                       timeconst=pp["timeconst"], extra_hidden=dict(heavy=pp["heavy"], oily=pp["oily"],
+                                                                     crush_n=fragility(rng, 0.35, 15, 45, params)))
             k += 1
         self.budget = int(params.get("budget", 4 * n))
 
@@ -190,7 +192,11 @@ class Singulation(StationEnv):
             scene.part(f"obj{i}", shape, (hx, hy, hz), (x, y, top + hz + 0.002), yaw=rng.uniform(-0.2, 0.2),
                        mass=mass, mu=mu, mu_grip=0.8, restitution=0.05)
             k += 1
-        scene.region("work", (0.0, 0.02, top + 0.03), (0.45, 0.3, 0.05), support_z=top)
+        # envs-r4: bounded work area (fixture plate, marked): pushing a part off it fails the episode, so how far a
+        # push carries (speed vs hidden friction) matters, not only that parts separate
+        wh = (float(params.get("work_half_x", 0.2)), float(params.get("work_half_y", 0.17)))
+        scene.region("work", (0.0, 0.02, top + 0.03), (wh[0], wh[1], 0.05), support_z=top)
+        scene.marker((0.0, 0.02), wh, top, rgba=(0.2, 0.6, 0.9, 0.35))
         self.budget = int(params.get("budget", 3 * n))
 
     def _gaps(self):
@@ -216,7 +222,9 @@ class Singulation(StationEnv):
         return sum(v >= self.gap_req for v in g.values()) / len(g)
 
     def fatal(self):
-        return self.metrics_acc["drops"] > 0
+        reg = self.scene.regions["work"]
+        return self.metrics_acc["drops"] > 0 or not all(self.in_region_true(e, reg, margin=0.02, zcheck=False)
+                                                         for e in self.objects())
 
     def _est_gaps(self):
         """actor-legal: gap estimate from tracked centres and SIZE (circumscribed-free box approx)."""
@@ -242,7 +250,7 @@ class Singulation(StationEnv):
             gap[a] = (best, nb)
         return P, gap
 
-    def _push_away(self, e, P, gap, speed=0.25, dist=0.06):
+    def _push_away(self, e, P, gap, speed=0.15, dist=0.04):
         """push e directly away from the centroid of its crowded neighbours; returns object-frame params."""
         pa, yaw, half = P[e]
         cen = np.mean([P[b][0] for b in P if b != e and gap[e][1] is not None and

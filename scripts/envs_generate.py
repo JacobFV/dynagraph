@@ -96,7 +96,7 @@ def run_episode(task, keep_events=True):
                 break
     except Exception as e:      # keep failures
         err = repr(e)[:500]
-    success = bool(env.success()) if err is None else False
+    success = bool(env.solved()) if err is None else False
     from physmem.envs.io import events_to_array
     rec = dict(task=asdict(task), episode_id=env.episode_id, policy=mode,
                events=events_to_array(env.events_all) if keep_events else None,

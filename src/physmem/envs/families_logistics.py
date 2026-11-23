@@ -7,7 +7,7 @@ import numpy as np
 
 from ..v2.api import SkillCall
 from .base import StationEnv
-from .scene import BENCH_H, BLUE_TOTE, CARDBOARD, DARK
+from .scene import BENCH_H, BLUE_TOTE, CARDBOARD, DARK, fragility
 from .stations import standard_mounts
 
 
@@ -249,7 +249,8 @@ class ConveyorSort(StationEnv):
             scene.part(f"item{i}", shape, half, (x, rng.uniform(-0.06, 0.06), top + half[2] + 0.002),
                        yaw=rng.uniform(-math.pi, math.pi), mass=mass, mu=float(rng.uniform(0.4, 0.9)),
                        mu_grip=float(rng.uniform(0.08, 0.2) if oily else rng.uniform(0.4, 1.0)), restitution=0.1,
-                       timeconst=0.01, meta=dict(sort_class=cls), extra_hidden=dict(heavy=bool(heavy), oily=bool(oily)))
+                       timeconst=0.01, meta=dict(sort_class=cls),
+                       extra_hidden=dict(heavy=bool(heavy), oily=bool(oily), crush_n=fragility(rng, 0.3, 15, 45, params)))
         standard_mounts(scene, (0.0, 0.0), top, (0.6, 0.15), gantry_h=1.5)
         scene.mounts["arm"] = [((0.3, -0.27, 0.8), math.pi / 2)]     # pedestal beside the belt, between bins
         scene.camera = dict(pos=(-0.1, -0.6, 2.0), lookat=(-0.1, 0.0, top), view_pos=(0.9, -1.6, 1.8),
@@ -435,7 +436,8 @@ class ToteTransfer(StationEnv):
                                                          z + hz + 0.002),
                                      yaw=rng.uniform(-0.05, 0.05), mu=float(rng.uniform(0.2, 0.6)),
                                      mu_grip=float(rng.uniform(0.4, 0.9)), timeconst=0.01, kind="tote", rgba=BLUE_TOTE,
-                                     mass_split=ms, extra_hidden=dict(content_mass=content))
+                                     mass_split=ms, extra_hidden=dict(content_mass=content,
+                                                                       crush_n=fragility(rng, 0.5, 60, 140, params)))
             info.shape = "tote"
         self.cart_slots = [(-0.22, 0.0), (0.22, 0.0), (0.0, 0.0)]
         self.safe_z = 0.85 + 2 * hz + 0.12 + 0.05

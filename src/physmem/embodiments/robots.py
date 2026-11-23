@@ -135,7 +135,7 @@ ROBOTS['ur5e_suction2'] = RobotCfg(
 _GJ = ('gx', 'gy', 'gz', 'gyaw')
 ROBOTS['gantry_vacuum'] = RobotCfg(
     name='gantry_vacuum', kind='gantry', xml='builtin:gantry_vacuum',
-    tool=dict(kind='suction', radius=0.04, dp=60e3, cups=[(-0.08, -0.05), (0.08, -0.05), (-0.08, 0.05), (0.08, 0.05), (0.0, 0.0)],
+    tool=dict(kind='suction', radius=0.04, dp=60e3, cups=[(-0.065, -0.04), (0.065, -0.04), (-0.065, 0.04), (0.065, 0.04), (0.0, 0.0)],
               cup_radii=[0.04, 0.04, 0.04, 0.04, 0.015]),
     effectors=(EffectorCfg(name='hand', joints=_GJ, site_body='cup', tcp_pos=(0, 0, 0.108), home=(0.0, 0.0, -0.4, 0.0),
                            gripper=GripperCfg(kind='suction', actuators=tuple(f'suction{k}' for k in range(5)), max_width=1.0,

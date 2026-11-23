@@ -1,5 +1,5 @@
 """MODEL-V2: paired closed loop on ENVS stations (G3 on real MuJoCo stations).
-usage: python scripts/v2/env_closed_loop.py <run> <families> <episodes> <typed.pt> [generic.pt] [nomem.pt]"""
+usage: ROBOT=<name> SPLIT=<split> python scripts/v2/env_closed_loop.py <run> <families> <episodes> <typed.pt> [generic.pt] [nomem.pt]"""
 import json, os, sys, time, numpy as np, torch
 from physmem.envs import make_env
 from physmem.v2 import api
@@ -16,10 +16,17 @@ for name, ck in cks.items():
     pols[f"planner_{name}"] = ("planner", CEMPlanner(m, name, cfg))
     if name == "typed":
         pols["planner_oracle(labelled)"] = ("planner", CEMPlanner(m, "oracle", cfg))
+        pols["planner_prior_mean"] = ("planner", CEMPlanner(m, "prior", cfg))
+for _, pl_ in pols.values():
+    if pl_ is not None:
+        pl_.search = os.environ.get("SEARCH", "ranked")      # real stations: support-constrained ranking by default
+        am = os.environ.get("ANCHOR", "0.15")                 # scripted-anchored margin ("none" = pure ranking)
+        pl_.anchor_margin = None if am == "none" else float(am)
 out, rows = {}, []
 for fam in fams:
     t0 = time.time()
-    tasks = [api.TaskSpec(fam, "", SEED_BASE["test"] + i, "probe", "test") for i in range(n)]
+    robot, split = os.environ.get("ROBOT", "probe"), os.environ.get("SPLIT", "test")
+    tasks = [api.TaskSpec(fam, "", SEED_BASE.get(split, 2_000_000) + 900_000 + i, robot, split) for i in range(n)]
     res = H.paired_eval(lambda: EnvAdapter(make_env(fam)), tasks, pols)
     summ = H.summarize(res)
     out[fam] = dict(summary=summ, episodes=res)
@@ -29,7 +36,7 @@ for fam in fams:
               f"risk={sm['risk_events'][0]:.2f} steps={sm['steps']:.1f}", flush=True)
         for k, v in sm.items():
             if isinstance(v, tuple):
-                rows.append(dict(run_id=f"{run}-{fam}", experiment="v2_g3_env_closed_loop", model=name, stratum=f"test:{fam}:probe",
+                rows.append(dict(run_id=f"{run}-{fam}", experiment="v2_g3_env_closed_loop", model=name, stratum=f"{split}:{fam}:{robot}",
                                  metric=k, value=v[0], ci_lo=v[1], ci_hi=v[2], n_episodes=sm["n"], status="observed", time_utc=_utc()))
 write_rows(rows)
 os.makedirs("results/v2/closed_loop", exist_ok=True)

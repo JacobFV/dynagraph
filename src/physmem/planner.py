@@ -57,7 +57,8 @@ class Decision:
 
 
 class CEMPlanner:
-    """mode: 'typed' | 'generic' | 'nomem' | 'oracle' (typed model + true latents in the slots; labelled oracle)."""
+    """mode: 'typed' | 'generic' | 'nomem' | 'oracle' (typed model + true latents in the slots; labelled oracle) |
+    'prior' (typed model with prior-mean slots: value-of-latent baseline)."""
 
     def __init__(self, model: PhysMemV2, mode: str = "typed", cfg: PlannerConfig = PlannerConfig(), device=None):
         self.model, self.mode, self.cfg = model, mode, cfg
@@ -72,11 +73,12 @@ class CEMPlanner:
     @torch.no_grad()
     def _prepare(self, history, frame, emb, query_target=None):
         m = self.model
-        b = single_batch(history, frame, emb, np.zeros((1, S.CALL_DIM), np.float32), device=self.dev,
+        b = single_batch(history, frame, emb, np.zeros((1, S.CALLN_DIM), np.float32), device=self.dev,
                          query_target=query_target)
         b = m.norm_batch(b)
         ctx, tgt = m.scene(b.ent, b.ent_mask, b.target, b.emb)
         mem = m.memory(b, tgt)
+        self._scene = (b.emb, b.ent, b.ent_mask)
         return ctx, mem
 
     def _latent_inputs(self, mem, true_z=None, true_mask=None, override=None):
@@ -84,6 +86,9 @@ class CEMPlanner:
         L = S.N_LATENT
         if self.mode in ("generic", "nomem"):
             return mem["zin"], None
+        if self.mode == "prior":     # value-of-latent baseline: typed model with PRIOR-MEAN slots, no evidence used
+            mu0 = mem["prior_mu"][0]
+            return torch.cat([mu0, torch.full_like(mu0, 0.5 * TF_LOGVAR)], -1)[None], None
         mu, lv = mem["z_mu"][0], mem["z_logvar"][0]
         if override is not None:  # intervention on the typed slots: dict {latent index: (mean, logvar)}
             mu, lv = mu.clone(), lv.clone()
@@ -105,10 +110,11 @@ class CEMPlanner:
         """calls (P,24) raw -> cost (P,S) plus decoded parts averaged over S."""
         m, c = self.model, self.cfg
         P, Sn = calls.shape[0], zin.shape[0]
-        cn = m.norm_call(calls)
-        cr = cn.repeat_interleave(Sn, 0)
+        cr = calls.repeat_interleave(Sn, 0)
         zr = zin.repeat(P, 1)
-        o = m.head(ctx.expand(P * Sn, -1), cr, zr)
+        emb, ent, entm = self._scene
+        n = P * Sn
+        o = m.head_eval(ctx.expand(n, -1), cr, zr, emb.expand(n, -1), ent.expand(n, -1, -1), entm.expand(n, -1))
         d = m.decode(o)
         prog = d["cont"][:, S.OUT_CONT.index("progress")].clamp(0, 1)
         dur = d["cont"][:, S.OUT_CONT.index("duration")].clamp(min=0)
@@ -149,10 +155,15 @@ class CEMPlanner:
         return keys, best, best_score, np.concatenate(allpop), torch.cat(allcost)
 
     def _vec(self, skill, keys, P):
+        """named call encoding for a population of scalar-param vectors (keys sorted)."""
         P = np.atleast_2d(P)
-        v = np.zeros((len(P), S.CALL_DIM), np.float32)
+        nk, NP = len(S.SKILLS), S.N_PARAM
+        v = np.zeros((len(P), S.CALLN_DIM), np.float32)
         v[:, S.SKILLS.index(skill)] = 1
-        v[:, 10:10 + len(keys)] = P
+        for j, k in enumerate(keys):
+            if k in S.P_INDEX:
+                v[:, nk + S.P_INDEX[k]] = P[:, j]
+                v[:, nk + NP + S.P_INDEX[k]] = 1
         return torch.as_tensor(v, device=self.dev)
 
     # --------------------------------------------------------- decision

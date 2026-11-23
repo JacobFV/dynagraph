@@ -102,7 +102,7 @@ class StationEnv:
         self.n_calls = 0
         self.fail_count = {}
         self.metrics_acc = dict(collisions=0, integrity_violations=0, drops=0, max_robot_contact_n=0.0,
-                                sim_instabilities=0)
+                                sim_instabilities=0, damaged=0)
         self._coll_pairs = set()
         self._drops_before, self._coll_before = 0, 0
         self.view = None
@@ -148,7 +148,7 @@ class StationEnv:
             self.fail_count[call.target] = self.fail_count.get(call.target, 0) + 1
         ev = self.sensors.flush()
         self.events_all.extend(ev)
-        succ = bool(self.success())
+        succ = self.solved()
         prog = self.progress()
         fatal = self.fatal() or self.metrics_acc["sim_instabilities"] > 0
         done = succ or fatal or self.n_calls >= self.budget
@@ -204,6 +204,10 @@ class StationEnv:
     # ================================================================== family hooks
     def build(self, scene: Scene, rng, params): raise NotImplementedError
     def success(self) -> bool: raise NotImplementedError
+
+    def solved(self) -> bool:
+        """episode success = the family predicate AND no fragile part damaged (crush limit exceeded)."""
+        return bool(self.success()) and not getattr(self, "damaged", set())
     def progress(self) -> float: return float(self.success())
     def fatal(self) -> bool: return False
     def candidates(self, n, rng) -> list: raise NotImplementedError
@@ -264,6 +268,17 @@ class StationEnv:
         for name, a in self.scene.actuated.items():
             if a["kind"] == "conveyor":
                 self._conveyors.append((m.actuator(a["actuator"]).id, a["speed"]))
+        self._fragile_body = {self.body_id[eid]: (eid, float(info.hidden["crush_n"]))
+                              for eid, info in self.scene.entities.items()
+                              if np.isfinite(info.hidden.get("crush_n", np.inf)) and self.body_id.get(eid, -1) >= 0}
+        self.damaged = set()
+        self._sq_ema = {}
+        # squeeze is measured on the gripper PADS only (palm bumps / pushes do not crush a part)
+        pads = set(getattr(self.robot, "pad_ids", set()))
+        if not pads and hasattr(self.robot, "pad_geom_names"):
+            pads = {m.geom(n).id for n in self.robot.pad_geom_names}
+        self._pad_arr = np.zeros(m.ngeom, bool)
+        self._pad_arr[list(pads or self.robot_geoms)] = True
         self._flex = {eid: mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_FLEX, info.body)
                       for eid, info in self.scene.entities.items() if info.meta.get("flex")}
         self._dropped = set()
@@ -339,9 +354,14 @@ class StationEnv:
         g = d.contact.geom
         rob = self._robot_geom_arr[g[:, 0]] | self._robot_geom_arr[g[:, 1]]
         f6 = np.zeros(6)
+        squeeze = {}
         for i in np.nonzero(rob)[0]:
             mujoco.mj_contactForce(m, d, int(i), f6)
             fn = abs(f6[0])
+            if self._fragile_body and (self._pad_arr[g[i, 0]] or self._pad_arr[g[i, 1]]):
+                ob = int(m.geom_bodyid[g[i, 1] if self._robot_geom_arr[g[i, 0]] else g[i, 0]])
+                if ob in self._fragile_body:
+                    squeeze[ob] = squeeze.get(ob, 0.0) + fn
             if fn > self.metrics_acc["max_robot_contact_n"]:
                 self.metrics_acc["max_robot_contact_n"] = float(fn)
             key = (int(g[i, 0]), int(g[i, 1]))
@@ -351,6 +371,20 @@ class StationEnv:
                     self.metrics_acc["collisions"] += 1
             else:
                 self._coll_pairs.discard(key)
+        # fragile parts: total robot contact normal force / 2 (= per-pad squeeze for a two-pad pinch) above the
+        # part's hidden crush limit damages it (counted once; success requires no damaged part)
+        # sustained squeeze (EMA over ~30 ms of 10 ms samples): closing impacts do not count, holding force does
+        ema = self._sq_ema
+        for ob in list(ema):
+            if ob not in squeeze:
+                ema[ob] *= 0.7
+        for ob, f in squeeze.items():
+            ema[ob] = 0.7 * ema.get(ob, 0.0) + 0.3 * f
+        for ob, f in list(ema.items()):
+            eid, lim = self._fragile_body[ob]
+            if f / 2.0 > lim and eid not in self.damaged:
+                self.damaged.add(eid)
+                self.metrics_acc["damaged"] += 1
         fl = np.nonzero((g[:, 0] == self.floor_gid) | (g[:, 1] == self.floor_gid))[0]
         for i in fl:
             other = int(g[i, 1] if g[i, 0] == self.floor_gid else g[i, 0])
@@ -369,6 +403,96 @@ class StationEnv:
             mujoco.mj_step(m, d)
             if self.post_physics(stop):
                 break
+
+    # ================================================================== interventions (EVALUATOR-ONLY)
+    _SNAP_FIELDS = ("t", "held", "_held_off", "n_calls", "fail_count", "metrics_acc", "damaged", "_dropped",
+                    "_coll_pairs", "_last_q", "_prev_full_q", "_prev_v", "_step_i", "_n_badqacc", "_drops_before",
+                    "_coll_before", "last_call", "last_result", "last_held_before", "_believe", "_sorted",
+                    "_seated_belief", "flagged", "_ow_attempts", "_looks", "_sq_ema")
+
+    def snapshot(self):
+        """Full evaluator-side state: MuJoCo integration state + env bookkeeping + sensor/actor caches + robot
+        controller state + rng states. Use with resimulate(); never give it to an actor."""
+        import copy
+        m, d = self.m, self.d
+        spec = mujoco.mjtState.mjSTATE_INTEGRATION
+        st = np.empty(mujoco.mj_stateSize(m, spec))
+        mujoco.mj_getState(m, d, st, spec)
+        memo = {id(m): m, id(d): d}
+        if self.renderer is not None:
+            memo[id(self.renderer)] = self.renderer
+        env_f = {k: copy.deepcopy(getattr(self, k), memo) for k in self._SNAP_FIELDS if hasattr(self, k)}
+        sens = {k: copy.deepcopy(v, memo) for k, v in self.sensors.__dict__.items() if k not in ("env", "out")}
+        robot = copy.deepcopy({k: v for k, v in self.robot.__dict__.items()}, memo)
+        return dict(state=st, env=env_f, sensors=sens, robot=robot, view=copy.deepcopy(self.view),
+                    n_events=len(self.events_all), rng=copy.deepcopy(self.rng.bit_generator.state),
+                    hidden={e: dict(i.hidden) for e, i in self.scene.entities.items()})
+
+    def restore(self, snap):
+        import copy
+        m, d = self.m, self.d
+        mujoco.mj_setState(m, d, snap["state"], mujoco.mjtState.mjSTATE_INTEGRATION)
+        mujoco.mj_forward(m, d)
+        memo = {id(m): m, id(d): d}
+        for k, v in snap["env"].items():
+            setattr(self, k, copy.deepcopy(v, memo))
+        for k, v in snap["sensors"].items():
+            setattr(self.sensors, k, copy.deepcopy(v, memo))
+        self.sensors.out = []
+        self.robot.__dict__.update(copy.deepcopy(snap["robot"], memo))
+        self.view = copy.deepcopy(snap["view"])
+        del self.events_all[snap["n_events"]:]
+        self.rng.bit_generator.state = copy.deepcopy(snap["rng"])
+        for e, h in snap["hidden"].items():
+            self.scene.entities[e].hidden.clear()
+            self.scene.entities[e].hidden.update(h)
+
+    def _param_baseline(self):
+        if not hasattr(self, "_param0"):
+            m = self.m
+            self._param0 = dict(body_mass=m.body_mass.copy(), body_inertia=m.body_inertia.copy(),
+                                geom_friction=m.geom_friction.copy(), pair_friction=m.pair_friction.copy(),
+                                dof_frictionloss=m.dof_frictionloss.copy(), dof_damping=m.dof_damping.copy())
+        return self._param0
+
+    def set_hidden(self, overrides):
+        """EVALUATOR-ONLY: change hidden physics in the compiled model (no pose writes): {eid: {mass, mu, mu_grip,
+        frictionloss, damping, crush_n}}. Resets every hidden param to the episode's original value first."""
+        m, p0 = self.m, self._param_baseline()
+        for k, v in p0.items():
+            getattr(m, k)[:] = v
+        for eid, ov in (overrides or {}).items():
+            info = self.scene.entities[eid]
+            bid = self.body_id.get(eid, -1)
+            gids = [m.geom(g).id for g in info.geoms]
+            if "mass" in ov and bid >= 0:
+                k = float(ov["mass"]) / max(float(p0["body_mass"][bid]), 1e-9)
+                m.body_mass[bid] = p0["body_mass"][bid] * k
+                m.body_inertia[bid] = p0["body_inertia"][bid] * k
+            if "mu" in ov:
+                for g in gids:
+                    m.geom_friction[g, 0] = float(ov["mu"])
+            if "mu_grip" in ov:
+                for i in range(m.npair):
+                    if m.pair_geom1[i] in gids or m.pair_geom2[i] in gids:
+                        if not (m.pair_geom1[i] in gids and m.pair_geom2[i] in gids):
+                            m.pair_friction[i, :2] = float(ov["mu_grip"])
+            if ("frictionloss" in ov or "damping" in ov) and "joint" in info.meta:
+                dof = m.jnt_dofadr[m.joint(info.meta["joint"]).id]
+                if "frictionloss" in ov:
+                    m.dof_frictionloss[dof] = float(ov["frictionloss"])
+                if "damping" in ov:
+                    m.dof_damping[dof] = float(ov["damping"])
+            if "crush_n" in ov and bid >= 0:
+                self._fragile_body[bid] = (eid, float(ov["crush_n"]))
+            info.hidden.update({k: float(v) for k, v in ov.items()})
+
+    def resimulate(self, snap, overrides, call):
+        """Re-run `call` from a snapshot with modified hidden properties (station intervention tests). Returns the
+        StepOut of that branch; the env is left in the branch's post-call state (restore(snap) to branch again)."""
+        self.restore(snap)
+        self.set_hidden(overrides)
+        return self.execute(call)
 
     # ================================================================== truth (evaluator / sensors only)
     def true_pose(self, eid):
@@ -405,7 +529,7 @@ class StationEnv:
     def labels(self):
         return dict(hidden={eid: dict(info.hidden) for eid, info in self.scene.entities.items()},
                     true_state=self.true_state(), contacts=self.contact_graph(), sensor_cfg=dict(self.sensors.cfg),
-                    held=self.held, **self.labels_extra())
+                    held=self.held, damaged=sorted(getattr(self, "damaged", ())), **self.labels_extra())
 
     # ================================================================== actor-legal helpers
     def est_pose(self, eid):

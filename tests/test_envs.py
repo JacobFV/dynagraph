@@ -314,3 +314,20 @@ def test_mobile_robot_gets_lower_bench():
     env = make_env("peg_insert")
     env.reset(TaskSpec("peg_insert", "fine", 0, "probe", "train", dict(bench_top=MOBILE_BENCH_TOP)))
     assert abs(env.surface_z - MOBILE_BENCH_TOP) < 1e-9
+
+
+def test_resimulate_is_deterministic_and_interventions_change_outcome():
+    env = make_env("bin_clearing")
+    env.reset(task("bin_clearing", 1000, n_parts=1, shapes=("box",), hidden={"mass": 0.3, "mu_grip": 0.6}))
+    e = env.objects()[0]
+    snap = env.snapshot()
+    call = SkillCall("pick", dict(grip_force=15.0, lift_speed=0.3, depth=0.5), target=e)
+    a = env.resimulate(snap, {}, call)
+    qa = env.d.qpos.copy()
+    b = env.resimulate(snap, {}, call)
+    assert np.allclose(qa, env.d.qpos) and a.result.ok == b.result.ok and a.result.ok
+    c = env.resimulate(snap, {e: {"mass": 3.0}}, call)          # heavy: slips
+    assert not c.result.ok
+    d = env.resimulate(snap, {e: {"mu_grip": 0.08}}, call)      # oily: slips
+    assert not d.result.ok
+    assert env.metrics_acc["integrity_violations"] == 0

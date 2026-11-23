@@ -49,6 +49,52 @@ def bootstrap_ci(x, n=2000, seed=0, stat=np.mean):
 RISK_KEYS = ("drop", "jam", "collision", "stall", "violation")
 
 
+def decide_env_ranked(planner: CEMPlanner, ad, hist, emb, rng, n_cand=16, n_pert=15):
+    """support-constrained decision on real stations: score ONLY actions inside the data-collection support —
+    the env's scripted call, n_pert perturbations of it (scalar params x U(0.7, 1.3), as in the ENVS mixed policy)
+    and n_cand random feasible candidates — with the same model cost; no CEM extrapolation."""
+    from .env_adapter import rel_params
+    pool = list(ad.candidate_skills(None, n_cand, rng))
+    sc = ad.env.scripted() if hasattr(ad.env, "scripted") else None
+    if sc is not None:
+        pool.append(sc)
+        for _ in range(n_pert):
+            pool.append(api.SkillCall(sc.skill, {k: (v * float(rng.uniform(0.7, 1.3)) if np.isscalar(v) and not
+                                                      isinstance(v, bool) else v) for k, v in sc.params.items()},
+                                      target=sc.target, effector=sc.effector))
+    if not pool:
+        return None
+    best, sc_score = None, None
+    groups = {}
+    for c in pool:
+        groups.setdefault((c.skill, c.target), []).append(c)
+    for (skill, target), cs in groups.items():
+        p0 = ad.target_pos(target)
+        qt = (lambda t: t[0] if len(t) == 1 else f"pile:{target}")(ad.target_ids(target))
+        true_z, true_m = S.labels_to_z(ad.oracle_latents(target)) if planner.mode == "oracle" else (None, None)
+        ctx, mem = planner._prepare(hist, ad.frame(target), emb, qt)
+        zin, Z = planner._latent_inputs(mem, true_z, true_m)
+        calls = torch.as_tensor(np.stack([S.named_call_vector(skill, rel_params(c.params, p0)) for c in cs]),
+                                device=planner.dev)
+        planner.eff_ref = 1.0
+        _, p_ = planner._costs(ctx, zin, calls)
+        planner.eff_ref = float(p_["effort"].median().clamp(min=1e-6))
+        cost, parts = planner._costs(ctx, zin, calls)
+        score = cost.mean(1) + planner.cfg.lam_unc * (cost.std(1) if cost.shape[1] > 1 else 0)
+        j = int(torch.nan_to_num(score, nan=1e9).argmin())
+        if sc is not None:
+            for i_, c_ in enumerate(cs):
+                if c_ is sc:
+                    sc_score = (float(score[i_]), sc, {k: float(v[i_]) for k, v in parts.items()})
+        if best is None or float(score[j]) < best[0]:
+            best = (float(score[j]), cs[j], {k: float(v[j]) for k, v in parts.items()})
+    # scripted-anchored: deviate from the scripted action only for a clear predicted improvement
+    anchor = getattr(planner, "anchor_margin", None)
+    if anchor is not None and sc_score is not None and best[0] > sc_score[0] - anchor:
+        return sc_score
+    return best
+
+
 def decide_env(planner: CEMPlanner, ad, hist, emb, rng, n_cand=32):
     """real-station decision: group the env's candidates by (skill, target); CEM per group over target-relative scalar
     params (bounds = group candidate range, population seeded with them); return the best (call, is_probe, info)."""
@@ -73,10 +119,12 @@ def decide_env(planner: CEMPlanner, ad, hist, emb, rng, n_cand=32):
 
 
 def run_episode(env, task: api.TaskSpec, policy: str, planner: Optional[CEMPlanner] = None, rng_seed=0,
-                slot_override=None, max_steps=None):
+                slot_override=None, max_steps=None, record: Optional[list] = None, explore: float = 0.0):
+    """record: if a list is given, append dict(frame, inter) per step WITH evaluator labels (training data only).
+    explore: per-step probability of replacing the planned action by a random feasible candidate (on-policy data)."""
     from .env_adapter import EnvAdapter
     if isinstance(env, EnvAdapter):
-        return run_env_episode(env, task, policy, planner, rng_seed, max_steps)
+        return run_env_episode(env, task, policy, planner, rng_seed, max_steps, record=record, explore=explore)
     env.reset(task)
     fam = task.family
     emb = S.embodiment_vector(Y.ROBOTS[task.robot].spec) if task.robot in Y.ROBOTS else None
@@ -105,7 +153,13 @@ def run_episode(env, task: api.TaskSpec, policy: str, planner: Optional[CEMPlann
             call, probe = d.call("target"), d.is_probe
             if "z_mu" in d.info and true_m.any():
                 rec["latent_err"].append(float(np.abs(d.info["z_mu"][true_m] - true_z[true_m]).mean()))
+        if explore > 0 and rng.random() < explore:
+            call, probe = env.candidate_skills(None, 1, rng)[0], False
         out = env.execute(call)
+        if record is not None:
+            it = copy.copy(out.result.log["interaction"])
+            it.labels = dict(getattr(env, "lat", {}))
+            record.append(dict(frame=frame, inter=it))
         t += out.result.duration_s + 0.5
         hist.append(interaction_from_step(call, out, k, fam, task.robot, t))
         rec["steps"] += 1
@@ -121,7 +175,7 @@ def run_episode(env, task: api.TaskSpec, policy: str, planner: Optional[CEMPlann
     return rec
 
 
-def run_env_episode(ad, task, policy, planner=None, rng_seed=0, max_steps=None):
+def run_env_episode(ad, task, policy, planner=None, rng_seed=0, max_steps=None, record=None, explore=0.0):
     """closed loop on an ENVS station through the adapter (policies: heuristic = env.scripted(), random, planner)."""
     ad.reset(task)
     rng = np.random.default_rng(rng_seed)
@@ -141,8 +195,22 @@ def run_env_episode(ad, task, policy, planner=None, rng_seed=0, max_steps=None):
             if not cs:
                 break
             out = ad.execute(cs[int(rng.integers(len(cs)))], relative=False)
+        elif explore > 0 and rng.random() < explore:
+            cs = ad.candidate_skills(None, 8, rng)
+            if not cs:
+                break
+            c0 = cs[int(rng.integers(len(cs)))]
+            frame0 = ad.frame(c0.target)
+            out = ad.execute(c0, relative=False)
+        elif getattr(planner, "search", "cem") == "ranked":
+            best = decide_env_ranked(planner, ad, hist, emb, rng)
+            if best is None:
+                break
+            frame0 = ad.frame(best[1].target)
+            out = ad.execute(best[1], relative=False)
         else:
             score, call, base, d = decide_env(planner, ad, hist, emb, rng)
+            frame0 = ad.frame(call.target)
             out = ad.execute(call, relative=True, base=base)
             lat = out.result.log.get("latents", {})
             if "z_mu" in d.info and lat:
@@ -150,6 +218,10 @@ def run_env_episode(ad, task, policy, planner=None, rng_seed=0, max_steps=None):
                 if tm.any():
                     rec["latent_err"].append(float(np.abs(d.info["z_mu"][tm] - tz[tm]).mean()))
         hist.append(out.result.log["interaction"])
+        if record is not None and policy != "heuristic":
+            it = copy.copy(hist[-1])
+            it.labels = dict(out.result.log.get("latents", {}))
+            record.append(dict(frame=frame0 if policy != "random" else ad.frame(None), inter=it))
         rec["steps"] += 1
         rec["effort"] += out.result.effort.cost()
         rec["duration"] += out.result.duration_s
@@ -263,7 +335,7 @@ def intervention_fd(model, family, n_states=200, delta=0.5, R=16, seed=0, robot=
                     vals.append(ext(sim))
                 ys.append(np.mean(vals))
             ds.append(ys[1] - ys[0])
-            call = api.SkillCall(Y.FAMILY_SKILL[family], params).vector()[None]
+            call = S.named_call_vector(Y.FAMILY_SKILL[family], params)[None]
             frame = Y.entity_frame(family, state, robot)
             emb = S.embodiment_vector(Y.ROBOTS[robot].spec)
             b = single_batch(hist, frame, emb, np.repeat(call, 2, 0), device=dev)

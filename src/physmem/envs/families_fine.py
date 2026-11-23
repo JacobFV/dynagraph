@@ -10,6 +10,7 @@ from ..v2.api import SkillCall
 from .base import StationEnv
 from .probe import wrap
 from .sensors import quat_yaw
+from .scene import fragility
 from .stations import bench_station
 
 
@@ -197,7 +198,8 @@ class ToolReturn(PegInsert):
         scene.compound(self.obj, boxes, (cpos[0], cpos[1], zc), yaw=float(rng.uniform(-0.3, 0.3)), mass=m_head + m_shank,
                        mu=mu, mu_grip=mu_grip, timeconst=0.004, kind="tool", rgba=(0.8, 0.15, 0.1, 1),
                        mass_split=[m_shank, m_head * (0.5 + imb), m_head * (0.5 - imb)],
-                       extra_hidden=dict(head_mass=m_head, head_imbalance=imb, com_offset=m_head * imb * 0.035 / (m_head + m_shank)))
+                       extra_hidden=dict(head_mass=m_head, head_imbalance=imb, com_offset=m_head * imb * 0.035 / (m_head + m_shank),
+                                         crush_n=fragility(rng, 0.5, 20, 60, params)))
         e = imb * 0.035
         self.scene.entities[self.obj].shape = "box"
         self.hidden_task = dict(clearance=clr, chamfer=ch, mu=mu, head_mass=m_head, head_imbalance=imb, mu_grip=mu_grip)
@@ -253,6 +255,7 @@ class FixturePlace(_FineBase):
         p0 = (-0.2 + rng.uniform(-0.05, 0.05), rng.uniform(-0.08, 0.08))
         scene.part("fixture", "box", (hx, hy, hz), (p0[0], p0[1], top + hz + 0.001), yaw=rng.uniform(-0.5, 0.5),
                    mass=mass, mu=mu, mu_grip=mu_grip, restitution=0.05, timeconst=0.004, kind="fixture_block",
+                   extra_hidden=dict(crush_n=fragility(rng, 0.5, 25, 80, params)),
                    rgba=(0.3, 0.35, 0.75, 1))
         mx, my = 0.18 + rng.uniform(-0.04, 0.04), 0.05 + rng.uniform(-0.05, 0.05)
         myaw = float(rng.uniform(-0.4, 0.4))
@@ -366,7 +369,7 @@ class KittingPocket(_FineBase):
             ox, oy = sx + rng.uniform(-0.06, 0.06), sy + (i - (k - 1) / 2) * 0.06
             scene.part(pid, shape, (hx, hy, hz), (ox, oy, sfloor + hz + 0.002), yaw=rng.uniform(-0.8, 0.8), mass=mass,
                        mu=mu, mu_grip=float(rng.uniform(0.3, 1.0)), restitution=0.05, timeconst=0.004, kind="kit_part",
-                       extra_hidden=dict(clearance=clr, heavy=bool(heavy)))
+                       extra_hidden=dict(clearance=clr, heavy=bool(heavy), crush_n=fragility(rng, 0.3, 15, 45, params)))
             self.pockets[pid] = dict(region=f"pocket_{pid}", floor=top + slab_t, clearance=clr)
         self.budget = int(params.get("budget", 5 * k))
 
@@ -437,6 +440,7 @@ class DrawerOpen(_FineBase):
         ay = float(rng.uniform(-0.25, 0.25))
         scene.drawer("drawer", pos, (0.14, 0.1), 0.07, ay, self.travel, damping=dmp, frictionloss=fl, mass=mass,
                      handle_mu_grip=mug)
+        self.scene.entities["drawer"].hidden["crush_n"] = fragility(rng, 1.0, 40, 120, params)   # handle tab limit
         self.hidden_task = dict(frictionloss=fl, damping=dmp, mass=mass, mu_grip=mug)
         self.budget = int(params.get("budget", 5))
 
@@ -502,6 +506,7 @@ class DoorOpen(DrawerOpen):
         scene.hinge_door("door", (hx, hy, hz), width, height, 0.02, axis=(0, 0, 1), closed_yaw=math.pi, damping=dmp,
                          frictionloss=fl, mass=mass, rng_open=(0.0, 1.9),
                          handle_off=(width - 0.05, 0.01 + 0.03, height / 2 - 0.04), handle_mu_grip=mug)
+        self.scene.entities["door"].hidden["crush_n"] = fragility(rng, 1.0, 20, 60, params)     # handle tab limit
         self.hidden_task = dict(frictionloss=fl, damping=dmp, mass=mass, mu_grip=mug)
         self.budget = int(params.get("budget", 5))
         self.travel = 1.9

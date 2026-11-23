@@ -188,11 +188,11 @@ def pick(ctx: SkillContext, call, est: ObjectEstimate):
         else:
             cy, width = yaw_o + math.pi / 2, 2 * hy
         cy += p.get('yaw', 0.0)
-        if gc.kind == 'suction':
-            return _suction_pick(ctx, eff, p, est, r, width, cy)
         vel = np.asarray(p.get('vel', (0.0, 0.0, 0.0)), float)
         if np.linalg.norm(vel[:2]) > 1e-3 and int(p.get('grasp', 0)) == 0:
             return _moving_pick(ctx, eff, p, est, r, width, cy, vel)
+        if gc.kind == 'suction':
+            return _suction_pick(ctx, eff, p, est, r, width, cy)
         if width > 0.95 * gc.max_width:
             return r.result(False, 'too_wide', width=width, max_width=gc.max_width)
         top, bottom = est.top_z(), est.bottom_z()
@@ -273,10 +273,19 @@ def _moving_pick(ctx, eff, p, est, r, width, cy, vel):
     v = np.array([vel[0], vel[1], 0.0])
     sp = min(float(p.get('speed', 0.3)), 0.3)   # the belt plan is not retimed: keep the approach trackable
     top, bottom = est.top_z(), est.bottom_z()
-    depth = p['depth'] if 'depth' in p else min(float(np.clip(est.h[2], 0.015, 0.035)), gc.link_h - 0.004)
-    gz = max(bottom + gc.tip + p.get('clear', 0.003), top - depth)
+    suction = gc.kind == 'suction'
+    if suction:
+        gz = top - p.get('press', 0.004)               # press the cup lip onto the moving part's top face
+    else:
+        depth = p['depth'] if 'depth' in p else min(float(np.clip(est.h[2], 0.015, 0.035)), gc.link_h - 0.004)
+        gz = max(bottom + gc.tip + p.get('clear', 0.003), top - depth)
     hov = p.get('pre', 0.05)
     q = down_quat(_near_yaw(ctx, eff, cy))
+    if suction:
+        mask = _suction_zones(ctx, est, q)
+        if not mask.any():
+            return r.result(False, 'too_small', width=width)
+        ctx.emb.eff[eff]['zone_mask'] = mask
     tcp, _ = _tcp(ctx, eff)
     age = float(p.get('age', 0.0))
     T_desc = max(0.25, float(p.get('t_desc', 0.6)))
@@ -304,7 +313,8 @@ def _moving_pick(ctx, eff, p, est, r, width, cy, vel):
             break
     if not ok:
         return r.result(False, 'unreachable', intercept=p_hover.tolist())
-    g_pre = float(np.clip(1.0 - (width + p.get('open_margin', 0.015 if gc.jaw_dir else 0.03)) / gc.max_width, 0.0, 0.6))
+    g_pre = 0.0 if suction else \
+        float(np.clip(1.0 - (width + p.get('open_margin', 0.015 if gc.jaw_dir else 0.03)) / gc.max_width, 0.0, 0.6))
     ctx.ctrl.set_mode('track', eff)
     ctx.ctrl.set_gripper(eff, g_pre)
     tr = BlendedTrajectory(effector=eff, waypoints=[(p_hover, q), (p_match, q), (p_grasp, q), (p_hold, q), (p_lift, q)],
@@ -323,7 +333,7 @@ def _moving_pick(ctx, eff, p, est, r, width, cy, vel):
     pred_close = est.p + v * (age + (t_cl - (t_close - (T_app + T_desc) * k)))
     st = ctx.run(max_t=(T_close + T_lift) * k + 1.5, effector=eff)
     c, n = ctx.emb.gripper_state(ctx.model, ctx.data, eff)
-    held = n > 0 and c < 0.95
+    held = (c > 0.0) if suction else (n > 0 and c < 0.95)
     if held:
         here = _tcp(ctx, eff)[0]
         _held(ctx)[eff] = dict(offset=float(gz - bottom), half_size=tuple(est.h), side=False, width=width,
@@ -356,6 +366,24 @@ class _AccBudget:
         return False
 
 
+def _suction_zones(ctx, est, q):
+    """zone control from the actor's geometry estimate: enable only the cups whose whole lip lies on the top face
+    (TCP over the face centre with orientation q)."""
+    from physmem.embodiments.core import suction_cups
+    tool = ctx.emb.cfg.tool
+    cups = suction_cups(tool)
+    radii = list(tool.get('cup_radii', [float(tool.get('radius', 0.035))] * len(cups)))
+    Rq, Ro = quat2mat(q), est.R
+    out = []
+    ctx._zone_dbg = dict(h=np.round(est.h, 3).tolist(), us=[])
+    for (ox, oy), rad in zip(cups, radii):
+        u = Ro.T @ (Rq[:, 0] * ox + Rq[:, 1] * oy)
+        ctx._zone_dbg['us'].append(np.round(u[:2], 3).tolist())
+        # the whole lip must sit >= 8 mm inside the estimated face (tracker pose/size noise of a few mm)
+        out.append(abs(u[0]) <= est.h[0] - rad - 0.008 and abs(u[1]) <= est.h[1] - rad - 0.008)
+    return np.array(out, bool)
+
+
 def _suction_pick(ctx, eff, p, est, r, width, cy):
     with _AccBudget(ctx, p):
         return _suction_pick_(ctx, eff, p, est, r, width, cy)
@@ -370,18 +398,9 @@ def _suction_pick_(ctx, eff, p, est, r, width, cy):
     v = p.get('speed', 0.3)
     top, bottom = est.top_z(), est.bottom_z()
     q = down_quat(_near_yaw(ctx, eff, cy))
-    # zone control from the actor's geometry estimate: enable only the cups whose whole lip lies on the top face
-    Rq = quat2mat(q)
-    Ro = est.R
-    radii = list(tool.get('cup_radii', [rad] * len(cups)))
-    mask = []
-    for (ox, oy), rad in zip(cups, radii):
-        w = Rq[:, 0] * ox + Rq[:, 1] * oy                     # cup offset in the world (TCP over the face centre)
-        u = Ro.T @ w
-        mask.append(abs(u[0]) <= est.h[0] - rad + 0.002 and abs(u[1]) <= est.h[1] - rad + 0.002)
-    mask = np.array(mask, bool)
+    mask = _suction_zones(ctx, est, q)
     if not mask.any():
-        return r.result(False, 'too_small', width=width, cup=2 * min(radii))
+        return r.result(False, 'too_small', width=width, cup=2 * min(ctx.emb.cfg.tool.get('cup_radii', [rad])))
     ctx.emb.eff[eff]['zone_mask'] = mask
     need = float(p.get('min_zones', 1))
     if mask.sum() < need:
@@ -411,7 +430,8 @@ def _suction_pick_(ctx, eff, p, est, r, width, cy):
     here = _tcp(ctx, eff)[0]
     _move(ctx, eff, [here + np.array([0, 0, p.get('lift', _clear(ctx, 0.10))])], min(v, p.get('lift_speed', 0.2)), q)
     c, n = ctx.emb.gripper_state(ctx.model, ctx.data, eff)
-    held = c > 0.5
+    held = c > 0.0          # at least one enabled cup still sealed and pulling
+    r.log['zones'] = getattr(ctx, '_zone_dbg', None)
     if held:
         _held(ctx)[eff] = dict(offset=float(here[2] - bottom), half_size=tuple(est.h), side=False, width=width,
                                obj_in_tcp=tuple(quat2mat(q).T @ (np.array([est.p[0], est.p[1], here[2]]) - here)))
@@ -444,7 +464,9 @@ def _place(ctx: SkillContext, call, est: ObjectEstimate = None):
         if not _reachable(ctx, eff, np.array([tx, ty, sz + off]), q):
             return r.result(False, 'unreachable')
         goal_z = sz + off
-        transit = max(cur_p[2], goal_z + _clear(ctx))
+        # carry high enough that the part's underside clears neighbours as tall as itself (placed cartons/parts)
+        h_obj = 2 * float(held['half_size'][2]) if held else 0.0
+        transit = max(cur_p[2], goal_z + max(_clear(ctx), h_obj + 0.05))
         ctx.ctrl.set_mode('track', eff)
         st = _move(ctx, eff, [np.array([cur_p[0], cur_p[1], transit]), np.array([tx, ty, transit]),
                               np.array([tx, ty, goal_z + 0.03])], v, q)

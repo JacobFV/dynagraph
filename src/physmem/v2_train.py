@@ -156,6 +156,52 @@ def sanitize(arr, name=""):
     return out
 
 
+def _convert_shard(path):
+    import warnings
+    warnings.filterwarnings("ignore")
+    from physmem.envs.io import load_shard
+    from physmem.models.v2 import env_adapter as A
+    out, fails = [], 0
+    for ep in load_shard(path):
+        if ep.get("error"):
+            fails += 1
+            continue
+        try:
+            out.append((ep["task"]["split"], A.convert_episode(ep)))
+        except Exception as e:
+            fails += 1
+            print(f"convert fail {path} {ep.get('episode_id')}: {type(e).__name__}: {e}", flush=True)
+    return out, fails
+
+
+def convert(pattern, out, workers=8):
+    """stored ENVS/ROBOTS tranches (physmem.envs.io shards) -> v2 arrays per (family, split), robots mixed."""
+    import glob as _g
+    from physmem.models.v2 import env_adapter as A
+    os.makedirs(out, exist_ok=True)
+    paths = sorted(_g.glob(pattern, recursive=True))
+    acc, nf, t0 = {}, 0, time.time()
+    with Pool(workers) as p:
+        for res, fails in p.imap_unordered(_convert_shard, paths):
+            nf += fails
+            for split, (fam, robot, steps) in res:
+                if steps:
+                    acc.setdefault((fam, split), []).append((fam, robot, steps))
+    manifest = dict(_meta=dict(pattern=pattern, shards=len(paths), failures=nf, seconds=time.time() - t0, time_utc=_utc()))
+    embs = {}
+    for (fam, split), eps in sorted(acc.items()):
+        for _, r, _s in eps:
+            if r not in embs:
+                embs[r] = S.embodiment_vector(A.robot_spec(r))
+        arr = build_family_arrays(eps, lambda r: embs[r], np.random.default_rng(0))
+        np.savez(os.path.join(out, f"{fam}_{split}.npz"), **arr)
+        rob = {r: int((arr["robot"] == r).sum()) for r in np.unique(arr["robot"])}
+        manifest[f"{fam}_{split}"] = dict(n=int(len(arr["k"])), episodes=len(eps), robots=rob, hash=arrays_hash(arr))
+        print(f"{fam:16s} {split:16s} episodes={len(eps):5d} rows={len(arr['k']):6d} robots={rob}", flush=True)
+    json.dump(manifest, open(os.path.join(out, "manifest.json"), "w"), indent=1, default=float)
+    print(f"convert done in {time.time() - t0:.0f}s, failures={nf}", flush=True)
+
+
 def load_stores(data, split, device, families=None, max_episodes=None):
     st = {}
     if families is None:
@@ -185,17 +231,15 @@ def fit_scalers(model, stores):
     model.eff_std.copy_(e.std().clamp(min=1e-3))
     model.ev_supervised.copy_(torch.cat([s.events_mask for s in stores.values()]).any(0))
     calls = torch.cat([s.call for s in stores.values()])
-    nk = len(S.SKILLS)
-    sk = calls[:, :nk].argmax(-1)
-    for i in range(nk):
-        m = sk == i
+    nk, P = len(S.SKILLS), S.N_PARAM
+    vals, msk = calls[:, nk:nk + P], calls[:, nk + P:] > 0.5
+    for i in range(P):
+        m = msk[:, i]
         if m.sum() > 1:
-            model.call_mean[i] = calls[m].mean(0)
-            model.call_std[i] = calls[m].std(0).clamp(min=1e-6)
-            model.call_std[i, (calls[m].std(0) < 1e-6)] = 1.0
+            model.call_mean[i] = vals[m, i].mean()
+            model.call_std[i] = vals[m, i].std().clamp(min=1e-6)
 
 
-# ----------------------------------------------------------------- evaluation
 @torch.no_grad()
 def evaluate(model, stores, max_hist=(0, 1, 2, 3), bs=1024, oracle=False):
     """per family: latent recovery after j interactions (corr, abs err in normalized units, calibration),
@@ -273,17 +317,15 @@ def train(args):
     keep = lambda f: f != args.holdout_family and (not args.families or f in args.families.split(","))
     tr = {f: s for f, s in load_stores(args.data, "train", dev, max_episodes=args.max_episodes).items() if keep(f)}
     va = {f: s for f, s in load_stores(args.data, "val", dev).items() if keep(f)}
-    model = PhysMemV2(args.variant, d=args.d).to(dev)
+    model = PhysMemV2(args.variant, d=args.d, phys=not args.no_phys).to(dev)
     fit_scalers(model, tr)
     if args.init:
         # adapter / fine-tune: start from a trained model; keep its output scalers, add call scalers for new skills
         init, _ = load_model(args.init, dev)
         new_call_mean, new_call_std = model.call_mean.clone(), model.call_std.clone()
         model.load_state_dict(init.state_dict())
-        seen = (init.call_std != 1).any(1) | (init.call_mean != 0).any(1)
-        for i in range(len(S.SKILLS)):
-            if not bool(seen[i]):
-                model.call_mean[i], model.call_std[i] = new_call_mean[i], new_call_std[i]
+        unseen = (init.call_std == 1) & (init.call_mean == 0)       # param names the init model never saw
+        model.call_mean[unseen], model.call_std[unseen] = new_call_mean[unseen], new_call_std[unseen]
         if args.freeze:
             for name, p_ in model.named_parameters():
                 p_.requires_grad = not any(name.startswith(x) for x in args.freeze.split(","))
@@ -331,7 +373,7 @@ def train(args):
     if model.variant == "typed":
         print("val variance temperature:", np.round(calibrate(model, va), 3).tolist(), flush=True)
     ck = os.path.join(RESULTS, "checkpoints", f"{args.run}.pt")
-    torch.save(dict(state=model.state_dict(), variant=args.variant, d=args.d, cfg=cfg, cfg_hash=cfg_hash,
+    torch.save(dict(state=model.state_dict(), variant=args.variant, d=args.d, phys=model.phys, cfg=cfg, cfg_hash=cfg_hash,
                     params=nparam), ck)
     json.dump(curve, open(os.path.join(RESULTS, "curves", f"{args.run}.json"), "w"))
     rows = [dict(run_id=args.run, experiment="v2_train", model="physmem_v2", variant=args.variant, seed=args.seed,
@@ -369,7 +411,7 @@ def calibrate(model, stores, bs=1024):
 def load_model(ck, device=None):
     dev = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
     c = torch.load(ck, map_location=dev, weights_only=False)
-    m = PhysMemV2(c["variant"], d=c["d"]).to(dev)
+    m = PhysMemV2(c["variant"], d=c["d"], phys=c.get("phys", False)).to(dev)
     sd = c["state"]
     if "ev_supervised" not in sd:
         sd["ev_supervised"] = torch.ones(S.N_EVENTS, dtype=torch.bool, device=dev)
@@ -441,6 +483,7 @@ def closed_loop(args):
             pols[f"planner_{nm}"] = ("planner", CEMPlanner(load_model(pth, dev)[0], "typed", cfg))
     if not getattr(args, "typed_only", False):
         pols["planner_oracle(labelled)"] = ("planner", CEMPlanner(typed, "oracle", cfg))
+        pols["planner_prior_mean"] = ("planner", CEMPlanner(typed, "prior", cfg))   # value-of-latent baseline
     out = {}
     rows = []
     fams = args.families.split(",") if args.families else Y.FAMILIES
@@ -505,6 +548,81 @@ def interventions(args):
     json.dump(out, open(os.path.join(RESULTS, "interventions", f"{args.run}.json"), "w"), default=float, indent=1)
 
 
+def onpolicy(args):
+    """model-based on-policy loop: (train) -> plan in env with the planner (+ exploration) -> add the planner's own
+    rollouts incl. failures -> fine-tune -> ... ; per-round rollout success + VAL closed-loop success reported."""
+    import shutil
+    from physmem.models.v2 import harness as H
+    from physmem.models.v2.tensorize import concat_arrays
+    from physmem.planner import CEMPlanner, PlannerConfig
+    from physmem.v2 import api
+    dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    fams = args.families.split(",") if args.families else Y.FAMILIES
+    emb = {r: S.embodiment_vector(Y.ROBOTS[r].spec) for r in Y.ROBOTS}
+    root = os.path.join(args.work, args.run)
+    os.makedirs(root, exist_ok=True)
+    ck = args.init
+    rollouts = {f: [] for f in fams}
+    rows = []
+    cfg = PlannerConfig(pop=args.pop, iters=args.iters, n_z=args.n_z, c_prog=2.0, lam_effort=0.03, voi=False)
+    for r in range(args.rounds + 1):
+        model, c = load_model(ck, dev)
+        pl = CEMPlanner(model, "typed", cfg)
+        # --- val closed-loop success of the current model (fixed val seeds, same every round)
+        for fam in fams:
+            tasks = [api.TaskSpec(fam, "", 5_000_000 + SEED_BASE["val"] + i, Y.TRAIN_ROBOTS[i % 4], "val",
+                                  params={"lot": args.lot} if args.lot > 1 else {}) for i in range(args.val_episodes)]
+            res = H.paired_eval(Y.SynthEnv, tasks, {"planner_typed": ("planner", pl), "heuristic": ("heuristic", None)})
+            sm = H.summarize(res)
+            for name in sm:
+                for key in ("success", "items_done", "effort"):
+                    v = sm[name][key]
+                    rows.append(dict(run_id=f"{args.run}-round{r}", experiment="v2_onpolicy", model=name, variant="typed",
+                                     stratum=f"val:{fam}", metric=key, value=v[0], ci_lo=v[1], ci_hi=v[2], round=r,
+                                     n_episodes=sm[name]["n"], status="observed", time_utc=_utc(), lot=args.lot))
+            print(f"[round {r}] val {fam}: typed succ={sm['planner_typed']['success'][0]:.2f} "
+                  f"items={sm['planner_typed']['items_done'][0]:.2f} eff={sm['planner_typed']['effort'][0]:.2f} | "
+                  f"heuristic succ={sm['heuristic']['success'][0]:.2f} items={sm['heuristic']['items_done'][0]:.2f}",
+                  flush=True)
+        if r == args.rounds:
+            break
+        # --- on-policy rollouts on TRAIN-range seeds (disjoint from val/test), with exploration
+        for fam in fams:
+            succ = []
+            for i in range(args.episodes):
+                seed = 7_000_000 + r * 100_000 + Y.FAMILIES.index(fam) * 10_000 + i
+                task = api.TaskSpec(fam, "", seed, Y.TRAIN_ROBOTS[i % 4], "train",
+                                    params={"lot": args.lot} if args.lot > 1 else {})
+                recd = []
+                e = H.run_episode(Y.SynthEnv(), task, "planner", pl, rng_seed=seed, record=recd, explore=args.explore)
+                succ.append(e["success"])
+                rollouts[fam].append((fam, task.robot, recd))
+            rows.append(dict(run_id=f"{args.run}-round{r}", experiment="v2_onpolicy", model="planner_typed+explore",
+                             stratum=f"rollout:{fam}", metric="success", value=float(np.mean(succ)), round=r,
+                             n_episodes=len(succ), status="observed", time_utc=_utc()))
+            print(f"[round {r}] rollouts {fam}: success {np.mean(succ):.2f} ({len(succ)} eps, "
+                  f"{sum(len(x[2]) for x in rollouts[fam])} interactions total)", flush=True)
+        # --- data = base train + all rollouts so far ; val/test unchanged
+        dr = os.path.join(root, f"data_round{r + 1}")
+        os.makedirs(dr, exist_ok=True)
+        for fam in fams:
+            base = dict(np.load(os.path.join(args.data, f"{fam}_train.npz")))
+            ro = build_family_arrays(rollouts[fam], lambda rb: emb[rb], np.random.default_rng(r))
+            np.savez(os.path.join(dr, f"{fam}_train.npz"), **concat_arrays([base, ro]))
+            for split in ("val", "test", "test_robot"):
+                src = os.path.join(args.data, f"{fam}_{split}.npz")
+                if os.path.exists(src) and not os.path.exists(os.path.join(dr, f"{fam}_{split}.npz")):
+                    os.symlink(os.path.abspath(src), os.path.join(dr, f"{fam}_{split}.npz"))
+        run_r = f"{args.run}_round{r + 1}"
+        targs = argparse.Namespace(data=dr, variant="typed", run=run_r, steps=args.steps, bs=512, lr=3e-4, d=c["d"],
+                                   seed=args.seed, tf_prob=0.5, drop_hist=0.15, holdout_family=None, families=None,
+                                   max_episodes=None, init=ck, freeze=None, log_every=500, eval_every=10 ** 9,
+                                   no_amp=False, no_test=True, no_phys=not c.get("phys", False))
+        ck = train(targs)
+    write_rows(rows)
+    print("onpolicy done", flush=True)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     sp = ap.add_subparsers(dest="cmd", required=True)
@@ -532,6 +650,7 @@ def main(argv=None):
     t.add_argument("--log-every", type=int, default=200)
     t.add_argument("--eval-every", type=int, default=5000)
     t.add_argument("--no-amp", action="store_true")
+    t.add_argument("--no-phys", action="store_true", help="r1-style free head (no physics margins)")
     t.add_argument("--no-test", action="store_true")
     cb = sp.add_parser("calibrate")
     cb.add_argument("--ckpt", required=True)
@@ -540,6 +659,26 @@ def main(argv=None):
     e.add_argument("--ckpt", required=True)
     e.add_argument("--data", default="data/v2_synth")
     e.add_argument("--splits", default="test,test_robot,test_stress")
+    op = sp.add_parser("onpolicy")
+    op.add_argument("--init", required=True)
+    op.add_argument("--data", default="data/v2_synth_r4")
+    op.add_argument("--run", required=True)
+    op.add_argument("--work", default="data/v2_onpolicy")
+    op.add_argument("--rounds", type=int, default=3)
+    op.add_argument("--episodes", type=int, default=200)
+    op.add_argument("--val-episodes", type=int, default=50)
+    op.add_argument("--steps", type=int, default=3000)
+    op.add_argument("--explore", type=float, default=0.2)
+    op.add_argument("--lot", type=int, default=1)
+    op.add_argument("--families", default=None)
+    op.add_argument("--pop", type=int, default=192)
+    op.add_argument("--iters", type=int, default=3)
+    op.add_argument("--n-z", type=int, default=16)
+    op.add_argument("--seed", type=int, default=0)
+    cv = sp.add_parser("convert")
+    cv.add_argument("--pattern", required=True)
+    cv.add_argument("--out", required=True)
+    cv.add_argument("--workers", type=int, default=8)
     co = sp.add_parser("collect")
     co.add_argument("--data", default="data/v2_env")
     co.add_argument("--families", default=None)
@@ -579,6 +718,10 @@ def main(argv=None):
         generate(a.data, a.n_train, a.n_eval, a.workers)
     elif a.cmd == "train":
         train(a)
+    elif a.cmd == "onpolicy":
+        onpolicy(a)
+    elif a.cmd == "convert":
+        convert(a.pattern, a.out, a.workers)
     elif a.cmd == "collect":
         from physmem.envs import FAMILIES as EF
         collect(a.data, a.families.split(",") if a.families else list(EF), a.robots.split(","), a.n_train, a.n_eval,

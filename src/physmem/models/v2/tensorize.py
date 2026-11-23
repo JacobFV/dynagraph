@@ -112,7 +112,7 @@ def build_family_arrays(episodes, emb_of_robot, rng=None):
         for k, st in enumerate(steps):
             it: S.Interaction = st["inter"]
             rows["seg"].append(seg_tensor(it.segment).astype(np.float16))
-            rows["call"].append(it.call_vec.astype(np.float32))
+            rows["call"].append(S.named_call_vector(it.skill, it.params))
             rows["an"].append(S.analytic_features(it.segment if it.segment.shape[0] == S.SEG_T
                                                   else S.resample_segment(it.segment)))
             rows["tend"].append(it.t_end)
@@ -213,7 +213,7 @@ def single_batch(history, frame: S.EntityFrame, emb: np.ndarray, calls: np.ndarr
     K = K_MAX
     seg = np.zeros((K, S.SEG_T, S.N_CH), np.float32)
     an = np.zeros((K, S.N_AN), np.float32)
-    call = np.zeros((K, S.CALL_DIM), np.float32)
+    call = np.zeros((K, S.CALLN_DIM), np.float32)
     m = np.zeros(K, bool)
     age = np.zeros(K, np.float32)
     ont = np.zeros(K, bool)
@@ -222,7 +222,7 @@ def single_batch(history, frame: S.EntityFrame, emb: np.ndarray, calls: np.ndarr
         xr = it.segment if it.segment.shape[0] == S.SEG_T else S.resample_segment(it.segment)
         seg[i] = xr / S.CH_SCALE
         an[i] = S.analytic_features(xr)
-        call[i] = it.call_vec
+        call[i] = S.named_call_vector(it.skill, it.params)
         m[i] = True
         age[i] = max(now - it.t_end, 0.0)
         if on_target is not None:
@@ -250,3 +250,27 @@ def arrays_hash(arrays: dict) -> str:
             h.update(k.encode())
             h.update(np.ascontiguousarray(a).tobytes()[:1 << 20])
     return h.hexdigest()[:16]
+
+
+def concat_arrays(parts: list) -> dict:
+    """concatenate build_family_arrays outputs (same family): re-index episodes / ep_start, pad entities."""
+    parts = [p for p in parts if p is not None and len(p["k"])]
+    nmax = max(p["ent"].shape[1] for p in parts)
+    out, row0, ep0 = {}, 0, 0
+    acc = {k: [] for k in parts[0]}
+    for p in parts:
+        n = len(p["k"])
+        for k, v in p.items():
+            if k == "ent":
+                e = np.zeros((n, nmax, v.shape[2]), v.dtype)
+                e[:, :v.shape[1]] = v
+                acc[k].append(e)
+            elif k == "ep_start":
+                acc[k].append(v + row0)
+            elif k == "ep_index":
+                acc[k].append(v + ep0)
+            else:
+                acc[k].append(v)
+        row0 += n
+        ep0 += int(p["ep_index"].max()) + 1
+    return {k: np.concatenate(v) for k, v in acc.items()}
