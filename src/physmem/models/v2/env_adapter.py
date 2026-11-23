@@ -290,7 +290,8 @@ class EnvAdapter:
                               params=rcall.params, target_is_query=True, segment=seg,
                               effort_cost=out.result.effort.cost(), effort=out.result.effort.as_dict(), t_end=t1,
                               outcome_cont=cont, outcome_cont_mask=np.ones(S.N_CONT, bool), outcome_events=evs,
-                              outcome_events_mask=emask, labels={}, target_id="|".join(sorted(tids)))
+                              outcome_events_mask=emask, labels={},
+                              target_id=tids[0] if len(tids) == 1 else f"pile:{target}")
         out.result.log["interaction"] = inter
         out.result.log["latents"] = dict(self.lat)     # evaluator-only copy (harness/training), never actor input
         self.k += 1

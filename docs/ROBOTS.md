@@ -495,3 +495,168 @@ For reference, the probe-robot scripted baseline (docs/ENVS.md, train split) is 
   - **API fixes:** `set_grip_force` / `max_grip_force` added (the Dex3 is nominally 10 N); `g1_pinch_pick` fills
     `ctx.held`; the hand IK chain includes waist pitch (effector dofs/home are 8 long, waist first; arm-only versions
     as `arm_*`).
+
+
+## 7. Env matrix, round 3 (current; supersedes section 6)
+
+Files:
+- Runs: `results/v2/robots/env_runs_r3_all.jsonl` (= `env_runs_r3.jsonl` + the G1 sub-agent's `env_runs_g1_r3.jsonl`).
+- Matrix: `results/v2/robots/env_matrix.json`.
+- Launcher: `scripts/robots_env_final.sh <out>`.
+
+565 episodes, 5 seeds per cell, 0 integrity violations.
+
+| family | panda | ur5e_2f85 | gen3_2f85 | aloha | tidybot | ur5e_suction | ur5e_suction2 | fr3_suction | z1 | so100 | g1_dex3 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| bin_clearing | 0/5 (0.07) | 0/5 (0.44) | 0/5 (0.45) | 0/5 (0.00) | 0/5 (0.00) | - | - | - | 0/5 (0.00) | 0/5 (0.00) | - |
+| bulk_sweep | 2/5 (0.83) | 1/5 (0.82) | 0/5 (0.63) | 0/5 (0.00) | 0/5 (0.07) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | - | - | - |
+| connector_insert | 1/5 (0.65) | 5/5 (1.00) | 4/5 (0.93) | 0/5 (0.05) | 0/5 (0.00) | - | - | - | - | - | - |
+| conveyor_sort | 0/5 (0.33) | 0/5 (0.51) | 0/5 (0.39) | 0/5 (0.00) | 0/5 (0.00) | - | - | - | - | - | - |
+| depalletize | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.05) | 0/5 (0.00) | - | - | - |
+| door_open | 4/5 (0.85) | 5/5 (1.00) | 5/5 (1.00) | 0/5 (0.00) | 5/5 (1.00) | - | - | - | 0/5 (0.00) | 0/5 (0.00) | 2/5 (0.47) |
+| drawer_open | 3/5 (0.84) | 5/5 (1.00) | 3/5 (0.90) | 4/5 (0.80) | 5/5 (1.00) | - | - | - | 4/5 (0.80) | 0/5 (0.00) | 3/5 (0.62) |
+| fixture_place | 5/5 (1.00) | 5/5 (1.00) | 5/5 (1.00) | 0/5 (0.00) | 0/5 (0.00) | 1/5 (0.20) | 1/5 (0.20) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) |
+| kitting_pocket | 4/5 (0.80) | 3/5 (0.77) | 1/5 (0.50) | 0/5 (0.00) | 0/5 (0.00) | - | - | - | - | - | - |
+| machine_tending | 0/5 (0.47) | 4/5 (0.93) | 2/5 (0.60) | 0/5 (0.00) | 0/5 (0.33) | - | - | - | - | - | - |
+| peg_insert | 5/5 (1.00) | 5/5 (1.00) | 5/5 (1.00) | 0/5 (0.00) | 0/5 (0.00) | - | - | - | 0/5 (0.00) | 0/5 (0.00) | - |
+| pouch_transfer | 4/5 (0.80) | 3/5 (0.60) | 2/5 (0.40) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | - |
+| singulation | 4/5 (0.92) | 2/5 (1.00) | 3/5 (0.80) | 3/5 (0.72) | 3/5 (0.60) | 3/5 (0.75) | 1/5 (0.68) | 2/5 (0.92) | 3/5 (0.73) | 0/5 (0.07) | 1/5 (0.39) |
+| tool_return | 4/5 (0.80) | 5/5 (1.00) | 3/5 (0.60) | 2/5 (0.40) | 0/5 (0.00) | - | - | - | - | - | - |
+| tote_transfer | 1/5 (0.53) | 2/5 (0.53) | 0/5 (0.33) | 0/5 (0.00) | 0/5 (0.00) | - | - | - | - | - | - |
+| twist_lock | 4/5 (0.88) | 5/5 (1.00) | 5/5 (1.00) | 2/5 (0.50) | 1/5 (0.37) | - | - | - | - | - | - |
+| **total** | 41/80 | 50/80 | 38/80 | 11/80 | 14/80 | 4/25 | 2/25 | 2/25 | 7/35 | 0/35 | 6/20 |
+violations total: 0
+
+What changed in round 3:
+- **conveyor_sort (target ≥ 3/5 NOT met: 0/5; progress 0.33–0.51).**
+  - **Tracking pick:** the pick now tracks the belt. It plans the earliest reachable intercept from the latest pose
+    plus its tracker age. Belt speed is the 1.5 s least-squares estimate from pose events, projected on the
+    pick-window axis (CAD). The hand hover-matches the part for 0.5 s, descends with the belt velocity fed forward,
+    closes once at grasp height, and lifts at belt velocity. The plan is not retimed.
+  - **Grasps:** single tracked grasps now land within about 5–8 mm (UR5e: 12 grasps in 43 attempts).
+  - **Why episodes fail:** the scripted policy re-targets items that are already sorted (up to 70 `unreachable`
+    calls per Panda episode; reported to ENVS). Remaining items reach the reject chute (fatal) while the robot is
+    busy, and heavy/oily items slip at the scripted 25 N grip (a hidden variable).
+- **bin_clearing (0/5; UR5e/Gen3 progress about 0.45).**
+  - **Loop breaker:** repeated picks on the same part vary yaw, then depth, then the part is skipped after 3
+    failures; grasp yaw is chosen against neighbouring estimates.
+  - **Pad/sphere pass-through:** stiff explicit pad pairs made parts stick between the pads after release, so they
+    were reverted. Kept as an open ENVS issue, with notes in docs/ENVS.md.
+- **depalletize (0 for all robots).**
+  - **Knobs exposed:** pick `suction`, `lift_speed`, `max_acc`; place `speed`, `max_acc`; and a two-cup tool
+    `ur5e_suction2` (600 N).
+  - **Oracle-knob check:** the 12–22 kg class is infeasible for every available arm. UR5e payload is 5 kg; with
+    oracle knobs it lifts an 18 kg carton only 6 cm, which is an arm limit, not a suction limit
+    (`scripts/robots_depal_oracle.py`).
+  - **Within payload (1–6 kg):** cartons still peel off a single 70 mm cup in transit (the seal check sees one edge
+    contact), and two cups hit edge seals. The scripted suction level was not tuned (left to the model).
+- **G1 floating (sub-agent): 0/20 → 6/20.** Drawer 3/5, door 2/5, singulation 1/5, fixture 0/5.
+  - **Changes:** a stance 0.03 m closer, a hands-over-the-bench ready pose with a 6 cm crouch, an IK-oriented
+    fingertip push, a Dex3 tab pinch with a 60 N cap, and a waist-pitch guard on pinch picks.
+  - **Remaining causes:** the Dex3 squeezes only about 10 N per side, so it slips on stiff hinges and drawers; the
+    fixture needs walking.
+- **TidyBot (14/80).** The base now drives laterally to line up with each target. Door/drawer 5/5, singulation 3/5;
+  depth into the 0.76 m bench is still out of reach for the 0.335 m arm base. Documented as a geometry limit (ENVS
+  could lower its bench).
+- **SO-100 (0/35): infeasible in these stations.** Its reach is 0.35 m, but station work areas are 0.4–0.5 m from
+  the arm mount. Its payload is about 0.25 kg and opening 45 mm, against station parts of 0.1–6 kg and 24–60 mm, and
+  even on its own bench it places only 3/20 (single 3 Nm jaw). It needs a dedicated light-parts micro-station
+  (≤ 30 mm, ≤ 80 g parts within 0.25 m), which belongs in ENVS.
+- **Other numbers:**
+  - Panda tool_return 0/5 → 4/5 (explicit grasp depth plus full-drive close).
+  - ALOHA gate restored (pick/place 20/20, handover 10/10); ALOHA in envs 11/80 (bench-centre layout at the edge of
+    the vx300s reach).
+  - Totals: UR5e 50/80, Panda 41/80, Gen3 38/80.
+
+## 8. Round 4: heavy-payload gantry, suction physics
+
+### Synthetic 4-axis palletizing gantry (`gantry_vacuum`, `gantry_clamp`; `src/physmem/embodiments/gantry.py`)
+**A generic, SYNTHETIC model with industry-typical numbers, not a vendor product.**
+
+Kinematics and dynamics:
+- **Axes:** x, y, z prismatic plus wrist yaw (hinge), all torque/force-controlled motors (ctrlrange = drive limit).
+- **Travel:** x/y ±1.2 m; z from 0 to −1.6 m below the beam. The robot uses the stations' `gantry` mount (beam
+  height over the work area), with no frame visuals so the tracker's line of sight is unchanged.
+- **Moving masses:** bridge 60 kg, carriage 30 kg, quill 20 kg, wrist 3 kg, tool 6–8 kg.
+- **Drives:** reflected inertia (armature) 1.5 / 1.0 / 0.8 kg and 0.05 kg m² (yaw); viscous drive damping 40/30/30.
+  Drive limits x 2500 N, y 2000 N, z 2000 N, yaw 60 N m.
+- **Budget:** payload 30 kg; v 1.5 m/s, a 4 m/s², j 60 m/s³.
+- **Control:** the same task-space inverse-dynamics controller as the arms (prismatic + hinge joints).
+
+Tools:
+
+| tool | zones | force | used for |
+|---|---|---|---|
+| `gantry_vacuum` | 2×2 cups r = 40 mm (zones 0–3) | 60 kPa → 302 N each, 1206 N total | cartons |
+| `gantry_vacuum` | centre cup r = 15 mm (zone 4) | 42 N | small parts (conveyor) |
+| `gantry_clamp` | tote clamp, two jaws (opening 0–0.30 m) | 400 N per jaw (nominal) | totes |
+
+Zone control: the pick enables only the cups whose whole lip lies on the estimated top face.
+
+### Suction physics (all suction tools)
+- **Lip model:** each cup is a body with a lip of 8 contact spheres on its rim (compliant, 1 mm margin) and a visual
+  disk. Lip contacts give the moment that resists peel, up to about F_vac·r.
+- **Vacuum force:** ΔP·πr² per cup through a MuJoCo adhesion actuator on that cup body (60 kPa: 70 mm cup 231 N,
+  80 mm 302 N, 30 mm 42 N). The env's `suction` level scales it. There are no welds.
+- **Seal (per cup, the equivalent of a vacuum switch per zone):**
+  - **Making a seal:** all 8 lip points must touch one non-robot face within 3 mm, with normals within 20° of the cup
+    axis.
+  - **Holding:** while holding, the cup leaks (its vacuum force goes to 0) when fewer than 6 of 8 lip points still
+    touch within 45°. A peeling or edge-hanging cup therefore drops its share.
+  - **Result:** "two-cup edge sealing" is fixed by construction. A cup over an edge never seals, and the skill
+    disables cups whose lip would leave the face.
+- **Bench check:** pick/place with `ur5e_suction` holds 2–7 mm placement accuracy. A 65 mm face correctly reports
+  `too_small` for the 70 mm cup.
+- **Margin/gap pitfall (documented):** lip geoms with margin 4 mm + gap 4 mm still produced contact forces at 3.7 mm
+  separation (84 N), so the cup rode on margin contacts and never sealed. A 1 mm margin with no gap is used instead.
+
+### Depalletize with real knobs (`scripts/robots_depal_oracle.py`, ORACLE knob choice from the hidden mass)
+**12–22 kg cartons on `gantry_vacuum`** (heavy_p = 1, seeds 0 and 2): 2 of 4 cartons each placed; every pick
+succeeded; one drop on the third placement per seed (not diagnosed). On the UR5e the same oracle knobs lift an 18 kg
+carton only 6 cm (5 kg payload). The heavy class is feasible only on the gantry.
+
+### Current env matrix (round 4; `results/v2/robots/env_runs_current.jsonl`, `env_matrix.json`)
+
+This is round 3 with the following cells re-run:
+- the suction arms on depalletize / fixture_place;
+- the new gantry rows;
+- the G1 sub-agent's round-4 rows.
+
+5 seeds per cell, 0 integrity violations.
+
+595
+| family | panda | ur5e_2f85 | gen3_2f85 | aloha | tidybot | ur5e_suction | ur5e_suction2 | fr3_suction | z1 | so100 | gantry_vacuum | gantry_clamp | g1_dex3 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| bin_clearing | 0/5 (0.07) | 0/5 (0.44) | 0/5 (0.45) | 0/5 (0.00) | 0/5 (0.00) | - | - | - | 0/5 (0.00) | 0/5 (0.00) | - | - | - |
+| bulk_sweep | 2/5 (0.83) | 1/5 (0.82) | 0/5 (0.63) | 0/5 (0.00) | 0/5 (0.07) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | - | - | - | - | - |
+| connector_insert | 1/5 (0.65) | 5/5 (1.00) | 4/5 (0.93) | 0/5 (0.05) | 0/5 (0.00) | - | - | - | - | - | - | - | - |
+| conveyor_sort | 0/5 (0.33) | 0/5 (0.51) | 0/5 (0.39) | 0/5 (0.00) | 0/5 (0.00) | - | - | - | - | - | 0/5 (0.00) | 0/5 (0.04) | - |
+| depalletize | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.38) | 0/5 (0.33) | 0/5 (0.35) | - | - | 1/5 (0.55) | 0/5 (0.00) | - |
+| door_open | 4/5 (0.85) | 5/5 (1.00) | 5/5 (1.00) | 0/5 (0.00) | 5/5 (1.00) | - | - | - | 0/5 (0.00) | 0/5 (0.00) | - | - | 2/5 (0.54) |
+| drawer_open | 3/5 (0.84) | 5/5 (1.00) | 3/5 (0.90) | 4/5 (0.80) | 5/5 (1.00) | - | - | - | 4/5 (0.80) | 0/5 (0.00) | - | - | 3/5 (0.71) |
+| fixture_place | 5/5 (1.00) | 5/5 (1.00) | 5/5 (1.00) | 0/5 (0.00) | 0/5 (0.00) | 1/5 (0.20) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | - | - | 0/5 (0.00) |
+| kitting_pocket | 4/5 (0.80) | 3/5 (0.77) | 1/5 (0.50) | 0/5 (0.00) | 0/5 (0.00) | - | - | - | - | - | - | - | - |
+| machine_tending | 0/5 (0.47) | 4/5 (0.93) | 2/5 (0.60) | 0/5 (0.00) | 0/5 (0.33) | - | - | - | - | - | - | - | - |
+| peg_insert | 5/5 (1.00) | 5/5 (1.00) | 5/5 (1.00) | 0/5 (0.00) | 0/5 (0.00) | - | - | - | 0/5 (0.00) | 0/5 (0.00) | - | - | - |
+| pouch_transfer | 4/5 (0.80) | 3/5 (0.60) | 2/5 (0.40) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | - | - | - |
+| singulation | 4/5 (0.92) | 2/5 (1.00) | 3/5 (0.80) | 3/5 (0.72) | 3/5 (0.60) | 3/5 (0.75) | 1/5 (0.68) | 2/5 (0.92) | 3/5 (0.73) | 0/5 (0.07) | - | - | 0/5 (0.37) |
+| tool_return | 4/5 (0.80) | 5/5 (1.00) | 3/5 (0.60) | 2/5 (0.40) | 0/5 (0.00) | - | - | - | - | - | - | - | - |
+| tote_transfer | 1/5 (0.53) | 2/5 (0.53) | 0/5 (0.33) | 0/5 (0.00) | 0/5 (0.00) | - | - | - | - | - | 0/5 (0.00) | 0/5 (0.20) | - |
+| twist_lock | 4/5 (0.88) | 5/5 (1.00) | 5/5 (1.00) | 2/5 (0.50) | 1/5 (0.37) | - | - | - | - | - | - | - | - |
+| **total** | 41/80 | 50/80 | 38/80 | 11/80 | 14/80 | 4/25 | 1/25 | 2/25 | 7/35 | 0/35 | 1/15 | 0/15 | 5/20 |
+violations total: 0
+
+Round-4 changes:
+- **Depalletize:** the first successes of any robot come from `gantry_vacuum` (1/5, progress 0.55). The suction arms
+  went from 0–0.05 to 0.33–0.38 progress with the lip/seal model.
+- **gantry_clamp tote_transfer 0/5 (0.20):** the first tote was placed in a single test episode; after that the
+  scripted policy re-targets the placed tote from a stale estimate, and upper-tier tote grasps miss.
+- **gantry conveyor_sort 0/5:** the small centre cup and the clamp were not tuned for moving parts.
+- **G1 Dex3 (sub-agent):**
+  - **Grip:** 0 → about 20 N per side, measured on a fixed block (`scripts/robots_g1_grip_calib.py`). The finger
+    gain was too low for the joints to reach their torque limit. 20 N matches the model's limits, which match
+    Unitree's published 1.498 N m (1:214) motor rating over a 7–8 cm fingertip lever. No official fingertip-force
+    spec was found; this is inferred.
+  - **Door/drawer:** hand-over-hand (a 6 cm tab cannot take two Dex3 pinches at once). Door 2/5 (0.54), drawer 3/5
+    (0.71); the dominant failure is still `grasp_failed` on the tab.
+  - **Totals:** G1 floating 5/20 (singulation 1/5 → 0/5).

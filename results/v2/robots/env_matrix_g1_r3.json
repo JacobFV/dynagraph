@@ -1,0 +1,58 @@
+{
+ "matrix": {
+  "singulation": {
+   "g1_dex3": {
+    "n": 5,
+    "success": 1,
+    "progress": 0.39,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 13.0,
+    "sim_mean": 50.6
+   }
+  },
+  "door_open": {
+   "g1_dex3": {
+    "n": 5,
+    "success": 2,
+    "progress": 0.47,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 49.9,
+    "sim_mean": 62.0
+   }
+  },
+  "drawer_open": {
+   "g1_dex3": {
+    "n": 5,
+    "success": 3,
+    "progress": 0.62,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 6.6,
+    "sim_mean": 32.4
+   }
+  },
+  "fixture_place": {
+   "g1_dex3": {
+    "n": 5,
+    "success": 0,
+    "progress": 0.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 0.8,
+    "sim_mean": 0.2
+   }
+  }
+ },
+ "robots": [
+  "g1_dex3"
+ ],
+ "families": [
+  "door_open",
+  "drawer_open",
+  "fixture_place",
+  "singulation"
+ ],
+ "source": "results/v2/robots/env_runs_g1_r3.jsonl"
+}

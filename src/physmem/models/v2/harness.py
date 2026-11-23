@@ -66,7 +66,7 @@ def decide_env(planner: CEMPlanner, ad, hist, emb, rng, n_cand=32):
         bounds = {k: (float(lo), float(hi) if hi > lo else float(lo) + 1e-6) for k, lo, hi in zip(keys, vals.min(0), vals.max(0))}
         true_z, true_m = S.labels_to_z(ad.oracle_latents(target)) if planner.mode == "oracle" else (None, None)
         d = planner.decide(hist, ad.frame(target), emb, skill, bounds, rng, probe_params=None, true_z=true_z,
-                           true_mask=true_m, init_params=rel, query_target="|".join(sorted(ad.target_ids(target))))
+                           true_mask=true_m, init_params=rel, query_target=(lambda t: t[0] if len(t) == 1 else f"pile:{target}")(ad.target_ids(target)))
         if best is None or d.info["score"] < best[0]:
             best = (d.info["score"], api.SkillCall(skill, d.params, target=target), cs[0], d)
     return best

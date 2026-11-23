@@ -19,9 +19,14 @@ class Depalletize(StationEnv):
     tool = "suction"
     probe_kw = dict(suction_max=300.0)
     settle_s = 1.0
-    success_doc = "every carton ends upright on the outfeed table (centre inside its footprint); none dropped"
-    hidden_doc = ("carton mass 1-6 kg with hidden heavy cartons 12-22 kg (p=0.25, same look), carton<->carton friction "
-                  "0.3-0.8: suction force needed = m (g + a_lift) -> suction level / lift speed per carton")
+    success_doc = ("like a real cell (round 3): every carton within the robot's declared payload "
+                   "(EmbodimentSpec.payload_kg) ends upright on the outfeed AND every overweight carton is flagged to the "
+                   "exception lane (SkillCall 'handover' on it) and left on the pallet; nothing dropped. Light cartons "
+                   "flagged needlessly, overweight cartons lifted off the pallet, or any drop -> failure")
+    hidden_doc = ("carton mass 1-6 kg + hidden heavy cartons 12-22 kg (p=0.25, bottom layer, same look) -> lift vs flag "
+                  "depends on the hidden mass vs payload (estimable from a probing partial lift + wrist F/T); 30 % of "
+                  "cartons have slick film (cup shear friction 0.15-0.3) and peel off a cup at high transport "
+                  "acceleration -> suction level / place speed; carton<->carton friction 0.3-0.8")
 
     def build(self, scene, rng, params):
         # EUR pallet 1.2 x 0.8 x 0.144 on the floor; outfeed table on the robot side
@@ -47,12 +52,16 @@ class Depalletize(StationEnv):
                     x = px + (i - 0.5) * (2 * hx + 0.006) + rng.uniform(-0.004, 0.004)
                     y = py + (j - 0.5) * (2 * hy + 0.006) + rng.uniform(-0.004, 0.004)
                     z = 0.144 + hz + L * (2 * hz + 0.001) + 0.001
-                    heavy = rng.random() < heavy_p
+                    # heavy cartons only in the bottom layer (standard stacking practice): the light ones above stay
+                    # reachable whatever the robot decides about the heavy ones
+                    heavy = (L == 0) and rng.random() < heavy_p
                     mass = float(rng.uniform(12, 22) if heavy else rng.uniform(1, 6))
+                    slick = rng.random() < params.get("slick_p", 0.3)
+                    mug = float(rng.uniform(0.15, 0.3) if slick else rng.uniform(0.7, 1.0))
                     _, info = scene.part(f"carton{k}", "box", (hx, hy, hz), (x, y, z), yaw=rng.uniform(-0.02, 0.02),
-                                         mass=mass, mu=float(rng.uniform(0.3, 0.8)), mu_grip=float(rng.uniform(0.7, 1.0)),
+                                         mass=mass, mu=float(rng.uniform(0.3, 0.8)), mu_grip=mug,
                                          restitution=0.05, timeconst=0.02, kind="carton", rgba=CARDBOARD,
-                                         extra_hidden=dict(heavy=bool(heavy)))
+                                         extra_hidden=dict(heavy=bool(heavy), slick=bool(slick)))
                     info.shape = "carton"
                     k += 1
         self.n = k
@@ -69,6 +78,7 @@ class Depalletize(StationEnv):
         self.slots = [(sx * (2 * hx + 0.03), sy * (hy + 0.03)) for sy in (-1, 1) for sx in (-1.5, -0.5, 0.5, 1.5)]
         self.budget = int(params.get("budget", 3 * k))
         self._next_slot = 0
+        self.flagged = set()
 
     def cartons(self):
         return self.objects("carton")
@@ -80,15 +90,65 @@ class Depalletize(StationEnv):
         hz = self.scene.entities[e].half[2]
         return (self.in_region_true(e, reg, zcheck=False) and abs(p[2] - (self.surface_z + hz)) < 0.02 and up > 0.95)
 
+    def payload(self):
+        return float(getattr(self.robot.spec, "payload_kg", 1e9))
+
+    def overweight(self, e):
+        return self.scene.entities[e].hidden["mass"] > self.payload()
+
+    def _on_pallet(self, e):
+        p, _ = self.true_pose(e)
+        return abs(p[0]) < 0.62 and 0.25 - 0.42 < p[1] < 0.25 + 0.42 and p[2] > 0.144
+
+    def _carton_ok(self, e):
+        if self.overweight(e):
+            return e in self.flagged and self._on_pallet(e)
+        return self._on_outfeed(e) and e not in self.flagged
+
     def success(self):
-        return all(self._on_outfeed(e) for e in self.cartons()) and self.metrics_acc["drops"] == 0
+        return all(self._carton_ok(e) for e in self.cartons()) and self.metrics_acc["drops"] == 0
 
     def progress(self):
         c = self.cartons()
-        return sum(self._on_outfeed(e) for e in c) / len(c)
+        return sum(self._carton_ok(e) for e in c) / len(c)
 
     def fatal(self):
         return self.metrics_acc["drops"] > 0
+
+    def execute(self, call):
+        """'handover' on a carton = flag it to the exception lane (operator / forklift): env-level, 2 s cycle, no
+        motion; picks of overweight cartons are counted (an attempted overweight lift costs)."""
+        if call.skill == "pick" and call.target in self.scene.entities and self.overweight(call.target):
+            self._ow_attempts = getattr(self, "_ow_attempts", 0) + 1
+        if call.skill != "handover":
+            return super().execute(call)
+        from ..v2.api import EffortMeter, SkillResult, StepOut
+        self.n_calls += 1
+        before = self.progress()
+        if call.target in self.scene.entities:
+            self.flagged.add(call.target)
+        self.run(2.0)
+        ev = self.sensors.flush()
+        self.events_all.extend(ev)
+        res = SkillResult(call.target in self.scene.entities, "flagged", EffortMeter(), 2.0,
+                          dict(skill="handover", params=dict(call.params), target=call.target))
+        self.last_held_before, self.last_call, self.last_result = self.held, call, res
+        succ = bool(self.success())
+        fatal = self.fatal() or self.metrics_acc["sim_instabilities"] > 0
+        prog = self.progress()
+        metrics = dict(progress=prog, progress_delta=prog - before, n_calls=self.n_calls, t=self.t, slip=False,
+                       jam=False, stall=False, drop=False, collision=False, success=succ,
+                       **{k: v for k, v in self.metrics_acc.items()}, effort_cost=0.0, fatal=fatal,
+                       **self.metrics_extra())
+        return StepOut(events=ev, result=res, done=succ or fatal or self.n_calls >= self.budget, success=succ,
+                       metrics=metrics, labels=self.labels())
+
+    def metrics_extra(self):
+        return dict(flagged=len(self.flagged), overweight_lift_attempts=getattr(self, "_ow_attempts", 0))
+
+    def labels_extra(self):
+        return dict(payload_kg=self.payload(), overweight={e: self.overweight(e) for e in self.cartons()},
+                    flagged=sorted(self.flagged))
 
     def _remaining(self):
         out = []
@@ -96,7 +156,7 @@ class Depalletize(StationEnv):
             est = self.est_pose(e)
             if est is None:
                 continue
-            if est[0][1] > -0.2:     # still on the pallet side
+            if est[0][1] > -0.2 and e not in self.flagged:     # still on the pallet side, not flagged
                 out.append((est[0][2], e))
         return [e for _, e in sorted(out, reverse=True)]
 
@@ -120,19 +180,26 @@ class Depalletize(StationEnv):
         if self.held is not None:
             return [self._place_call(rng) for _ in range(n)]
         rem = self._remaining()[:4]
-        return [self._pick_call(rem[i % len(rem)], rng) for i in range(n)] if rem else []
+        if not rem:
+            return []
+        out = []
+        for i in range(n):
+            e = rem[i % len(rem)]
+            out.append(SkillCall("handover", dict(), target=e) if rng.random() < 0.2 else self._pick_call(e, rng))
+        return out
 
     def scripted(self):
+        """baseline: lift every carton; after two failed lifts of the same carton, flag it (handover)."""
         if self.held is not None:
             return self._place_call()
         rem = self._remaining()
         if not rem:
             return None
-        cand = [e for e in rem if self.fail_count.get(e, 0) < 3] or rem   # top layer first, skip repeated failures
-        e = cand[0]
+        e = rem[0]                                           # top layer first
         k = self.fail_count.get(e, 0)
-        return self._pick_call(e, suction=(0.9, 1.0, 1.0)[min(k, 2)], lift_speed=(0.15, 0.06, 0.04)[min(k, 2)],
-                               dx=(0.0, 0.0, 0.03)[min(k, 2)])
+        if k >= 2:
+            return SkillCall("handover", dict(reason="lift failed twice"), target=e)
+        return self._pick_call(e, suction=(0.9, 1.0)[min(k, 1)], lift_speed=(0.15, 0.06)[min(k, 1)])
 
 
 # ====================================================================== (b) conveyor sort
@@ -229,12 +296,30 @@ class ConveyorSort(StationEnv):
         ev = self.view.latest(e, XProp.SHAPE, self.t + 1e9)
         return "A" if ev is not None and SHAPES[int(np.argmax(ev.value))] == "cylinder" else "B"
 
+    def _sorted_ids(self):
+        """actor memory + tracker: items this robot already placed into a bin (successful place of a held item), or
+        whose latest estimate lies inside a bin region. Never re-targeted."""
+        lc, lr = getattr(self, "last_call", None), getattr(self, "last_result", None)
+        done = getattr(self, "_sorted", set())
+        held = getattr(self, "last_held_before", None)
+        if lc is not None and lc.skill == "place" and lr is not None and lr.ok and held is not None \
+                and lc.target in ("bin_A", "bin_B"):
+            done.add(held)
+        for e in self.items():
+            est = self.est_pose(e)
+            if est is not None and any(self.in_region_est(e, self.scene.regions[b], margin=0.02)
+                                       for b in ("bin_A", "bin_B")):
+                done.add(e)
+        self._sorted = done
+        return done
+
     def _in_window(self):
         out = []
+        skip = self._sorted_ids()
         reg = self.scene.regions["pick_window"]
         for e in self.items():
             est = self.est_pose(e)
-            if est is None or self.held == e:
+            if est is None or self.held == e or e in skip:
                 continue
             # reachable stretch of the belt: the pick window plus the last 0.25 m before the reject chute
             if abs(est[0][1]) < 0.16 and reg["center"][0] - reg["half"][0] - 0.05 < est[0][0] < 0.45 \
@@ -246,7 +331,10 @@ class ConveyorSort(StationEnv):
 
     def _upstream(self):
         out = []
+        skip = self._sorted_ids()
         for e in self.items():
+            if e in skip:
+                continue
             est = self.est_pose(e)
             if est is not None and est[0][0] < -0.4 and abs(est[0][1]) < 0.16:
                 out.append((est[0][0], e))
@@ -292,7 +380,8 @@ class ConveyorSort(StationEnv):
         up = self._upstream()
         if not up:
             # anything still on the belt (e.g. just past the window)? wait briefly and re-check rather than give up
-            on = [e for e in self.items() if (lambda est: est is not None and abs(est[0][1]) < 0.16
+            skip = self._sorted_ids()
+            on = [e for e in self.items() if e not in skip and (lambda est: est is not None and abs(est[0][1]) < 0.16
                                                and est[0][2] > self.surface_z and est[0][0] < 0.6)(self.est_pose(e))]
             return self._wait_call(0.5) if on and self.n_calls < self.budget - 1 else None
         v = max(self._belt_v()[0], 0.02)

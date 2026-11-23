@@ -4,29 +4,29 @@
    "panda": {
     "n": 5,
     "success": 0,
-    "progress": 0.09,
+    "progress": 0.07,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 22.9,
-    "sim_mean": 129.7
+    "wall_mean": 14.0,
+    "sim_mean": 78.1
    },
    "ur5e_2f85": {
     "n": 5,
     "success": 0,
-    "progress": 0.57,
+    "progress": 0.44,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 35.7,
-    "sim_mean": 178.0
+    "wall_mean": 14.7,
+    "sim_mean": 128.6
    },
    "gen3_2f85": {
     "n": 5,
     "success": 0,
-    "progress": 0.47,
+    "progress": 0.45,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 19.5,
-    "sim_mean": 177.2
+    "wall_mean": 14.6,
+    "sim_mean": 123.6
    },
    "aloha": {
     "n": 5,
@@ -34,8 +34,8 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 20.6,
-    "sim_mean": 135.2
+    "wall_mean": 25.1,
+    "sim_mean": 139.6
    },
    "tidybot": {
     "n": 5,
@@ -43,8 +43,8 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 23.9,
-    "sim_mean": 0.2
+    "wall_mean": 22.8,
+    "sim_mean": 13.2
    },
    "z1": {
     "n": 5,
@@ -52,8 +52,8 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 15.6,
-    "sim_mean": 6.9
+    "wall_mean": 16.4,
+    "sim_mean": 7.8
    },
    "so100": {
     "n": 5,
@@ -61,7 +61,7 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 10.5,
+    "wall_mean": 10.2,
     "sim_mean": 0.2
    }
   },
@@ -72,7 +72,7 @@
     "progress": 0.92,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 7.7,
+    "wall_mean": 5.2,
     "sim_mean": 24.8
    },
    "ur5e_2f85": {
@@ -81,7 +81,7 @@
     "progress": 1.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 7.4,
+    "wall_mean": 5.2,
     "sim_mean": 23.4
    },
    "gen3_2f85": {
@@ -90,7 +90,7 @@
     "progress": 0.8,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 3.0,
+    "wall_mean": 4.0,
     "sim_mean": 21.0
    },
    "aloha": {
@@ -99,17 +99,17 @@
     "progress": 0.72,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 6.9,
+    "wall_mean": 6.2,
     "sim_mean": 20.8
    },
    "tidybot": {
     "n": 5,
     "success": 3,
-    "progress": 0.8,
+    "progress": 0.6,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 6.1,
-    "sim_mean": 32.4
+    "wall_mean": 6.5,
+    "sim_mean": 30.5
    },
    "ur5e_suction": {
     "n": 5,
@@ -120,13 +120,22 @@
     "wall_mean": 1.9,
     "sim_mean": 12.7
    },
+   "ur5e_suction2": {
+    "n": 5,
+    "success": 1,
+    "progress": 0.68,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 3.2,
+    "sim_mean": 22.4
+   },
    "fr3_suction": {
     "n": 5,
     "success": 2,
     "progress": 0.92,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 2.7,
+    "wall_mean": 2.3,
     "sim_mean": 18.3
    },
    "z1": {
@@ -135,7 +144,7 @@
     "progress": 0.73,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 7.2,
+    "wall_mean": 4.0,
     "sim_mean": 32.5
    },
    "so100": {
@@ -144,8 +153,17 @@
     "progress": 0.07,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 2.9,
+    "wall_mean": 2.2,
     "sim_mean": 2.4
+   },
+   "g1_dex3": {
+    "n": 5,
+    "success": 0,
+    "progress": 0.37,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 10.3,
+    "sim_mean": 40.1
    }
   },
   "bulk_sweep": {
@@ -155,7 +173,7 @@
     "progress": 0.83,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 123.0,
+    "wall_mean": 122.1,
     "sim_mean": 346.9
    },
    "ur5e_2f85": {
@@ -164,7 +182,7 @@
     "progress": 0.82,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 115.0,
+    "wall_mean": 111.6,
     "sim_mean": 368.8
    },
    "gen3_2f85": {
@@ -173,7 +191,7 @@
     "progress": 0.63,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 115.4,
+    "wall_mean": 114.6,
     "sim_mean": 441.8
    },
    "aloha": {
@@ -182,17 +200,17 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 130.6,
+    "wall_mean": 141.6,
     "sim_mean": 440.0
    },
    "tidybot": {
     "n": 5,
     "success": 0,
-    "progress": 0.01,
+    "progress": 0.07,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 118.6,
-    "sim_mean": 482.6
+    "wall_mean": 83.7,
+    "sim_mean": 349.0
    },
    "ur5e_suction": {
     "n": 5,
@@ -200,8 +218,17 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 24.8,
+    "wall_mean": 17.8,
     "sim_mean": 64.3
+   },
+   "ur5e_suction2": {
+    "n": 5,
+    "success": 0,
+    "progress": 0.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 7.5,
+    "sim_mean": 26.6
    },
    "fr3_suction": {
     "n": 5,
@@ -209,7 +236,7 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 4.1,
+    "wall_mean": 3.8,
     "sim_mean": 14.7
    }
   },
@@ -220,7 +247,7 @@
     "progress": 1.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 7.1,
+    "wall_mean": 4.5,
     "sim_mean": 14.3
    },
    "ur5e_2f85": {
@@ -229,7 +256,7 @@
     "progress": 1.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 9.3,
+    "wall_mean": 5.0,
     "sim_mean": 15.6
    },
    "gen3_2f85": {
@@ -238,7 +265,7 @@
     "progress": 1.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 8.1,
+    "wall_mean": 9.2,
     "sim_mean": 26.7
    },
    "aloha": {
@@ -247,120 +274,8 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 17.7,
-    "sim_mean": 42.7
-   },
-   "tidybot": {
-    "n": 5,
-    "success": 0,
-    "progress": 0.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 6.1,
-    "sim_mean": 0.2
-   },
-   "z1": {
-    "n": 5,
-    "success": 0,
-    "progress": 0.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 4.5,
-    "sim_mean": 0.2
-   },
-   "so100": {
-    "n": 5,
-    "success": 0,
-    "progress": 0.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 6.6,
-    "sim_mean": 0.2
-   }
-  },
-  "connector_insert": {
-   "panda": {
-    "n": 5,
-    "success": 1,
-    "progress": 0.66,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 27.0,
-    "sim_mean": 53.0
-   },
-   "ur5e_2f85": {
-    "n": 5,
-    "success": 5,
-    "progress": 1.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 5.2,
-    "sim_mean": 17.4
-   },
-   "gen3_2f85": {
-    "n": 5,
-    "success": 4,
-    "progress": 0.8,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 6.8,
-    "sim_mean": 25.6
-   },
-   "aloha": {
-    "n": 5,
-    "success": 0,
-    "progress": 0.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 20.2,
-    "sim_mean": 45.2
-   },
-   "tidybot": {
-    "n": 5,
-    "success": 0,
-    "progress": 0.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 5.2,
-    "sim_mean": 0.2
-   }
-  },
-  "tool_return": {
-   "panda": {
-    "n": 5,
-    "success": 0,
-    "progress": 0.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 14.9,
-    "sim_mean": 48.5
-   },
-   "ur5e_2f85": {
-    "n": 5,
-    "success": 4,
-    "progress": 0.8,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 12.6,
-    "sim_mean": 42.3
-   },
-   "gen3_2f85": {
-    "n": 5,
-    "success": 1,
-    "progress": 0.2,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 19.8,
-    "sim_mean": 70.3
-   },
-   "aloha": {
-    "n": 5,
-    "success": 2,
-    "progress": 0.4,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 11.4,
-    "sim_mean": 38.8
+    "wall_mean": 23.4,
+    "sim_mean": 42.8
    },
    "tidybot": {
     "n": 5,
@@ -369,7 +284,119 @@
     "errors": 0,
     "violations": 0,
     "wall_mean": 5.8,
+    "sim_mean": 1.4
+   },
+   "z1": {
+    "n": 5,
+    "success": 0,
+    "progress": 0.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 4.1,
     "sim_mean": 0.2
+   },
+   "so100": {
+    "n": 5,
+    "success": 0,
+    "progress": 0.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 5.5,
+    "sim_mean": 0.2
+   }
+  },
+  "connector_insert": {
+   "panda": {
+    "n": 5,
+    "success": 1,
+    "progress": 0.65,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 25.2,
+    "sim_mean": 55.0
+   },
+   "ur5e_2f85": {
+    "n": 5,
+    "success": 5,
+    "progress": 1.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 6.5,
+    "sim_mean": 17.4
+   },
+   "gen3_2f85": {
+    "n": 5,
+    "success": 4,
+    "progress": 0.93,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 8.9,
+    "sim_mean": 25.8
+   },
+   "aloha": {
+    "n": 5,
+    "success": 0,
+    "progress": 0.05,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 13.9,
+    "sim_mean": 35.9
+   },
+   "tidybot": {
+    "n": 5,
+    "success": 0,
+    "progress": 0.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 5.9,
+    "sim_mean": 1.3
+   }
+  },
+  "tool_return": {
+   "panda": {
+    "n": 5,
+    "success": 4,
+    "progress": 0.8,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 14.9,
+    "sim_mean": 47.4
+   },
+   "ur5e_2f85": {
+    "n": 5,
+    "success": 5,
+    "progress": 1.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 10.5,
+    "sim_mean": 38.2
+   },
+   "gen3_2f85": {
+    "n": 5,
+    "success": 3,
+    "progress": 0.6,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 11.9,
+    "sim_mean": 42.8
+   },
+   "aloha": {
+    "n": 5,
+    "success": 2,
+    "progress": 0.4,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 18.7,
+    "sim_mean": 40.5
+   },
+   "tidybot": {
+    "n": 5,
+    "success": 0,
+    "progress": 0.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 5.8,
+    "sim_mean": 1.4
    }
   },
   "fixture_place": {
@@ -379,7 +406,7 @@
     "progress": 1.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 4.5,
+    "wall_mean": 4.0,
     "sim_mean": 11.5
    },
    "ur5e_2f85": {
@@ -388,7 +415,7 @@
     "progress": 1.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 3.4,
+    "wall_mean": 4.5,
     "sim_mean": 11.5
    },
    "gen3_2f85": {
@@ -397,7 +424,7 @@
     "progress": 1.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 2.3,
+    "wall_mean": 2.7,
     "sim_mean": 11.4
    },
    "aloha": {
@@ -406,7 +433,7 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 4.7,
+    "wall_mean": 7.0,
     "sim_mean": 15.7
    },
    "tidybot": {
@@ -415,26 +442,8 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 7.0,
-    "sim_mean": 0.2
-   },
-   "ur5e_suction": {
-    "n": 5,
-    "success": 1,
-    "progress": 0.2,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 1.5,
-    "sim_mean": 2.2
-   },
-   "fr3_suction": {
-    "n": 5,
-    "success": 0,
-    "progress": 0.0,
-    "errors": 0,
-    "violations": 0,
-    "wall_mean": 1.2,
-    "sim_mean": 6.1
+    "wall_mean": 4.6,
+    "sim_mean": 1.3
    },
    "z1": {
     "n": 5,
@@ -451,28 +460,64 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 1.9,
+    "wall_mean": 1.2,
+    "sim_mean": 0.2
+   },
+   "ur5e_suction": {
+    "n": 5,
+    "success": 1,
+    "progress": 0.2,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 1.0,
+    "sim_mean": 3.2
+   },
+   "ur5e_suction2": {
+    "n": 5,
+    "success": 0,
+    "progress": 0.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 0.7,
+    "sim_mean": 0.2
+   },
+   "fr3_suction": {
+    "n": 5,
+    "success": 0,
+    "progress": 0.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 1.5,
+    "sim_mean": 3.2
+   },
+   "g1_dex3": {
+    "n": 5,
+    "success": 0,
+    "progress": 0.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 1.0,
     "sim_mean": 0.2
    }
   },
   "kitting_pocket": {
    "panda": {
     "n": 5,
-    "success": 3,
-    "progress": 0.67,
+    "success": 4,
+    "progress": 0.8,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 13.5,
-    "sim_mean": 47.5
+    "wall_mean": 14.7,
+    "sim_mean": 43.8
    },
    "ur5e_2f85": {
     "n": 5,
     "success": 3,
-    "progress": 0.83,
+    "progress": 0.77,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 17.9,
-    "sim_mean": 58.6
+    "wall_mean": 16.6,
+    "sim_mean": 49.4
    },
    "gen3_2f85": {
     "n": 5,
@@ -480,8 +525,8 @@
     "progress": 0.5,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 23.1,
-    "sim_mean": 84.2
+    "wall_mean": 26.7,
+    "sim_mean": 92.2
    },
    "aloha": {
     "n": 5,
@@ -489,8 +534,8 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 20.6,
-    "sim_mean": 64.8
+    "wall_mean": 21.1,
+    "sim_mean": 49.9
    },
    "tidybot": {
     "n": 5,
@@ -498,8 +543,8 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 11.8,
-    "sim_mean": 0.2
+    "wall_mean": 7.1,
+    "sim_mean": 1.5
    }
   },
   "drawer_open": {
@@ -509,7 +554,7 @@
     "progress": 0.84,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 3.1,
+    "wall_mean": 3.0,
     "sim_mean": 20.6
    },
    "ur5e_2f85": {
@@ -518,7 +563,7 @@
     "progress": 1.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 1.2,
+    "wall_mean": 2.2,
     "sim_mean": 10.3
    },
    "gen3_2f85": {
@@ -527,7 +572,7 @@
     "progress": 0.9,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 3.9,
+    "wall_mean": 2.3,
     "sim_mean": 22.9
    },
    "aloha": {
@@ -536,7 +581,7 @@
     "progress": 0.8,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 3.1,
+    "wall_mean": 3.3,
     "sim_mean": 18.6
    },
    "tidybot": {
@@ -545,7 +590,7 @@
     "progress": 1.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 1.9,
+    "wall_mean": 1.7,
     "sim_mean": 10.5
    },
    "z1": {
@@ -554,7 +599,7 @@
     "progress": 0.8,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 2.2,
+    "wall_mean": 2.8,
     "sim_mean": 22.1
    },
    "so100": {
@@ -563,8 +608,17 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 1.3,
+    "wall_mean": 2.3,
     "sim_mean": 22.4
+   },
+   "g1_dex3": {
+    "n": 5,
+    "success": 3,
+    "progress": 0.71,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 62.5,
+    "sim_mean": 75.8
    }
   },
   "door_open": {
@@ -574,7 +628,7 @@
     "progress": 0.85,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 4.5,
+    "wall_mean": 4.7,
     "sim_mean": 29.0
    },
    "ur5e_2f85": {
@@ -583,7 +637,7 @@
     "progress": 1.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 2.4,
+    "wall_mean": 4.8,
     "sim_mean": 27.3
    },
    "gen3_2f85": {
@@ -592,7 +646,7 @@
     "progress": 1.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 2.2,
+    "wall_mean": 2.8,
     "sim_mean": 13.2
    },
    "aloha": {
@@ -601,7 +655,7 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 2.9,
+    "wall_mean": 4.7,
     "sim_mean": 23.9
    },
    "tidybot": {
@@ -610,7 +664,7 @@
     "progress": 1.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 4.6,
+    "wall_mean": 3.0,
     "sim_mean": 25.9
    },
    "z1": {
@@ -619,7 +673,7 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 1.6,
+    "wall_mean": 2.3,
     "sim_mean": 25.0
    },
    "so100": {
@@ -628,8 +682,17 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 1.5,
+    "wall_mean": 2.8,
     "sim_mean": 24.9
+   },
+   "g1_dex3": {
+    "n": 5,
+    "success": 2,
+    "progress": 0.54,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 71.5,
+    "sim_mean": 156.1
    }
   },
   "depalletize": {
@@ -648,7 +711,7 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 0.3,
+    "wall_mean": 0.4,
     "sim_mean": 0.2
    },
    "gen3_2f85": {
@@ -657,7 +720,7 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 0.2,
+    "wall_mean": 0.4,
     "sim_mean": 0.2
    },
    "aloha": {
@@ -675,55 +738,82 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 0.4,
-    "sim_mean": 0.2
+    "wall_mean": 1.6,
+    "sim_mean": 9.8
    },
-   "ur5e_suction": {
+   "gantry_vacuum": {
     "n": 5,
-    "success": 0,
-    "progress": 0.05,
+    "success": 1,
+    "progress": 0.55,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 8.8,
-    "sim_mean": 77.9
+    "wall_mean": 20.7,
+    "sim_mean": 70.5
    },
-   "fr3_suction": {
+   "gantry_clamp": {
     "n": 5,
     "success": 0,
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
+    "wall_mean": 4.4,
+    "sim_mean": 23.4
+   },
+   "ur5e_suction": {
+    "n": 5,
+    "success": 0,
+    "progress": 0.38,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 12.0,
+    "sim_mean": 84.0
+   },
+   "ur5e_suction2": {
+    "n": 5,
+    "success": 0,
+    "progress": 0.33,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 14.5,
+    "sim_mean": 84.0
+   },
+   "fr3_suction": {
+    "n": 5,
+    "success": 0,
+    "progress": 0.35,
+    "errors": 0,
+    "violations": 0,
     "wall_mean": 2.4,
-    "sim_mean": 20.2
+    "sim_mean": 10.1
    }
   },
   "conveyor_sort": {
    "panda": {
     "n": 5,
     "success": 0,
-    "progress": 0.0,
+    "progress": 0.33,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 8.2,
-    "sim_mean": 53.9
+    "wall_mean": 20.0,
+    "sim_mean": 35.7
    },
    "ur5e_2f85": {
     "n": 5,
     "success": 0,
-    "progress": 0.24,
+    "progress": 0.51,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 8.4,
-    "sim_mean": 60.9
+    "wall_mean": 10.4,
+    "sim_mean": 52.2
    },
    "gen3_2f85": {
     "n": 5,
     "success": 0,
-    "progress": 0.16,
+    "progress": 0.39,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 10.5,
-    "sim_mean": 53.9
+    "wall_mean": 11.5,
+    "sim_mean": 59.7
    },
    "aloha": {
     "n": 5,
@@ -731,8 +821,8 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 14.9,
-    "sim_mean": 27.8
+    "wall_mean": 22.4,
+    "sim_mean": 13.5
    },
    "tidybot": {
     "n": 5,
@@ -740,8 +830,26 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 38.9,
-    "sim_mean": 96.7
+    "wall_mean": 40.2,
+    "sim_mean": 115.8
+   },
+   "gantry_vacuum": {
+    "n": 5,
+    "success": 0,
+    "progress": 0.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 2.7,
+    "sim_mean": 4.8
+   },
+   "gantry_clamp": {
+    "n": 5,
+    "success": 0,
+    "progress": 0.04,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 18.9,
+    "sim_mean": 7.1
    }
   },
   "tote_transfer": {
@@ -751,8 +859,8 @@
     "progress": 0.53,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 6.9,
-    "sim_mean": 38.6
+    "wall_mean": 5.8,
+    "sim_mean": 34.6
    },
    "ur5e_2f85": {
     "n": 5,
@@ -760,8 +868,8 @@
     "progress": 0.53,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 5.6,
-    "sim_mean": 40.3
+    "wall_mean": 5.4,
+    "sim_mean": 35.8
    },
    "gen3_2f85": {
     "n": 5,
@@ -770,7 +878,7 @@
     "errors": 0,
     "violations": 0,
     "wall_mean": 5.7,
-    "sim_mean": 30.3
+    "sim_mean": 28.5
    },
    "aloha": {
     "n": 5,
@@ -778,7 +886,7 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 4.1,
+    "wall_mean": 5.9,
     "sim_mean": 0.2
    },
    "tidybot": {
@@ -787,8 +895,26 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 5.7,
-    "sim_mean": 0.2
+    "wall_mean": 5.4,
+    "sim_mean": 8.3
+   },
+   "gantry_vacuum": {
+    "n": 5,
+    "success": 0,
+    "progress": 0.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 4.5,
+    "sim_mean": 23.5
+   },
+   "gantry_clamp": {
+    "n": 5,
+    "success": 0,
+    "progress": 0.2,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 3.8,
+    "sim_mean": 25.1
    }
   },
   "pouch_transfer": {
@@ -798,8 +924,8 @@
     "progress": 0.8,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 7.6,
-    "sim_mean": 19.0
+    "wall_mean": 5.7,
+    "sim_mean": 16.5
    },
    "ur5e_2f85": {
     "n": 5,
@@ -807,8 +933,8 @@
     "progress": 0.6,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 11.1,
-    "sim_mean": 20.4
+    "wall_mean": 7.8,
+    "sim_mean": 17.1
    },
    "gen3_2f85": {
     "n": 5,
@@ -816,8 +942,8 @@
     "progress": 0.4,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 7.8,
-    "sim_mean": 22.3
+    "wall_mean": 10.2,
+    "sim_mean": 19.2
    },
    "aloha": {
     "n": 5,
@@ -825,7 +951,7 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 0.5,
+    "wall_mean": 0.8,
     "sim_mean": 0.2
    },
    "tidybot": {
@@ -834,8 +960,8 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 5.2,
-    "sim_mean": 0.2
+    "wall_mean": 4.6,
+    "sim_mean": 1.4
    },
    "ur5e_suction": {
     "n": 5,
@@ -843,8 +969,17 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 9.2,
-    "sim_mean": 26.2
+    "wall_mean": 6.2,
+    "sim_mean": 17.4
+   },
+   "ur5e_suction2": {
+    "n": 5,
+    "success": 0,
+    "progress": 0.0,
+    "errors": 0,
+    "violations": 0,
+    "wall_mean": 6.4,
+    "sim_mean": 17.5
    },
    "fr3_suction": {
     "n": 5,
@@ -852,8 +987,8 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 8.8,
-    "sim_mean": 26.2
+    "wall_mean": 5.6,
+    "sim_mean": 17.3
    },
    "z1": {
     "n": 5,
@@ -870,7 +1005,7 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 0.4,
+    "wall_mean": 0.5,
     "sim_mean": 0.2
    }
   },
@@ -881,7 +1016,7 @@
     "progress": 0.88,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 3.1,
+    "wall_mean": 2.4,
     "sim_mean": 21.7
    },
    "ur5e_2f85": {
@@ -890,7 +1025,7 @@
     "progress": 1.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 3.0,
+    "wall_mean": 3.4,
     "sim_mean": 19.7
    },
    "gen3_2f85": {
@@ -899,7 +1034,7 @@
     "progress": 1.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 3.1,
+    "wall_mean": 2.2,
     "sim_mean": 12.8
    },
    "aloha": {
@@ -908,7 +1043,7 @@
     "progress": 0.5,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 4.4,
+    "wall_mean": 5.8,
     "sim_mean": 30.7
    },
    "tidybot": {
@@ -917,7 +1052,7 @@
     "progress": 0.37,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 6.6,
+    "wall_mean": 4.2,
     "sim_mean": 40.5
    }
   },
@@ -928,8 +1063,8 @@
     "progress": 0.47,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 13.2,
-    "sim_mean": 57.0
+    "wall_mean": 5.7,
+    "sim_mean": 39.4
    },
    "ur5e_2f85": {
     "n": 5,
@@ -937,17 +1072,17 @@
     "progress": 0.93,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 10.5,
-    "sim_mean": 58.1
+    "wall_mean": 7.4,
+    "sim_mean": 54.5
    },
    "gen3_2f85": {
     "n": 5,
-    "success": 1,
-    "progress": 0.4,
+    "success": 2,
+    "progress": 0.6,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 17.5,
-    "sim_mean": 60.3
+    "wall_mean": 10.7,
+    "sim_mean": 53.1
    },
    "aloha": {
     "n": 5,
@@ -955,7 +1090,7 @@
     "progress": 0.0,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 12.2,
+    "wall_mean": 12.8,
     "sim_mean": 53.9
    },
    "tidybot": {
@@ -964,8 +1099,8 @@
     "progress": 0.33,
     "errors": 0,
     "violations": 0,
-    "wall_mean": 11.2,
-    "sim_mean": 24.3
+    "wall_mean": 8.0,
+    "sim_mean": 25.4
    }
   }
  },
@@ -976,9 +1111,13 @@
   "aloha",
   "tidybot",
   "ur5e_suction",
+  "ur5e_suction2",
   "fr3_suction",
   "z1",
-  "so100"
+  "so100",
+  "gantry_vacuum",
+  "gantry_clamp",
+  "g1_dex3"
  ],
  "families": [
   "bin_clearing",
@@ -998,5 +1137,5 @@
   "tote_transfer",
   "twist_lock"
  ],
- "source": "results/v2/robots/env_runs_final.jsonl"
+ "source": "results/v2/robots/env_runs_current.jsonl"
 }

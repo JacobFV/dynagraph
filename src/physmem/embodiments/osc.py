@@ -130,7 +130,11 @@ class TaskSpaceController:
         else:
             p0, q0 = s['hold']
             t0 = self.t
-        plan = Plan(traj, p0, q0, t0, limits=self.limits, effort_weight=self.effort_weight)
+        # a trajectory that must keep its timing (e.g. matching a conveyor belt) opts out of effort retiming
+        lim = None if getattr(traj, 'no_retime', False) else self.limits
+        plan = Plan(traj, p0, q0, t0, limits=lim, effort_weight=self.effort_weight)
+        if lim is None:
+            plan.pred = dict(scale=1.0, duration=plan.duration)
         s['plans'].append(plan)
         s['tripped'] = False
         return plan.pred
@@ -346,13 +350,16 @@ class TaskSpaceController:
             tau_act[e['acts']] = tau / emb.act_gear[e['acts']]
             # ---------------------------------------------------- gripper (force-limited servo on transmission length)
             if len(e['gacts']) and e['cfg'].gripper.kind == 'suction':
-                # vacuum: adhesion on only while commanded AND sealed (no seal -> no holding force)
-                # seal with hysteresis: making a seal needs an aligned cup (20 deg); a held seal persists while the pad
-                # still touches (tilt up to 45 deg) - a hanging load tilts the cup without breaking the vacuum
-                held_seal = s.get('sealed', False) and s['grip'] >= 0.5
-                sealed, _ = emb.cup_seal(model, data, name, max_tilt_deg=45.0 if held_seal else 20.0)
-                s['sealed'] = sealed
-                tau_act[e['gacts']] = float(np.clip(e.get('suction_level', 1.0), 0, 1)) if (s['grip'] >= 0.5 and sealed) else 0.0
+                # per-zone vacuum: a cup pulls only while commanded, enabled (zone mask) and SEALED (lip model with
+                # hysteresis: a held cup leaks when its lip peels - see core.add_suction_cup / cup_seals)
+                K = len(e['gacts'])
+                held = e.get('_held_seal', np.zeros(K, bool))
+                sealed, _ = emb.cup_seals(model, data, name, held)
+                mask = e.get('zone_mask', np.ones(K, bool))
+                on = (s['grip'] >= 0.5) & mask & sealed
+                e['_held_seal'] = on.copy()
+                s['sealed'] = bool(on.any())
+                tau_act[e['gacts']] = np.where(on, float(np.clip(e.get('suction_level', 1.0), 0, 1)), 0.0)
             elif len(e['gacts']):
                 ga = emb.act_ids[e['gacts']]
                 L = data.actuator_length[ga]

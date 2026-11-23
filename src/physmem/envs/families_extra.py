@@ -172,3 +172,92 @@ class MachineTending(DoorOpen):
             return SkillCall("close", dict(grip_force=(30.0, 60.0, 90.0)[min(k, 2)], travel=float(q + 0.05), speed=0.15),
                              target="door")
         return None
+
+
+# ====================================================================== light-parts station (SO-100-class arms)
+# Everything within ~0.25 m of the `arm` mount at the near bench edge (0, -0.45, bench top); parts <= 30 mm, <= 80 g.
+from .families_bulk import BinClearing                      # noqa: E402
+from .families_fine import PegInsert                        # noqa: E402
+from .scene import sample_part_params                       # noqa: E402
+
+LIGHT_ZONE_Y = -0.24
+
+
+class SmallPartsPick(BinClearing):
+    family = "small_parts_pick"
+    category = "bulk"
+    station = "light_parts"
+    probe_kw = dict(max_open=0.03, grip_max=30.0)
+    success_doc = "every tiny part (<= 30 mm, <= 80 g) from the small tray ends inside the target cup"
+    hidden_doc = "part mass (<= 80 g, dense metal outliers), part<->gripper friction (oily), compliance: grip force / lift speed"
+
+    def build(self, scene, rng, params):
+        from .stations import bench_station
+        top = bench_station(scene)
+        self.surface_z = top
+        self.safe_z = top + 0.12
+        n = int(params.get("n_parts", rng.integers(3, 7)))
+        sx, sy = -0.08 + rng.uniform(-0.01, 0.01), LIGHT_ZONE_Y + rng.uniform(-0.01, 0.01)
+        tray = (0.055, 0.045)
+        fz = scene.open_box((sx, sy, top), tray, 0.03, prefix="srcbin", t=0.005)
+        tx, ty = 0.08 + rng.uniform(-0.01, 0.01), LIGHT_ZONE_Y + rng.uniform(-0.01, 0.01)
+        cup = (0.045, 0.04)
+        tfz = scene.open_box((tx, ty, top), cup, 0.03, rgba=(0.6, 0.2, 0.15, 1), prefix="tote", t=0.005)
+        scene.region("source_bin", (sx, sy, fz + 0.02), (tray[0], tray[1], 0.03), support_z=fz)
+        scene.region("tote", (tx, ty, tfz + 0.02), (cup[0], cup[1], 0.03), support_z=tfz)
+        placed = []
+        for i in range(n):
+            pp = sample_part_params(rng, half_range=(0.006, 0.015),
+                                    shapes=tuple(params.get("shapes", ("box", "cylinder", "capsule", "sphere"))),
+                                    density_range=(1000, 8000), heavy_p=0.1, heavy_mult=(1.5, 2.5), oily_p=0.15)
+            mass = float(min(pp["mass"], 0.08))
+            rad = float(np.linalg.norm(pp["half"][:2])) + 0.003
+            for _ in range(60):
+                x = sx + rng.uniform(-tray[0] + rad, tray[0] - rad)
+                y = sy + rng.uniform(-tray[1] + rad, tray[1] - rad)
+                if all(np.hypot(x - a, y - b) > rad + r2 for a, b, r2 in placed):
+                    break
+            placed.append((x, y, rad))
+            z = fz + 0.02 + 0.03 * (i // 4)
+            scene.part(f"part{i:02d}", pp["shape"], pp["half"], (x, y, z), yaw=rng.uniform(-math.pi, math.pi), mass=mass,
+                       mu=pp["mu"], mu_grip=pp["mu_grip"], restitution=pp["restitution"], timeconst=pp["timeconst"],
+                       extra_hidden=dict(heavy=pp["heavy"], oily=pp["oily"]))
+        self.budget = int(params.get("budget", 4 * n))
+        # SO-100-class robots mount at the near edge; the light zone is within ~0.25 m of that mount
+        scene.camera = dict(pos=(0.0, LIGHT_ZONE_Y + 0.4, top + 0.6), lookat=(0.0, LIGHT_ZONE_Y, top),
+                            view_pos=(0.35, LIGHT_ZONE_Y - 0.45, top + 0.45), view_lookat=(0.0, LIGHT_ZONE_Y, top))
+
+
+def _small_place(self, rng=None):
+    p = dict(dx=0.0, dy=0.0, release_h=0.02, speed=0.3)
+    r = rng if rng is not None else self.rng
+    p.update(dx=float(r.uniform(-0.02, 0.02)), dy=float(r.uniform(-0.015, 0.015)))
+    if rng is not None:
+        p.update(release_h=float(rng.uniform(0.005, 0.04)), speed=float(rng.uniform(0.1, 0.6)))
+    return SkillCall("place", p, target="tote")
+
+
+SmallPartsPick._place_call = _small_place
+
+
+class SmallPegInsert(PegInsert):
+    family = "small_peg_insert"
+    station = "light_parts"
+    probe_kw = dict(max_open=0.03, grip_max=30.0, pad_solref=0.003)
+    hole_center = (0.07, LIGHT_ZONE_Y)
+    peg_center = (-0.07, LIGHT_ZONE_Y)
+    layout_jitter = 0.015
+    mass_range = (0.01, 0.06)
+    success_doc = "a 10-14 mm square peg (<= 60 g) seated >= 80 % into its 12 mm deep hole, released"
+    hidden_doc = "clearance 0.3-1.2 mm, chamfer 0-1 mm, friction 0.2-0.9: straight vs search insertion"
+
+    def geometry(self, rng, params):
+        sh = float(params.get("peg_half", rng.uniform(0.005, 0.007)))
+        return dict(half=(sh, sh, 0.02), sym=math.pi / 2, depth=0.012)
+
+    def build(self, scene, rng, params):
+        params = dict(params)
+        params.setdefault("clearance", float(rng.uniform(0.0003, 0.0012)))
+        params.setdefault("chamfer", 0.0 if rng.random() < 0.4 else float(rng.uniform(0.0003, 0.001)))
+        super().build(scene, rng, params)
+        self.safe_z = self.surface_z + 0.12

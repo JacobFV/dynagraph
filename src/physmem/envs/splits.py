@@ -21,12 +21,14 @@ from ..v2.api import TaskSpec
 SPLITS = ("train", "val", "test", "heldout_layout", "heldout_objects", "heldout_family", "heldout_robot")
 HELDOUT_FAMILIES = {"bulk": "tote_transfer", "fine": "connector_insert"}
 BENCH_FAMILIES = {"bin_clearing", "singulation", "bulk_sweep", "peg_insert", "connector_insert", "tool_return",
-                  "fixture_place", "kitting_pocket", "drawer_open", "door_open", "twist_lock", "machine_tending"}
+                  "fixture_place", "kitting_pocket", "drawer_open", "door_open", "twist_lock", "machine_tending",
+                  "small_parts_pick", "small_peg_insert"}
 TRAIN_SHAPES = ("box", "cylinder", "capsule", "sphere")
 
 # params applied to EVERY split of a family (in-distribution object sets)
 BASE_PARAMS = {
     "bin_clearing": dict(shapes=TRAIN_SHAPES),
+    "small_parts_pick": dict(shapes=TRAIN_SHAPES),
     "singulation": dict(p_box=0.7),
 }
 HELDOUT_OBJECTS = {
@@ -46,6 +48,8 @@ HELDOUT_OBJECTS = {
     "pouch_transfer": dict(young=5e4),
     "twist_lock": dict(frictionloss=0.9),
     "machine_tending": dict(mass=8.0),
+    "small_parts_pick": dict(shapes=("mesh", "ellipsoid")),
+    "small_peg_insert": dict(peg_half=0.0085),
 }
 COUNT_SHIFT = {"depalletize": dict(layers=3), "conveyor_sort": dict(n_parts=7), "tote_transfer": dict(n_totes=4),
                "pouch_transfer": dict(mass=0.8)}

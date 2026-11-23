@@ -9,6 +9,11 @@ from __future__ import annotations
 
 import importlib
 
+# environment version, recorded in every generation manifest. envs-r2: tranches 1-3 of the large run;
+# envs-r3: conveyor sorted-item memory, stiff pad pairs, payload-aware depalletize + 'handover' flag, slick
+# cartons, mobile lower bench, light-parts station (small_parts_pick, small_peg_insert).
+ENV_VERSION = "envs-r3"
+
 _REG = {
     "bin_clearing": ("families_bulk", "BinClearing"),
     "singulation": ("families_bulk", "Singulation"),
@@ -26,6 +31,8 @@ _REG = {
     "pouch_transfer": ("families_logistics", "PouchTransfer"),
     "twist_lock": ("families_extra", "TwistLock"),
     "machine_tending": ("families_extra", "MachineTending"),
+    "small_parts_pick": ("families_extra", "SmallPartsPick"),
+    "small_peg_insert": ("families_extra", "SmallPegInsert"),
 }
 
 FAMILIES = tuple(_REG)

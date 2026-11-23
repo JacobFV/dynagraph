@@ -1,7 +1,8 @@
 # MODEL_V2 — typed physical-memory world model, planner, and data contract (owner: agent MODEL-V2)
 
-Status: DRAFT data contract published first (2026-11-23 ~17:45Z) so ENVS/ROBOTS can log what the model needs.
-Results sections are filled in at the end of the doc as they are measured.
+Status (2026-11-23 ~21:30Z): contract (sec 1), model / planner (2-3), synthetic proof (4-5), real-station results (5f-5g),
+bugs (6), API (7), pending (8). Summary: latent physics WORKS (G4 synthetic largely met, partial on real stations);
+closed-loop utility G3 and family transfer G5 are NOT met; the outcome head / planner, not latent estimation, is the bottleneck.
 
 Code: `src/physmem/models/v2/` (spec, synth, tensorize, model, harness), `src/physmem/planner.py`,
 `src/physmem/v2_train.py`, tests `tests/test_v2_model.py`.
@@ -256,6 +257,39 @@ planners, and loses badly on drawer-lot and slide. Diagnosis (measured, not assu
   2.5% of the normal data): latent recovery transfers (friction corr 0.78 @1, 0.83 @2 interactions; mass 0.96), but
   the outcome head does not: closed-loop success zero-shot 0.04, adapter 0.14 (test) / 0.01 (held-out robot) vs
   0.78 in-distribution -> **G5 family transfer NOT met** (needs a more physics-structured head or more adapter data).
+
+### 5f. Real ENVS stations (MuJoCo; TEST-ONLY `probe` gantry robot — no ROBOTS embodiment was bound yet)
+Data: `data/v2_env_r3` (6 families x 300 train / 50 val / 50 test episodes, 18.5k train interactions, 0 collection
+failures; 26 episodes with simulator blow-ups dropped), segments rebuilt from ENVS 25 Hz events by the adapter.
+Typed model r3 (6000 steps, bs 256, 4.0k samples/s), latent corr after j on-target interactions (test):
+| family | latent | j=0 | j=1 | j=2 | j=3 | verdict |
+|---|---|---|---|---|---|---|
+| bulk_sweep | bulk friction | -0.18 | **0.80** | **0.84** | **0.87** | met |
+| bulk_sweep | pile mass | 0.96 | 0.96 | 0.95 | 0.95 | (from the visible pile, not interaction) |
+| drawer_open | breakaway (frictionloss) | -0.02 | **0.83** | – | – | met (j=1 only; episodes are 1-2 calls) |
+| drawer_open | damping | 0.08 | 0.24 | – | – | fails |
+| peg_insert | peg mass | 0.15 | **0.98** | 0.90 | 0.92 | met |
+| peg_insert | clearance | 0.04 | 0.02 | -0.03 | 0.02 | fails |
+| singulation | object friction | 0.16 | 0.15 | 0.34 | 0.43 | fails (r1, which fused other objects' history: 0.69 / 0.78) |
+| bin_clearing | mass / friction / grip friction | 0.65 / 0.06 / 0.06 | 0.65 / -0.01 / 0.06 | | 0.67 / 0.04 / 0.28 | fails (mass only from size prior) |
+| depalletize | mass / friction / grip friction | -0.01 / .. | 0.29 / -0.01 / -0.13 | 0.19 | 0.33 | fails |
+Outcome prediction: model ~= oracle-slot model on every station family (e.g. success AUC bulk_sweep 0.69 vs 0.70,
+drawer_open 0.97 vs 0.96, peg_insert 0.94 vs 0.94) -> on the current stations / probe robot, outcomes are barely
+latent-dependent once the scene is observed (the v1 lesson again); G4 on real stations is partial (3 latents).
+
+### 5g. G3 closed loop on real ENVS stations (probe robot, 30 paired test episodes per family, heuristic =
+ENVS `env.scripted()`, planner cost fixed from the synthetic val selection: c_prog 2.0, lam_effort 0.03;
+`scripts/v2/env_closed_loop.py`, rows `experiment=v2_g3_env_closed_loop`)
+| family | heuristic | typed | generic | no-memory | oracle (labelled) | paired typed - heuristic |
+|---|---|---|---|---|---|---|
+| peg_insert | 0.77 [0.63,0.90] / 576 | **0.90 [0.77,1.00] / 374** | 0.87 / 489 | 0.87 / 713 | 0.90 / 387 | succ +0.13 [-0.07,+0.30]; log effort -0.37 [-0.76,+0.04] |
+| singulation | 0.80 / 1007 | 0.77 / 1794 | 0.70 / 1403 | 0.67 / 1499 | 0.73 / 1317 | succ -0.03 [-0.23,+0.17]; log effort +0.61 [+0.18,+1.03] (worse) |
+| drawer_open | 1.00 / 212 | 1.00 / 403 | 1.00 / 391 | 1.00 / 380 | 1.00 / 324 | effort worse (heuristic is already minimal) |
+| bulk_sweep | running at the time of writing (`logs/v2_g3_env_r3_bulk_sweep.log`) | | | | | |
+(success rate [95% CI] / mean episode EffortMeter cost.) Typed vs generic on peg_insert: success +0.03
+[-0.10,+0.17], log effort -0.41 [-0.73,-0.10] (typed significantly less effort). **G3 on real stations: not met**
+(no significant success gain over the heuristic at n=30; one family with significantly lower effort than the
+generic-memory planner; typed ~= oracle again).
 
 ## 6. Bugs found and fixed during the run (kept for the record)
 - raw-SI SkillCall vectors (aims ~0.004 m next to forces ~100 N) -> per-skill call normalization (before r0).

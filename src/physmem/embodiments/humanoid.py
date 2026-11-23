@@ -35,7 +35,7 @@ OPEN_L = dict(thumb_0=0.0, thumb_1=-0.3, thumb_2=0.0, middle_0=0.0, middle_1=0.0
 G1_GAINS = dict(com_kp=50.0, root_z_kp=100.0, root_kp=200.0, torso_kp=100.0, hand_kp=400.0, hand_ki=1500.0,
                 hand_i_max=0.004, hand_e_max=0.05, hand_kr=200.0, hand_w=3000.0, hand_wr=300.0, post_kp=40.0,
                 post_w=0.2, imp_k=300.0, imp_kr=10.0, guard_n=15.0, force_kd=30.0, force_ki=4.0,
-                finger_kp=6.0, finger_kd=0.15, balance_w=1000.0, root_w=300.0, torso_w=30.0,
+                finger_kp=15.0, finger_kd=0.15, balance_w=1000.0, root_w=300.0, torso_w=30.0,
                 f_cap=15.0, f_back=0.3, ext_total=80.0, com_shift=0.06,
                 qp_period=0.004)   # QP rate 250 Hz; between solves the torques are held + gravity/Coriolis updated
 
@@ -267,17 +267,24 @@ class G1Embodiment:
             n = int(np.sum((pm[g1] & ~om[g2]) | (pm[g2] & ~om[g1])))
         return c, n
 
+    # Dex3 thumb-vs-finger pinch per side at full joint torque, MEASURED on a fixed 25 mm block at the pinch point
+    # (scripts/robots_g1_grip_calib.py, finger_kp 15): 20.8 N (right) / 19.7 N (left), thumb-limited; 22 N on 35 mm.
+    # Before (finger_kp 6) the PD never reached the torque limit on contact: 0 N on this block (~10 N assumed earlier).
+    # Consistent with Unitree's Dex3-1 joint spec (F-1515 joint, ideal max 1.498 N m at 1:214 reduction; menagerie
+    # limits 1.4-2.45 N m kept) over a ~0.07-0.08 m fingertip lever. No official fingertip-force figure was found.
+    DEX3_PINCH_N = 20.0
+
     def set_grip_force(self, eff, newtons):
-        """Dex3: per-finger torque limit scaled so the pinch squeezes ~newtons (nominal 10 N at full joint torque);
-        returns the force set (N)."""
+        """Dex3: per-finger torque limit scaled so the pinch squeezes ~newtons (20 N at full joint torque, measured);
+        the fingers still TRAVEL at full torque until the pads touch (see WholeBodyController._fingers). Returns N."""
         e = self.eff[eff]
         full = self.act_hi[e['gacts']] * self.act_gear[e['gacts']]
-        k = float(np.clip(newtons / 10.0, 0.05, 1.0))
+        k = float(np.clip(newtons / self.DEX3_PINCH_N, 0.05, 1.0))
         e['gforce'] = full * k
-        return 10.0 * k
+        return self.DEX3_PINCH_N * k
 
     def max_grip_force(self, eff):
-        return 10.0
+        return self.DEX3_PINCH_N
 
     def proprio(self, data) -> dict:
         m = self.model
@@ -689,6 +696,12 @@ class WholeBodyController:
             vh = data.qvel[e['gdofs']]
             u = g['finger_kp'] * (tgt - qh) - g['finger_kd'] * vh + data.qfrc_bias[e['gdofs']]
             lim = e['gforce']
+            if gg >= 0.5:
+                # close at full torque until the pads touch, then regulate to the requested squeeze (gforce)
+                if self.tick % 5 == 0 or 'pad_n' not in s:
+                    s['pad_n'] = emb.gripper_state(self.m, data, name)[1]
+                if s['pad_n'] == 0:
+                    lim = np.maximum(lim, emb.act_hi[e['gacts']] * emb.act_gear[e['gacts']])
             tau_act[e['gacts']] = np.clip(u, -lim, lim) / emb.act_gear[e['gacts']]
 
     def apply(self, model, data):
@@ -739,6 +752,159 @@ def _go(ctx, eff, pts, T, q, max_t=None):
     return ctx.run(max_t=max_t if max_t else sum(T) * 2 + 1.0, effector=eff)
 
 
+def _heading(ctx):
+    """robot forward direction (unit, horizontal) from the pelvis frame (IMU; proprioceptive)."""
+    R = ctx.data.xmat[ctx.emb.root_body].reshape(3, 3)
+    f = np.array([R[0, 0], R[1, 0], 0.0])
+    return f / max(np.linalg.norm(f), 1e-9)
+
+
+def _rot_z(v, yaw):
+    c, s = math.cos(yaw), math.sin(yaw)
+    return np.array([c * v[0] - s * v[1], s * v[0] + c * v[1], v[2]])
+
+
+def _reach_quat(ctx, eff, pos, iters=400):
+    """position-only IK (waist pitch + arm) on scratch data -> (pos_err, tcp quat of that solution). The G1 cannot
+    hold a palm-down hand 0.45 m out over a waist-high bench, but it reaches the POINT with its natural hand
+    orientation; skills then command that orientation."""
+    from physmem.embodiments.ik import solve_ik
+    if not hasattr(ctx, '_g1ikd'):
+        ctx._g1ikd = mujoco.MjData(ctx.model)
+    dd = ctx._g1ikd
+    qs, ok, ep, er = solve_ik(ctx.emb, ctx.model, ctx.data, eff, np.asarray(pos, float), None, iters=iters, scratch=dd)
+    e = ctx.emb.eff[eff]
+    dd.qpos[e['qadr']] = qs
+    mujoco.mj_kinematics(ctx.model, dd)
+    q = np.zeros(4)
+    mujoco.mju_mat2Quat(q, dd.site_xmat[e['site']])
+    return float(ep), q
+
+
+def _hand_parts(ctx, eff, v):
+    """per collision geom of the hand: (extent along v from the TCP, bottom z relative to the TCP), in the pose of the
+    last _reach_quat solution."""
+    m, dd = ctx.model, ctx._g1ikd
+    e = ctx.emb.eff[eff]
+    v = np.asarray(v, float)
+    t = dd.site_xpos[e['site']]
+    out = []
+    for g in e['ft_geoms']:
+        if not (m.geom_contype[g] or m.geom_conaffinity[g]):
+            continue
+        R = dd.geom_xmat[g].reshape(3, 3)
+        c, h = m.geom_aabb[g][:3], m.geom_aabb[g][3:]
+        cw = dd.geom_xpos[g] + R @ c
+        out.append((float((cw - t) @ v + np.abs(R.T @ v) @ h), float(cw[2] - t[2] - np.abs(R[2]) @ h)))
+    return out
+
+
+def _hand_extent(ctx, eff, v):
+    """max extent of the hand (collision AABBs) along world direction v, relative to the TCP, in the pose of the last
+    _reach_quat solution (scratch data)."""
+    m, dd = ctx.model, ctx._g1ikd
+    e = ctx.emb.eff[eff]
+    v = np.asarray(v, float)
+    t = dd.site_xpos[e['site']]
+    best = 0.0
+    for g in e['ft_geoms']:
+        if not (m.geom_contype[g] or m.geom_conaffinity[g]):
+            continue
+        R = dd.geom_xmat[g].reshape(3, 3)
+        c, h = m.geom_aabb[g][:3], m.geom_aabb[g][3:]
+        cw = dd.geom_xpos[g] + R @ c
+        best = max(best, float((cw - t) @ v + np.abs(R.T @ v) @ h))
+    return best
+
+
+def _hand_drop(ctx, eff):
+    """how far the hand (all its collision geoms, AABB in geom frames) reaches below the TCP, in the pose of the last
+    _reach_quat solution (scratch data)."""
+    m, dd = ctx.model, ctx._g1ikd
+    e = ctx.emb.eff[eff]
+    tz = dd.site_xpos[e['site']][2]
+    low = tz
+    for g in e['ft_geoms']:
+        if not (m.geom_contype[g] or m.geom_conaffinity[g]):
+            continue
+        R = dd.geom_xmat[g].reshape(3, 3)
+        c, h = m.geom_aabb[g][:3], m.geom_aabb[g][3:]
+        cz = dd.geom_xpos[g][2] + R[2] @ c
+        low = min(low, cz - np.abs(R[2]) @ h)
+    return float(tz - low)
+
+
+def g1_push(ctx, est, theta, speed=0.2, distance=0.06, height=None, eff=None, tol=0.012, kw_fcap=35.0):
+    """G1 push with the hand's natural orientation (from position-only IK at the contact): run-up, constant-speed
+    push through the object along `theta` (object frame), stop, lift. Picks the hand that reaches; balance stays with
+    the whole-body QP. -> (status, log)"""
+    from physmem.embodiments.trajectory import BlendedTrajectory
+    emb, c = ctx.emb, ctx.ctrl
+    R = est.R
+    d_o = np.array([math.cos(theta), math.sin(theta)])
+    hx, hy = est.h[0], est.h[1]
+    tx = hx / abs(d_o[0]) if abs(d_o[0]) > 1e-9 else np.inf
+    ty = hy / abs(d_o[1]) if abs(d_o[1]) > 1e-9 else np.inf
+    sup = min(tx, ty)
+    dw = np.array([*(R[:2, :2] @ d_o), 0.0])
+    dw /= np.linalg.norm(dw)
+    sz = est.bottom_z()
+    H = est.top_z() - sz
+    hz = float(height) if height is not None else float(np.clip(0.6 * H, 0.025, 0.05))
+    contact = np.array([*(est.p[:2] - dw[:2] * sup), sz + hz])
+    r_hand = 0.03                         # half thickness of the Dex3 hand around the TCP
+    T_r = max(0.3, 3 * speed / 3.0)
+    L_r = 0.5 * speed * T_r
+    T_d = max(0.25, 3 * speed / 3.0)
+    L_d = 0.5 * speed * T_d
+    cruise = max(distance + 0.015 - L_d, 0.01)   # +15 mm: the fingertip contact comes later than the AABB estimate
+    touch = contact - dw * r_hand
+    start, end = touch - dw * L_r, touch + dw * cruise
+    stop = end + dw * L_d
+    effs = [eff] if eff else sorted(emb.eff, key=lambda k: float(np.linalg.norm(emb.tcp_pose(ctx.data, k)[0][:2] - start[:2])))
+    drops = []
+    for k in effs:
+        errs = [_reach_quat(ctx, k, x) for x in (start, stop)]
+        if all(ep < tol for ep, _ in errs):
+            eff = k
+            q = errs[0][1]
+            # keep the hand's lowest point 4 mm above the surface (the fist reaches below the palm TCP)
+            # the natural hand hangs fingers-down: its lowest point is the pusher. Put it 4 mm above the surface, and
+            # put the hand's leading face (extent along the push direction) at the object's face
+            parts = _hand_parts(ctx, k, dw)
+            drop = -min(b for _, b in parts)
+            dz = sz + drop + 0.015 - touch[2]
+            # leading face: only the parts that end up below the object's top actually push it
+            low = [a for a, b in parts if touch[2] + dz + b < est.top_z() - 0.005]
+            lead = max(low) if low else max(a for a, _ in parts)
+            drops.append((round(drop, 3), round(lead, 3)))
+            dxy = -dw * (lead - r_hand)
+            touch, start, end, stop = (x + dxy + np.array([0, 0, dz]) for x in (touch, start, end, stop))
+            if not all(_reach_quat(ctx, k, x)[0] < tol for x in (start, stop)):
+                continue
+            q = _reach_quat(ctx, k, start)[1]
+            break
+    else:
+        return 'unreachable', dict(ik=[round(e, 3) for e, _ in errs], drops=drops, H=round(H, 3))
+    c.set_mode('track', eff, f_cap=float(kw_fcap))              # pushing packed parts needs > the default 15 N cap
+    c.set_gripper(eff, 1.0)                                    # fist
+    p0, _ = emb.tcp_pose(ctx.data, eff)
+    above = start + np.array([0, 0, 0.08])
+    hover = np.array([p0[0], p0[1], max(p0[2], above[2])])
+    _go(ctx, eff, [hover, above, start], [0.8, 1.0, 0.8], q)
+    c.command(BlendedTrajectory(effector=eff, waypoints=[(touch, q), (end, q), (stop, q)],
+                                durations=[2 * L_r / speed, cruise / speed, 2 * L_d / speed],
+                                via_vel=[dw * speed, dw * speed, np.zeros(3)]))
+    st = ctx.run(max_t=(2 * L_r + cruise + 2 * L_d) / speed * 2 + 1.0, effector=eff)
+    here, _ = emb.tcp_pose(ctx.data, eff)
+    dbg = dict(touch=touch.round(3).tolist(), stop=stop.round(3).tolist(), tcp_end=here.round(3).tolist(), run=st)
+    c.set_mode('track', eff)
+    _go(ctx, eff, [here + np.array([0, 0, 0.10]) - dw * 0.03], [0.8], q)
+    if c.fallen(ctx.data):
+        return 'fell', {}
+    return ('done' if st == 'done' else st), dict(eff=eff, **dbg)
+
+
 def g1_pinch_pick(ctx, side, est_pos, half, lift=0.10, guard=8.0, squeeze=1.0):
     """Dex3 top-down pinch of a small box (actor-legal estimate `est_pos`, half extents `half`): palm down, thumb
     behind / index+middle in front of the object along +x, guarded descent, force-limited finger PD squeeze, lift.
@@ -746,17 +912,25 @@ def g1_pinch_pick(ctx, side, est_pos, half, lift=0.10, guard=8.0, squeeze=1.0):
     emb, c = ctx.emb, ctx.ctrl
     eff = side
     est = np.asarray(est_pos, float)
-    q = _axes_quat((0, 0, -1.0), (1.0, 0, 0))
+    q = _axes_quat((0, 0, -1.0), _heading(ctx))      # palm down, fingers along the robot's forward
     R = np.zeros(9)
     mujoco.mju_quat2Mat(R, q)
     R = R.reshape(3, 3)
     centre = np.array([est[0], est[1], est[2] - 0.2 * half[2]])
     tcp = centre - R @ PINCH_CENTRE
     pre = tcp + np.array([0, 0, 0.08])
+    # palm-down at the edge of the workspace (waist at its limit) toppled the robot: require a kinematic margin
+    from physmem.embodiments.ik import solve_ik
+    if not hasattr(ctx, '_g1ikd'):
+        ctx._g1ikd = mujoco.MjData(ctx.model)
+    for x in (pre, tcp):
+        qs, _, ep, er = solve_ik(emb, ctx.model, ctx.data, eff, x, q, iters=400, rot_weight=1.0, scratch=ctx._g1ikd)
+        if ep > 0.01 or er > 0.1 or qs[0] > 0.45:      # qs[0] = waist pitch (limit 0.52)
+            return 'unreachable'
     c.set_mode('track', eff)
     c.set_gripper(eff, 0.0)
     p0, _ = emb.tcp_pose(ctx.data, eff)
-    _go(ctx, eff, [p0 + np.array([0.05, 0, 0.12]), pre], [1.0, 1.2], q)
+    _go(ctx, eff, [p0 + 0.05 * _heading(ctx) + np.array([0, 0, 0.12]), pre], [2.2, 1.6], q)
     c.set_mode('guarded', eff, threshold=guard, axis=(0, 0, -1.0))
     _go(ctx, eff, [tcp], [1.2], q)
     c.set_mode('track', eff)

@@ -362,7 +362,7 @@ def calibrate(model, stores, bs=1024):
     for l in range(S.N_LATENT):
         r = torch.cat(R[l]) if R[l] else torch.zeros(0)
         if len(r) > 50:
-            model.z_var_scale[l] = float(np.clip((torch.quantile(r.float(), 0.8) / 1.2816) ** 2, 0.25, 10.0))
+            model.z_var_scale[l] = float(np.clip(float(torch.quantile(r.float(), 0.8) / 1.2816) ** 2, 0.25, 10.0))
     return model.z_var_scale.cpu().numpy()
 
 

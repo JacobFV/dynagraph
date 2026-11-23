@@ -22,6 +22,9 @@ from .sensors import ActorView, SensorSuite, quat_yaw
 from .props import XProp
 
 
+MOBILE_ROBOTS = {"tidybot"}
+
+
 def seed_of(task: TaskSpec, salt="") -> int:
     h = hashlib.sha256(f"{task.family}|{task.seed}|{task.split}|{salt}".encode()).digest()
     return int.from_bytes(h[:8], "little")
@@ -65,6 +68,12 @@ class StationEnv:
         self.scene = Scene(rng, timestep=self.timestep, name=self.family)
         self.scene.floor()
         self.scene.overrides = dict(task.params.get("hidden", {}))   # evaluator-only (sensitivity studies)
+        # station variant per robot class: mobile manipulators get the lower bench (bench_top param overrides)
+        if "bench_top" in task.params:
+            self.scene.bench_top_override = float(task.params["bench_top"])
+        elif task.robot in MOBILE_ROBOTS:
+            from .stations import MOBILE_BENCH_TOP
+            self.scene.bench_top_override = MOBILE_BENCH_TOP
         self.held = None
         self._held_off = (0.05, 0.0)
         self.safe_z = 1.05
@@ -132,6 +141,7 @@ class StationEnv:
     def execute(self, call: SkillCall) -> StepOut:
         self.n_calls += 1
         before = self.progress()
+        self.last_held_before = self.held
         res: SkillResult = self.skills.run(self, call)
         self.last_call, self.last_result = call, res
         if not res.ok and call.target is not None:

@@ -25,6 +25,10 @@ PROBE_SPEC = EmbodimentSpec(name="probe", kind="arm", effectors=("hand",), gripp
                             source="test-only stub, src/physmem/envs/probe.py")
 
 
+PAD_SOLREF = (0.004, 1.0)
+PAD_SOLIMP = (0.95, 0.99, 0.001, 0.5, 2.0)
+
+
 def minjerk(t, T):
     s = np.clip(t / max(T, 1e-6), 0.0, 1.0)
     p = 10 * s ** 3 - 15 * s ** 4 + 6 * s ** 5
@@ -160,7 +164,11 @@ class ProbeRobot:
                 mu = info.hidden.get("mu_grip", 0.8)
                 for gname in info.geoms:
                     for pg in self.pad_geoms:
-                        s.add_pair(geomname1=pg, geomname2=gname, condim=4, friction=[mu, mu, 0.005, 0.0001, 0.0001])
+                        # pad pairs: stiff + hard impedance so a squeezed small/stiff part cannot be pushed through
+                        # the 10 mm pad (default pair solref 0.02 let 40-100 N squeezes pass a 15 mm sphere);
+                        # no margin, so released parts do not stick between the pads
+                        s.add_pair(geomname1=pg, geomname2=gname, condim=4, friction=[mu, mu, 0.005, 0.0001, 0.0001],
+                                   solref=list(PAD_SOLREF), solimp=list(PAD_SOLIMP))
                 s.add_exclude(bodyname1=info.body, bodyname2="probe_hand")
                 if self.tool == "parallel":
                     for side in "lr":

@@ -63,15 +63,17 @@ class PegInsert(_FineBase):
         ch = float(params.get("chamfer", 0.0 if rng.random() < 0.35 else rng.uniform(0.0005, 0.003)))
         mu = float(params.get("mu", rng.uniform(0.2, 0.9)))
         yaw_h = float(rng.uniform(-math.pi / 2, math.pi / 2)) if g.get("random_yaw") else float(rng.uniform(-0.3, 0.3))
-        hpos = (0.15 + rng.uniform(-0.04, 0.04), 0.05 + rng.uniform(-0.04, 0.04))
+        hc, pc, jit = getattr(self, "hole_center", (0.15, 0.05)), getattr(self, "peg_center", (-0.18, 0.0)), \
+            getattr(self, "layout_jitter", 0.04)
+        hpos = (hc[0] + rng.uniform(-jit, jit), hc[1] + rng.uniform(-jit, jit))
         ztop = top + g["depth"]
         scene.socket((hpos[0], hpos[1], ztop), (hx + clr / 2, hy + clr / 2), g["depth"], outer=0.03, chamfer=ch,
                      yaw=yaw_h, name="sock")
         scene.region(self.region_name, (hpos[0], hpos[1], ztop - g["depth"] / 2),
                      (hx + clr / 2, hy + clr / 2, g["depth"] / 2), yaw=yaw_h, support_z=ztop, depth=g["depth"],
                      sym=g["sym"])
-        ppos = (-0.18 + rng.uniform(-0.04, 0.04), 0.0 + rng.uniform(-0.05, 0.05))
-        mass = float(params.get("mass", rng.uniform(0.05, 0.4)))
+        ppos = (pc[0] + rng.uniform(-jit, jit), pc[1] + rng.uniform(-jit, jit))
+        mass = float(params.get("mass", rng.uniform(*getattr(self, "mass_range", (0.05, 0.4)))))
         self.make_object(scene, rng, g, ppos, top, mass, mu)
         self.hidden_task = dict(clearance=clr, chamfer=ch, mu=mu, mass=mass, hole_yaw=yaw_h)
         self.depth = g["depth"]

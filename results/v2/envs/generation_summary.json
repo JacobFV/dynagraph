@@ -1,794 +1,2274 @@
 {
- "bin_clearing": {
+ "panda/bin_clearing": {
   "heldout_layout": {
-   "n": 16,
-   "success": 0.0625,
-   "wall_s": 11.948849841952324,
-   "sim_s": 155.983125000161,
-   "calls": 29.5625,
-   "effort": 10669.83067322772,
+   "n": 2,
+   "success": 0.0,
+   "wall_s": 14.305883407592773,
+   "sim_s": 57.84200000001901,
+   "calls": 32.0,
+   "effort": 4527.9289025609905,
    "violations": 0,
-   "events": 65368.0
+   "events": 23566.0
   },
   "heldout_objects": {
-   "n": 16,
+   "n": 2,
    "success": 0.0,
-   "wall_s": 23.502078756690025,
-   "sim_s": 266.53000000054453,
-   "calls": 38.75,
-   "effort": 40925.04063845333,
+   "wall_s": 15.72251832485199,
+   "sim_s": 83.01899999998793,
+   "calls": 42.0,
+   "effort": 2859.5195275936453,
    "violations": 0,
-   "events": 112145.875
+   "events": 37906.0
   },
   "test": {
-   "n": 16,
-   "success": 0.25,
-   "wall_s": 13.99729198217392,
-   "sim_s": 212.40187500034546,
-   "calls": 33.6875,
-   "effort": 15753.154856192803,
+   "n": 5,
+   "success": 0.0,
+   "wall_s": 16.052379322052,
+   "sim_s": 93.26039999996405,
+   "calls": 37.6,
+   "effort": 3184.5087371953787,
    "violations": 0,
-   "events": 93171.625
+   "events": 41246.8
   },
   "train": {
-   "n": 16,
-   "success": 0.1875,
-   "wall_s": 15.735642358660698,
-   "sim_s": 193.68875000027748,
-   "calls": 32.8125,
-   "effort": 15013.187608309636,
+   "n": 32,
+   "success": 0.0,
+   "wall_s": 19.84198270738125,
+   "sim_s": 87.91737499996916,
+   "calls": 36.875,
+   "effort": 4052.1270113652527,
    "violations": 0,
-   "events": 83459.75
+   "events": 39704.875
   },
   "val": {
-   "n": 16,
-   "success": 0.1875,
-   "wall_s": 15.639216721057892,
-   "sim_s": 200.8293750003157,
-   "calls": 31.875,
-   "effort": 17940.663653331212,
+   "n": 5,
+   "success": 0.0,
+   "wall_s": 16.825297355651855,
+   "sim_s": 85.27439999998266,
+   "calls": 34.4,
+   "effort": 3242.018639780422,
    "violations": 0,
-   "events": 89218.6875
+   "events": 37216.4
   }
  },
- "bulk_sweep": {
+ "panda/bulk_sweep": {
   "heldout_layout": {
-   "n": 16,
-   "success": 0.75,
-   "wall_s": 8.535981580615044,
-   "sim_s": 33.95062500000526,
-   "calls": 6.5,
-   "effort": 246.88016052273375,
+   "n": 1,
+   "success": 1.0,
+   "wall_s": 93.65391564369202,
+   "sim_s": 248.7860000004598,
+   "calls": 6.0,
+   "effort": 371.8620275454674,
    "violations": 0,
-   "events": 10390.3125
+   "events": 85478.0
   },
   "heldout_objects": {
-   "n": 16,
+   "n": 1,
    "success": 0.0,
-   "wall_s": 12.967432707548141,
-   "sim_s": 64.55875000002533,
+   "wall_s": 181.65191173553467,
+   "sim_s": 481.6280000015716,
    "calls": 12.0,
-   "effort": 1151.0217346832121,
+   "effort": 1999.7566360100345,
    "violations": 0,
-   "events": 22776.1875
+   "events": 197024.0
   },
   "test": {
-   "n": 16,
-   "success": 0.75,
-   "wall_s": 9.830856993794441,
-   "sim_s": 35.01187500000454,
-   "calls": 6.625,
-   "effort": 252.2977804022888,
-   "violations": 0,
-   "events": 11026.25
-  },
-  "train": {
-   "n": 16,
-   "success": 0.5625,
-   "wall_s": 16.498835876584053,
-   "sim_s": 41.60625000001141,
-   "calls": 8.125,
-   "effort": 220.51722185098114,
-   "violations": 0,
-   "events": 13251.0
-  },
-  "val": {
-   "n": 16,
-   "success": 0.5625,
-   "wall_s": 14.57045729458332,
-   "sim_s": 42.83500000001067,
-   "calls": 8.0625,
-   "effort": 339.1185899597223,
-   "violations": 0,
-   "events": 13669.6875
-  }
- },
- "connector_insert": {
-  "heldout_family": {
-   "n": 16,
-   "success": 0.4375,
-   "wall_s": 2.5265100300312042,
-   "sim_s": 30.836562499985583,
-   "calls": 5.375,
-   "effort": 960.6558896921445,
-   "violations": 0,
-   "events": 8698.125
-  },
-  "heldout_layout": {
-   "n": 16,
-   "success": 0.5,
-   "wall_s": 2.9541804492473602,
-   "sim_s": 31.97562499998733,
-   "calls": 5.125,
-   "effort": 1129.378405866935,
-   "violations": 0,
-   "events": 9060.75
-  },
-  "heldout_objects": {
-   "n": 16,
-   "success": 0.625,
-   "wall_s": 2.8151132613420486,
-   "sim_s": 26.57218749998959,
-   "calls": 4.25,
-   "effort": 957.0710379881531,
-   "violations": 0,
-   "events": 7504.5625
-  }
- },
- "conveyor_sort": {
-  "heldout_layout": {
-   "n": 16,
-   "success": 0.375,
-   "wall_s": 6.533785000443459,
-   "sim_s": 92.02187499996393,
-   "calls": 20.3125,
-   "effort": 3148.955348120245,
-   "violations": 0,
-   "events": 35371.125
-  },
-  "heldout_objects": {
-   "n": 16,
-   "success": 0.625,
-   "wall_s": 3.6705870628356934,
-   "sim_s": 56.675625000018655,
-   "calls": 13.1875,
-   "effort": 1373.8843202584735,
-   "violations": 0,
-   "events": 19406.75
-  },
-  "test": {
-   "n": 16,
-   "success": 0.625,
-   "wall_s": 3.3189957290887833,
-   "sim_s": 51.41875000001439,
-   "calls": 11.75,
-   "effort": 1073.2845805656123,
-   "violations": 0,
-   "events": 17363.25
-  },
-  "train": {
-   "n": 16,
-   "success": 0.625,
-   "wall_s": 4.224005043506622,
-   "sim_s": 51.44937500001299,
-   "calls": 12.0,
-   "effort": 1051.8241794804248,
-   "violations": 0,
-   "events": 17705.125
-  },
-  "val": {
-   "n": 16,
-   "success": 0.5625,
-   "wall_s": 3.4874010533094406,
-   "sim_s": 55.29250000001783,
-   "calls": 12.5,
-   "effort": 1342.3001021522537,
-   "violations": 0,
-   "events": 18909.5
-  }
- },
- "depalletize": {
-  "heldout_layout": {
-   "n": 16,
-   "success": 0.0,
-   "wall_s": 16.148866295814514,
-   "sim_s": 220.95187500032688,
-   "calls": 21.8125,
-   "effort": 4556.770303467146,
-   "violations": 0,
-   "events": 83745.625
-  },
-  "heldout_objects": {
-   "n": 16,
+   "n": 1,
    "success": 1.0,
-   "wall_s": 7.445419684052467,
-   "sim_s": 142.98500000004952,
-   "calls": 12.5625,
-   "effort": 846.9913247817333,
-   "violations": 0,
-   "events": 47084.3125
-  },
-  "test": {
-   "n": 16,
-   "success": 0.9375,
-   "wall_s": 7.562146261334419,
-   "sim_s": 138.63000000004493,
-   "calls": 12.125,
-   "effort": 714.9019583830345,
-   "violations": 0,
-   "events": 45320.75
-  },
-  "train": {
-   "n": 16,
-   "success": 1.0,
-   "wall_s": 9.922658875584602,
-   "sim_s": 137.21187500003697,
-   "calls": 12.0,
-   "effort": 711.1005070274459,
-   "violations": 0,
-   "events": 44856.1875
-  },
-  "val": {
-   "n": 16,
-   "success": 1.0,
-   "wall_s": 7.327579349279404,
-   "sim_s": 131.179375000023,
-   "calls": 11.5,
-   "effort": 672.3693490607417,
-   "violations": 0,
-   "events": 42309.6875
-  }
- },
- "door_open": {
-  "heldout_layout": {
-   "n": 16,
-   "success": 1.0,
-   "wall_s": 0.3259577006101608,
-   "sim_s": 8.394374999999473,
-   "calls": 1.0,
-   "effort": 143.3421891331783,
-   "violations": 0,
-   "events": 2400.6875
-  },
-  "heldout_objects": {
-   "n": 16,
-   "success": 1.0,
-   "wall_s": 0.25550346076488495,
-   "sim_s": 8.329999999999451,
-   "calls": 1.0,
-   "effort": 143.17853413108742,
-   "violations": 0,
-   "events": 2380.375
-  },
-  "test": {
-   "n": 16,
-   "success": 1.0,
-   "wall_s": 0.27438464760780334,
-   "sim_s": 8.39062499999947,
-   "calls": 1.0,
-   "effort": 143.45730545187456,
-   "violations": 0,
-   "events": 2397.3125
-  },
-  "train": {
-   "n": 16,
-   "success": 1.0,
-   "wall_s": 0.5593939423561096,
-   "sim_s": 8.432499999999486,
-   "calls": 1.0,
-   "effort": 143.4334668892704,
-   "violations": 0,
-   "events": 2409.3125
-  },
-  "val": {
-   "n": 16,
-   "success": 1.0,
-   "wall_s": 0.39432816207408905,
-   "sim_s": 8.381874999999468,
-   "calls": 1.0,
-   "effort": 143.39011992602187,
-   "violations": 0,
-   "events": 2394.125
-  }
- },
- "drawer_open": {
-  "heldout_layout": {
-   "n": 16,
-   "success": 0.875,
-   "wall_s": 0.5809188485145569,
-   "sim_s": 12.603124999999777,
-   "calls": 1.5,
-   "effort": 422.6367028669488,
-   "violations": 0,
-   "events": 3596.5
-  },
-  "heldout_objects": {
-   "n": 16,
-   "success": 0.9375,
-   "wall_s": 0.8012873381376266,
-   "sim_s": 12.149999999999729,
-   "calls": 1.4375,
-   "effort": 367.39028469524453,
-   "violations": 0,
-   "events": 3471.875
-  },
-  "test": {
-   "n": 16,
-   "success": 1.0,
-   "wall_s": 0.3894445151090622,
-   "sim_s": 8.969374999999664,
-   "calls": 1.0,
-   "effort": 210.72269741855794,
-   "violations": 0,
-   "events": 2563.8125
-  },
-  "train": {
-   "n": 16,
-   "success": 1.0,
-   "wall_s": 0.5985506027936935,
-   "sim_s": 9.764374999999628,
-   "calls": 1.125,
-   "effort": 246.21404111490247,
-   "violations": 0,
-   "events": 2790.5625
-  },
-  "val": {
-   "n": 16,
-   "success": 1.0,
-   "wall_s": 0.5418104827404022,
-   "sim_s": 8.967499999999664,
-   "calls": 1.0,
-   "effort": 212.0142550831907,
-   "violations": 0,
-   "events": 2561.875
-  }
- },
- "fixture_place": {
-  "heldout_layout": {
-   "n": 16,
-   "success": 0.875,
-   "wall_s": 1.4249830096960068,
-   "sim_s": 15.40250000000024,
-   "calls": 2.75,
-   "effort": 716.7684195560846,
-   "violations": 0,
-   "events": 4448.5625
-  },
-  "heldout_objects": {
-   "n": 16,
-   "success": 0.1875,
-   "wall_s": 2.078216075897217,
-   "sim_s": 27.425312500009447,
-   "calls": 6.875,
-   "effort": 3484.678734950893,
-   "violations": 0,
-   "events": 7952.6875
-  },
-  "test": {
-   "n": 16,
-   "success": 0.875,
-   "wall_s": 1.2187349200248718,
-   "sim_s": 15.282187500000331,
-   "calls": 2.75,
-   "effort": 745.8842743156451,
-   "violations": 0,
-   "events": 4399.375
-  },
-  "train": {
-   "n": 16,
-   "success": 1.0,
-   "wall_s": 1.0887688398361206,
-   "sim_s": 12.792187499998349,
-   "calls": 2.0,
-   "effort": 250.25960754364826,
-   "violations": 0,
-   "events": 3636.3125
-  },
-  "val": {
-   "n": 16,
-   "success": 0.9375,
-   "wall_s": 1.1282592564821243,
-   "sim_s": 14.636249999999416,
-   "calls": 2.5,
-   "effort": 421.5618367226648,
-   "violations": 0,
-   "events": 4200.875
-  }
- },
- "kitting_pocket": {
-  "heldout_layout": {
-   "n": 16,
-   "success": 0.25,
-   "wall_s": 6.957341805100441,
-   "sim_s": 70.23437500003253,
-   "calls": 9.3125,
-   "effort": 1312.2425927919458,
-   "violations": 0,
-   "events": 22188.4375
-  },
-  "heldout_objects": {
-   "n": 16,
-   "success": 0.125,
-   "wall_s": 11.05616882443428,
-   "sim_s": 116.71062500019363,
-   "calls": 17.5625,
-   "effort": 5124.31460436751,
-   "violations": 0,
-   "events": 40298.875
-  },
-  "test": {
-   "n": 16,
-   "success": 0.3125,
-   "wall_s": 5.971807643771172,
-   "sim_s": 75.34187500004354,
-   "calls": 10.0625,
-   "effort": 1833.898874612371,
-   "violations": 0,
-   "events": 24103.25
-  },
-  "train": {
-   "n": 16,
-   "success": 0.25,
-   "wall_s": 5.9624984711408615,
-   "sim_s": 71.38000000005033,
-   "calls": 10.625,
-   "effort": 2035.4632411711668,
-   "violations": 0,
-   "events": 22899.3125
-  },
-  "val": {
-   "n": 16,
-   "success": 0.5,
-   "wall_s": 6.234656929969788,
-   "sim_s": 76.50218750006766,
-   "calls": 9.9375,
-   "effort": 1699.9147141474464,
-   "violations": 0,
-   "events": 24445.0625
-  }
- },
- "machine_tending": {
-  "heldout_layout": {
-   "n": 16,
-   "success": 0.75,
-   "wall_s": 2.9442425072193146,
-   "sim_s": 61.013749999975865,
-   "calls": 6.375,
-   "effort": 2307.224851063278,
-   "violations": 0,
-   "events": 18255.3125
-  },
-  "heldout_objects": {
-   "n": 16,
-   "success": 0.9375,
-   "wall_s": 2.047532081604004,
-   "sim_s": 42.02499999999817,
-   "calls": 4.5625,
-   "effort": 666.2777442037543,
-   "violations": 0,
-   "events": 12324.4375
-  },
-  "test": {
-   "n": 16,
-   "success": 0.9375,
-   "wall_s": 2.5304065495729446,
-   "sim_s": 40.977499999994514,
-   "calls": 4.5,
-   "effort": 694.1055142084342,
-   "violations": 0,
-   "events": 11978.5
-  },
-  "train": {
-   "n": 16,
-   "success": 0.6875,
-   "wall_s": 2.5176331400871277,
-   "sim_s": 56.517499999987365,
-   "calls": 6.5625,
-   "effort": 1033.4428490185494,
-   "violations": 0,
-   "events": 16470.6875
-  },
-  "val": {
-   "n": 16,
-   "success": 0.6875,
-   "wall_s": 2.7029091119766235,
-   "sim_s": 62.59562499997922,
-   "calls": 6.9375,
-   "effort": 1089.1493820232063,
-   "violations": 0,
-   "events": 18150.5625
-  }
- },
- "peg_insert": {
-  "heldout_layout": {
-   "n": 16,
-   "success": 0.9375,
-   "wall_s": 1.4788489639759064,
-   "sim_s": 14.076875000000786,
-   "calls": 2.8125,
-   "effort": 267.67441110318543,
-   "violations": 0,
-   "events": 4082.4375
-  },
-  "heldout_objects": {
-   "n": 16,
-   "success": 1.0,
-   "wall_s": 1.398040235042572,
-   "sim_s": 15.461250000000577,
-   "calls": 2.5,
-   "effort": 449.5989160015788,
-   "violations": 0,
-   "events": 4487.1875
-  },
-  "test": {
-   "n": 16,
-   "success": 0.9375,
-   "wall_s": 1.4347362667322159,
-   "sim_s": 14.668437499999124,
-   "calls": 2.5,
-   "effort": 301.4073868693455,
-   "violations": 0,
-   "events": 4227.9375
-  },
-  "train": {
-   "n": 16,
-   "success": 0.875,
-   "wall_s": 1.697612702846527,
-   "sim_s": 16.70718749999889,
-   "calls": 2.875,
-   "effort": 516.5285134024083,
-   "violations": 0,
-   "events": 4835.25
-  },
-  "val": {
-   "n": 16,
-   "success": 0.875,
-   "wall_s": 1.6503074318170547,
-   "sim_s": 18.289999999998845,
-   "calls": 3.25,
-   "effort": 580.0920004566387,
-   "violations": 0,
-   "events": 5292.875
-  }
- },
- "pouch_transfer": {
-  "heldout_layout": {
-   "n": 16,
-   "success": 0.6875,
-   "wall_s": 4.609973639249802,
-   "sim_s": 19.262500000001125,
-   "calls": 3.5,
-   "effort": 888.4762836207888,
-   "violations": 0,
-   "events": 5671.625
-  },
-  "heldout_objects": {
-   "n": 16,
-   "success": 0.6875,
-   "wall_s": 2.8214224725961685,
-   "sim_s": 18.08781250000207,
-   "calls": 3.375,
-   "effort": 1189.6466735490633,
-   "violations": 0,
-   "events": 5327.6875
-  },
-  "test": {
-   "n": 16,
-   "success": 1.0,
-   "wall_s": 3.6816186904907227,
-   "sim_s": 15.694374999999706,
-   "calls": 2.5,
-   "effort": 688.964840356788,
-   "violations": 0,
-   "events": 4627.625
-  },
-  "train": {
-   "n": 16,
-   "success": 1.0,
-   "wall_s": 3.9335856288671494,
-   "sim_s": 15.260624999999832,
-   "calls": 2.4375,
-   "effort": 660.1013251364636,
-   "violations": 0,
-   "events": 4502.25
-  },
-  "val": {
-   "n": 16,
-   "success": 0.9375,
-   "wall_s": 4.037941202521324,
-   "sim_s": 14.362499999998743,
-   "calls": 2.25,
-   "effort": 594.2683299722614,
-   "violations": 0,
-   "events": 4236.3125
-  }
- },
- "singulation": {
-  "heldout_layout": {
-   "n": 16,
-   "success": 0.875,
-   "wall_s": 1.3603236973285675,
-   "sim_s": 16.315624999999297,
-   "calls": 4.875,
-   "effort": 620.9390846767461,
-   "violations": 0,
-   "events": 6196.4375
-  },
-  "heldout_objects": {
-   "n": 16,
-   "success": 0.75,
-   "wall_s": 1.0270859450101852,
-   "sim_s": 13.27374999999931,
-   "calls": 3.8125,
-   "effort": 1589.4189160332628,
-   "violations": 0,
-   "events": 5073.625
-  },
-  "test": {
-   "n": 16,
-   "success": 0.8125,
-   "wall_s": 1.7956344485282898,
-   "sim_s": 21.378124999998548,
-   "calls": 6.4375,
-   "effort": 930.2080079290918,
-   "violations": 0,
-   "events": 8406.4375
-  },
-  "train": {
-   "n": 16,
-   "success": 0.875,
-   "wall_s": 1.307423010468483,
-   "sim_s": 24.439375000000933,
-   "calls": 7.4375,
-   "effort": 1587.0204134841847,
-   "violations": 0,
-   "events": 9437.8125
-  },
-  "val": {
-   "n": 16,
-   "success": 0.75,
-   "wall_s": 1.6513079851865768,
-   "sim_s": 21.236249999999938,
-   "calls": 6.4375,
-   "effort": 1117.8232714282267,
-   "violations": 0,
-   "events": 8248.9375
-  }
- },
- "tool_return": {
-  "heldout_layout": {
-   "n": 16,
-   "success": 0.8125,
-   "wall_s": 3.4978311359882355,
-   "sim_s": 32.46031249999709,
-   "calls": 4.25,
-   "effort": 771.9120290024316,
-   "violations": 0,
-   "events": 9089.0625
-  },
-  "heldout_objects": {
-   "n": 16,
-   "success": 0.0625,
-   "wall_s": 4.446069046854973,
-   "sim_s": 56.9115624999549,
-   "calls": 7.625,
-   "effort": 3778.416346902114,
-   "violations": 0,
-   "events": 15915.0625
-  },
-  "test": {
-   "n": 16,
-   "success": 0.9375,
-   "wall_s": 2.754821479320526,
-   "sim_s": 24.47875000000794,
-   "calls": 3.6875,
-   "effort": 745.6186307107778,
-   "violations": 0,
-   "events": 6870.375
-  },
-  "train": {
-   "n": 16,
-   "success": 0.9375,
-   "wall_s": 2.783825248479843,
-   "sim_s": 28.37468750000515,
-   "calls": 3.75,
-   "effort": 560.856143692326,
-   "violations": 0,
-   "events": 7961.3125
-  },
-  "val": {
-   "n": 16,
-   "success": 0.8125,
-   "wall_s": 2.9933786541223526,
-   "sim_s": 31.657187499996375,
-   "calls": 4.1875,
-   "effort": 802.559526034294,
-   "violations": 0,
-   "events": 8871.8125
-  }
- },
- "tote_transfer": {
-  "heldout_family": {
-   "n": 16,
-   "success": 0.4375,
-   "wall_s": 3.738044023513794,
-   "sim_s": 58.433125000012694,
-   "calls": 5.3125,
-   "effort": 1045.4121175992032,
-   "violations": 0,
-   "events": 18652.0
-  },
-  "heldout_layout": {
-   "n": 16,
-   "success": 0.0,
-   "wall_s": 9.064584195613861,
-   "sim_s": 102.89812499996441,
-   "calls": 9.25,
-   "effort": 2884.100840487213,
-   "violations": 0,
-   "events": 35224.5
-  },
-  "heldout_objects": {
-   "n": 16,
-   "success": 0.0,
-   "wall_s": 6.992978245019913,
-   "sim_s": 80.66312499998217,
-   "calls": 7.125,
-   "effort": 4022.101216358258,
-   "violations": 0,
-   "events": 25562.875
-  }
- },
- "twist_lock": {
-  "heldout_layout": {
-   "n": 16,
-   "success": 1.0,
-   "wall_s": 0.4471868723630905,
-   "sim_s": 9.814375000000137,
-   "calls": 1.625,
-   "effort": 258.93747999137133,
-   "violations": 0,
-   "events": 2806.0625
-  },
-  "heldout_objects": {
-   "n": 16,
-   "success": 0.0,
-   "wall_s": 0.8857447952032089,
-   "sim_s": 26.348124999996276,
+   "wall_s": 74.26409864425659,
+   "sim_s": 179.24200000012775,
    "calls": 5.0,
-   "effort": 847.9107776621665,
+   "effort": 329.26659639177797,
    "violations": 0,
-   "events": 7508.8125
-  },
-  "test": {
-   "n": 16,
-   "success": 0.75,
-   "wall_s": 0.5711902230978012,
-   "sim_s": 12.638124999998688,
-   "calls": 2.125,
-   "effort": 345.85469925314413,
-   "violations": 0,
-   "events": 3606.5625
+   "events": 66144.0
   },
   "train": {
-   "n": 16,
-   "success": 0.9375,
-   "wall_s": 0.48249073326587677,
-   "sim_s": 10.263124999999668,
-   "calls": 1.6875,
-   "effort": 269.8903846033979,
+   "n": 8,
+   "success": 0.375,
+   "wall_s": 159.9324987232685,
+   "sim_s": 357.7807500009802,
+   "calls": 10.0,
+   "effort": 4609.498504935706,
    "violations": 0,
-   "events": 2932.375
+   "events": 133460.0
   },
   "val": {
-   "n": 16,
-   "success": 0.9375,
-   "wall_s": 0.5158487111330032,
-   "sim_s": 9.969374999999639,
-   "calls": 1.625,
-   "effort": 259.01259839535294,
+   "n": 1,
+   "success": 0.0,
+   "wall_s": 273.6911244392395,
+   "sim_s": 485.45000000158984,
+   "calls": 12.0,
+   "effort": 600.3510833525194,
    "violations": 0,
-   "events": 2848.0625
+   "events": 191268.0
+  }
+ },
+ "panda/connector_insert": {
+  "heldout_family": {
+   "n": 28,
+   "success": 0.39285714285714285,
+   "wall_s": 21.51692569255829,
+   "sim_s": 38.32182142855857,
+   "calls": 5.678571428571429,
+   "effort": 9336.695080390395,
+   "violations": 0,
+   "events": 11932.857142857143
+  },
+  "heldout_layout": {
+   "n": 9,
+   "success": 0.4444444444444444,
+   "wall_s": 19.591640922758316,
+   "sim_s": 38.14188888887176,
+   "calls": 5.333333333333333,
+   "effort": 8381.09177274802,
+   "violations": 0,
+   "events": 11854.555555555555
+  },
+  "heldout_objects": {
+   "n": 9,
+   "success": 0.4444444444444444,
+   "wall_s": 24.87761590215895,
+   "sim_s": 38.61333333332402,
+   "calls": 5.333333333333333,
+   "effort": 6655.658458128559,
+   "violations": 0,
+   "events": 12027.888888888889
+  }
+ },
+ "panda/conveyor_sort": {
+  "heldout_layout": {
+   "n": 2,
+   "success": 0.0,
+   "wall_s": 29.456286549568176,
+   "sim_s": 64.14000000002588,
+   "calls": 26.5,
+   "effort": 55253.661966312444,
+   "violations": 0,
+   "events": 27406.0
+  },
+  "heldout_objects": {
+   "n": 2,
+   "success": 0.0,
+   "wall_s": 23.129105925559998,
+   "sim_s": 42.72100000000624,
+   "calls": 19.5,
+   "effort": 15208.728899193968,
+   "violations": 0,
+   "events": 16537.0
+  },
+  "test": {
+   "n": 5,
+   "success": 0.0,
+   "wall_s": 15.023717737197876,
+   "sim_s": 54.483600000010746,
+   "calls": 20.4,
+   "effort": 46216.26893864043,
+   "violations": 0,
+   "events": 19712.2
+  },
+  "train": {
+   "n": 32,
+   "success": 0.0,
+   "wall_s": 20.791407957673073,
+   "sim_s": 57.97243750000122,
+   "calls": 20.4375,
+   "effort": 64874.401124934186,
+   "violations": 0,
+   "events": 21528.6875
+  },
+  "val": {
+   "n": 5,
+   "success": 0.0,
+   "wall_s": 15.72517533302307,
+   "sim_s": 62.45319999999506,
+   "calls": 20.4,
+   "effort": 25652.780457623452,
+   "violations": 0,
+   "events": 23557.0
+  }
+ },
+ "panda/door_open": {
+  "heldout_layout": {
+   "n": 2,
+   "success": 0.0,
+   "wall_s": 3.468344211578369,
+   "sim_s": 16.21800000000189,
+   "calls": 5.0,
+   "effort": 276874.0471881318,
+   "violations": 0,
+   "events": 5030.0
+  },
+  "heldout_objects": {
+   "n": 2,
+   "success": 1.0,
+   "wall_s": 1.3496668338775635,
+   "sim_s": 12.394000000000808,
+   "calls": 1.0,
+   "effort": 174.80520151239185,
+   "violations": 0,
+   "events": 3851.5
+  },
+  "test": {
+   "n": 5,
+   "success": 1.0,
+   "wall_s": 2.8644400119781492,
+   "sim_s": 16.958800000000437,
+   "calls": 1.6,
+   "effort": 42481.258557985806,
+   "violations": 0,
+   "events": 5257.8
+  },
+  "train": {
+   "n": 32,
+   "success": 0.90625,
+   "wall_s": 4.351307161152363,
+   "sim_s": 23.69387499999865,
+   "calls": 2.15625,
+   "effort": 99167.2488479212,
+   "violations": 0,
+   "events": 7343.8125
+  },
+  "val": {
+   "n": 5,
+   "success": 1.0,
+   "wall_s": 5.233612203598023,
+   "sim_s": 23.442799999998368,
+   "calls": 2.0,
+   "effort": 55314.63196357493,
+   "violations": 0,
+   "events": 7263.4
+  }
+ },
+ "panda/drawer_open": {
+  "heldout_layout": {
+   "n": 2,
+   "success": 1.0,
+   "wall_s": 3.4047513008117676,
+   "sim_s": 16.496000000001736,
+   "calls": 2.0,
+   "effort": 13117.509916341582,
+   "violations": 0,
+   "events": 5117.5
+  },
+  "heldout_objects": {
+   "n": 2,
+   "success": 0.5,
+   "wall_s": 3.5017194747924805,
+   "sim_s": 23.876999999997643,
+   "calls": 3.5,
+   "effort": 4583.210352014112,
+   "violations": 0,
+   "events": 7404.5
+  },
+  "test": {
+   "n": 5,
+   "success": 0.6,
+   "wall_s": 5.0771125793457035,
+   "sim_s": 24.53679999999725,
+   "calls": 3.4,
+   "effort": 81615.21599245249,
+   "violations": 0,
+   "events": 7612.4
+  },
+  "train": {
+   "n": 32,
+   "success": 0.71875,
+   "wall_s": 3.9440870359539986,
+   "sim_s": 19.92299999999947,
+   "calls": 2.625,
+   "effort": 38372.97241672873,
+   "violations": 0,
+   "events": 6178.78125
+  },
+  "val": {
+   "n": 5,
+   "success": 0.4,
+   "wall_s": 6.360520458221435,
+   "sim_s": 29.67560000000134,
+   "calls": 3.8,
+   "effort": 102032.23441166154,
+   "violations": 0,
+   "events": 9201.2
+  }
+ },
+ "panda/fixture_place": {
+  "heldout_layout": {
+   "n": 2,
+   "success": 1.0,
+   "wall_s": 5.077707290649414,
+   "sim_s": 11.146999999999261,
+   "calls": 2.0,
+   "effort": 115.32373521770948,
+   "violations": 0,
+   "events": 3422.0
+  },
+  "heldout_objects": {
+   "n": 2,
+   "success": 0.0,
+   "wall_s": 7.3952716588974,
+   "sim_s": 18.40499999999951,
+   "calls": 8.0,
+   "effort": 16717.89735822202,
+   "violations": 0,
+   "events": 5702.0
+  },
+  "test": {
+   "n": 5,
+   "success": 1.0,
+   "wall_s": 7.708433055877686,
+   "sim_s": 17.20100000000049,
+   "calls": 3.2,
+   "effort": 4161.836056472037,
+   "violations": 0,
+   "events": 5359.4
+  },
+  "train": {
+   "n": 32,
+   "success": 0.78125,
+   "wall_s": 5.3200670182704926,
+   "sim_s": 14.984000000000606,
+   "calls": 4.0,
+   "effort": 2053.552084129529,
+   "violations": 0,
+   "events": 4630.5
+  },
+  "val": {
+   "n": 5,
+   "success": 0.8,
+   "wall_s": 10.965279817581177,
+   "sim_s": 24.16980000000506,
+   "calls": 5.2,
+   "effort": 1736.878049186053,
+   "violations": 0,
+   "events": 7523.4
+  }
+ },
+ "panda/kitting_pocket": {
+  "heldout_layout": {
+   "n": 2,
+   "success": 0.5,
+   "wall_s": 34.24734270572662,
+   "sim_s": 64.54700000005825,
+   "calls": 9.5,
+   "effort": 11840.306035922848,
+   "violations": 0,
+   "events": 22440.5
+  },
+  "heldout_objects": {
+   "n": 2,
+   "success": 0.0,
+   "wall_s": 37.93826150894165,
+   "sim_s": 59.07249999996076,
+   "calls": 20.0,
+   "effort": 23418.71591053252,
+   "violations": 0,
+   "events": 21651.0
+  },
+  "test": {
+   "n": 5,
+   "success": 0.6,
+   "wall_s": 50.654496145248416,
+   "sim_s": 80.0120000000683,
+   "calls": 9.6,
+   "effort": 8331.261946159131,
+   "violations": 0,
+   "events": 28048.4
+  },
+  "train": {
+   "n": 32,
+   "success": 0.5,
+   "wall_s": 30.21180136501789,
+   "sim_s": 62.52578125002224,
+   "calls": 9.46875,
+   "effort": 15095.598278513138,
+   "violations": 0,
+   "events": 21640.0
+  },
+  "val": {
+   "n": 5,
+   "success": 0.8,
+   "wall_s": 28.930945301055907,
+   "sim_s": 65.14559999995771,
+   "calls": 9.4,
+   "effort": 14457.66835933919,
+   "violations": 0,
+   "events": 23054.6
+  }
+ },
+ "panda/machine_tending": {
+  "heldout_layout": {
+   "n": 2,
+   "success": 0.0,
+   "wall_s": 6.182434678077698,
+   "sim_s": 35.8929999999979,
+   "calls": 12.0,
+   "effort": 7432293.370843023,
+   "violations": 0,
+   "events": 11799.0
+  },
+  "heldout_objects": {
+   "n": 2,
+   "success": 0.0,
+   "wall_s": 6.725953817367554,
+   "sim_s": 38.30400000000085,
+   "calls": 12.0,
+   "effort": 108080.76878049558,
+   "violations": 0,
+   "events": 12375.5
+  },
+  "test": {
+   "n": 5,
+   "success": 0.0,
+   "wall_s": 6.685960197448731,
+   "sim_s": 43.57880000000729,
+   "calls": 12.0,
+   "effort": 95540.56267077726,
+   "violations": 0,
+   "events": 13998.6
+  },
+  "train": {
+   "n": 32,
+   "success": 0.0625,
+   "wall_s": 7.4130252078175545,
+   "sim_s": 40.829687500005306,
+   "calls": 11.5,
+   "effort": 53526.30560718968,
+   "violations": 0,
+   "events": 13096.65625
+  },
+  "val": {
+   "n": 5,
+   "success": 0.2,
+   "wall_s": 7.4632903099060055,
+   "sim_s": 38.85440000000237,
+   "calls": 10.4,
+   "effort": 21939.081535111436,
+   "violations": 0,
+   "events": 12479.0
+  }
+ },
+ "panda/peg_insert": {
+  "heldout_layout": {
+   "n": 2,
+   "success": 1.0,
+   "wall_s": 9.146218657493591,
+   "sim_s": 14.672499999997306,
+   "calls": 2.0,
+   "effort": 2193.03464358845,
+   "violations": 0,
+   "events": 4616.0
+  },
+  "heldout_objects": {
+   "n": 2,
+   "success": 1.0,
+   "wall_s": 12.175565838813782,
+   "sim_s": 19.37650000000162,
+   "calls": 3.0,
+   "effort": 16777.02596385682,
+   "violations": 0,
+   "events": 6192.0
+  },
+  "test": {
+   "n": 5,
+   "success": 1.0,
+   "wall_s": 9.944704866409301,
+   "sim_s": 14.415799999997507,
+   "calls": 2.0,
+   "effort": 5802.517012975438,
+   "violations": 0,
+   "events": 4534.2
+  },
+  "train": {
+   "n": 32,
+   "success": 0.9375,
+   "wall_s": 9.884302280843258,
+   "sim_s": 18.491468749998376,
+   "calls": 2.65625,
+   "effort": 6048.399388141807,
+   "violations": 0,
+   "events": 5791.6875
+  },
+  "val": {
+   "n": 5,
+   "success": 1.0,
+   "wall_s": 8.380725431442261,
+   "sim_s": 14.6025999999982,
+   "calls": 2.0,
+   "effort": 1790.7484961070288,
+   "violations": 0,
+   "events": 4571.4
+  }
+ },
+ "panda/pouch_transfer": {
+  "heldout_layout": {
+   "n": 2,
+   "success": 0.5,
+   "wall_s": 7.119855284690857,
+   "sim_s": 15.454500000000255,
+   "calls": 4.0,
+   "effort": 978.1104373302165,
+   "violations": 0,
+   "events": 4942.0
+  },
+  "heldout_objects": {
+   "n": 2,
+   "success": 1.0,
+   "wall_s": 5.564730763435364,
+   "sim_s": 11.56299999999903,
+   "calls": 2.0,
+   "effort": 35.92873430530354,
+   "violations": 0,
+   "events": 3706.0
+  },
+  "test": {
+   "n": 5,
+   "success": 0.8,
+   "wall_s": 9.935600566864014,
+   "sim_s": 22.298800000005837,
+   "calls": 4.0,
+   "effort": 333.22135388071433,
+   "violations": 0,
+   "events": 7113.4
+  },
+  "train": {
+   "n": 32,
+   "success": 0.8125,
+   "wall_s": 9.25208304822445,
+   "sim_s": 16.02956250000056,
+   "calls": 3.125,
+   "effort": 506.0352010611538,
+   "violations": 0,
+   "events": 5125.1875
+  },
+  "val": {
+   "n": 5,
+   "success": 0.8,
+   "wall_s": 9.458484029769897,
+   "sim_s": 17.62520000000163,
+   "calls": 3.4,
+   "effort": 243.27536545736552,
+   "violations": 0,
+   "events": 5636.6
+  }
+ },
+ "panda/singulation": {
+  "heldout_layout": {
+   "n": 2,
+   "success": 1.0,
+   "wall_s": 10.35304057598114,
+   "sim_s": 25.265000000001393,
+   "calls": 9.0,
+   "effort": 40710.51729399017,
+   "violations": 0,
+   "events": 10143.0
+  },
+  "heldout_objects": {
+   "n": 2,
+   "success": 0.5,
+   "wall_s": 6.600572109222412,
+   "sim_s": 20.335999999996822,
+   "calls": 7.5,
+   "effort": 40537.46429738877,
+   "violations": 0,
+   "events": 7987.0
+  },
+  "test": {
+   "n": 5,
+   "success": 0.2,
+   "wall_s": 6.952974510192871,
+   "sim_s": 24.205199999999724,
+   "calls": 8.6,
+   "effort": 42176.43019664972,
+   "violations": 0,
+   "events": 9489.8
+  },
+  "train": {
+   "n": 32,
+   "success": 0.5,
+   "wall_s": 6.038625359535217,
+   "sim_s": 21.46493750000127,
+   "calls": 7.96875,
+   "effort": 31770.914198955394,
+   "violations": 0,
+   "events": 8345.625
+  },
+  "val": {
+   "n": 5,
+   "success": 0.4,
+   "wall_s": 4.492509651184082,
+   "sim_s": 11.002800000000267,
+   "calls": 4.0,
+   "effort": 32393.538743046578,
+   "violations": 0,
+   "events": 4400.2
+  }
+ },
+ "panda/tool_return": {
+  "heldout_layout": {
+   "n": 2,
+   "success": 0.5,
+   "wall_s": 22.290400505065918,
+   "sim_s": 37.990499999986056,
+   "calls": 5.0,
+   "effort": 30758.5734513042,
+   "violations": 0,
+   "events": 11723.0
+  },
+  "heldout_objects": {
+   "n": 2,
+   "success": 0.5,
+   "wall_s": 24.381572008132935,
+   "sim_s": 56.0580000000116,
+   "calls": 6.5,
+   "effort": 17771.12536319718,
+   "violations": 0,
+   "events": 17295.0
+  },
+  "test": {
+   "n": 5,
+   "success": 0.6,
+   "wall_s": 14.901284074783325,
+   "sim_s": 36.76000000000171,
+   "calls": 6.0,
+   "effort": 15906.099255265324,
+   "violations": 0,
+   "events": 11517.0
+  },
+  "train": {
+   "n": 32,
+   "success": 0.5625,
+   "wall_s": 15.490550577640533,
+   "sim_s": 37.893343749992745,
+   "calls": 5.71875,
+   "effort": 10315.259337262227,
+   "violations": 0,
+   "events": 11841.25
+  },
+  "val": {
+   "n": 5,
+   "success": 0.2,
+   "wall_s": 19.77284264564514,
+   "sim_s": 44.93339999997886,
+   "calls": 7.0,
+   "effort": 10873.56215658689,
+   "violations": 0,
+   "events": 14035.4
+  }
+ },
+ "panda/tote_transfer": {
+  "heldout_family": {
+   "n": 28,
+   "success": 0.0,
+   "wall_s": 8.280705639294215,
+   "sim_s": 34.35221428571741,
+   "calls": 7.392857142857143,
+   "effort": 245669.95400980068,
+   "violations": 0,
+   "events": 11874.0
+  },
+  "heldout_layout": {
+   "n": 9,
+   "success": 0.0,
+   "wall_s": 12.146478043662178,
+   "sim_s": 53.829777777787655,
+   "calls": 12.0,
+   "effort": 332759.5377822613,
+   "violations": 0,
+   "events": 19940.555555555555
+  },
+  "heldout_objects": {
+   "n": 9,
+   "success": 0.0,
+   "wall_s": 6.42021009657118,
+   "sim_s": 27.974222222219993,
+   "calls": 7.333333333333333,
+   "effort": 188647.0775057511,
+   "violations": 0,
+   "events": 9735.444444444445
+  }
+ },
+ "panda/twist_lock": {
+  "heldout_layout": {
+   "n": 2,
+   "success": 1.0,
+   "wall_s": 1.937434196472168,
+   "sim_s": 16.65100000000086,
+   "calls": 2.5,
+   "effort": 13030.51014786518,
+   "violations": 0,
+   "events": 5169.5
+  },
+  "heldout_objects": {
+   "n": 2,
+   "success": 0.0,
+   "wall_s": 3.8144694566726685,
+   "sim_s": 34.876999999996656,
+   "calls": 5.0,
+   "effort": 20153.777213853256,
+   "violations": 0,
+   "events": 10820.5
+  },
+  "test": {
+   "n": 5,
+   "success": 0.8,
+   "wall_s": 3.005628824234009,
+   "sim_s": 24.439599999999814,
+   "calls": 3.6,
+   "effort": 19534.20868446614,
+   "violations": 0,
+   "events": 7580.4
+  },
+  "train": {
+   "n": 32,
+   "success": 0.9375,
+   "wall_s": 2.374656893312931,
+   "sim_s": 21.034999999999073,
+   "calls": 3.0625,
+   "effort": 10363.532852787659,
+   "violations": 0,
+   "events": 6522.34375
+  },
+  "val": {
+   "n": 5,
+   "success": 1.0,
+   "wall_s": 2.080637073516846,
+   "sim_s": 18.76719999999965,
+   "calls": 2.8,
+   "effort": 10167.396552811648,
+   "violations": 0,
+   "events": 5816.0
+  }
+ },
+ "probe/bin_clearing": {
+  "heldout_layout": {
+   "n": 5,
+   "success": 0.2,
+   "wall_s": 5.9733165264129635,
+   "sim_s": 129.5200000000347,
+   "calls": 30.6,
+   "effort": 5523.382919138804,
+   "violations": 0,
+   "events": 54710.2
+  },
+  "heldout_objects": {
+   "n": 5,
+   "success": 0.0,
+   "wall_s": 12.61716012954712,
+   "sim_s": 244.3580000004387,
+   "calls": 40.0,
+   "effort": 33458.18781845311,
+   "violations": 0,
+   "events": 103383.0
+  },
+  "test": {
+   "n": 10,
+   "success": 0.2,
+   "wall_s": 7.847051048278809,
+   "sim_s": 177.78900000021358,
+   "calls": 31.7,
+   "effort": 10256.106052504223,
+   "violations": 0,
+   "events": 76432.3
+  },
+  "train": {
+   "n": 70,
+   "success": 0.32857142857142857,
+   "wall_s": 7.17830286366599,
+   "sim_s": 161.36128571444146,
+   "calls": 29.757142857142856,
+   "effort": 12543.456396939802,
+   "violations": 0,
+   "events": 69866.21428571429
+  },
+  "val": {
+   "n": 10,
+   "success": 0.4,
+   "wall_s": 6.609835362434387,
+   "sim_s": 145.52000000005904,
+   "calls": 28.3,
+   "effort": 8448.256084532204,
+   "violations": 0,
+   "events": 62230.2
+  }
+ },
+ "probe/bulk_sweep": {
+  "heldout_layout": {
+   "n": 5,
+   "success": 1.0,
+   "wall_s": 5.24011082649231,
+   "sim_s": 22.329999999999625,
+   "calls": 4.0,
+   "effort": 17.930930962998083,
+   "violations": 0,
+   "events": 7074.8
+  },
+  "heldout_objects": {
+   "n": 5,
+   "success": 0.0,
+   "wall_s": 12.437765550613403,
+   "sim_s": 68.06000000002233,
+   "calls": 12.0,
+   "effort": 1556.2264819130417,
+   "violations": 0,
+   "events": 24708.2
+  },
+  "test": {
+   "n": 10,
+   "success": 0.4,
+   "wall_s": 11.129907703399658,
+   "sim_s": 48.62300000001255,
+   "calls": 9.1,
+   "effort": 273.9799384022543,
+   "violations": 0,
+   "events": 15099.6
+  },
+  "train": {
+   "n": 70,
+   "success": 0.5428571428571428,
+   "wall_s": 12.042273105893816,
+   "sim_s": 43.749142857154396,
+   "calls": 8.071428571428571,
+   "effort": 251.97780839113855,
+   "violations": 0,
+   "events": 13823.728571428572
+  },
+  "val": {
+   "n": 10,
+   "success": 0.4,
+   "wall_s": 11.526910138130187,
+   "sim_s": 47.34900000001398,
+   "calls": 9.1,
+   "effort": 345.5527044928498,
+   "violations": 0,
+   "events": 14991.9
+  }
+ },
+ "probe/connector_insert": {
+  "heldout_family": {
+   "n": 60,
+   "success": 0.5166666666666667,
+   "wall_s": 1.6377696593602498,
+   "sim_s": 29.257583333324998,
+   "calls": 5.2,
+   "effort": 1381.0689532604142,
+   "violations": 0,
+   "events": 8287.833333333334
+  },
+  "heldout_layout": {
+   "n": 20,
+   "success": 0.55,
+   "wall_s": 1.614909040927887,
+   "sim_s": 28.34099999999296,
+   "calls": 4.9,
+   "effort": 1259.2405645311906,
+   "violations": 0,
+   "events": 8046.85
+  },
+  "heldout_objects": {
+   "n": 20,
+   "success": 0.7,
+   "wall_s": 1.362272822856903,
+   "sim_s": 23.839999999991797,
+   "calls": 3.9,
+   "effort": 1240.561502769037,
+   "violations": 0,
+   "events": 6725.3
+  }
+ },
+ "probe/conveyor_sort": {
+  "heldout_layout": {
+   "n": 5,
+   "success": 0.4,
+   "wall_s": 6.552382850646973,
+   "sim_s": 121.24359999994117,
+   "calls": 29.2,
+   "effort": 2947.1151506250885,
+   "violations": 0,
+   "events": 48259.2
+  },
+  "heldout_objects": {
+   "n": 5,
+   "success": 0.4,
+   "wall_s": 4.399736070632935,
+   "sim_s": 79.80479999999335,
+   "calls": 20.0,
+   "effort": 1881.2825589159147,
+   "violations": 0,
+   "events": 27944.0
+  },
+  "test": {
+   "n": 10,
+   "success": 0.4,
+   "wall_s": 3.1122990608215333,
+   "sim_s": 71.59059999998159,
+   "calls": 17.8,
+   "effort": 1383.5151493725814,
+   "violations": 0,
+   "events": 24868.5
+  },
+  "train": {
+   "n": 70,
+   "success": 0.5571428571428572,
+   "wall_s": 2.752841602052961,
+   "sim_s": 66.3143142857147,
+   "calls": 16.542857142857144,
+   "effort": 1561.6265870822242,
+   "violations": 0,
+   "events": 23215.371428571427
+  },
+  "val": {
+   "n": 10,
+   "success": 0.9,
+   "wall_s": 2.80775785446167,
+   "sim_s": 60.798600000009,
+   "calls": 14.7,
+   "effort": 1276.28115975616,
+   "violations": 0,
+   "events": 21214.0
+  }
+ },
+ "probe/depalletize": {
+  "heldout_layout": {
+   "n": 5,
+   "success": 0.0,
+   "wall_s": 8.372817420959473,
+   "sim_s": 159.05000000021147,
+   "calls": 16.0,
+   "effort": 2833.139920746831,
+   "violations": 0,
+   "events": 59251.4
+  },
+  "heldout_objects": {
+   "n": 5,
+   "success": 0.4,
+   "wall_s": 7.931816101074219,
+   "sim_s": 154.42400000005418,
+   "calls": 14.6,
+   "effort": 1429.962581498832,
+   "violations": 0,
+   "events": 51397.4
+  },
+  "test": {
+   "n": 10,
+   "success": 0.8,
+   "wall_s": 5.914271879196167,
+   "sim_s": 115.1589999999971,
+   "calls": 10.8,
+   "effort": 1162.1240596671269,
+   "violations": 0,
+   "events": 35987.7
+  },
+  "train": {
+   "n": 70,
+   "success": 0.7428571428571429,
+   "wall_s": 5.871370812824794,
+   "sim_s": 137.53100000004696,
+   "calls": 12.9,
+   "effort": 1014.6816201367155,
+   "violations": 0,
+   "events": 44838.24285714285
+  },
+  "val": {
+   "n": 10,
+   "success": 0.6,
+   "wall_s": 7.295277070999146,
+   "sim_s": 147.32200000007194,
+   "calls": 14.2,
+   "effort": 1531.9833154045643,
+   "violations": 0,
+   "events": 48286.6
+  }
+ },
+ "probe/door_open": {
+  "heldout_layout": {
+   "n": 5,
+   "success": 1.0,
+   "wall_s": 0.16960649490356444,
+   "sim_s": 7.861999999999547,
+   "calls": 1.0,
+   "effort": 221.6605178367068,
+   "violations": 0,
+   "events": 2248.8
+  },
+  "heldout_objects": {
+   "n": 5,
+   "success": 1.0,
+   "wall_s": 0.21524085998535156,
+   "sim_s": 10.166000000000064,
+   "calls": 1.6,
+   "effort": 569.4272162250269,
+   "violations": 0,
+   "events": 2903.8
+  },
+  "test": {
+   "n": 10,
+   "success": 1.0,
+   "wall_s": 0.30179240703582766,
+   "sim_s": 10.120999999999786,
+   "calls": 1.3,
+   "effort": 283.831873246844,
+   "violations": 0,
+   "events": 2889.1
+  },
+  "train": {
+   "n": 70,
+   "success": 1.0,
+   "wall_s": 0.24040372712271554,
+   "sim_s": 10.022285714285742,
+   "calls": 1.4,
+   "effort": 378.4029669850567,
+   "violations": 0,
+   "events": 2862.5857142857144
+  },
+  "val": {
+   "n": 10,
+   "success": 1.0,
+   "wall_s": 0.19041366577148439,
+   "sim_s": 8.830999999999769,
+   "calls": 1.3,
+   "effort": 423.45350230067805,
+   "violations": 0,
+   "events": 2521.4
+  }
+ },
+ "probe/drawer_open": {
+  "heldout_layout": {
+   "n": 5,
+   "success": 1.0,
+   "wall_s": 0.26614909172058104,
+   "sim_s": 8.971999999999664,
+   "calls": 1.0,
+   "effort": 204.04647721393536,
+   "violations": 0,
+   "events": 2563.8
+  },
+  "heldout_objects": {
+   "n": 5,
+   "success": 0.8,
+   "wall_s": 0.3966620922088623,
+   "sim_s": 18.682000000000777,
+   "calls": 2.4,
+   "effort": 821.7726508145166,
+   "violations": 0,
+   "events": 5333.4
+  },
+  "test": {
+   "n": 10,
+   "success": 1.0,
+   "wall_s": 0.2359332799911499,
+   "sim_s": 11.407000000000387,
+   "calls": 1.4,
+   "effort": 423.9684843691319,
+   "violations": 0,
+   "events": 3256.0
+  },
+  "train": {
+   "n": 70,
+   "success": 1.0,
+   "wall_s": 0.28340436390468055,
+   "sim_s": 12.32142857142887,
+   "calls": 1.542857142857143,
+   "effort": 467.9001441497012,
+   "violations": 0,
+   "events": 3517.2428571428572
+  },
+  "val": {
+   "n": 10,
+   "success": 1.0,
+   "wall_s": 0.23666257858276368,
+   "sim_s": 11.90300000000003,
+   "calls": 1.5,
+   "effort": 446.9449095157027,
+   "violations": 0,
+   "events": 3397.3
+  }
+ },
+ "probe/fixture_place": {
+  "heldout_layout": {
+   "n": 5,
+   "success": 1.0,
+   "wall_s": 0.8664401054382325,
+   "sim_s": 12.365999999998584,
+   "calls": 2.0,
+   "effort": 271.67294330125463,
+   "violations": 0,
+   "events": 3537.0
+  },
+  "heldout_objects": {
+   "n": 5,
+   "success": 0.8,
+   "wall_s": 1.1810203075408936,
+   "sim_s": 22.254000000003472,
+   "calls": 4.6,
+   "effort": 1976.2502549126489,
+   "violations": 0,
+   "events": 6400.4
+  },
+  "test": {
+   "n": 10,
+   "success": 1.0,
+   "wall_s": 0.9148787021636963,
+   "sim_s": 14.519499999998981,
+   "calls": 2.5,
+   "effort": 485.3854362083581,
+   "violations": 0,
+   "events": 4193.6
+  },
+  "train": {
+   "n": 70,
+   "success": 0.9428571428571428,
+   "wall_s": 0.8965325491768973,
+   "sim_s": 15.542500000000288,
+   "calls": 3.0428571428571427,
+   "effort": 551.7679086162224,
+   "violations": 0,
+   "events": 4458.071428571428
+  },
+  "val": {
+   "n": 10,
+   "success": 0.9,
+   "wall_s": 0.9257544040679931,
+   "sim_s": 16.160500000000784,
+   "calls": 2.8,
+   "effort": 534.9294953776705,
+   "violations": 0,
+   "events": 4600.4
+  }
+ },
+ "probe/kitting_pocket": {
+  "heldout_layout": {
+   "n": 5,
+   "success": 0.2,
+   "wall_s": 5.477575159072876,
+   "sim_s": 82.79300000006998,
+   "calls": 12.2,
+   "effort": 5358.795009601649,
+   "violations": 0,
+   "events": 26264.2
+  },
+  "heldout_objects": {
+   "n": 5,
+   "success": 0.4,
+   "wall_s": 6.3308703899383545,
+   "sim_s": 95.05700000009597,
+   "calls": 15.6,
+   "effort": 4523.083265869228,
+   "violations": 0,
+   "events": 32993.0
+  },
+  "test": {
+   "n": 10,
+   "success": 0.0,
+   "wall_s": 6.272253251075744,
+   "sim_s": 91.13300000007123,
+   "calls": 13.5,
+   "effort": 2985.236101703319,
+   "violations": 0,
+   "events": 29165.2
+  },
+  "train": {
+   "n": 70,
+   "success": 0.4,
+   "wall_s": 4.463949809755598,
+   "sim_s": 70.2617142857413,
+   "calls": 10.5,
+   "effort": 2273.1976492863546,
+   "violations": 0,
+   "events": 22386.77142857143
+  },
+  "val": {
+   "n": 10,
+   "success": 0.3,
+   "wall_s": 5.5186899423599245,
+   "sim_s": 78.81600000004389,
+   "calls": 11.8,
+   "effort": 2492.2449181443267,
+   "violations": 0,
+   "events": 25241.2
+  }
+ },
+ "probe/machine_tending": {
+  "heldout_layout": {
+   "n": 5,
+   "success": 0.6,
+   "wall_s": 2.445658874511719,
+   "sim_s": 71.01799999997979,
+   "calls": 7.8,
+   "effort": 1828.9037225523723,
+   "violations": 0,
+   "events": 21225.6
+  },
+  "heldout_objects": {
+   "n": 5,
+   "success": 0.4,
+   "wall_s": 2.3290314197540285,
+   "sim_s": 70.88799999998044,
+   "calls": 9.0,
+   "effort": 1986.2790792631415,
+   "violations": 0,
+   "events": 20594.8
+  },
+  "test": {
+   "n": 10,
+   "success": 0.7,
+   "wall_s": 1.8905403375625611,
+   "sim_s": 52.9329999999948,
+   "calls": 6.9,
+   "effort": 1473.9143462625336,
+   "violations": 0,
+   "events": 15405.8
+  },
+  "train": {
+   "n": 70,
+   "success": 0.35714285714285715,
+   "wall_s": 2.4565474816731045,
+   "sim_s": 67.52314285713649,
+   "calls": 9.314285714285715,
+   "effort": 2083.189461908835,
+   "violations": 0,
+   "events": 19579.3
+  },
+  "val": {
+   "n": 10,
+   "success": 0.2,
+   "wall_s": 2.557682204246521,
+   "sim_s": 77.91899999998323,
+   "calls": 10.5,
+   "effort": 2258.727128315391,
+   "violations": 0,
+   "events": 22518.0
+  }
+ },
+ "probe/peg_insert": {
+  "heldout_layout": {
+   "n": 5,
+   "success": 1.0,
+   "wall_s": 0.6553455829620362,
+   "sim_s": 12.282999999998632,
+   "calls": 2.0,
+   "effort": 160.35430282944367,
+   "violations": 0,
+   "events": 3510.0
+  },
+  "heldout_objects": {
+   "n": 5,
+   "success": 0.8,
+   "wall_s": 1.3873121738433838,
+   "sim_s": 26.3759999999981,
+   "calls": 4.8,
+   "effort": 3994.5373915463,
+   "violations": 0,
+   "events": 7612.2
+  },
+  "test": {
+   "n": 10,
+   "success": 0.9,
+   "wall_s": 0.9763153314590454,
+   "sim_s": 16.248499999999215,
+   "calls": 2.9,
+   "effort": 564.9382264788057,
+   "violations": 0,
+   "events": 4692.8
+  },
+  "train": {
+   "n": 70,
+   "success": 0.9,
+   "wall_s": 1.0268562964030674,
+   "sim_s": 15.58728571428521,
+   "calls": 2.9285714285714284,
+   "effort": 475.7865471056037,
+   "violations": 0,
+   "events": 4494.028571428571
+  },
+  "val": {
+   "n": 10,
+   "success": 0.9,
+   "wall_s": 0.9677698850631714,
+   "sim_s": 17.58950000000157,
+   "calls": 3.1,
+   "effort": 518.0279269836698,
+   "violations": 0,
+   "events": 5065.6
+  }
+ },
+ "probe/pouch_transfer": {
+  "heldout_layout": {
+   "n": 5,
+   "success": 1.0,
+   "wall_s": 3.456580114364624,
+   "sim_s": 14.900999999999453,
+   "calls": 2.4,
+   "effort": 884.4108459933288,
+   "violations": 0,
+   "events": 4393.0
+  },
+  "heldout_objects": {
+   "n": 5,
+   "success": 0.6,
+   "wall_s": 2.8650395393371584,
+   "sim_s": 24.9760000000086,
+   "calls": 4.4,
+   "effort": 2416.596078361131,
+   "violations": 0,
+   "events": 7353.4
+  },
+  "test": {
+   "n": 10,
+   "success": 1.0,
+   "wall_s": 3.746759557723999,
+   "sim_s": 17.904500000003196,
+   "calls": 3.0,
+   "effort": 1191.5358477970692,
+   "violations": 0,
+   "events": 5276.4
+  },
+  "train": {
+   "n": 70,
+   "success": 0.9,
+   "wall_s": 3.3176314898899624,
+   "sim_s": 17.987000000001277,
+   "calls": 3.0285714285714285,
+   "effort": 1126.0081623405406,
+   "violations": 0,
+   "events": 5303.028571428571
+  },
+  "val": {
+   "n": 10,
+   "success": 1.0,
+   "wall_s": 3.620639514923096,
+   "sim_s": 18.674500000001984,
+   "calls": 2.9,
+   "effort": 1123.3046246399567,
+   "violations": 0,
+   "events": 5504.8
+  }
+ },
+ "probe/singulation": {
+  "heldout_layout": {
+   "n": 5,
+   "success": 0.8,
+   "wall_s": 0.7330711841583252,
+   "sim_s": 16.760000000001707,
+   "calls": 5.0,
+   "effort": 1087.6357231007607,
+   "violations": 0,
+   "events": 6449.4
+  },
+  "heldout_objects": {
+   "n": 5,
+   "success": 0.8,
+   "wall_s": 0.6236139297485351,
+   "sim_s": 13.885999999998816,
+   "calls": 4.0,
+   "effort": 2068.412719197394,
+   "violations": 0,
+   "events": 5292.0
+  },
+  "test": {
+   "n": 10,
+   "success": 1.0,
+   "wall_s": 1.00306134223938,
+   "sim_s": 20.949999999999164,
+   "calls": 6.3,
+   "effort": 1187.4367909681162,
+   "violations": 0,
+   "events": 8249.7
+  },
+  "train": {
+   "n": 70,
+   "success": 0.8857142857142857,
+   "wall_s": 1.1026337487357003,
+   "sim_s": 21.83157142857184,
+   "calls": 6.5285714285714285,
+   "effort": 1354.1194593505932,
+   "violations": 0,
+   "events": 8470.642857142857
+  },
+  "val": {
+   "n": 10,
+   "success": 0.9,
+   "wall_s": 0.7251208782196045,
+   "sim_s": 16.453999999999258,
+   "calls": 4.8,
+   "effort": 1163.5241389446758,
+   "violations": 0,
+   "events": 6376.7
+  }
+ },
+ "probe/tool_return": {
+  "heldout_layout": {
+   "n": 5,
+   "success": 0.8,
+   "wall_s": 1.7087987899780273,
+   "sim_s": 25.95899999999441,
+   "calls": 3.6,
+   "effort": 1125.277544622359,
+   "violations": 0,
+   "events": 7317.8
+  },
+  "heldout_objects": {
+   "n": 5,
+   "success": 0.2,
+   "wall_s": 3.198909330368042,
+   "sim_s": 51.32099999996876,
+   "calls": 7.2,
+   "effort": 1680.183643562878,
+   "violations": 0,
+   "events": 14370.8
+  },
+  "test": {
+   "n": 10,
+   "success": 0.6,
+   "wall_s": 1.9461411714553833,
+   "sim_s": 31.48949999999028,
+   "calls": 5.0,
+   "effort": 1416.0698100362044,
+   "violations": 0,
+   "events": 8829.2
+  },
+  "train": {
+   "n": 70,
+   "success": 0.8,
+   "wall_s": 1.5970208951405116,
+   "sim_s": 26.746214285714,
+   "calls": 4.414285714285715,
+   "effort": 741.3414584971441,
+   "violations": 0,
+   "events": 7504.371428571429
+  },
+  "val": {
+   "n": 10,
+   "success": 0.9,
+   "wall_s": 1.8590269327163695,
+   "sim_s": 29.216999999995853,
+   "calls": 3.8,
+   "effort": 762.7283837734245,
+   "violations": 0,
+   "events": 8181.2
+  }
+ },
+ "probe/tote_transfer": {
+  "heldout_family": {
+   "n": 60,
+   "success": 0.26666666666666666,
+   "wall_s": 3.5841247916221617,
+   "sim_s": 66.48850000000527,
+   "calls": 6.383333333333334,
+   "effort": 1731.6776480897356,
+   "violations": 0,
+   "events": 21335.5
+  },
+  "heldout_layout": {
+   "n": 20,
+   "success": 0.0,
+   "wall_s": 6.281913006305695,
+   "sim_s": 96.18999999995411,
+   "calls": 9.45,
+   "effort": 3070.5621085172966,
+   "violations": 0,
+   "events": 33086.2
+  },
+  "heldout_objects": {
+   "n": 20,
+   "success": 0.0,
+   "wall_s": 3.801558029651642,
+   "sim_s": 78.37499999999262,
+   "calls": 7.6,
+   "effort": 4990.385571009627,
+   "violations": 0,
+   "events": 24963.1
+  }
+ },
+ "probe/twist_lock": {
+  "heldout_layout": {
+   "n": 5,
+   "success": 1.0,
+   "wall_s": 0.2281968593597412,
+   "sim_s": 7.76799999999958,
+   "calls": 1.2,
+   "effort": 200.74964068653347,
+   "violations": 0,
+   "events": 2222.8
+  },
+  "heldout_objects": {
+   "n": 5,
+   "success": 0.4,
+   "wall_s": 0.5322569370269775,
+   "sim_s": 26.02399999999646,
+   "calls": 5.0,
+   "effort": 1124.6025439757664,
+   "violations": 0,
+   "events": 7420.8
+  },
+  "test": {
+   "n": 10,
+   "success": 0.8,
+   "wall_s": 0.35706589221954343,
+   "sim_s": 14.379999999998674,
+   "calls": 2.5,
+   "effort": 422.0613093005669,
+   "violations": 0,
+   "events": 4102.5
+  },
+  "train": {
+   "n": 70,
+   "success": 0.9428571428571428,
+   "wall_s": 0.33278726850237167,
+   "sim_s": 11.500571428571357,
+   "calls": 2.0,
+   "effort": 399.8477241047037,
+   "violations": 0,
+   "events": 3283.0142857142855
+  },
+  "val": {
+   "n": 10,
+   "success": 1.0,
+   "wall_s": 0.3614500045776367,
+   "sim_s": 12.654000000000092,
+   "calls": 2.3,
+   "effort": 511.72610374903843,
+   "violations": 0,
+   "events": 3611.4
+  }
+ },
+ "ur5e_2f85/bin_clearing": {
+  "heldout_layout": {
+   "n": 2,
+   "success": 0.0,
+   "wall_s": 10.99368929862976,
+   "sim_s": 86.91699999997883,
+   "calls": 32.0,
+   "effort": 70334.18930270032,
+   "violations": 0,
+   "events": 33347.5
+  },
+  "heldout_objects": {
+   "n": 2,
+   "success": 0.0,
+   "wall_s": 17.5843505859375,
+   "sim_s": 123.40899999994834,
+   "calls": 42.0,
+   "effort": 402671.9452691497,
+   "violations": 0,
+   "events": 53154.5
+  },
+  "test": {
+   "n": 5,
+   "success": 0.0,
+   "wall_s": 15.951148319244385,
+   "sim_s": 118.4235999999516,
+   "calls": 37.6,
+   "effort": 92749.3084248679,
+   "violations": 0,
+   "events": 50673.0
+  },
+  "train": {
+   "n": 32,
+   "success": 0.0,
+   "wall_s": 16.048225164413452,
+   "sim_s": 113.37062499996833,
+   "calls": 36.875,
+   "effort": 510220.85592275154,
+   "violations": 0,
+   "events": 49285.59375
+  },
+  "val": {
+   "n": 5,
+   "success": 0.0,
+   "wall_s": 14.882545614242554,
+   "sim_s": 94.76159999996055,
+   "calls": 34.4,
+   "effort": 545704.8819129064,
+   "violations": 0,
+   "events": 39784.2
+  }
+ },
+ "ur5e_2f85/bulk_sweep": {
+  "heldout_layout": {
+   "n": 1,
+   "success": 0.0,
+   "wall_s": 102.5793297290802,
+   "sim_s": 420.15200000127805,
+   "calls": 12.0,
+   "effort": 5764.572336527795,
+   "violations": 0,
+   "events": 134280.0
+  },
+  "heldout_objects": {
+   "n": 1,
+   "success": 0.0,
+   "wall_s": 144.83615136146545,
+   "sim_s": 601.0319999996112,
+   "calls": 12.0,
+   "effort": 34903.13451721546,
+   "violations": 0,
+   "events": 229746.0
+  },
+  "test": {
+   "n": 1,
+   "success": 1.0,
+   "wall_s": 77.12733340263367,
+   "sim_s": 263.2340000005288,
+   "calls": 9.0,
+   "effort": 7888.140433220043,
+   "violations": 0,
+   "events": 91179.0
+  },
+  "train": {
+   "n": 8,
+   "success": 0.25,
+   "wall_s": 105.06134587526321,
+   "sim_s": 350.09150000094354,
+   "calls": 11.0,
+   "effort": 59942.19904519401,
+   "violations": 0,
+   "events": 122214.5
+  },
+  "val": {
+   "n": 1,
+   "success": 0.0,
+   "wall_s": 159.30372047424316,
+   "sim_s": 444.04800000139215,
+   "calls": 12.0,
+   "effort": 8231.979911762592,
+   "violations": 0,
+   "events": 167926.0
+  }
+ },
+ "ur5e_2f85/connector_insert": {
+  "heldout_family": {
+   "n": 28,
+   "success": 0.6785714285714286,
+   "wall_s": 10.150195104735237,
+   "sim_s": 30.03482142856355,
+   "calls": 4.357142857142857,
+   "effort": 22022.649843248488,
+   "violations": 0,
+   "events": 8533.857142857143
+  },
+  "heldout_layout": {
+   "n": 9,
+   "success": 0.6666666666666666,
+   "wall_s": 8.094613605075413,
+   "sim_s": 26.6278888888821,
+   "calls": 4.0,
+   "effort": 17219.35982408199,
+   "violations": 0,
+   "events": 7602.666666666667
+  },
+  "heldout_objects": {
+   "n": 9,
+   "success": 0.8888888888888888,
+   "wall_s": 6.287399901284112,
+   "sim_s": 22.006222222219726,
+   "calls": 2.888888888888889,
+   "effort": 28434.1224354761,
+   "violations": 0,
+   "events": 6267.555555555556
+  }
+ },
+ "ur5e_2f85/conveyor_sort": {
+  "heldout_layout": {
+   "n": 2,
+   "success": 0.0,
+   "wall_s": 22.926278591156006,
+   "sim_s": 128.221999999908,
+   "calls": 34.0,
+   "effort": 1237341.5948190796,
+   "violations": 0,
+   "events": 51111.5
+  },
+  "heldout_objects": {
+   "n": 2,
+   "success": 0.0,
+   "wall_s": 32.73103976249695,
+   "sim_s": 47.885999999994866,
+   "calls": 26.0,
+   "effort": 191087.5665537223,
+   "violations": 0,
+   "events": 17410.0
+  },
+  "test": {
+   "n": 5,
+   "success": 0.2,
+   "wall_s": 15.705529975891114,
+   "sim_s": 64.49680000000392,
+   "calls": 19.4,
+   "effort": 375113.27329515095,
+   "violations": 0,
+   "events": 22224.0
+  },
+  "train": {
+   "n": 32,
+   "success": 0.5625,
+   "wall_s": 14.362157471477985,
+   "sim_s": 62.346375000012074,
+   "calls": 17.1875,
+   "effort": 460733.30596318276,
+   "violations": 0,
+   "events": 21577.34375
+  },
+  "val": {
+   "n": 5,
+   "success": 0.8,
+   "wall_s": 15.71711778640747,
+   "sim_s": 69.80559999999717,
+   "calls": 16.6,
+   "effort": 135870.45890181567,
+   "violations": 0,
+   "events": 24272.0
+  }
+ },
+ "ur5e_2f85/door_open": {
+  "heldout_layout": {
+   "n": 2,
+   "success": 0.0,
+   "wall_s": 2.8838998079299927,
+   "sim_s": 22.74499999999827,
+   "calls": 5.0,
+   "effort": 7604.374140914647,
+   "violations": 0,
+   "events": 6487.0
+  },
+  "heldout_objects": {
+   "n": 2,
+   "success": 1.0,
+   "wall_s": 2.7027140855789185,
+   "sim_s": 13.098000000001043,
+   "calls": 1.0,
+   "effort": 1565.388402798621,
+   "violations": 0,
+   "events": 3738.0
+  },
+  "test": {
+   "n": 5,
+   "success": 1.0,
+   "wall_s": 3.548057222366333,
+   "sim_s": 28.223199999997043,
+   "calls": 2.2,
+   "effort": 17347.013290445193,
+   "violations": 0,
+   "events": 8039.8
+  },
+  "train": {
+   "n": 32,
+   "success": 1.0,
+   "wall_s": 3.7203038409352303,
+   "sim_s": 25.772249999997406,
+   "calls": 2.125,
+   "effort": 26989.191526043487,
+   "violations": 0,
+   "events": 7342.96875
+  },
+  "val": {
+   "n": 5,
+   "success": 1.0,
+   "wall_s": 3.118323040008545,
+   "sim_s": 25.759199999996603,
+   "calls": 1.8,
+   "effort": 27052.160935760585,
+   "violations": 0,
+   "events": 7341.2
+  }
+ },
+ "ur5e_2f85/drawer_open": {
+  "heldout_layout": {
+   "n": 2,
+   "success": 1.0,
+   "wall_s": 2.9417048692703247,
+   "sim_s": 17.53300000000116,
+   "calls": 2.0,
+   "effort": 178.36231915233824,
+   "violations": 0,
+   "events": 4997.5
+  },
+  "heldout_objects": {
+   "n": 2,
+   "success": 1.0,
+   "wall_s": 1.3788782358169556,
+   "sim_s": 10.235000000000088,
+   "calls": 1.0,
+   "effort": 394.6303920078833,
+   "violations": 0,
+   "events": 2924.5
+  },
+  "test": {
+   "n": 5,
+   "success": 1.0,
+   "wall_s": 2.569721984863281,
+   "sim_s": 11.795200000000502,
+   "calls": 1.2,
+   "effort": 8747.149246679171,
+   "violations": 0,
+   "events": 3369.0
+  },
+  "train": {
+   "n": 32,
+   "success": 1.0,
+   "wall_s": 2.9386883080005646,
+   "sim_s": 13.579375000000617,
+   "calls": 1.4375,
+   "effort": 5513.425835934944,
+   "violations": 0,
+   "events": 3872.5
+  },
+  "val": {
+   "n": 5,
+   "success": 1.0,
+   "wall_s": 2.791708517074585,
+   "sim_s": 16.60919999999902,
+   "calls": 1.8,
+   "effort": 14600.222748496424,
+   "violations": 0,
+   "events": 4739.2
+  }
+ },
+ "ur5e_2f85/fixture_place": {
+  "heldout_layout": {
+   "n": 2,
+   "success": 1.0,
+   "wall_s": 4.9772186279296875,
+   "sim_s": 19.51450000000418,
+   "calls": 3.5,
+   "effort": 830.738019721803,
+   "violations": 0,
+   "events": 5624.0
+  },
+  "heldout_objects": {
+   "n": 2,
+   "success": 0.0,
+   "wall_s": 6.885017395019531,
+   "sim_s": 36.075000000006625,
+   "calls": 8.0,
+   "effort": 11777.984900808882,
+   "violations": 0,
+   "events": 10419.5
+  },
+  "test": {
+   "n": 5,
+   "success": 0.8,
+   "wall_s": 5.686616849899292,
+   "sim_s": 25.49539999999963,
+   "calls": 4.6,
+   "effort": 1958.1290591882328,
+   "violations": 0,
+   "events": 7334.2
+  },
+  "train": {
+   "n": 32,
+   "success": 0.84375,
+   "wall_s": 4.203941434621811,
+   "sim_s": 16.696281250001608,
+   "calls": 3.875,
+   "effort": 3623.4788099977723,
+   "violations": 0,
+   "events": 4796.53125
+  },
+  "val": {
+   "n": 5,
+   "success": 0.8,
+   "wall_s": 4.603017139434814,
+   "sim_s": 18.300400000000657,
+   "calls": 3.6,
+   "effort": 2783.1874417430095,
+   "violations": 0,
+   "events": 5254.2
+  }
+ },
+ "ur5e_2f85/kitting_pocket": {
+  "heldout_layout": {
+   "n": 2,
+   "success": 0.5,
+   "wall_s": 34.010844707489014,
+   "sim_s": 65.83450000004069,
+   "calls": 9.5,
+   "effort": 29958.967776431688,
+   "violations": 0,
+   "events": 21033.5
+  },
+  "heldout_objects": {
+   "n": 2,
+   "success": 0.5,
+   "wall_s": 36.56791055202484,
+   "sim_s": 82.28450000002884,
+   "calls": 15.0,
+   "effort": 68064.48642325068,
+   "violations": 0,
+   "events": 28223.5
+  },
+  "test": {
+   "n": 5,
+   "success": 0.6,
+   "wall_s": 28.78604941368103,
+   "sim_s": 68.87740000004237,
+   "calls": 9.6,
+   "effort": 28448.60521075148,
+   "violations": 0,
+   "events": 22333.6
+  },
+  "train": {
+   "n": 32,
+   "success": 0.625,
+   "wall_s": 25.716948181390762,
+   "sim_s": 70.19509375004138,
+   "calls": 9.21875,
+   "effort": 87104.79520604288,
+   "violations": 0,
+   "events": 22581.96875
+  },
+  "val": {
+   "n": 5,
+   "success": 0.6,
+   "wall_s": 27.212044525146485,
+   "sim_s": 68.68220000000301,
+   "calls": 8.6,
+   "effort": 47886.496000990825,
+   "violations": 0,
+   "events": 22313.8
+  }
+ },
+ "ur5e_2f85/machine_tending": {
+  "heldout_layout": {
+   "n": 2,
+   "success": 0.0,
+   "wall_s": 9.643150329589844,
+   "sim_s": 53.84500000001984,
+   "calls": 12.0,
+   "effort": 1989.5338785061185,
+   "violations": 0,
+   "events": 16345.5
+  },
+  "heldout_objects": {
+   "n": 2,
+   "success": 0.0,
+   "wall_s": 15.087465167045593,
+   "sim_s": 68.16000000002192,
+   "calls": 12.0,
+   "effort": 50182.4880996554,
+   "violations": 0,
+   "events": 19924.0
+  },
+  "test": {
+   "n": 5,
+   "success": 0.4,
+   "wall_s": 12.920389747619629,
+   "sim_s": 69.38000000001061,
+   "calls": 9.6,
+   "effort": 41824.67570838278,
+   "violations": 0,
+   "events": 20310.2
+  },
+  "train": {
+   "n": 32,
+   "success": 0.3125,
+   "wall_s": 10.3322943598032,
+   "sim_s": 66.11325000001028,
+   "calls": 10.34375,
+   "effort": 31598.857465596328,
+   "violations": 0,
+   "events": 19297.8125
+  },
+  "val": {
+   "n": 5,
+   "success": 0.0,
+   "wall_s": 12.235438346862793,
+   "sim_s": 61.69840000001848,
+   "calls": 12.0,
+   "effort": 13282.234533432187,
+   "violations": 0,
+   "events": 17982.2
+  }
+ },
+ "ur5e_2f85/peg_insert": {
+  "heldout_layout": {
+   "n": 2,
+   "success": 1.0,
+   "wall_s": 3.7187575101852417,
+   "sim_s": 16.464499999997688,
+   "calls": 2.0,
+   "effort": 9010.841481702126,
+   "violations": 0,
+   "events": 4762.0
+  },
+  "heldout_objects": {
+   "n": 2,
+   "success": 1.0,
+   "wall_s": 4.378759264945984,
+   "sim_s": 17.01149999999781,
+   "calls": 2.0,
+   "effort": 22630.47736082165,
+   "violations": 0,
+   "events": 5015.0
+  },
+  "test": {
+   "n": 5,
+   "success": 1.0,
+   "wall_s": 7.858782863616943,
+   "sim_s": 15.673799999997533,
+   "calls": 2.0,
+   "effort": 19206.95324582069,
+   "violations": 0,
+   "events": 4532.2
+  },
+  "train": {
+   "n": 32,
+   "success": 0.96875,
+   "wall_s": 5.207756444811821,
+   "sim_s": 18.10759374999688,
+   "calls": 2.4375,
+   "effort": 18858.596050087508,
+   "violations": 0,
+   "events": 5214.0
+  },
+  "val": {
+   "n": 5,
+   "success": 1.0,
+   "wall_s": 5.540174198150635,
+   "sim_s": 15.241399999998109,
+   "calls": 2.0,
+   "effort": 13169.373531291678,
+   "violations": 0,
+   "events": 4387.0
+  }
+ },
+ "ur5e_2f85/pouch_transfer": {
+  "heldout_layout": {
+   "n": 2,
+   "success": 1.0,
+   "wall_s": 6.655948162078857,
+   "sim_s": 16.092500000000562,
+   "calls": 2.5,
+   "effort": 15586.151828287992,
+   "violations": 0,
+   "events": 4739.5
+  },
+  "heldout_objects": {
+   "n": 2,
+   "success": 0.5,
+   "wall_s": 6.360180616378784,
+   "sim_s": 15.998000000000491,
+   "calls": 4.0,
+   "effort": 8422.472446963246,
+   "violations": 0,
+   "events": 4716.5
+  },
+  "test": {
+   "n": 5,
+   "success": 0.6,
+   "wall_s": 10.254247331619263,
+   "sim_s": 20.34880000000373,
+   "calls": 4.0,
+   "effort": 6391.780466169647,
+   "violations": 0,
+   "events": 5988.0
+  },
+  "train": {
+   "n": 32,
+   "success": 0.71875,
+   "wall_s": 8.678681991994381,
+   "sim_s": 18.387062500002067,
+   "calls": 3.53125,
+   "effort": 13567.136261092095,
+   "violations": 0,
+   "events": 5417.96875
+  },
+  "val": {
+   "n": 5,
+   "success": 0.6,
+   "wall_s": 7.570163822174072,
+   "sim_s": 20.324400000003205,
+   "calls": 4.4,
+   "effort": 9782.854023089281,
+   "violations": 0,
+   "events": 5992.0
+  }
+ },
+ "ur5e_2f85/singulation": {
+  "heldout_layout": {
+   "n": 2,
+   "success": 1.0,
+   "wall_s": 3.493101477622986,
+   "sim_s": 18.684999999996894,
+   "calls": 7.0,
+   "effort": 1362295.3806074297,
+   "violations": 0,
+   "events": 7138.5
+  },
+  "heldout_objects": {
+   "n": 2,
+   "success": 1.0,
+   "wall_s": 3.095310688018799,
+   "sim_s": 9.763999999999998,
+   "calls": 3.5,
+   "effort": 1730237.1355037806,
+   "violations": 0,
+   "events": 3606.5
+  },
+  "test": {
+   "n": 5,
+   "success": 0.2,
+   "wall_s": 4.099290418624878,
+   "sim_s": 26.92320000000684,
+   "calls": 9.6,
+   "effort": 2796251.9061005795,
+   "violations": 0,
+   "events": 10387.6
+  },
+  "train": {
+   "n": 32,
+   "success": 0.6875,
+   "wall_s": 3.917788952589035,
+   "sim_s": 22.355437500000175,
+   "calls": 8.0625,
+   "effort": 2092234.1811043601,
+   "violations": 0,
+   "events": 8340.4375
+  },
+  "val": {
+   "n": 5,
+   "success": 0.4,
+   "wall_s": 2.2717926025390627,
+   "sim_s": 15.145600000000053,
+   "calls": 5.4,
+   "effort": 1487848.5031984414,
+   "violations": 0,
+   "events": 5715.8
+  }
+ },
+ "ur5e_2f85/tool_return": {
+  "heldout_layout": {
+   "n": 2,
+   "success": 0.5,
+   "wall_s": 14.011833190917969,
+   "sim_s": 42.009499999971894,
+   "calls": 5.0,
+   "effort": 68336.4972270567,
+   "violations": 0,
+   "events": 11868.0
+  },
+  "heldout_objects": {
+   "n": 2,
+   "success": 0.5,
+   "wall_s": 12.931886076927185,
+   "sim_s": 58.421999999954544,
+   "calls": 7.0,
+   "effort": 117988.75933756196,
+   "violations": 0,
+   "events": 16632.5
+  },
+  "test": {
+   "n": 5,
+   "success": 1.0,
+   "wall_s": 13.408174991607666,
+   "sim_s": 31.843599999991863,
+   "calls": 3.6,
+   "effort": 58531.62218328678,
+   "violations": 0,
+   "events": 9064.6
+  },
+  "train": {
+   "n": 32,
+   "success": 0.75,
+   "wall_s": 9.931123979389668,
+   "sim_s": 36.79615624999334,
+   "calls": 4.90625,
+   "effort": 74362.12902199474,
+   "violations": 0,
+   "events": 10432.4375
+  },
+  "val": {
+   "n": 5,
+   "success": 1.0,
+   "wall_s": 13.926504325866699,
+   "sim_s": 48.650999999977316,
+   "calls": 5.6,
+   "effort": 80817.88506091674,
+   "violations": 0,
+   "events": 13769.2
+  }
+ },
+ "ur5e_2f85/tote_transfer": {
+  "heldout_family": {
+   "n": 28,
+   "success": 0.10714285714285714,
+   "wall_s": 9.589797394616264,
+   "sim_s": 42.67942857143464,
+   "calls": 7.107142857142857,
+   "effort": 556372.2058625693,
+   "violations": 0,
+   "events": 13670.25
+  },
+  "heldout_layout": {
+   "n": 9,
+   "success": 0.0,
+   "wall_s": 12.359662400351631,
+   "sim_s": 63.31422222223762,
+   "calls": 10.333333333333334,
+   "effort": 1362025.437165855,
+   "violations": 0,
+   "events": 21796.88888888889
+  },
+  "heldout_objects": {
+   "n": 9,
+   "success": 0.0,
+   "wall_s": 8.982072273890177,
+   "sim_s": 41.92866666667236,
+   "calls": 7.222222222222222,
+   "effort": 616189.356147446,
+   "violations": 0,
+   "events": 13362.666666666666
+  }
+ },
+ "ur5e_2f85/twist_lock": {
+  "heldout_layout": {
+   "n": 2,
+   "success": 1.0,
+   "wall_s": 2.689027428627014,
+   "sim_s": 19.204000000000203,
+   "calls": 2.5,
+   "effort": 7623.888175123489,
+   "violations": 0,
+   "events": 5478.0
+  },
+  "heldout_objects": {
+   "n": 2,
+   "success": 0.0,
+   "wall_s": 3.468105435371399,
+   "sim_s": 39.47600000000228,
+   "calls": 5.0,
+   "effort": 27037.983225678938,
+   "violations": 0,
+   "events": 11252.0
+  },
+  "test": {
+   "n": 5,
+   "success": 0.8,
+   "wall_s": 2.3087574005126954,
+   "sim_s": 21.57760000000065,
+   "calls": 2.8,
+   "effort": 7987.136620944562,
+   "violations": 0,
+   "events": 6151.4
+  },
+  "train": {
+   "n": 32,
+   "success": 0.9375,
+   "wall_s": 3.0063947215676308,
+   "sim_s": 23.173124999998947,
+   "calls": 2.96875,
+   "effort": 12702.467719037742,
+   "violations": 0,
+   "events": 6603.125
+  },
+  "val": {
+   "n": 5,
+   "success": 1.0,
+   "wall_s": 2.460004997253418,
+   "sim_s": 22.507599999998405,
+   "calls": 2.8,
+   "effort": 5595.292502282547,
+   "violations": 0,
+   "events": 6412.4
   }
  }
 }

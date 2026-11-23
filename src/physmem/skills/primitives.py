@@ -190,6 +190,9 @@ def pick(ctx: SkillContext, call, est: ObjectEstimate):
         cy += p.get('yaw', 0.0)
         if gc.kind == 'suction':
             return _suction_pick(ctx, eff, p, est, r, width, cy)
+        vel = np.asarray(p.get('vel', (0.0, 0.0, 0.0)), float)
+        if np.linalg.norm(vel[:2]) > 1e-3 and int(p.get('grasp', 0)) == 0:
+            return _moving_pick(ctx, eff, p, est, r, width, cy, vel)
         if width > 0.95 * gc.max_width:
             return r.result(False, 'too_wide', width=width, max_width=gc.max_width)
         top, bottom = est.top_z(), est.bottom_z()
@@ -260,14 +263,129 @@ def pick(ctx: SkillContext, call, est: ObjectEstimate):
                         grasp_width_est=width)
 
 
+def _moving_pick(ctx, eff, p, est, r, width, cy, vel):
+    """pick a part riding a belt (estimate `est` taken `age` s ago, xy velocity `vel` estimated from pose events):
+    intercept planning + velocity feed-forward. One blended trajectory: hover point at the intercept, reached WITH the
+    belt velocity; descent while tracking; the fingers close while the hand keeps pace (closing time from the
+    gripper), then a lift that keeps the belt velocity and decelerates. No guarded mode (the hand moves with the
+    part); the grasp check is proprioceptive (closure + pad contacts)."""
+    gc = _grip_cfg(ctx, eff)
+    v = np.array([vel[0], vel[1], 0.0])
+    sp = min(float(p.get('speed', 0.3)), 0.3)   # the belt plan is not retimed: keep the approach trackable
+    top, bottom = est.top_z(), est.bottom_z()
+    depth = p['depth'] if 'depth' in p else min(float(np.clip(est.h[2], 0.015, 0.035)), gc.link_h - 0.004)
+    gz = max(bottom + gc.tip + p.get('clear', 0.003), top - depth)
+    hov = p.get('pre', 0.05)
+    q = down_quat(_near_yaw(ctx, eff, cy))
+    tcp, _ = _tcp(ctx, eff)
+    age = float(p.get('age', 0.0))
+    T_desc = max(0.25, float(p.get('t_desc', 0.6)))
+    T_match = float(p.get('t_match', 0.5))      # hover over the part at belt speed before descending (lets lag settle)
+    T_close = gc.close_time + 0.35
+    # intercept: the hand reaches the hover point at time T_app, when the part is there (fixed point iteration)
+    T_app = 1.0
+    for _ in range(4):
+        hp = est.p + v * (age + T_app)
+        T_app = max(0.4, 1.875 * float(np.linalg.norm(hp[:2] - tcp[:2]) + abs(top + hov - tcp[2])) / sp)
+    lift = p.get('lift', _clear(ctx, 0.10))
+    T_lift = max(0.5, 2 * lift / max(p.get('lift_speed', 0.2), 1e-3))
+    # earliest REACHABLE intercept: a part still upstream is met later (the hand waits on its way), one that has
+    # passed the workspace is reported unreachable
+    ok = False
+    for extra in np.arange(0.0, float(p.get('max_wait', 6.0)) + 1e-9, 0.5):
+        T_i = T_app + extra
+        p_hover = np.array([*(est.p[:2] + v[:2] * (age + T_i)), gz + hov])
+        p_match = p_hover + v * T_match
+        p_grasp = np.array([*(p_match[:2] + v[:2] * T_desc), gz])
+        p_hold = p_grasp + v * (T_close + 0.4)
+        p_lift = p_hold + v * T_lift * 0.5 + np.array([0, 0, lift])
+        if all(_reachable(ctx, eff, x, q) for x in (p_hover, p_grasp, p_lift)):
+            ok, T_app = True, T_i
+            break
+    if not ok:
+        return r.result(False, 'unreachable', intercept=p_hover.tolist())
+    g_pre = float(np.clip(1.0 - (width + p.get('open_margin', 0.015 if gc.jaw_dir else 0.03)) / gc.max_width, 0.0, 0.6))
+    ctx.ctrl.set_mode('track', eff)
+    ctx.ctrl.set_gripper(eff, g_pre)
+    tr = BlendedTrajectory(effector=eff, waypoints=[(p_hover, q), (p_match, q), (p_grasp, q), (p_hold, q), (p_lift, q)],
+                           durations=[T_app, T_match, T_desc, T_close + 0.4, T_lift], via_vel=[v, v, v, v, np.zeros(3)])
+    tr.no_retime = True       # the belt sets the timing
+    pred = ctx.ctrl.command(tr, preempt=True)
+    k = pred.get('scale', 1.0)
+    T_app = T_app + T_match
+    t_close = ctx.data.time + (T_app + T_desc) * k
+    ctx.run(until=lambda c: c.data.time >= t_close, max_t=(T_app + T_desc) * k + 1.0, effector=eff)
+    # close when the fingers are actually at grasp height (the hand keeps pace with the belt meanwhile), <= 0.4 s
+    ctx.run(until=lambda c: _tcp(c, eff)[0][2] <= gz + 0.006, max_t=0.4, effector=eff)
+    ctx.ctrl.set_gripper(eff, p.get('squeeze', 1.0))
+    tcp_close = _tcp(ctx, eff)[0].copy()
+    t_cl = float(ctx.data.time)
+    pred_close = est.p + v * (age + (t_cl - (t_close - (T_app + T_desc) * k)))
+    st = ctx.run(max_t=(T_close + T_lift) * k + 1.5, effector=eff)
+    c, n = ctx.emb.gripper_state(ctx.model, ctx.data, eff)
+    held = n > 0 and c < 0.95
+    if held:
+        here = _tcp(ctx, eff)[0]
+        _held(ctx)[eff] = dict(offset=float(gz - bottom), half_size=tuple(est.h), side=False, width=width,
+                               obj_in_tcp=(0.0, 0.0, 0.0))
+    else:
+        ctx.ctrl.set_gripper(eff, 0.0)
+    return r.result(held, 'done' if held else 'grasp_failed', closure=c, contacts=n, intercept_t=T_app, retime=k,
+                    t_close=t_cl, tcp_close=tcp_close.round(4).tolist(), pred_item_close=np.round(pred_close, 4).tolist(),
+                    grasp_z=float(gz), vel=v[:2].round(4).tolist())
+
+
+class _AccBudget:
+    """decision knob `max_acc` (m/s^2): the controller's retiming acceleration budget for this skill (a suction /
+    grip load needs F >= m (g + a)); restored afterwards."""
+
+    def __init__(self, ctx, p):
+        self.ctx, self.a = ctx, p.get('max_acc')
+
+    def __enter__(self):
+        if self.a is not None:
+            self.old = dict(self.ctx.ctrl.limits)
+            lim = self.ctx.ctrl.limits
+            lim['a'] = float(self.a)
+            lim['j'] = min(lim['j'], 20.0 * float(self.a))
+
+    def __exit__(self, *exc):
+        if self.a is not None:
+            self.ctx.ctrl.limits.clear()
+            self.ctx.ctrl.limits.update(self.old)
+        return False
+
+
 def _suction_pick(ctx, eff, p, est, r, width, cy):
+    with _AccBudget(ctx, p):
+        return _suction_pick_(ctx, eff, p, est, r, width, cy)
+
+
+def _suction_pick_(ctx, eff, p, est, r, width, cy):
     """vacuum pick: cup onto the top face centre (guarded), vacuum on, seal check, lift, seal check."""
-    cup_d = 2 * float(ctx.emb.cfg.tool.get('radius', 0.02))
-    if width < 0.9 * cup_d:
-        return r.result(False, 'too_small', width=width, cup=cup_d)
+    from physmem.embodiments.core import suction_cups
+    tool = ctx.emb.cfg.tool
+    rad = float(tool.get('radius', 0.035))
+    cups = suction_cups(tool)
     v = p.get('speed', 0.3)
     top, bottom = est.top_z(), est.bottom_z()
     q = down_quat(_near_yaw(ctx, eff, cy))
+    # zone control from the actor's geometry estimate: enable only the cups whose whole lip lies on the top face
+    Rq = quat2mat(q)
+    Ro = est.R
+    radii = list(tool.get('cup_radii', [rad] * len(cups)))
+    mask = []
+    for (ox, oy), rad in zip(cups, radii):
+        w = Rq[:, 0] * ox + Rq[:, 1] * oy                     # cup offset in the world (TCP over the face centre)
+        u = Ro.T @ w
+        mask.append(abs(u[0]) <= est.h[0] - rad + 0.002 and abs(u[1]) <= est.h[1] - rad + 0.002)
+    mask = np.array(mask, bool)
+    if not mask.any():
+        return r.result(False, 'too_small', width=width, cup=2 * min(radii))
+    ctx.emb.eff[eff]['zone_mask'] = mask
+    need = float(p.get('min_zones', 1))
+    if mask.sum() < need:
+        return r.result(False, 'too_small', zones=int(mask.sum()))
     g = np.array([est.p[0], est.p[1], top - p.get('press', 0.003)])
     pre = g + np.array([0, 0, p.get('pre', _clear(ctx))])
     if not _reachable(ctx, eff, g, q) or not _reachable(ctx, eff, pre, q):
@@ -302,6 +420,11 @@ def _suction_pick(ctx, eff, p, est, r, width, cy):
 
 # ============================================================================ place
 def place(ctx: SkillContext, call, est: ObjectEstimate = None):
+    with _AccBudget(ctx, call.params):
+        return _place(ctx, call, est)
+
+
+def _place(ctx: SkillContext, call, est: ObjectEstimate = None):
     """params: x, y, z (surface height at the target; or est = target region/fixture estimate), yaw (TCP closing yaw,
     optional), speed, guard (N), release (m of drop allowed), retreat (m)."""
     eff, p = _eff(ctx, call), call.params

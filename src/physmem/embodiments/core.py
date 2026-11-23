@@ -144,23 +144,59 @@ def torque_motorize(child: mujoco.MjSpec, override: dict, model_for_limits: mujo
     return lims
 
 
-def add_suction_cup(child, site='attachment_site', stem=0.07, radius=0.02, gain=120.0, mass=0.25, **_):
-    """vacuum cup tool: a stem + a compliant cup pad on the flange site, and an ADHESION actuator on the cup body
-    (MuJoCo adhesion: attractive force at the cup's contacts, ctrl 0..1 x gain N in total). The controller turns it on
-    only while the cup is sealed (see osc.py). No welds. gain 120 N ~ a 40 mm cup at -0.95 bar."""
-    s = child.site(site)
-    parent = s.parent
-    b = parent.add_body(name='cup', pos=list(s.pos), quat=list(s.quat))
-    b.add_geom(name='cup_stem', type=mujoco.mjtGeom.mjGEOM_CYLINDER, size=[0.012, stem / 2, 0], pos=[0, 0, stem / 2],
-               mass=mass * 0.6, rgba=[0.3, 0.3, 0.32, 1])
-    b.add_geom(name='cup_pad', type=mujoco.mjtGeom.mjGEOM_CYLINDER, size=[radius, 0.004, 0], pos=[0, 0, stem + 0.004],
-               mass=mass * 0.4, rgba=[0.15, 0.15, 0.15, 1], friction=[1.2, 0.01, 0.001], condim=4,
-               margin=0.004, gap=0.004, solref=[0.01, 1], solimp=[0.9, 0.95, 0.002, 0.5, 2])
-    a = child.add_actuator(name='suction', trntype=mujoco.mjtTrn.mjTRN_BODY, target='cup')
-    a.gaintype, a.biastype, a.dyntype = mujoco.mjtGain.mjGAIN_FIXED, mujoco.mjtBias.mjBIAS_NONE, mujoco.mjtDyn.mjDYN_NONE
-    a.gainprm[0] = gain
-    a.ctrllimited = 1
-    a.ctrlrange = [0, 1]
+RIM_N = 8          # lip contact points per cup
+
+
+def suction_cups(tool):
+    """cup centre offsets (x, y) on the tool plate from a tool dict: explicit `cups` or `n_cups` in a row."""
+    if tool.get('cups'):
+        return [tuple(c) for c in tool['cups']]
+    n, sp = int(tool.get('n_cups', 1)), float(tool.get('spacing', 0.09))
+    return [(0.0, 0.0)] if n == 1 else [(float(x), 0.0) for x in np.linspace(-sp / 2, sp / 2, n)]
+
+
+def add_suction_cup(child, site='attachment_site', stem=0.07, radius=0.035, dp=60e3, mass=0.25, plate=None,
+                    parent_body=None, **tool):
+    """vacuum tool (physically motivated, no welds):
+    * each cup is its own body with a LIP of RIM_N small contact spheres on a circle of radius `radius` (compliant,
+      margin/gap 4 mm) and a visual disk; the lip gives the contact moment that resists peel (up to ~ F_vac * r);
+    * vacuum force per cup = dp * pi * r^2 (dp = vacuum below ambient, Pa; 60 kPa ~ a standard ejector), applied by a
+      MuJoCo ADHESION actuator `suction<k>` on the cup body (attractive force at that cup's contacts only);
+    * the controller (osc.py) applies a cup's vacuum only while that cup is SEALED: every lip point touches one
+      non-robot face with aligned normals (making a seal); a held seal leaks (vacuum lost) when fewer than 3/4 of the
+      lip still touches - i.e. a peeling or edge-hanging cup drops its load, as a real cup does;
+    * zone control: `emb.eff[eff]['zone_mask']` enables/disables cups (the skill disables cups off the face)."""
+    cups = suction_cups(dict(tool, n_cups=tool.get('n_cups', 1)))
+    if parent_body is None:
+        s = child.site(site)
+        parent = s.parent
+        b = parent.add_body(name='cup', pos=list(s.pos), quat=list(s.quat))
+    else:
+        b = parent_body
+    if stem > 0:
+        b.add_geom(name='cup_stem', type=mujoco.mjtGeom.mjGEOM_CYLINDER, size=[0.012, stem / 2, 0], pos=[0, 0, stem / 2],
+                   mass=mass * 0.5, rgba=[0.3, 0.3, 0.32, 1])
+    if plate is not None or len(cups) > 1:
+        hx = max(abs(c[0]) for c in cups) + radius
+        hy = max(abs(c[1]) for c in cups) + radius
+        b.add_geom(name='cup_plate', type=mujoco.mjtGeom.mjGEOM_BOX, size=[hx, hy, 0.006], pos=[0, 0, stem - 0.006],
+                   mass=mass * 0.3 if plate is None else plate, rgba=[0.3, 0.3, 0.32, 1])
+    gain = dp * np.pi * radius ** 2
+    for k, (cx, cy) in enumerate(cups):
+        cb = b.add_body(name=f'cup{k}', pos=[cx, cy, stem])
+        cb.add_geom(name=f'cup{k}_disk', type=mujoco.mjtGeom.mjGEOM_CYLINDER, size=[radius, 0.004, 0], pos=[0, 0, 0.004],
+                    contype=0, conaffinity=0, mass=0.02, rgba=[0.12, 0.12, 0.12, 1])
+        for j in range(RIM_N):
+            a = 2 * np.pi * j / RIM_N
+            cb.add_geom(name=f'cup{k}_lip{j}', type=mujoco.mjtGeom.mjGEOM_SPHERE, size=[0.004, 0, 0],
+                        pos=[radius * np.cos(a), radius * np.sin(a), 0.008 - 0.004], mass=0.002,
+                        rgba=[0.15, 0.15, 0.15, 1], friction=[1.2, 0.01, 0.001], condim=4, margin=0.001, gap=0.0,
+                        solref=[0.01, 1], solimp=[0.9, 0.95, 0.002, 0.5, 2])
+        act = child.add_actuator(name=f'suction{k}', trntype=mujoco.mjtTrn.mjTRN_BODY, target=f'cup{k}')
+        act.gaintype, act.biastype, act.dyntype = mujoco.mjtGain.mjGAIN_FIXED, mujoco.mjtBias.mjBIAS_NONE, mujoco.mjtDyn.mjDYN_NONE
+        act.gainprm[0] = gain
+        act.ctrllimited = 1
+        act.ctrlrange = [0, 1]
     return b
 
 
@@ -220,7 +256,11 @@ class MjEmbodiment:
     # ---------------------------------------------------------------- build
     def load_child(self):
         cfg = self.cfg
-        child = mujoco.MjSpec.from_file(str(ASSETS / cfg.xml))
+        if cfg.xml.startswith('builtin:'):       # programmatic (synthetic) models, e.g. builtin:gantry_vacuum
+            from physmem.embodiments.gantry import build_gantry
+            child = build_gantry(cfg.xml.split(':', 1)[1].split('_', 1)[1])
+        else:
+            child = mujoco.MjSpec.from_file(str(ASSETS / cfg.xml))
         for site, xml, pre in cfg.attach:
             g = mujoco.MjSpec.from_file(str(ASSETS / xml))
             for k in list(g.keys):
@@ -240,7 +280,7 @@ class MjEmbodiment:
         for gm in list(child.geoms):
             if gm.type == mujoco.mjtGeom.mjGEOM_PLANE:
                 child.delete(gm)
-        if cfg.tool.get('kind') == 'suction':
+        if cfg.tool.get('kind') == 'suction' and not cfg.xml.startswith('builtin:'):
             add_suction_cup(child, **cfg.tool)
         for jn, kv in cfg.joint_overrides.items():
             j = child.joint(jn)
@@ -429,8 +469,11 @@ class MjEmbodiment:
         if not len(e['gacts']):
             return 0.0, 0
         if e['cfg'].gripper.kind == 'suction':
-            sealed, n = self.cup_seal(model, data, eff, max_tilt_deg=45.0)
-            return float(data.ctrl[self.act_ids[e['gacts'][0]]] > 0.05 and sealed), n
+            sealed, cnt = self.cup_seals(model, data, eff, e.get('_held_seal'))
+            mask = e.get('zone_mask', np.ones(len(sealed), bool))
+            on = data.ctrl[self.act_ids[e['gacts']]] > 0.05
+            frac = float(np.sum(sealed & mask & on) / max(1, np.sum(mask)))
+            return frac, int(cnt.sum())
         L = data.actuator_length[self.act_ids[e['gacts']]]
         c = float(np.mean((L - e['gopen']) / (e['gclosed'] - e['gopen'] + 1e-12)))
         n = 0
@@ -456,25 +499,45 @@ class MjEmbodiment:
         gr = e['cfg'].gripper
         return 0.0 if gr.kind == 'suction' else float(self.act_hi[e['gacts'][0]] * self.act_gear[e['gacts'][0]] * gr.pad_per_drive)
 
-    def cup_seal(self, model, data, eff, max_tilt_deg=20.0):
-        """vacuum-cup seal sensing (a pressure switch in reality): the cup pad touches a non-robot surface with the
-        contact normal within max_tilt of the cup axis. -> (sealed, n_contacts)"""
+    def cup_seals(self, model, data, eff, held=None):
+        """per-cup seal sensing (a vacuum switch per zone in reality) -> (sealed[k] bool array, lip contacts[k]).
+        making a seal: all lip points touch one non-robot surface (dist <= 3 mm) with normals within 20 deg of the
+        cup axis; holding (held[k] true): sealed while >= 3/4 of the lip still touches (within 45 deg) - else leak."""
         e = self.eff[eff]
-        cg = e.get('_cupg')
-        if cg is None:
-            cg = e['_cupg'] = model.geom(self.prefix + 'cup_pad').id
+        lips = e.get('_lips')
+        if lips is None:
+            K = len(e['gacts'])
+            lips = e['_lips'] = [np.array([model.geom(self.prefix + f'cup{k}_lip{j}').id for j in range(RIM_N)], int)
+                                 for k in range(K)]
+        K = len(lips)
+        sealed, cnt = np.zeros(K, bool), np.zeros(K, int)
         if not data.ncon:
-            return False, 0
+            return sealed, cnt
         z = data.site_xmat[e['site']].reshape(3, 3)[:, 2]
-        n, ok = 0, 0
-        for k in np.where((data.contact.geom1 == cg) | (data.contact.geom2 == cg))[0]:
-            other = data.contact.geom2[k] if data.contact.geom1[k] == cg else data.contact.geom1[k]
-            if other in self.geoms or data.contact.dist[k] > 0.004:
+        g1, g2 = data.contact.geom1, data.contact.geom2
+        dist = data.contact.dist
+        for k, L in enumerate(lips):
+            idx = np.where((np.isin(g1, L) & ~np.isin(g2, self.geoms)) | (np.isin(g2, L) & ~np.isin(g1, self.geoms)))[0]
+            idx = idx[dist[idx] <= 0.003]
+            if not len(idx):
                 continue
-            n += 1
-            nrm = data.contact.frame[k][:3]
-            ok += abs(float(nrm @ z)) > np.cos(np.radians(max_tilt_deg))
-        return (n > 0 and ok == n), n
+            hold = held is not None and held[k]
+            cmax = np.cos(np.radians(45.0 if hold else 20.0))
+            touching = set()
+            for i in idx:
+                if abs(float(data.contact.frame[i][:3] @ z)) > cmax:
+                    touching.add(int(g1[i] if g1[i] in L else g2[i]))
+            cnt[k] = len(touching)
+            sealed[k] = cnt[k] >= (int(np.ceil(0.75 * RIM_N)) if hold else RIM_N)
+        return sealed, cnt
+
+    def cup_seal(self, model, data, eff, max_tilt_deg=20.0):
+        """(any active cup sealed, total lip contacts) - backwards compatible summary."""
+        e = self.eff[eff]
+        held = e.get('_held_seal')
+        sealed, cnt = self.cup_seals(model, data, eff, held)
+        mask = e.get('zone_mask', np.ones(len(sealed), bool))
+        return bool(np.any(sealed & mask)), int(cnt.sum())
 
     def proprio(self, data) -> dict:
         m = self.model

@@ -99,13 +99,15 @@ ROBOTS = {
 }
 
 
-def _suction_eff(joints, home):
-    return EffectorCfg(name='hand', joints=joints, site_body='cup', tcp_pos=(0, 0, 0.078), home=home,
-                       gripper=GripperCfg(kind='suction', actuators=('suction',), max_width=1.0, tip=0.0, link_h=0.07,
-                                          pad_bodies=('cup',), close_time=0.1))
+def _suction_eff(joints, home, n=1, stem=0.07, body='cup', approach=(0, 0, 1)):
+    return EffectorCfg(name='hand', joints=joints, site_body=body, tcp_pos=(0, 0, stem + 0.008 * approach[2]),
+                       approach=approach, home=home,
+                       gripper=GripperCfg(kind='suction', actuators=tuple(f'suction{k}' for k in range(n)), max_width=1.0,
+                                          tip=0.0, link_h=0.07, pad_bodies=tuple(f'cup{k}' for k in range(n)),
+                                          close_time=0.1))
 
 
-SUCTION = dict(kind='suction', site='attachment_site', stem=0.07, radius=0.035, gain=300.0)   # 70 mm foam cup, ~-0.8 bar
+SUCTION = dict(kind='suction', site='attachment_site', stem=0.07, radius=0.035, dp=60e3)   # 70 mm cup, 60 kPa -> 231 N
 ROBOTS['ur5e_suction'] = RobotCfg(
     name='ur5e_suction', kind='arm', xml='menagerie/universal_robots_ur5e/ur5e.xml', tool=SUCTION,
     effectors=(_suction_eff(('shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint',
@@ -117,6 +119,40 @@ ROBOTS['fr3_suction'] = RobotCfg(
     effectors=(_suction_eff(tuple(f'fr3_joint{i}' for i in range(1, 8)), (0, -0.1104, 0, -2.273, 0, 2.1626, -0.7854)),),
     reach_m=0.855, payload_kg=3.0, max_ee_speed=1.0, max_ee_force=70.0,
     limits=dict(v=1.2, a=8.0, j=200.0, w=3.0), source=MENAGERIE + ' franka_fr3 + vacuum cup (adhesion)', base_body='base')
+
+
+ROBOTS['ur5e_suction2'] = RobotCfg(
+    name='ur5e_suction2', kind='arm', xml='menagerie/universal_robots_ur5e/ur5e.xml',
+    tool=dict(SUCTION, n_cups=2, spacing=0.09),
+    effectors=(_suction_eff(('shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint',
+                             'wrist_3_joint'), (-1.8419, -1.5918, 1.6738, -1.6528, -1.5708, -1.8419), n=2),),
+    front_yaw=1.5708, reach_m=0.85, payload_kg=5.0, max_ee_speed=1.0, max_ee_force=60.0,
+    limits=dict(v=1.2, a=8.0, j=200.0, w=3.0), source=MENAGERIE + ' universal_robots_ur5e + dual vacuum cup (adhesion)',
+    base_body='base')
+
+
+# ---- SYNTHETIC 4-axis palletizing gantry (see embodiments/gantry.py; generic model, not a vendor product)
+_GJ = ('gx', 'gy', 'gz', 'gyaw')
+ROBOTS['gantry_vacuum'] = RobotCfg(
+    name='gantry_vacuum', kind='gantry', xml='builtin:gantry_vacuum',
+    tool=dict(kind='suction', radius=0.04, dp=60e3, cups=[(-0.08, -0.05), (0.08, -0.05), (-0.08, 0.05), (0.08, 0.05), (0.0, 0.0)],
+              cup_radii=[0.04, 0.04, 0.04, 0.04, 0.015]),
+    effectors=(EffectorCfg(name='hand', joints=_GJ, site_body='cup', tcp_pos=(0, 0, 0.108), home=(0.0, 0.0, -0.4, 0.0),
+                           gripper=GripperCfg(kind='suction', actuators=tuple(f'suction{k}' for k in range(5)), max_width=1.0,
+                                              tip=0.0, link_h=0.2, pad_bodies=tuple(f'cup{k}' for k in range(5)),
+                                              close_time=0.1)),),
+    reach_m=1.6, payload_kg=30.0, max_ee_speed=1.5, max_ee_force=400.0,
+    limits=dict(v=1.5, a=4.0, j=60.0, w=3.0), gains=dict(post_kp=20.0),
+    source='SYNTHETIC generic 4-axis gantry (embodiments/gantry.py)', base_body='gantry_base')
+ROBOTS['gantry_clamp'] = RobotCfg(
+    name='gantry_clamp', kind='gantry', xml='builtin:gantry_clamp',
+    effectors=(EffectorCfg(name='hand', joints=_GJ, site_body='clamp', tcp_pos=(0, 0, 0.12), home=(0.0, 0.0, -0.4, 0.0),
+                           gripper=GripperCfg(kind='parallel', actuators=('clamp',), closed=(0.0,), opened=(0.15,),
+                                              max_width=0.29, tip=0.04, link_h=0.2, pad_per_drive=0.5, grip_n=400.0,
+                                              pad_friction=1.0, pad_bodies=('jaw_l', 'jaw_r'), close_time=0.5)),),
+    reach_m=1.6, payload_kg=30.0, max_ee_speed=1.5, max_ee_force=400.0,
+    limits=dict(v=1.5, a=4.0, j=60.0, w=3.0), gains=dict(post_kp=20.0),
+    source='SYNTHETIC generic 4-axis gantry (embodiments/gantry.py)', base_body='gantry_base')
 
 
 def names():

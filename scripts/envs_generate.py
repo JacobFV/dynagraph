@@ -35,32 +35,74 @@ def code_hash():
     return h.hexdigest()[:16]
 
 
+JITTER_KEYS = ("speed", "force", "grip", "suction", "lift", "depth", "approach", "release_h", "search", "compliance",
+               "stop_time", "distance", "travel", "rate", "timeout", "height")
+
+
+def perturb(call, rng, frac=0.3):
+    """jitter the scripted call's speed / force / grasp / approach params by U(1-frac, 1+frac) (positive scalars)."""
+    from dataclasses import replace
+    p = dict(call.params)
+    for k, v in p.items():
+        if isinstance(v, (int, float)) and not isinstance(v, bool) and v > 0 and any(j in k for j in JITTER_KEYS):
+            p[k] = float(v * rng.uniform(1 - frac, 1 + frac))
+    return replace(call, params=p)
+
+
+def choose(env, rng, mode):
+    """policy mixture: 'scripted' (pure baseline), 'mixed' (0.4 scripted / 0.4 random feasible candidate / 0.2
+    perturbed scripted), 'explore' (random candidates). Returns (call, policy_source) or (None, None)."""
+    if mode == "scripted":
+        c = env.scripted()
+        return c, "scripted"
+    u = rng.random() if mode == "mixed" else 0.5
+    if u >= 0.4 and u < 0.8 or mode == "explore":
+        cands = env.candidate_skills(None, 8, rng)
+        if cands:
+            return cands[int(rng.integers(len(cands)))], "random_candidate"
+    c = env.scripted()
+    if c is None:
+        cands = env.candidate_skills(None, 8, rng)
+        return (cands[int(rng.integers(len(cands)))], "random_candidate") if cands else (None, None)
+    if u >= 0.8:
+        return perturb(c, rng), "perturbed_scripted"
+    return c, "scripted"
+
+
 def run_episode(task, keep_events=True):
+    import hashlib as _h
     t0 = time.time()
     env = make_env(task.family)
     ev0 = env.reset(task)
+    mode = task.params.get("policy", "scripted")
+    prng = np.random.default_rng(int.from_bytes(_h.sha256(f"policy|{task.family}|{task.seed}|{task.robot}|{task.split}"
+                                                          .encode()).digest()[:8], "little"))
     steps = []
     out = None
     err = None
     try:
         while True:
-            call = env.scripted()
+            call, src = choose(env, prng, mode)
             if call is None:
                 break
+            t_start = env.t
             out = env.execute(call)
-            steps.append(dict(call=asdict(call), ok=out.result.ok, status=out.result.status,
-                              effort=out.result.effort.as_dict(), duration_s=out.result.duration_s, done=out.done,
-                              success=out.success, metrics=out.metrics, labels=out.labels))
+            log = {k: v for k, v in out.result.log.items()}
+            steps.append(dict(call=asdict(call), policy_source=src, t_start=t_start, t_end=env.t, ok=out.result.ok,
+                              status=out.result.status, effort=out.result.effort.as_dict(),
+                              duration_s=out.result.duration_s, done=out.done, success=out.success,
+                              metrics=out.metrics, labels=out.labels, log=log))
             if out.done:
                 break
     except Exception as e:      # keep failures
-        err = repr(e)
+        err = repr(e)[:500]
     success = bool(env.success()) if err is None else False
     from physmem.envs.io import events_to_array
-    rec = dict(task=asdict(task), episode_id=env.episode_id,
+    rec = dict(task=asdict(task), episode_id=env.episode_id, policy=mode,
                events=events_to_array(env.events_all) if keep_events else None,
                n_events=len(env.events_all), steps=steps, success=success, sim_t=env.t, wall_s=time.time() - t0,
-               final_metrics=(out.metrics if out else {}), error=err, goal=env.goal())
+               final_metrics=(out.metrics if out else {}), error=err, goal=env.goal(),
+               reset_attempts=getattr(env, "reset_attempts", 1))
     return rec
 
 
@@ -105,6 +147,7 @@ def main():
     ap.add_argument("--matrix", default="", help="json {robot: [families]} of WORKING pairs (ROBOTS' matrix)")
     ap.add_argument("--heldout_robot", default="", help="robot held out ENTIRELY: only split=heldout_robot episodes")
     ap.add_argument("--limit_s", type=int, default=300, help="per-episode wall-time guard")
+    ap.add_argument("--tasks_json", default="", help="explicit task list (TaskSpec dicts); overrides the grid")
     a = ap.parse_args()
     fams = list(FAMILIES) if a.families == "all" else a.families.split(",")
     splits = a.splits.split(",")
@@ -125,11 +168,17 @@ def main():
                     continue
                 ss = "heldout_family" if (heldout and s == "test") else s
                 tasks += make_tasks(f, ss, a.n, rob, a.base_seed)
+    if a.tasks_json:
+        from physmem.v2.api import TaskSpec
+        tasks = [TaskSpec(**t) for t in json.load(open(a.tasks_json))]
+        robots = sorted({t.robot for t in tasks})
+        robots = robots if len(robots) > 1 else robots + ["_multi"]     # always <robot>/<family>/ layout
     os.makedirs(a.out, exist_ok=True)
     if a.rows:
         os.makedirs(os.path.dirname(a.rows) or ".", exist_ok=True)
     created = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    manifest = dict(created=created, code_hash=code_hash(), robots=robots, heldout_robot=a.heldout_robot,
+    from physmem.envs import ENV_VERSION
+    manifest = dict(created=created, env_version=ENV_VERSION, code_hash=code_hash(), robots=robots, heldout_robot=a.heldout_robot,
                     procs=a.procs, files={}, families={}, n_tasks=len(tasks), args=vars(a))
     rows = open(a.rows if a.rows else os.devnull, "a")
     buf, chunk_i, stats = {}, {}, {}
@@ -155,6 +204,8 @@ def main():
     n_done = 0
     with Pool(a.procs, maxtasksperchild=50) as pool:
         for r in pool.imap_unordered(_job, tasks, chunksize=1):
+            if r.get("error", "") and str(r.get("error")).startswith("timeout"):
+                r.setdefault("policy", r["task"]["params"].get("policy"))
             n_done += 1
             t = r["task"]
             key = (t["robot"], t["family"], t["split"])
@@ -170,7 +221,8 @@ def main():
             st["events"] += r["n_events"]
             st["errors"] += int(r["error"] is not None)
             st["viol"] += int(m.get("integrity_violations", 0) or 0)
-            rows.write(json.dumps(dict(run_id=f"envs-gen-{created}", model="scripted_heuristic", family=t["family"],
+            rows.write(json.dumps(dict(run_id=f"envs-gen-{created}", model=f"policy_{r.get('policy', 'scripted')}",
+                                       family=t["family"],
                                        split=t["split"], seed=t["seed"], robot=t["robot"],
                                        config_hash=manifest["code_hash"], status="observed", success=r["success"],
                                        progress=m.get("progress"), calls=len(r["steps"]), sim_t=r["sim_t"],

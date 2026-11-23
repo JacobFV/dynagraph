@@ -220,7 +220,7 @@ def test_conveyor_belt_is_driven():
                                  "connector_insert", "kitting_pocket", "bulk_sweep", "twist_lock", "depalletize"])
 def test_scripted_solves_some_seeds(fam):
     ok = 0
-    for seed in range(3):
+    for seed in range(6 if fam == "kitting_pocket" else 3):     # kitting baseline succeeds on ~30 % of seeds
         env = make_env(fam)
         env.reset(task(fam, seed))
         while True:
@@ -281,3 +281,36 @@ def test_skill_log_has_commanded_reference():
     t, pos, vel = out.result.log["cmd"]
     assert len(t) > 10 and pos.shape == (len(t), 3) and vel.shape == (len(t), 3)
     assert {"slip", "jam", "stall", "drop", "collision"} <= set(out.metrics)
+
+
+def test_depalletize_flag_path_and_payload_rule():
+    env = make_env("depalletize")
+    env.reset(task("depalletize", 3, layers=1, hidden={"mass": 25.0}))
+    heavy = [e for e in env.cartons() if env.overweight(e)]
+    assert heavy                                        # probe payload 20 kg vs 12-22 kg cartons
+    out = env.execute(SkillCall("handover", {}, target=heavy[0]))
+    assert out.result.status == "flagged" and heavy[0] in env.flagged
+    assert out.metrics["integrity_violations"] == 0
+
+
+def test_conveyor_never_retargets_sorted_items():
+    env = make_env("conveyor_sort")
+    env.reset(task("conveyor_sort", 1))
+    seen_sorted = set()
+    for _ in range(14):
+        c = env.scripted()
+        if c is None:
+            break
+        if c.skill == "pick":
+            assert c.target not in seen_sorted
+        out = env.execute(c)
+        seen_sorted |= env._sorted_ids()
+        if out.done:
+            break
+
+
+def test_mobile_robot_gets_lower_bench():
+    from physmem.envs.stations import MOBILE_BENCH_TOP
+    env = make_env("peg_insert")
+    env.reset(TaskSpec("peg_insert", "fine", 0, "probe", "train", dict(bench_top=MOBILE_BENCH_TOP)))
+    assert abs(env.surface_z - MOBILE_BENCH_TOP) < 1e-9

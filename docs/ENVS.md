@@ -8,7 +8,7 @@ Code `src/physmem/envs/` (owned by ENVS): `scene.py` (MjSpec builder), `stations
 `families_bulk.py`, `families_fine.py`, `families_logistics.py`, `base.py` (StationEnv = api.IndustrialEnv),
 `sensors.py` (ObservationEvent streams, ActorView), `props.py` (extended Prop vocabulary), `probe.py` (TEST-ONLY
 robot + reference skills), `robots.py` (adapter to ROBOTS' embodiments), `splits.py`. Tests `tests/test_envs.py`
-(54 tests). Scripts: `envs_smoke.py`, `envs_trace.py`, `envs_sensitivity.py`, `envs_generate.py`, `envs_render.py`.
+(59 tests). Scripts: `envs_smoke.py`, `envs_trace.py`, `envs_sensitivity.py`, `envs_generate.py`, `envs_render.py`.
 
 ## API (implements `physmem.v2.api.IndustrialEnv`)
 
@@ -149,7 +149,7 @@ tote/pallet sizes); the success-predicate vocabulary mirrors `packages/domain/wo
 joint_ge, upright, below_m failure, collisions_over_n). Stills: `results/v2/envs/<family>_probe_{reset,end}.png`,
 `contact_sheet_probe.png`.
 
-## Task families (16: 6 bulk, 9 fine, 1 deformable)
+## Task families (18: 7 bulk, 10 fine, 1 deformable; small_parts_pick / small_peg_insert added in round 3)
 
 Success predicates are evaluated on TRUE state after every skill (`env.success()`), documented in each class's
 `success_doc`; hidden variables in `hidden_doc`.
@@ -275,6 +275,73 @@ process per CPU slot we are allowed, <= 8):
 ~8 GB per 20k episodes (441 GB free); probe throughput ~3.8k eps/h on 5 procs under load, real arms ~5-10x slower
 per episode (envs_robot_smoke: 1-25 s wall/episode) -> 20k mixed episodes ~ 10-20 h on 8 procs.
 
+
+## LARGE MODEL-V2 generation - STATUS (updated as tranches complete)
+Plan `scripts/envs_plan_large.py` -> `data/v2_envs_large/plan/{tranche1,tranche2,tranche3_heldout_robot}.json` +
+`pairs.json` (kept / dropped robot x family pairs with reasons). Launched 2026-11-23 20:45Z, 10 processes, tranches
+in order, each with its own `data/v2_envs_large/<tranche>/manifest.json` (+ `manifest.sha256`); rows ->
+`results/v2/envs/generation_large.jsonl`.
+- tranche1: **DONE 2026-11-23 21:23Z** - 2912 episodes (probe 1600, ur5e_2f85 656, panda 656) in 2232 s on 10
+  procs = 4696 eps/h, 1.12 GB, 234 shard files, 0 errors, 0 integrity violations, 0 timeouts.
+  `gb10-direct:~/dynagraph/data/v2_envs_large/tranche1/` - manifest.json sha256
+  `0d84bcd1830aa56fe94832c444ee3f2af131501241999881b0a060dcf38cdd95`; per-(robot, family) success in
+  `logs/envs_large_tranche1.md` / `logs/envs_large_tranche1.log` (e.g. mixed-policy success: ur5e peg .98, door .96,
+  drawer 1.0, bin_clearing 0; panda conveyor 0, tote 0; probe 0.16-1.0). Load: `physmem.envs.io.iter_episodes(
+  "data/v2_envs_large/tranche1/**/*.pkl.gz")`.
+- tranche2: ABORTED at ~1900/16887 (2026-11-23 21:36Z) because it was MIXED-VERSION: generator workers import the
+  env family modules lazily from `~/dynagraph/src`, and other agents' `scripts/remote.sh` rsyncs pushed my r3 edits
+  there mid-run. Partial shards kept only as `data/v2_envs_large/_aborted_tranche2_mixed_r2r3/` (no manifest; do not
+  train on it); its rows moved to `results/v2/envs/generation_large_aborted_tranche2.jsonl`.
+- **From tranche 2 on, every tranche runs from a FROZEN code copy `gb10-direct:~/dynagraph_r3`** (envs + embodiments
+  + skills; nobody syncs into it; sha256 of the envs sources = `7095b278...0388`), env version **envs-r3**:
+  - tranche2_envs_r3: 16887 episodes (same plan as above) - RUNNING since 21:37Z (est. 4-6 h)
+  - tranche3_heldout_robot_envs_r3: 712 episodes gen3_2f85 - queued
+  - tranche4_envs_r3: 3830 episodes (redesigned depalletize: probe 200, ur5e_suction 200, fr3_suction 200; fixed
+    conveyor_sort; small_parts_pick + small_peg_insert for probe/ur5e/panda/so100/z1; TidyBot on the lower bench:
+    peg/fixture/bin/kitting/connector/tool/machine_tending/conveyor; gen3 heldout_robot 120) - queued
+  Each finishes with `<dir>/manifest.json` (contains `env_version`, `code_hash`) + `manifest.sha256`, logs
+  `~/dynagraph/logs/envs_large_<dir>.{log,md}`.
+- Env versions: tranche1 = envs-r2 (code hash in its manifest); tranche2/3/4 = envs-r3.
+Policy: per episode 10 % `explore` (random feasible candidates), 90 % `mixed` (per decision 0.4 scripted / 0.4 random
+feasible candidate / 0.2 scripted with speed/force/grasp/approach params x U(0.7, 1.3)); `steps[i].policy_source`.
+Per step stored: call, policy_source, t_start/t_end (skill segment boundaries; the events inside are the 25 Hz
+proprio / WRENCH / EE_POSE / GRIPPER / TACTILE and 10 Hz POSE3 stream), ok/status, effort components, metrics
+(progress, slip/jam/stall/drop/collision flags, cumulative counters), labels (hidden physics, true state, contacts),
+result log (probe: `cmd` = commanded reference (t, pos3, vel3) at 50 Hz; real robots: the ROBOTS adapter's log).
+Hidden variables over the full documented ranges (incl. heavy / oily outliers); splits by root seed as planned.
+Dropped pairs (>= 80 % unreachable, no sim progress, or crashing): panda/ur5e/gen3/aloha/tidybot depalletize
+(parallel grippers), tidybot bin/peg/connector/tool/fixture/kitting/tote/pouch/machine_tending, aloha tote/pouch,
+z1 fixture/peg/pouch/bin, so100 singulation/fixture/peg/pouch/bin, ur5e_suction peg/connector/tool/kitting,
+g1_dex3 singulation + bin_clearing (crash), g1_dex3_fixed singulation + bin_clearing (crash). Untested pairs are not
+generated.
+
+## Round 3 changes (envs-r3, lead + ROBOTS §7 requests)
+1. conveyor_sort: the scripted policy tracks sorted items (actor memory: successful place of the item it held into
+   a bin, plus tracker estimates inside a bin region) and never re-targets them (test added).
+2. bin_clearing pad pass-through: explicit pad<->object pairs now use `solref=(0.004, 1)`,
+   `solimp=(0.95, 0.99, 0.001, 0.5, 2)` and NO margin (`envs/probe.py PAD_SOLREF / PAD_SOLIMP`). The default pair
+   solref (0.02) let a 40-100 N squeeze push a 15 mm stiff sphere through the 10 mm pads. Probe, single stiff sphere
+   (r 14-30 mm, timeconst 0.01), grip 60 N, seeds 0-7: 6/8 picked AND released into the tote (was ~0); 1 slip,
+   1 not observed. No sticking after release with the zero margin. ROBOTS: please apply the same pair params to
+   the real pads (your stuck-after-release trial used a 1 mm margin).
+3. depalletize redefined like a real cell: success = every carton within `robot.spec.payload_kg` upright on the
+   outfeed AND every overweight carton flagged with `SkillCall("handover", {}, target=carton)` (exception lane,
+   env-level, 2 s, no motion) and left on the pallet, nothing dropped; flagging a light carton or lifting an
+   overweight one off the pallet fails it; `metrics.overweight_lift_attempts`, `metrics.flagged`,
+   `labels.payload_kg`, `labels.overweight`. Heavy cartons (12-22 kg) only in the bottom layer. New hidden class:
+   30 % slick-film cartons (cup shear friction 0.15-0.3) that peel off at high transport acceleration. Scripted:
+   lift every carton (suction 0.9 then 1.0 + slower lift), flag after two failed lifts. Probe (payload 20 kg)
+   7/8 seeds.
+4. Mobile manipulators: `tidybot` gets a lower bench (0.62 m, `stations.MOBILE_BENCH_TOP`; any robot via
+   `params["bench_top"]`) and a base pose 0.25 m from the bench edge. TidyBot then solves peg_insert 2/2 and
+   fixture_place 2/2 (were 100 % unreachable); bin_clearing / kitting execute (progress 0-0.4).
+5. Light-parts station for SO-100-class arms (everything within ~0.25 m of the near-edge arm mount):
+   `small_parts_pick` (3-6 parts <= 30 mm, <= 80 g, tray -> cup) and `small_peg_insert` (10-14 mm peg, 12 mm hole,
+   0.3-1.2 mm clearance). Seeds 0-1: probe small_peg 4/4 seeds, small_parts progress 0.2-0.83; z1 small_peg 2/2;
+   ur5e small_peg 2/2; so100 executes both (small_parts progress 0.2, small_peg 0/2).
+6. shelf_restock with a TidyBot driving along an aisle: NOT done (time); needs base-motion skills from ROBOTS.
+Also: `ENV_VERSION` in `physmem.envs` recorded in each manifest; tests 59/59 pass on envs-r3.
+
 ## What failed / limitations (honest list)
 * connector_insert: clearance now changes the fixed-action outcome monotonically (.33 -> .67) but friction does not;
   machine_tending's vise clearance effect is weak (.83 -> 1).
@@ -351,3 +418,30 @@ than about 0.45 m deep are out of reach. ENVS may want a lower bench or a closer
 - Envs now re-draw a scene deterministically (salted seed) if the settle phase drops an object or goes unstable
   (`env.reset_attempts`), and `_move`-style durations should be capped (a bad estimate once made a probe skill
   run for 7000 s of sim time; the probe now clamps targets to its workspace and caps a move at 8 s).
+
+ROBOTS round 3 notes (adapter + skills), for ENVS:
+- **conveyor_sort.** The ROBOTS pick now tracks the belt.
+  - Intercept: the earliest reachable intercept is planned from the latest tracker pose plus its age. The belt speed
+    is the 1.5 s least-squares `est_velocity` projected on the pick-window yaw.
+  - Motion: hover-match 0.5 s, descent while moving with the belt, close at grasp height, lift with belt velocity.
+    The plan is not retimed.
+  - **Scripted-policy issue for ENVS:** `scripted()` keeps re-targeting items that are already sorted (static in
+    bin_A / bin_B) with the belt velocity in the call. Real robots then return `unreachable` up to 70 times per
+    episode (Panda) until the budget ends. Please only target items whose estimate is on the belt.
+- **bin_clearing.** Repeated picks of the same part vary the grasp (other yaw, then deeper). After 3 failures on a
+  part the adapter declines it (`skipped_after_failures`, no motion) so the budget moves on.
+  - Pad/sphere pass-through: I tried stiff, small-margin explicit pad pairs (solref 0.004, margin 1 mm). Parts then
+    stuck between the pads after release, so I reverted. Pinching a 15 mm stiff sphere with the Panda or the 2F-85
+    on the ROBOTS bench (no explicit pairs) holds at 40–100 N. The pass-through seems tied to the explicit pairs'
+    default solref/solimp; worth a joint look (e.g. pair solref 0.01 + solimp width 0.002).
+- **depalletize.** Decision knobs exposed through the adapter:
+  - pick: `suction` (0..1 × cup gain), `lift_speed`, and new `max_acc` (m/s², the lift/transport acceleration
+    budget);
+  - place: `speed` and new `max_acc`;
+  - tool: `ur5e_suction2` (two cups, 600 N).
+  Cartons of 12–22 kg exceed every available arm's payload (UR5e 5 kg, FR3 3 kg): with oracle knobs the UR5e lifts
+  a 18 kg carton only 6 cm. Real-arm depalletizing of the heavy class is infeasible, which a model must learn as
+  "skip / ask for a different robot". Even 1–6 kg cartons peel off a single 70 mm cup during transit; two cups help
+  with tilt but seal on an edge.
+- **TidyBot.** The adapter drives the base laterally (along the bench) to line up with each target. Depth is still
+  bench-limited (arm base 0.335 m, about 0.45 m reach into a 0.76 m bench).

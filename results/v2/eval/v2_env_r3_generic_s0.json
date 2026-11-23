@@ -1,0 +1,52 @@
+{
+ "test:model": {
+  "bin_clearing": {
+   "success_brier": 0.0044067129492759705,
+   "success_auc": 0.895311732940599,
+   "success_rate": 0.004398826975375414,
+   "effort_log_rmse": 0.8387150764465332,
+   "progress_rmse": 0.16430190205574036,
+   "cont_nll": -0.9741894602775574
+  },
+  "bulk_sweep": {
+   "success_brier": 0.0583714134991169,
+   "success_auc": 0.806002243829469,
+   "success_rate": 0.06829268485307693,
+   "effort_log_rmse": 1.071088194847107,
+   "progress_rmse": 0.08344647288322449,
+   "cont_nll": -2.269901990890503
+  },
+  "depalletize": {
+   "success_brier": 0.014142907224595547,
+   "success_auc": 0.9929023481398237,
+   "success_rate": 0.047385621815919876,
+   "effort_log_rmse": 0.5065062046051025,
+   "progress_rmse": 0.11269383132457733,
+   "cont_nll": -0.22934703528881073
+  },
+  "drawer_open": {
+   "success_brier": 0.06472423672676086,
+   "success_auc": 0.9728,
+   "success_rate": 0.6666666865348816,
+   "effort_log_rmse": 0.0788930207490921,
+   "progress_rmse": 0.08436261862516403,
+   "cont_nll": -2.8780879974365234
+  },
+  "peg_insert": {
+   "success_brier": 0.08818396925926208,
+   "success_auc": 0.9362409138110073,
+   "success_rate": 0.29605263471603394,
+   "effort_log_rmse": 0.5446693301200867,
+   "progress_rmse": 0.283861368894577,
+   "cont_nll": -1.1376585960388184
+  },
+  "singulation": {
+   "success_brier": 0.1122664213180542,
+   "success_auc": 0.596585549896246,
+   "success_rate": 0.11987382173538208,
+   "effort_log_rmse": 1.5333820581436157,
+   "progress_rmse": 0.26852133870124817,
+   "cont_nll": 46.47556686401367
+  }
+ }
+}
