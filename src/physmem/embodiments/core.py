@@ -292,6 +292,22 @@ class MjEmbodiment:
             assert b is not None, f'{cfg.name}: no body {e.site_body}'
             b.add_site(name=f'tcp_{e.name}', pos=list(e.tcp_pos), quat=list(tcp_quat(e)), size=[0.006, 0, 0],
                        rgba=[1, 0.2, 0.2, 0.5], group=4)
+        # pad<->part contact (ENVS envs-r3 convention, also on the ROBOTS bench): stiff solref/solimp, no margin; every
+        # collision geom on a finger/pad body gets a stable name '<body>_pad<k>' (fragile-part squeeze checks use them).
+        # Suction cup lips are excluded (adhesion needs their margin).
+        for e in cfg.effectors:
+            if e.gripper.kind == 'suction':
+                continue
+            for bn in e.gripper.pad_bodies:
+                b = child.body(bn)
+                for k, gm in enumerate(b.geoms if b is not None else []):
+                    if gm.contype == 0 and gm.conaffinity == 0:
+                        continue
+                    if not gm.name:
+                        gm.name = f'{bn}_pad{k}'
+                    gm.solref = [0.004, 1.0]
+                    gm.solimp = [0.95, 0.99, 0.001, 0.5, 2.0]
+                    gm.margin = 0.0
         for e in cfg.effectors:
             if e.gripper.pad_friction:
                 for bn in e.gripper.pad_bodies:

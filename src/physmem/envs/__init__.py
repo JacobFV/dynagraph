@@ -12,7 +12,9 @@ import importlib
 # environment version, recorded in every generation manifest. envs-r2: tranches 1-3 of the large run;
 # envs-r3: conveyor sorted-item memory, stiff pad pairs, payload-aware depalletize + 'handover' flag, slick
 # cartons, mobile lower bench, light-parts station (small_parts_pick, small_peg_insert).
-ENV_VERSION = "envs-r3"
+# envs-r4: fragile parts (hidden crush limits, pad-squeeze damage, solved() = success and no damage), snapshot /
+# restore / set_hidden / resimulate, bin_clearing 3-6 parts, singulation bounded work area, peg cycle-time limit.
+ENV_VERSION = "envs-r4"
 
 _REG = {
     "bin_clearing": ("families_bulk", "BinClearing"),

@@ -77,20 +77,34 @@ class TaskTrajectory:
 # ----------------------------------------------------------------- skills
 @dataclass(frozen=True)
 class SkillCall:
-    skill: str                      # "reach"|"push"|"sweep"|"pick"|"place"|"insert"|"open"|"close"|"handover"|"regrasp"
+    skill: str                      # one of SKILLS_V2 ("reach"|"push"|...|"regrasp"|"move_base")
     params: dict                    # skill-specific, SI, expressed relative to target entity frame where meaningful
     target: Optional[str] = None    # entity id
     effector: Optional[str] = None
     candidate_id: str = ""
 
     def vector(self, dim: int = 24) -> np.ndarray:
-        """Fixed-width numeric encoding shared by all models: one-hot skill (10) + up to 14 params (sorted keys)."""
-        names = ["reach", "push", "sweep", "pick", "place", "insert", "open", "close", "handover", "regrasp"]
+        """Fixed-width numeric encoding shared by all models.
+
+        dim=24 (layout v1, used by existing checkpoints): one-hot over SKILLS_V1 (10) + up to 14 scalar params
+        (sorted keys). Raises for skills outside SKILLS_V1.
+        dim=32 (layout v2): one-hot over SKILLS_V2 (16 slots, incl. move_base) + up to 16 scalar params."""
+        if dim == 32:
+            names, n_hot = SKILLS_V2, 16
+        else:
+            names, n_hot = SKILLS_V1, 10
+            if self.skill not in names:
+                raise ValueError(f"skill {self.skill!r} needs the v2 encoding: call .vector(dim=32)")
         v = np.zeros(dim, np.float32)
         v[names.index(self.skill)] = 1.0
         vals = [float(self.params[k]) for k in sorted(self.params) if np.isscalar(self.params[k])]
-        v[10:10 + min(len(vals), dim - 10)] = vals[: dim - 10]
+        v[n_hot:n_hot + min(len(vals), dim - n_hot)] = vals[: dim - n_hot]
         return v
+
+
+SKILLS_V1 = ["reach", "push", "sweep", "pick", "place", "insert", "open", "close", "handover", "regrasp"]
+# v2 adds mobile-base motion; remaining slots reserved (append only, never reorder)
+SKILLS_V2 = SKILLS_V1 + ["move_base"]
 
 
 @dataclass

@@ -24,7 +24,10 @@ EXPENSIVE = {"bulk_sweep": 0.25}          # real-arm bulk_sweep episodes take ~2
 HELDOUT_ROBOT = "gen3_2f85"
 
 
-def executable_pairs(pattern="results/v2/robots/env_runs*.jsonl"):
+def executable_pairs(pattern=None):
+    if pattern is None:      # ROBOTS' measured runs live in the main tree (frozen copies have no results/)
+        main = os.path.expanduser("~/dynagraph/results/v2/robots")
+        pattern = os.path.join(main if os.path.isdir(main) else "results/v2/robots", "env_runs*.jsonl")
     st = collections.defaultdict(lambda: dict(n=0, steps=0, unr=0, err=0, sim=0.0, wall=0.0))
     for f in glob.glob(pattern):
         if "stale" in f:
@@ -79,8 +82,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="data/v2_envs_large/plan")
     ap.add_argument("--tranche4", action="store_true")
+    ap.add_argument("--r4", action="store_true")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
+    if a.r4:
+        return plan_r4(a.out)
     if a.tranche4:
         return plan_tranche4(a.out)
     keep, drop = executable_pairs()
@@ -135,6 +141,49 @@ def plan_tranche4(out):
         t4h += tasks_for(HELDOUT_ROBOT, fam, 40, base_seed=300000)
     json.dump(t4 + t4h, open(os.path.join(out, "tranche4_envs_r3.json"), "w"))
     print("tranche4_envs_r3", len(t4 + t4h), dict(collections.Counter(t["robot"] for t in t4 + t4h)))
+
+
+RELEVANT = {"depalletize", "connector_insert", "bin_clearing", "bulk_sweep", "kitting_pocket", "drawer_open",
+            "door_open", "tool_return", "fixture_place", "twist_lock"}
+T4_PAIRS = {
+    "probe": ["depalletize", "conveyor_sort", "bin_clearing", "small_parts_pick", "small_peg_insert"],
+    "ur5e_2f85": ["conveyor_sort", "small_parts_pick", "small_peg_insert"],
+    "panda": ["conveyor_sort", "small_parts_pick", "small_peg_insert"],
+    "so100": ["small_parts_pick", "small_peg_insert"], "z1": ["small_parts_pick", "small_peg_insert"],
+    "ur5e_suction": ["depalletize"], "fr3_suction": ["depalletize"],
+    "tidybot": ["peg_insert", "fixture_place", "bin_clearing", "kitting_pocket", "connector_insert", "tool_return",
+                "machine_tending", "conveyor_sort"],
+    "gen3_2f85": ["small_parts_pick", "small_peg_insert", "conveyor_sort"],
+}
+
+
+def plan_r4(out):
+    """envs-r4: tranche3_heldout_robot_r4 (gen3 only) + tranche5_r4 (all executable pairs, 2x weight on the
+    decision-relevant families). Replaces the r3 tranches 3 and 4."""
+    keep, _ = executable_pairs()
+    pairs = {r: set(f) for r, f in keep.items()}
+    pairs["probe"] = set(FAMILIES)
+    for r, fams in T4_PAIRS.items():
+        pairs.setdefault(r, set()).update(fams)
+    base = {"probe": 110, "ur5e_2f85": 55, "panda": 55, "tidybot": 30, "aloha": 25, "ur5e_suction": 40,
+            "fr3_suction": 30, "z1": 30, "so100": 25, "g1_dex3_fixed": 20, "g1_dex3": 6}
+    t5, t3 = [], []
+    for rob, fams in sorted(pairs.items()):
+        for fam in sorted(fams):
+            if fam not in FAMILIES:
+                continue
+            if rob == HELDOUT_ROBOT:
+                t3 += tasks_for(rob, fam, int(45 * EXPENSIVE.get(fam, 1.0)), base_seed=400000)
+                continue
+            if rob not in base:
+                continue
+            n = base[rob] * (2 if fam in RELEVANT else 1)
+            if rob != "probe":
+                n = int(n * EXPENSIVE.get(fam, 1.0))
+            t5 += tasks_for(rob, fam, max(n, 4), base_seed=500000)
+    for name, tl in (("tranche3_heldout_robot_r4", t3), ("tranche5_r4", t5)):
+        json.dump(tl, open(os.path.join(out, f"{name}.json"), "w"))
+        print(name, len(tl), dict(collections.Counter(t["robot"] for t in tl)))
 
 
 if __name__ == "__main__":

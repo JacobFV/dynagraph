@@ -165,8 +165,11 @@ class Singulation(StationEnv):
     station = "push_table"
     tool = "parallel"
     gap_req = 0.03
-    success_doc = "every object has >= 3 cm clearance to every other object and stays on the bench work area"
-    hidden_doc = "object<->bench friction (0.15-0.9, per object) and mass (log-U 0.1-3 kg): push travel after release"
+    success_doc = ("every object has >= 3 cm clearance to every other object, stays on the work area, none damaged, "
+                   "within the cycle-time limit (7 s per object)")
+    hidden_doc = ("object<->bench friction (0.15-0.9) x mass (log-U 0.1-3 kg) vs a hidden crush limit 4-14 N per pad: a "
+                  "push needs ~mu m g of pad force (crushes heavy sticky parts) -> push light/slippery parts, pick the "
+                  "heavy sticky ones (pick + place costs cycle time); push travel after release still depends on mu")
 
     def build(self, scene, rng, params):
         top = bench_station(scene)
@@ -189,8 +192,13 @@ class Singulation(StationEnv):
             x = (c_ - (cols - 1) / 2) * pitch + rng.uniform(-0.004, 0.004)
             y = (r_ - (cols - 1) / 2) * pitch + 0.02 + rng.uniform(-0.004, 0.004)
             mu = float(np.clip(mu_mean * rng.uniform(0.85, 1.15), 0.1, 1.0))
+            # r5: every object has a crush limit on the pads (which are also the pusher): pushing a heavy,
+            # high-friction part needs ~mu m g of contact force and crushes it -> pick it instead (costs cycle time)
+            # r5 finding: the probe's position-controlled pusher loads parts with 80-130 N whatever mu*m*g is
+            # (it shoves the cluster), so a crush limit cannot encode push-vs-pick yet -> opt-in via params only
+            crush = float(params["crush_n"]) if "crush_n" in params else float("inf")
             scene.part(f"obj{i}", shape, (hx, hy, hz), (x, y, top + hz + 0.002), yaw=rng.uniform(-0.2, 0.2),
-                       mass=mass, mu=mu, mu_grip=0.8, restitution=0.05)
+                       mass=mass, mu=mu, mu_grip=0.8, restitution=0.05, extra_hidden=dict(crush_n=crush))
             k += 1
         # envs-r4: bounded work area (fixture plate, marked): pushing a part off it fails the episode, so how far a
         # push carries (speed vs hidden friction) matters, not only that parts separate
@@ -198,6 +206,8 @@ class Singulation(StationEnv):
         scene.region("work", (0.0, 0.02, top + 0.03), (wh[0], wh[1], 0.05), support_z=top)
         scene.marker((0.0, 0.02), wh, top, rgba=(0.2, 0.6, 0.9, 0.35))
         self.budget = int(params.get("budget", 3 * n))
+        # r5: cycle-time limit (pushes ~3 s, a pick + place ~11 s with the probe): picking everything does not fit
+        self.cycle_limit = float(params.get("cycle_limit", 7.0 * n))
 
     def _gaps(self):
         m, d = self.m, self.d
@@ -215,7 +225,8 @@ class Singulation(StationEnv):
     def success(self):
         reg = self.scene.regions["work"]
         g = self._gaps()
-        return all(v >= self.gap_req for v in g.values()) and all(self.in_region_true(e, reg) for e in g)
+        return (all(v >= self.gap_req for v in g.values()) and all(self.in_region_true(e, reg) for e in g)
+                and self.held is None and self.t <= self.cycle_limit)
 
     def progress(self):
         g = self._gaps()
@@ -223,8 +234,9 @@ class Singulation(StationEnv):
 
     def fatal(self):
         reg = self.scene.regions["work"]
-        return self.metrics_acc["drops"] > 0 or not all(self.in_region_true(e, reg, margin=0.02, zcheck=False)
-                                                         for e in self.objects())
+        return (self.metrics_acc["drops"] > 0 or self.t > self.cycle_limit
+                or not all(self.in_region_true(e, reg, margin=0.02, zcheck=False) for e in self.objects()
+                           if e != self.held))
 
     def _est_gaps(self):
         """actor-legal: gap estimate from tracked centres and SIZE (circumscribed-free box approx)."""
@@ -270,9 +282,14 @@ class Singulation(StationEnv):
         crowded = sorted([e for e in P if gap[e][0] < self.gap_req + 0.01], key=lambda e: gap[e][0])
         if not crowded:
             crowded = list(P)
+        if self.held is not None:
+            return [self.place_free(rng) for _ in range(n)]
         out = []
         for i in range(n):
             e = crowded[i % len(crowded)]
+            if rng.random() < 0.25:
+                out.append(self.pick_call(e, grip_force=float(rng.uniform(3, 30))))
+                continue
             p = self._push_away(e, P, gap, speed=float(rng.uniform(0.05, 0.8)), dist=float(rng.uniform(0.02, 0.12)))
             p["theta"] = float(p["theta"] + rng.normal(0, 0.4))
             p["phi"] = float(rng.uniform(-0.3, 0.3))
@@ -281,11 +298,35 @@ class Singulation(StationEnv):
 
     def scripted(self):
         P, gap = self._est_gaps()
+        if self.held is not None:
+            return self.place_free()
         crowded = sorted([e for e in P if gap[e][0] < self.gap_req + 0.008], key=lambda e: gap[e][0])
         if not crowded:
             return None
         e = crowded[self.n_calls % len(crowded)] if self.n_calls % 2 else crowded[0]
         return SkillCall("push", self._push_away(e, P, gap), target=e)
+
+    def free_spot(self):
+        """actor-legal: the grid point of the work area farthest from every tracked object (and its edges)."""
+        reg = self.scene.regions["work"]
+        cx, cy, _ = reg["center"]
+        hx, hy, _ = reg["half"]
+        pts = [self.est_pose(e)[0][:2] for e in self.objects() if e != self.held and self.est_pose(e) is not None]
+        best, bd = (0.0, 0.0), -1.0
+        for x in np.linspace(-hx + 0.05, hx - 0.05, 9):
+            for y in np.linspace(-hy + 0.05, hy - 0.05, 7):
+                d = min([np.hypot(cx + x - p[0], cy + y - p[1]) for p in pts] or [1.0])
+                if d > bd:
+                    best, bd = (float(x), float(y)), d
+        return best
+
+    def place_free(self, rng=None):
+        dx, dy = self.free_spot()
+        return SkillCall("place", dict(dx=dx, dy=dy, release_h=0.005, speed=0.4, lower_speed=0.1), target="work")
+
+    def pick_call(self, e, grip_force=10.0):
+        return SkillCall("pick", dict(grip_force=float(grip_force), lift_speed=0.2, depth=0.4, lift_height=0.08),
+                         target=e)
 
 
 def _support_radius(half, yaw, u):

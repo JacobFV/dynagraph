@@ -250,6 +250,7 @@ class SmallPegInsert(PegInsert):
     peg_center = (-0.07, LIGHT_ZONE_Y)
     layout_jitter = 0.015
     mass_range = (0.01, 0.06)
+    default_cycle_limit = 14.0
     success_doc = "a 10-14 mm square peg (<= 60 g) seated >= 80 % into its 12 mm deep hole, released"
     hidden_doc = "clearance 0.3-1.2 mm, chamfer 0-1 mm, friction 0.2-0.9: straight vs search insertion"
 

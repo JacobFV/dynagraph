@@ -45,16 +45,20 @@ class PegInsert(_FineBase):
     family = "peg_insert"
     station = "insertion_fixture"
     success_doc = "the square peg's bottom face is >= 80% of the hole depth below the hole mouth"
-    hidden_doc = ("diametral clearance 0.5-2 mm, chamfer 0-3 mm (0 on 35% of episodes), peg<->hole friction "
-                  "0.2-0.9: straight insertion jams on tight/no-chamfer holes -> needs spiral search, lower force")
+    hidden_doc = ("diametral clearance 0.5-2 mm, chamfer 0-3 mm (0 on 35% of episodes), peg<->hole friction 0.2-0.9, "
+                  "dent limit 8-25 N (60 % of pegs): straight insertion jams on tight holes, a spiral costs ~1.5 s/mm "
+                  "of radius against the 16 s cycle, pressing harder than the dent limit damages the peg")
     obj = "peg"
     region_name = "hole"
+    default_cycle_limit = 16.0        # s of sim time for pick + insert (envs-r4)
+    cycle_limit = 1e9                 # families that do not set one (tool_return)
 
     def geometry(self, rng, params):
         s = float(params.get("peg_half", rng.uniform(0.009, 0.014)))
         return dict(half=(s, s, 0.04), sym=math.pi / 2, depth=0.03)
 
     def build(self, scene, rng, params):
+        self._params = params
         top = bench_station(scene)
         self.surface_z = top
         self.safe_z = top + 0.22
@@ -80,12 +84,17 @@ class PegInsert(_FineBase):
         self.depth = g["depth"]
         self.ztop = ztop
         self.budget = int(params.get("budget", 8))
+        self.cycle_limit = float(params.get("cycle_limit", self.default_cycle_limit))
 
     def make_object(self, scene, rng, g, ppos, top, mass, mu):
         hx, hy, hz = g["half"]
+        # r5: dent limit - a soft-alloy peg dents (damaged) if pressed onto the socket rim harder than dent_n
+        params = getattr(self, "_params", {})
+        dent = float(params["dent_n"]) if "dent_n" in params else (float(rng.uniform(8, 25)) if rng.random() < 0.6
+                                                                   else float("inf"))
         scene.part(self.obj, "box", (hx, hy, hz), (ppos[0], ppos[1], top + hz + 0.001), yaw=rng.uniform(-0.6, 0.6),
                    mass=mass, mu=mu, mu_grip=float(rng.uniform(0.5, 1.0)), restitution=0.05, timeconst=0.004,
-                   kind="peg", rgba=(0.85, 0.6, 0.15, 1))
+                   kind="peg", rgba=(0.85, 0.6, 0.15, 1), extra_hidden=dict(dent_n=dent))
 
     def depth_frac(self):
         p, q = self.true_pose(self.obj)
@@ -96,13 +105,17 @@ class PegInsert(_FineBase):
         return float(np.clip((self.ztop - bottom) / self.depth, 0, 1.5))
 
     def success(self):
-        return self.depth_frac() >= 0.8 and self.held is None
+        # envs-r4: a CAD cycle-time limit - a search that works but takes too long, or retries after a jam, fail
+        return self.depth_frac() >= 0.8 and self.held is None and self.t <= self.cycle_limit
 
     def progress(self):
         return float(min(1.0, self.depth_frac() / 0.8))
 
     def fatal(self):
-        return self.metrics_acc["drops"] > 0
+        return self.metrics_acc["drops"] > 0 or self.t > self.cycle_limit
+
+    def goal_extra(self):
+        return dict(cycle_limit_s=self.cycle_limit)
 
     def candidates(self, n, rng):
         if self.held is None:
@@ -129,6 +142,7 @@ class ConnectorInsert(PegInsert):
                   "yaw, 48-64 mm long module: 1 deg of yaw error = 0.5 mm at its ends -> needs yaw wiggle + compliance")
     obj = "module"
     region_name = "slot"
+    default_cycle_limit = 1e9
 
     def geometry(self, rng, params):
         # long thin module: a yaw error e displaces its ends by half_x * e (1 deg -> 0.5 mm at 30 mm half length)

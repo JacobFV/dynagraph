@@ -96,3 +96,25 @@ def test_grip_force_api():
     m, d, emb2, ctx, B = _bench('ur5e_2f85')
     assert abs(emb2.set_grip_force('hand', 50.0) - 50.0) < 1e-6
     assert emb2.max_grip_force('hand') > 200
+
+
+def test_move_base_tidybot():
+    import mujoco
+    import physmem.embodiments as E
+    spec = mujoco.MjSpec()
+    E.scene_defaults(spec)
+    spec.worldbody.add_geom(type=mujoco.mjtGeom.mjGEOM_PLANE, size=[4, 4, 0.1])
+    emb = E.make('tidybot', prefix='r0')
+    emb.build(spec, ((0.0, -1.0, 0.0), (0.7071068, 0, 0, 0.7071068)))     # facing +y
+    m = spec.compile()
+    d = mujoco.MjData(m)
+    emb.bind(m, d)
+    emb.reset(m, d)
+    ctx = SkillContext(m, d, emb)
+    r = run_skill(ctx, SkillCall('move_base', dict(x=0.3, y=-0.6, yaw=math.pi / 2 + 0.3, speed=0.3), effector='hand'))
+    assert r.ok, (r.status, r.log)
+    assert r.effort.energy_j > 0
+    p = d.xpos[m.body('r0/base_link').id]
+    assert abs(p[0] - 0.3) < 0.03 and abs(p[1] + 0.6) < 0.03
+    r2 = run_skill(SkillContext(*_bench('panda')[:3]), SkillCall('move_base', dict(x=0, y=0), effector='hand'))
+    assert not r2.ok and r2.status == 'unsupported'

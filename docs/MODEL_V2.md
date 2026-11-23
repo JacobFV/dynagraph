@@ -337,3 +337,33 @@ gate test runs when a checkpoint + data exist).
 3. Weakly identifiable latents (grip friction, clearance, hole offset): needs informative probes (slip test,
    compliant search) in the skill library + VOI that actually pays; currently VOI rarely helps.
 4. Multi-seed repeats of the r1 synthetic results (single training seed so far).
+
+## 9. r4 — making latents pay off in decisions (lead priorities, 2026-11-23 ~21:40Z)
+
+### 9a. What changed
+1. **Named skill-parameter encoding** (`spec.PARAM_VOCAB`, `named_call_vector`): `api.SkillCall.vector()` places
+   params by sorted-key position, so `grip_force` sat in different slots in different families; r4 uses
+   [skill one-hot, values by NAME (50), presence mask (50)], per-name scalers fit on train.
+2. **Physics-structured outcome head** (`models/v2/physics.py`): 20 margin / quantity features computed from the
+   typed-slot VALUES (SI) x named params x robot limits (embodiment vector) x goal geometry (scene goal token):
+   grip margin log(2 mu_g F) - log(m sqrt((g+a)^2+a_lat^2)), payload/torque margin, push force margin and travel
+   s + v^2/(2 mu g) vs goal, breakaway margin / opening (|F|-0.3F_b)/b T vs goal / slam speed / pull-force margin
+   (F_b + b v) for position-controlled doors, grip vs pull force, insertion capture & search margins and jam,
+   sweep carry vs goal and stall margin. Event logits = MarginNet(margins, skill) + sigmoid(gate) x residual;
+   continuous outcomes with a physics prediction = physics value + sigmoid(gate) x residual; L2 penalty 0.01 on
+   residuals; the FiLM trunk (residual) sees typed slots + margins. Generic / no-memory variants get the same head
+   with margins computed at prior-mean latents (no typed memory). Typed slots remain the only latent pathway.
+3. **Value-of-latent baseline**: planner mode `prior` (typed model, prior-mean slots, no evidence) next to the
+   labelled oracle (true latents) in every closed-loop run.
+4. **On-policy loop** (`v2_train onpolicy`): round r: closed-loop val success -> 150 planner rollouts per family on
+   train-range seeds (20% random exploration, failures kept, evaluator labels attached) -> data = base + all
+   rollouts -> 3000-step fine-tune -> round r+1.
+5. **ROBOTS tranches**: offline converter (`env_adapter.convert_episode`, `v2_train convert`) replays the stored
+   ENVS event streams with a time cursor (frame / target / held object exactly as the actor saw them) -> v2 arrays,
+   robots mixed per family (`data/v2_robots_t1`: panda / ur5e_2f85 / probe, 14 families, 0 conversion failures).
+6. **Real-station planner**: CEM extrapolated outside the data support and failed on real robots (UR5e/Panda,
+   tranche1 model: singulation 0.00 vs heuristic 0.25-0.40, twist_lock 0.00-0.10 vs 0.60-0.65, oracle and prior
+   planners equally bad -> model exploitation, logs kept in `logs/failed_cem_robots_t1/`). Real stations now use
+   support-constrained ranking (`harness.decide_env_ranked`: scripted call + 15 x U(0.7,1.3) perturbations + 16 env
+   candidates = the data-collection distribution) with a **scripted anchor** (deviate from the scripted action only
+   if the predicted score improves by > 0.15; margin fixed a priori), labelled "planner (scripted-anchored)".

@@ -386,7 +386,7 @@ class EmbodimentSkills:
             if est is not None:
                 r.eff = min(r.effs, key=lambda k: float(np.linalg.norm(r.emb.tcp_pose(env.d, k)[0][:2] - est[0][:2])))
         eff = call.effector or r.eff
-        if r.emb.base is not None:
+        if r.emb.base is not None and call.skill != "move_base":
             self._base_approach(env, call, ctx)
         fn = getattr(self, "sk_" + call.skill, None)
         if fn is None:
@@ -701,6 +701,10 @@ class EmbodimentSkills:
         log = dict(res.log if res is not None else {}, moved=moved, hands_used=k + 1)
         return SkillResult(ok, "done" if ok else (res.status if res is not None else "not_observed"), tot,
                            sum([0.0]) if res is None else res.duration_s, log)
+
+    def sk_move_base(self, env, call, ctx, eff, run_skill):
+        """mobile base motion: params x, y, yaw (station = world frame), speed, yaw_rate, arm ('keep'|'tuck')."""
+        return run_skill(ctx, SkillCall("move_base", dict(call.params), effector=eff), None)
 
     def sk_open(self, env, call, ctx, eff, run_skill):
         if self.r.spec.kind == "humanoid":

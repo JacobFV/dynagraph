@@ -53,6 +53,14 @@ def grip_for(env, e, src, a=2.0, F_max=100.0, extra_mass=0.0):
 def rule(env, call, src):
     """return the call with rule-chosen parameters (src = 'true' | 'prior')."""
     f, p, t = env.family, dict(call.params), call.target
+    if call.skill == "pick" and f == "pouch_transfer":
+        # stiffness-based pinch: a stiff pouch needs more squeeze to hold by friction (soft ones wrap the pads)
+        y = lat(env, t, "young", src, None) if t in env.scene.entities else None
+        if y is None:
+            y = env.hidden_task["young"] if src == "true" else PRIORS.get(f, {}).get("young", 8e3)
+        crush = (env.hidden_task.get("crush_n") if src == "true" else PRIORS.get(f, {}).get("crush_n")) or 1e9
+        p["grip_force"] = float(min(np.clip(6.0 + y / 1000.0, 6.0, 45.0), 0.85 * crush))
+        return replace(call, params=p)
     if call.skill == "pick" and t in env.scene.entities:
         if f == "depalletize":
             m = lat(env, t, "mass", src, 3.0)
@@ -98,6 +106,11 @@ def rule(env, call, src):
         p["grip_force"] = float(np.clip(F, 5.0, 100.0))
     elif call.skill == "push" and f == "singulation":
         mu = lat(env, t, "mu", src, 0.5)
+        m = lat(env, t, "mass", src, 0.5)
+        crush = lat(env, t, "crush_n", src, 1e9)
+        if 1.5 * mu * m * G / 2.0 > 0.8 * crush:            # a push would crush it: pick it instead
+            F = min(1.3 * m * (G + 2.0) / (2 * 0.8), 0.85 * crush)
+            return env.pick_call(t, grip_force=F)
         D = p.get("distance", 0.06) + 0.0
         d_push = 0.02
         p["distance"] = d_push
@@ -115,6 +128,10 @@ def rule(env, call, src):
                 clr = _h(env, env.held).get("clearance")
         else:
             clr = PRIORS.get(f, {}).get("clearance")
+        held = env.held if env.held in env.scene.entities else None
+        dent = (lat(env, held, "dent_n", src, 1e9) if held else 1e9) or 1e9
+        if np.isfinite(dent):
+            p["down_force"] = float(min(p.get("down_force", 6.0), 0.6 * dent))
         if clr is not None:
             p["search_r"] = 0.0 if clr >= 0.0015 else float(np.clip(0.003 - clr, 0.001, 0.004))
             p["wiggle"] = 0.02 if clr < 0.0008 else 0.0

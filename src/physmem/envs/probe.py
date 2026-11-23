@@ -730,7 +730,9 @@ class ProbeSkills:
         if R > 0 or wig > 0:
             def spiral(t, t0=t0):
                 tt = t - t0
-                rr = R * min(1.0, tt * hz / 3.0)
+                # r5: the search radius grows at most 1 mm per 1.5 s (a real spiral covers area ~ R^2), so a wide
+                # search costs cycle time
+                rr = min(R * min(1.0, tt * hz / 3.0), tt / 1.5 * 1e-3)
                 return np.array([rr * math.cos(2 * math.pi * hz * tt), rr * math.sin(2 * math.pi * hz * tt), 0.0,
                                  wig * math.sin(2 * math.pi * 1.7 * hz * tt)])
             r.xy_offset_fn = spiral

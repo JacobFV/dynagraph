@@ -8,7 +8,7 @@ from physmem.skills.base import ObjectEstimate, SkillContext, SkillRun
 from physmem.skills import primitives as P
 
 SKILLS = {'reach': P.reach, 'pick': P.pick, 'place': P.place, 'push': P.push, 'sweep': P.sweep, 'insert': P.insert,
-          'open': P.articulate, 'close': P.articulate, 'handover': P.handover}
+          'open': P.articulate, 'close': P.articulate, 'handover': P.handover, 'move_base': P.move_base}
 
 
 def run_skill(ctx, call, est=None):

@@ -273,6 +273,11 @@ class StationEnv:
                               if np.isfinite(info.hidden.get("crush_n", np.inf)) and self.body_id.get(eid, -1) >= 0}
         self.damaged = set()
         self._sq_ema = {}
+        self._dent_body = {self.body_id[eid]: (eid, float(info.hidden["dent_n"]))
+                           for eid, info in self.scene.entities.items()
+                           if np.isfinite(info.hidden.get("dent_n", np.inf)) and self.body_id.get(eid, -1) >= 0}
+        self._dent_ema = {}
+        self._flex_ema = {}
         # squeeze is measured on the gripper PADS only (palm bumps / pushes do not crush a part)
         pads = set(getattr(self.robot, "pad_ids", set()))
         if not pads and hasattr(self.robot, "pad_geom_names"):
@@ -281,6 +286,9 @@ class StationEnv:
         self._pad_arr[list(pads or self.robot_geoms)] = True
         self._flex = {eid: mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_FLEX, info.body)
                       for eid, info in self.scene.entities.items() if info.meta.get("flex")}
+        self._flex_crush = {fid: (eid, float(self.scene.entities[eid].hidden["crush_n"]))
+                            for eid, fid in self._flex.items()
+                            if np.isfinite(self.scene.entities[eid].hidden.get("crush_n", np.inf))}
         self._dropped = set()
         self._step_i = 0
 
@@ -352,7 +360,7 @@ class StationEnv:
         if d.ncon == 0:
             return
         g = d.contact.geom
-        rob = self._robot_geom_arr[g[:, 0]] | self._robot_geom_arr[g[:, 1]]
+        rob = (self._robot_geom_arr[g[:, 0]] & (g[:, 0] >= 0)) | (self._robot_geom_arr[g[:, 1]] & (g[:, 1] >= 0))
         f6 = np.zeros(6)
         squeeze = {}
         for i in np.nonzero(rob)[0]:
@@ -385,6 +393,45 @@ class StationEnv:
             if f / 2.0 > lim and eid not in self.damaged:
                 self.damaged.add(eid)
                 self.metrics_acc["damaged"] += 1
+        # r5: dent limit - contact force between a part and STATIC fixtures (socket rim, bench) above the part's
+        # hidden dent_n damages it (axial jamming / ramming a peg into a rim); EMA like the squeeze monitor
+        if self._dent_body:
+            gb = m.geom_bodyid
+            fixed = ((gb[g[:, 0]] == 0) & (g[:, 0] >= 0) & (g[:, 1] >= 0)) | ((gb[g[:, 1]] == 0) & (g[:, 1] >= 0)
+                                                                            & (g[:, 0] >= 0))
+            push = {}
+            for i in np.nonzero(fixed)[0]:
+                ob = int(gb[g[i, 1]] if gb[g[i, 0]] == 0 else gb[g[i, 0]])
+                if ob in self._dent_body:
+                    mujoco.mj_contactForce(m, d, int(i), f6)
+                    push[ob] = push.get(ob, 0.0) + abs(f6[0])
+            for ob in list(self._dent_ema):
+                if ob not in push:
+                    self._dent_ema[ob] *= 0.7
+            for ob, f in push.items():
+                self._dent_ema[ob] = 0.7 * self._dent_ema.get(ob, 0.0) + 0.3 * f
+                eid, lim = self._dent_body[ob]
+                if self._dent_ema[ob] > lim and eid not in self.damaged:
+                    self.damaged.add(eid)
+                    self.metrics_acc["damaged"] += 1
+        # r5: soft flex parts (pouch): pad squeeze on flex vertices above the hidden crush limit damages it
+        if self._flex_crush and d.ncon:
+            fx = d.contact.flex
+            sq = {}
+            for i in np.nonzero(rob)[0]:
+                for k in (0, 1):
+                    if fx[i, k] >= 0 and int(fx[i, k]) in self._flex_crush and self._pad_arr[g[i, 1 - k]]:
+                        mujoco.mj_contactForce(m, d, int(i), f6)
+                        sq[int(fx[i, k])] = sq.get(int(fx[i, k]), 0.0) + abs(f6[0])
+            for fid in list(self._flex_ema):
+                if fid not in sq:
+                    self._flex_ema[fid] *= 0.7
+            for fid, f in sq.items():
+                self._flex_ema[fid] = 0.7 * self._flex_ema.get(fid, 0.0) + 0.3 * f
+                eid, lim = self._flex_crush[fid]
+                if self._flex_ema[fid] / 2.0 > lim and eid not in self.damaged:
+                    self.damaged.add(eid)
+                    self.metrics_acc["damaged"] += 1
         fl = np.nonzero((g[:, 0] == self.floor_gid) | (g[:, 1] == self.floor_gid))[0]
         for i in fl:
             other = int(g[i, 1] if g[i, 0] == self.floor_gid else g[i, 0])
@@ -408,7 +455,7 @@ class StationEnv:
     _SNAP_FIELDS = ("t", "held", "_held_off", "n_calls", "fail_count", "metrics_acc", "damaged", "_dropped",
                     "_coll_pairs", "_last_q", "_prev_full_q", "_prev_v", "_step_i", "_n_badqacc", "_drops_before",
                     "_coll_before", "last_call", "last_result", "last_held_before", "_believe", "_sorted",
-                    "_seated_belief", "flagged", "_ow_attempts", "_looks", "_sq_ema")
+                    "_seated_belief", "flagged", "_ow_attempts", "_looks", "_sq_ema", "_dent_ema", "_flex_ema")
 
     def snapshot(self):
         """Full evaluator-side state: MuJoCo integration state + env bookkeeping + sensor/actor caches + robot

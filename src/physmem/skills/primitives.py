@@ -821,3 +821,38 @@ def handover(ctx: SkillContext, call, est: ObjectEstimate):
             _held(ctx)[recv] = dict(offset=float(hz - p.get('grip_low', 0.5 * hz)), half_size=held['half_size'], side=True,
                                     width=held['width'])
         return r.result(ok, 'done' if ok else 'dropped', closure=c, contacts=n)
+
+
+# ============================================================================ move_base (mobile manipulators)
+def move_base(ctx: SkillContext, call, est: ObjectEstimate = None):
+    """drive a mobile base to a pose. params: x, y, yaw (world / station frame, m, rad), speed (m/s, default 0.3),
+    yaw_rate (rad/s, default 0.8), arm ('keep' | 'tuck': lift the hand 0.1 m first). Min-jerk base trajectory through
+    the controller's computed-torque base servo (torques only, effort-metered); done when the time is up (no
+    convergence wait); status 'unsupported' for fixed-base robots."""
+    p = call.params
+    eff = _eff(ctx, call)
+    with SkillRun(ctx, 'move_base') as r:
+        emb = ctx.emb
+        if getattr(emb, 'base', None) is None:
+            return r.result(False, 'unsupported')
+        mpos, mquat = emb.mount_pose
+        Rm = quat2mat(mquat)
+        myaw = math.atan2(Rm[1, 0], Rm[0, 0])
+        # base joints are expressed in the mount frame (x forward, y left, yaw about z)
+        dxy = np.array([p['x'], p['y']], float) - np.asarray(mpos[:2], float)
+        c, s_ = math.cos(myaw), math.sin(myaw)
+        tq = np.array([c * dxy[0] + s_ * dxy[1], -s_ * dxy[0] + c * dxy[1], _wrap(float(p.get('yaw', myaw)) - myaw)])
+        qb = ctx.data.qpos[emb.base['qadr']].copy()
+        tq[2] = qb[2] + _wrap(tq[2] - qb[2])
+        if p.get('arm', 'keep') == 'tuck':
+            here, hq = _tcp(ctx, eff)
+            _move(ctx, eff, [here + np.array([0, 0, 0.1])], 0.3, hq)
+        dist = float(np.linalg.norm(tq[:2] - qb[:2]))
+        dur = max(0.5, 1.875 * dist / max(float(p.get('speed', 0.3)), 1e-3),
+                  1.875 * abs(tq[2] - qb[2]) / max(float(p.get('yaw_rate', 0.8)), 1e-3))
+        ctx.ctrl.command_base(tq, dur)
+        st = ctx.run(max_t=dur + 1.0)
+        qe = ctx.data.qpos[emb.base['qadr']]
+        err = float(np.linalg.norm(qe[:2] - tq[:2]))
+        return r.result(st == 'done' and err < 0.03, 'done' if err < 0.03 else 'blocked', pos_err=err,
+                        yaw_err=float(abs(_wrap(qe[2] - tq[2]))), duration_plan=dur)

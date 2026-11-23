@@ -294,14 +294,22 @@ in order, each with its own `data/v2_envs_large/<tranche>/manifest.json` (+ `man
   train on it); its rows moved to `results/v2/envs/generation_large_aborted_tranche2.jsonl`.
 - **From tranche 2 on, every tranche runs from a FROZEN code copy `gb10-direct:~/dynagraph_r3`** (envs + embodiments
   + skills; nobody syncs into it; sha256 of the envs sources = `7095b278...0388`), env version **envs-r3**:
-  - tranche2_envs_r3: 16887 episodes (same plan as above) - RUNNING since 21:37Z, progress [5200/16887] 2634s (log-time s) at ~23:10Z; probe-heavy start, real-arm tail slower (est. 3-5 h more)
-  - tranche3_heldout_robot_envs_r3: 712 episodes gen3_2f85 - queued
-  - tranche4_envs_r3: 3830 episodes (redesigned depalletize: probe 200, ur5e_suction 200, fr3_suction 200; fixed
-    conveyor_sort; small_parts_pick + small_peg_insert for probe/ur5e/panda/so100/z1; TidyBot on the lower bench:
-    peg/fixture/bin/kitting/connector/tool/machine_tending/conveyor; gen3 heldout_robot 120) - queued
-  Each finishes with `<dir>/manifest.json` (contains `env_version`, `code_hash`) + `manifest.sha256`, logs
-  `~/dynagraph/logs/envs_large_<dir>.{log,md}`.
-- Env versions: tranche1 = envs-r2 (code hash in its manifest); tranche2/3/4 = envs-r3 (frozen copy). envs-r4 (fragility, resimulate, redesigned bin_clearing/singulation) is in the local repo + `~/dynagraph_dev` only and is NOT in any tranche yet - a tranche 5 on r4 is the next step.
+  - tranche2_envs_r3: 16887 episodes - RUNNING since 21:37Z. At 22:47Z-local-host-time 6020 done (probe 5614 = all, ur5e 406); real-robot episodes take ~25 s wall each under host load ~27 (UR5e mean 24.5 s), so the remaining ~10.9k real-robot episodes need ~8-12 h on 10 procs (ETA ~08:00-12:00Z). tranche5_r4 (5.5k of its 8.6k are real robots) adds ~5-7 h. Lead: say if tranche2 should be trimmed (e.g. drop ALOHA/G1 bulk families) to land r4 sooner.
+  - tranche3_heldout_robot_envs_r3 and tranche4_envs_r3: CANCELLED (lead, 2026-11-23 ~23:40Z) - replaced by r4 tranches.
+  - tranche3_heldout_robot_r4: 776 episodes, gen3_2f85 only (split heldout_robot), all its executable families incl.
+    the r3/r4 ones - QUEUED (starts when tranche2 finishes; ~30-45 min).
+  - tranche5_r4: 8630 episodes, all executable robot x family pairs (ROBOTS' measured runs + round-3 pairs: TidyBot on
+    the lower bench, suction depalletize, light-parts families), 2x weight on the decision-relevant families
+    (depalletize, connector_insert, bin_clearing, bulk_sweep, kitting_pocket, drawer_open, door_open, tool_return,
+    fixture_place, twist_lock); by robot: probe 3087, ur5e 1472, panda 1472, tidybot 620, aloha 598, ur5e_suction
+    580, z1 213, fr3_suction 198, g1_dex3_fixed 180, so100 146, g1_dex3 64 - QUEUED after tranche3_r4 (~3-4 h).
+  - How to check without ENVS: `ls ~/dynagraph/data/v2_envs_large/*/manifest.sha256`; progress lines `[n/N]` in
+    `~/dynagraph/logs/envs_large_<dir>.log`.
+  - r4 tranches run from the FROZEN copy `gb10-direct:~/dynagraph_r4` (ENV_VERSION envs-r4; sha256 of the envs
+    sources `8f970b81...832d`); chain log `~/dynagraph/logs/envs_large_chain_r4.log`.
+  - MODEL-V2: a tranche is FINAL when `<dir>/manifest.sha256` exists (written after manifest.json); per-tranche
+    summary in `~/dynagraph/logs/envs_large_<dir>.md`. Status lines here are updated by ENVS when each one lands.
+- Env versions: tranche1 = envs-r2; tranche2_envs_r3 = envs-r3 (frozen `~/dynagraph_r3`); tranche3_heldout_robot_r4 and tranche5_r4 = envs-r4 (frozen `~/dynagraph_r4`). Every manifest records `env_version` (tranche1/2 via `code_hash`, the field was added in r3).
 Policy: per episode 10 % `explore` (random feasible candidates), 90 % `mixed` (per decision 0.4 scripted / 0.4 random
 feasible candidate / 0.2 scripted with speed/force/grasp/approach params x U(0.7, 1.3)); `steps[i].policy_source`.
 Per step stored: call, policy_source, t_start/t_end (skill segment boundaries; the events inside are the 25 Hz
@@ -396,6 +404,48 @@ fix the conveyor baseline), pouch_transfer (NEGATIVE: the mass-based grip rule i
 grip vs Young's modulus). Families redesigned in r4 for this: bin_clearing 0 -> +0.35 (3-6 parts, pad-only squeeze
 damage), singulation (bounded work area: still ~0). Next redesigns needed (not done): insertion time/jam costs,
 stiffness-aware pouch rule, conveyor intercept tolerance, singulation target displacement.
+
+### r4 quick fixes for the ~0-gap families (lead's 45-min budget) and the r5 backlog
+* peg_insert / small_peg_insert: CAD cycle-time limit (16 s / 14 s of sim time for pick + insert; exceeding it is
+  fatal). Re-measured gap (20 paired seeds): peg +0.05 [-0.10, +0.25], small_peg +0.00 - still ~0: one spiral search
+  is cheap enough to fit the cycle. r5: make the search radius cost time per mm and add a jam/damage limit on the
+  axial force for tight, high-friction fits.
+* pouch_transfer: the oracle rule is now stiffness-based (grip = 6 N + Young/1000); gap -0.15 [-0.30, +0.00] -
+  max force stays dominant because nothing penalises squeezing a pouch. r5: a squeeze limit for soft pouches
+  (flex vertex-force monitor) so stiff needs more and soft needs less.
+* singulation: push-vs-pick by friction not done (r5): high-friction objects should be picked, low-friction pushed.
+* All three are in envs-r4 as described; the r4 tranches therefore contain these families with ~0 decision gap.
+
+### r5 (dev tree only, NOT frozen, no r5 tranche queued)
+* peg_insert / small_peg_insert: spiral search radius grows at most 1 mm per 1.5 s (search costs cycle time) and a
+  hidden dent limit (8-25 N, 60 % of pegs) damages a peg pressed onto the rim harder than that (monitor: EMA of the
+  peg's contact force with static fixtures). Decision gap (20 paired seeds): peg +0.10 [+0.00, +0.25] (was +0.05),
+  small_peg +0.00.
+* pouch_transfer: hidden squeeze limit crush_n = 4 N + Young/2500 (flex vertex contacts on the pads); the oracle grip
+  rule = min(6 + Young/1000, 0.85 crush). Gap +0.05 [-0.25, +0.35] (was -0.15); the plain scripted baseline now
+  fails 95 % (it crushes soft pouches at 12 N).
+* singulation push-vs-pick: pick/place-to-free-spot added to scripted/candidates and a 7 s/object cycle limit; a crush
+  limit on the pusher did NOT work: the probe's position-controlled pusher loads parts with 80-130 N regardless of
+  mu*m*g (it shoves the cluster), so every push "crushed". Crush is opt-in (`params["crush_n"]`), default off.
+  Needs a force-limited (compliant) push skill before friction can decide push vs pick.
+* Verdict: the three gaps did NOT all open (peg borderline, pouch and singulation ~0) -> per the lead's rule no r5
+  tranche is queued. Tests 60/60 pass on the r5 dev tree.
+* shelf_restock: ROBOTS' `move_base` skill exists (`SkillCall("move_base", {x, y, yaw, speed})` via run_skill); NOTE
+  for the lead: `v2/api.py SkillCall.vector()` does not list "move_base" (names.index would raise) - please add it
+  before ENVS builds the aisle family.
+
+### Requests to ROBOTS (from ENVS, round 4)
+1. **Pad contact settings:** please adopt the ENVS pad-pair settings for the real grippers' explicit pad<->object
+   pairs: `solref=(0.004, 1.0)`, `solimp=(0.95, 0.99, 0.001, 0.5, 2.0)`, `margin=0` (probe: `envs/probe.py`
+   `PAD_SOLREF`, `PAD_SOLIMP`). With them a 40-100 N pinch no longer pushes 15-30 mm stiff spheres through the pads,
+   and released parts do not stick (your earlier trial used a 1 mm margin). Note envs-r4 fragile parts: the env
+   measures squeeze on the gripper PAD geoms (`robot.pad_ids` or `robot.pad_geom_names`) - please keep exposing one
+   of them.
+2. **shelf_restock (TidyBot driving along an aisle):** ENVS will build the station (aisle with 2-3 shelf bays, totes
+   to restock) once there is a base-motion skill: please expose a `reach`-style base move (e.g. SkillCall "reach"
+   with params `base_x, base_y, base_yaw` for mobile robots, or a documented `ctrl.command_base` wrapper in
+   run_skill) and tell us its name/params here.
+3. r3 adapter notes above (suction unreachable, UR5e door/peg) still apply to the r3 data.
 
 ## What failed / limitations (honest list)
 * connector_insert: clearance now changes the fixed-action outcome monotonically (.33 -> .67) but friction does not;

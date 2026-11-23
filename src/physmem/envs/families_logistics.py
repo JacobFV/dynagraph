@@ -536,7 +536,10 @@ class PouchTransfer(StationEnv):
         tx, ty = 0.2, 0.05
         tfloor = scene.open_box((tx, ty, top), (0.14, 0.11), 0.08, rgba=(0.6, 0.2, 0.15, 1), prefix="tote")
         scene.region("tote", (tx, ty, tfloor + 0.05), (0.14, 0.11, 0.08), support_z=tfloor)
-        self.hidden_task = dict(young=young, mass=mass, mu=mu)
+        # r5: a soft pouch bursts / deforms permanently above a squeeze that grows with its stiffness
+        crush = float(params.get("crush_n", 4.0 + young / 2500.0))
+        scene.entities["pouch"].hidden["crush_n"] = crush
+        self.hidden_task = dict(young=young, mass=mass, mu=mu, crush_n=crush)
         self.budget = int(params.get("budget", 6))
 
     def success(self):
