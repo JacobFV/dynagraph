@@ -1,0 +1,181 @@
+{
+ "summary": {
+  "n": 10,
+  "success": 0.8,
+  "falls": 0,
+  "com_exc_mm_max": 62.0,
+  "peak_torque_frac_max": 0.962
+ },
+ "rows": [
+  {
+   "seed": 0,
+   "mass": 1.0,
+   "success": true,
+   "fell": false,
+   "com_exc_mm": 57.0,
+   "peak_torque_frac": 0.763,
+   "final_tote_z": -0.0,
+   "qp": {
+    "solved": 7453,
+    "fallback": 43,
+    "no_ranges": 27
+   },
+   "dropped": false,
+   "max_lift": 0.09310390332768226,
+   "touched": true
+  },
+  {
+   "seed": 1,
+   "mass": 1.22,
+   "success": true,
+   "fell": false,
+   "com_exc_mm": 56.1,
+   "peak_torque_frac": 0.749,
+   "final_tote_z": -0.0,
+   "qp": {
+    "solved": 9255,
+    "fallback": 68,
+    "no_ranges": 33
+   },
+   "dropped": false,
+   "max_lift": 0.089087634625576,
+   "touched": true
+  },
+  {
+   "seed": 2,
+   "mass": 1.44,
+   "success": true,
+   "fell": false,
+   "com_exc_mm": 57.1,
+   "peak_torque_frac": 0.751,
+   "final_tote_z": -0.0,
+   "qp": {
+    "solved": 7453,
+    "fallback": 41,
+    "no_ranges": 23
+   },
+   "dropped": false,
+   "max_lift": 0.08825699729194358,
+   "touched": true
+  },
+  {
+   "seed": 3,
+   "mass": 1.67,
+   "success": true,
+   "fell": false,
+   "com_exc_mm": 54.8,
+   "peak_torque_frac": 0.759,
+   "final_tote_z": -0.0,
+   "qp": {
+    "solved": 9255,
+    "fallback": 46,
+    "no_ranges": 28
+   },
+   "dropped": false,
+   "max_lift": 0.08228184602026645,
+   "touched": true
+  },
+  {
+   "seed": 4,
+   "mass": 1.89,
+   "success": true,
+   "fell": false,
+   "com_exc_mm": 62.0,
+   "peak_torque_frac": 0.757,
+   "final_tote_z": -0.0,
+   "qp": {
+    "solved": 7453,
+    "fallback": 41,
+    "no_ranges": 27
+   },
+   "dropped": false,
+   "max_lift": 0.08727981463211898,
+   "touched": true
+  },
+  {
+   "seed": 5,
+   "mass": 2.11,
+   "success": false,
+   "fell": false,
+   "com_exc_mm": 52.4,
+   "peak_torque_frac": 0.962,
+   "final_tote_z": -0.0,
+   "qp": {
+    "solved": 9255,
+    "fallback": 64,
+    "no_ranges": 30
+   },
+   "dropped": false,
+   "max_lift": 0.07896688870209023,
+   "touched": true
+  },
+  {
+   "seed": 6,
+   "mass": 2.33,
+   "success": false,
+   "fell": false,
+   "com_exc_mm": 53.2,
+   "peak_torque_frac": 0.731,
+   "final_tote_z": -0.0,
+   "qp": {
+    "solved": 7453,
+    "fallback": 51,
+    "no_ranges": 29
+   },
+   "dropped": false,
+   "max_lift": 0.07507202258289736,
+   "touched": true
+  },
+  {
+   "seed": 7,
+   "mass": 2.56,
+   "success": true,
+   "fell": false,
+   "com_exc_mm": 58.5,
+   "peak_torque_frac": 0.782,
+   "final_tote_z": -0.0,
+   "qp": {
+    "solved": 9255,
+    "fallback": 89,
+    "no_ranges": 47
+   },
+   "dropped": false,
+   "max_lift": 0.08142528976025143,
+   "touched": true
+  },
+  {
+   "seed": 8,
+   "mass": 2.78,
+   "success": true,
+   "fell": false,
+   "com_exc_mm": 54.3,
+   "peak_torque_frac": 0.869,
+   "final_tote_z": -0.0,
+   "qp": {
+    "solved": 7453,
+    "fallback": 35,
+    "no_ranges": 22
+   },
+   "dropped": false,
+   "max_lift": 0.08606576580544112,
+   "touched": true
+  },
+  {
+   "seed": 9,
+   "mass": 3.0,
+   "success": true,
+   "fell": false,
+   "com_exc_mm": 56.2,
+   "peak_torque_frac": 0.838,
+   "final_tote_z": -0.0,
+   "qp": {
+    "solved": 9255,
+    "fallback": 45,
+    "no_ranges": 30
+   },
+   "dropped": false,
+   "max_lift": 0.08329368501999834,
+   "touched": true
+  }
+ ]
+}

@@ -1,0 +1,54 @@
+{
+ "test_robot:model": {
+  "drawer": {
+   "success_brier": 0.05170946195721626,
+   "success_auc": 0.8231695048931239,
+   "success_rate": 0.058666665107011795,
+   "effort_log_rmse": 0.8120295405387878,
+   "progress_rmse": 0.24522797763347626,
+   "cont_nll": 45.114166259765625
+  },
+  "insert": {
+   "success_brier": 0.15935097634792328,
+   "success_auc": 0.8179408482142857,
+   "success_rate": 0.3422222137451172,
+   "effort_log_rmse": 0.9462310671806335,
+   "progress_rmse": 0.4142850935459137,
+   "cont_nll": -2.679727077484131
+  },
+  "lift": {
+   "success_brier": 0.017436109483242035,
+   "success_auc": 0.9970173636340859,
+   "success_rate": 0.22291666269302368,
+   "effort_log_rmse": 0.48531943559646606,
+   "progress_rmse": 0.12619788944721222,
+   "cont_nll": -1.0769140720367432
+  },
+  "slide": {
+   "success_brier": 0.04826471954584122,
+   "success_auc": 0.8607836208688422,
+   "success_rate": 0.05666666850447655,
+   "effort_log_rmse": 0.26055678725242615,
+   "progress_rmse": 0.19654366374015808,
+   "cont_nll": -2.2568209171295166
+  },
+  "sweep": {
+   "success_brier": 0.08457959443330765,
+   "success_auc": 0.9103937594749392,
+   "success_rate": 0.15095913410186768,
+   "effort_log_rmse": 0.3050067722797394,
+   "progress_rmse": 0.24667946994304657,
+   "cont_nll": -1.4189114570617676
+  }
+ },
+ "test_stress:model": {
+  "slide": {
+   "success_brier": 0.042513955384492874,
+   "success_auc": 0.8548149042816595,
+   "success_rate": 0.04833333194255829,
+   "effort_log_rmse": 0.35786333680152893,
+   "progress_rmse": 0.2220684289932251,
+   "cont_nll": 0.327212929725647
+  }
+ }
+}

@@ -1,0 +1,254 @@
+"""Tests for the v2 industrial environments (agent ENVS). Run on gb10-direct:
+    scripts/remote.sh "python -m pytest -q tests/test_envs.py"
+Robot = test-only probe unless stated."""
+import math
+
+import mujoco
+import numpy as np
+import pytest
+
+from physmem.envs import FAMILIES, family_class, make_env
+from physmem.envs.props import XProp, split_events
+from physmem.envs.splits import HELDOUT_FAMILIES, make_tasks, seed_bucket
+from physmem.memory import WorldBelief
+from physmem.schema import Provenance
+from physmem.v2.api import SkillCall, TaskSpec
+
+FAST = ["singulation", "peg_insert", "drawer_open", "door_open", "fixture_place", "connector_insert"]
+
+
+def task(fam, seed=0, split="train", **params):
+    return TaskSpec(fam, family_class(fam).category, seed, "probe", split, params)
+
+
+def _sig(env):
+    return np.concatenate([env.d.qpos.copy(), [env.t]])
+
+
+# ------------------------------------------------------------------ registry / API
+def test_registry_counts():
+    cats = {f: family_class(f).category for f in FAMILIES}
+    assert len(FAMILIES) >= 12
+    assert sum(c == "bulk" for c in cats.values()) >= 5
+    assert sum(c == "fine" for c in cats.values()) >= 5
+
+
+@pytest.mark.parametrize("fam", FAMILIES)
+def test_reset_and_api(fam):
+    env = make_env(fam)
+    ev = env.reset(task(fam, 3))
+    assert len(ev) > 0
+    g = env.goal()
+    assert g["family"] == fam and (g["regions"] or g.get("joint_goal"))
+    rng = np.random.default_rng(0)
+    c = env.candidate_skills(None, 5, rng)
+    assert all(isinstance(x, SkillCall) for x in c)
+    assert env.scripted() is not None
+    img = env.render(width=160, height=120)
+    assert img.shape == (120, 160, 3)
+
+
+# ------------------------------------------------------------------ determinism
+@pytest.mark.parametrize("fam", ["bin_clearing", "singulation", "conveyor_sort", "peg_insert"])
+def test_determinism_by_seed(fam):
+    outs = []
+    for _ in range(2):
+        env = make_env(fam)
+        ev = env.reset(task(fam, 7))
+        o = env.execute(env.scripted())
+        outs.append((_sig(env), [e.value for e in ev], [e.value for e in o.events], o.metrics["progress"]))
+    a, b = outs
+    assert np.array_equal(a[0], b[0])
+    assert a[1] == b[1] and a[2] == b[2] and a[3] == b[3]
+    env = make_env(fam)
+    env.reset(task(fam, 8))
+    assert not np.array_equal(_sig(env), a[0])
+
+
+# ------------------------------------------------------------------ integrity
+@pytest.mark.parametrize("fam", FAST)
+def test_scripted_episode_no_integrity_violations(fam):
+    env = make_env(fam)
+    env.reset(task(fam, 1))
+    out = None
+    for _ in range(4):
+        c = env.scripted()
+        if c is None:
+            break
+        out = env.execute(c)
+        if out.done:
+            break
+    assert out is not None and out.metrics["integrity_violations"] == 0
+
+
+def test_integrity_monitor_catches_pose_write_and_force():
+    env = make_env("singulation")
+    env.reset(task("singulation", 2))
+    e = env.objects()[0]
+    adr = env.qadr[e]
+    env.run(0.05)
+    assert env.metrics_acc["integrity_violations"] == 0
+    env.d.qpos[adr] += 0.01          # teleport
+    env.run(0.01)
+    n1 = env.metrics_acc["integrity_violations"]
+    assert n1 > 0
+    env.d.xfrc_applied[env.body_id[e], 2] = 5.0
+    env.run(0.01)
+    assert env.metrics_acc["integrity_violations"] > n1
+    env.d.xfrc_applied[:] = 0
+    # post-step check alone (another module owning the loop) also sees a teleport
+    n2 = env.metrics_acc["integrity_violations"]
+    env.d.qpos[adr + 1] += 0.01
+    mujoco.mj_step(env.m, env.d)
+    env.post_physics()
+    assert env.metrics_acc["integrity_violations"] > n2
+
+
+def test_no_object_welds_in_models():
+    for fam in FAST:
+        env = make_env(fam)
+        env.reset(task(fam, 0))
+        assert env._bad_eq == []
+
+
+# ------------------------------------------------------------------ actor legality
+@pytest.mark.parametrize("fam", ["bin_clearing", "drawer_open", "pouch_transfer"])
+def test_actor_events_not_privileged_and_ingestable(fam):
+    env = make_env(fam)
+    ev = env.reset(task(fam, 4))
+    out = env.execute(env.scripted())
+    evs = ev + out.events
+    assert all(e.provenance in (Provenance.SENSOR, Provenance.DERIVED) for e in evs)
+    std, ext = split_events(evs)
+    assert std and not ext                 # approved schema: every env event is schema-standard
+    b = WorldBelief(env.episode_id)
+    b.ingest_events(evs, now=env.t)        # raises on privileged / malformed (incl. POSE3 / WRENCH ...)
+    # no event value equals a hidden truth exactly (latent quantities never emitted)
+    hidden_props = {XProp.GRIP_FRICTION, XProp.RESTITUTION, XProp.COMPLIANCE, XProp.CLEARANCE, XProp.JOINT_FRICTION}
+    assert not any(e.property_type in hidden_props for e in evs)
+
+
+def test_events_respect_latency_and_causality():
+    env = make_env("singulation")
+    env.reset(task("singulation", 5))
+    out = env.execute(env.scripted())
+    for e in out.events:
+        assert e.received_at >= e.measured_at
+        assert e.measured_at <= env.t + 1e-9
+    trk = [e for e in out.events if e.source_id == "tracker" and e.property_type == XProp.POSE3]
+    lat = np.array([e.received_at - e.measured_at for e in trk])
+    assert lat.min() > 0.02
+
+
+def test_candidates_use_no_truth():
+    """candidate generation reads the ActorView only: corrupting the TRUE poses after the last sensor packet
+    must not change the candidates."""
+    env = make_env("bin_clearing")
+    env.reset(task("bin_clearing", 6))
+    c1 = env.candidate_skills(None, 6, np.random.default_rng(1))
+    q = env.d.qpos.copy()
+    env.d.qpos[env._obj_q] += 0.05
+    mujoco.mj_forward(env.m, env.d)
+    c2 = env.candidate_skills(None, 6, np.random.default_rng(1))
+    env.d.qpos[:] = q
+    assert [c.params for c in c1] == [c.params for c in c2]
+    assert [c.target for c in c1] == [c.target for c in c2]
+
+
+def test_occlusion_drops_tracker_packets():
+    env = make_env("bin_clearing")
+    env.reset(task("bin_clearing", 3))
+    # a part deep in the bin is sometimes hidden by walls / other parts / the robot: count visibility
+    vis = []
+    for e in env.objects():
+        p, _ = env.true_pose(e)
+        vis.append(env.sensors.visible(env.body_id[e], p))
+    assert any(vis)
+    # put the camera under the bench: everything is occluded
+    env.sensors.cam = np.array([0.0, 0.0, 0.3])
+    assert not any(env.sensors.visible(env.body_id[e], env.true_pose(e)[0]) for e in env.objects())
+
+
+# ------------------------------------------------------------------ hidden physics matters
+def test_hidden_mass_changes_pick_outcome():
+    res = {}
+    for m in (0.3, 3.0):
+        env = make_env("bin_clearing")
+        env.reset(task("bin_clearing", 1000, n_parts=1, hidden={"mass": m, "mu_grip": 0.5}, shapes=("box",)))
+        out = env.execute(SkillCall("pick", dict(grip_force=15.0, lift_speed=0.3, depth=0.5), target=env.objects()[0]))
+        res[m] = out.result.ok
+    assert res[0.3] and not res[3.0]
+
+
+def test_hidden_friction_changes_push_distance():
+    d = {}
+    for mu in (0.15, 0.9):
+        env = make_env("singulation")
+        env.reset(task("singulation", 1000, n_objects=1, hidden={"mu": mu, "mass": 1.0}))
+        e = env.objects()[0]
+        p0 = env.true_pose(e)[0]
+        env.execute(SkillCall("push", dict(theta=math.pi, phi=0.0, speed=0.6, distance=0.05), target=e))
+        env.run(1.0)
+        d[mu] = float(np.linalg.norm(env.true_pose(e)[0][:2] - p0[:2]))
+    assert d[0.15] > 2 * d[0.9]
+
+
+def test_hidden_joint_friction_changes_drawer_travel():
+    q = {}
+    for fl in (3.0, 40.0):
+        env = make_env("drawer_open")
+        env.reset(task("drawer_open", 1001, frictionloss=fl, damping=20.0, mass=5.0, mu_grip=0.6))
+        env.execute(env._open(grip_force=15.0, travel=0.2, speed=0.15))
+        q[fl] = env.q()
+    assert q[3.0] > 0.1 and q[40.0] < 0.02
+
+
+def test_conveyor_belt_is_driven():
+    env = make_env("conveyor_sort")
+    env.reset(task("conveyor_sort", 0, belt_speed=0.1))
+    j = env.m.joint("belt_slide")
+    q0 = env.d.qpos[env.m.jnt_qposadr[j.id]]
+    env.run(1.0)
+    v = (env.d.qpos[env.m.jnt_qposadr[j.id]] - q0) / 1.0
+    assert abs(v - 0.1) < 0.01
+    e = env.objects()[0]
+    assert abs(env.d.qvel[env.dadr[e]] - 0.1) < 0.02     # parts ride the belt by friction
+
+
+# ------------------------------------------------------------------ solvable by the scripted baseline
+@pytest.mark.parametrize("fam", ["singulation", "peg_insert", "drawer_open", "door_open", "fixture_place",
+                                 "connector_insert", "kitting_pocket", "bulk_sweep"])
+def test_scripted_solves_some_seeds(fam):
+    ok = 0
+    for seed in range(3):
+        env = make_env(fam)
+        env.reset(task(fam, seed))
+        while True:
+            c = env.scripted()
+            if c is None:
+                break
+            out = env.execute(c)
+            if out.done:
+                break
+        ok += env.success()
+    assert ok >= 1
+
+
+# ------------------------------------------------------------------ splits
+def test_splits_by_root_seed_disjoint():
+    tr = {t.seed for t in make_tasks("singulation", "train", 50)}
+    va = {t.seed for t in make_tasks("singulation", "val", 20)}
+    te = {t.seed for t in make_tasks("singulation", "test", 20)}
+    assert not (tr & va) and not (tr & te) and not (va & te)
+    assert all(seed_bucket(s) == "train" for s in tr)
+    for fam in HELDOUT_FAMILIES.values():
+        with pytest.raises(ValueError):
+            make_tasks(fam, "train", 1)
+
+
+def test_heldout_layout_rotates_station():
+    a, b = make_env("peg_insert"), make_env("peg_insert")
+    a.reset(task("peg_insert", 11))
+    b.reset(TaskSpec("peg_insert", "fine", 11, "probe", "train", dict(layout="rot180")))
+    ra, rb = a.region("hole")["center"], b.region("hole")["center"]
+    assert np.allclose([ra[0], ra[1]], [-rb[0], -rb[1]], atol=1e-9)

@@ -1,0 +1,20 @@
+{
+ "stub_prior_coulomb_mu0.5": {
+  "n": 30,
+  "success": 28,
+  "mean_final_dist": 0.016511357533907485,
+  "mean_pushes": 2.433333333333333
+ },
+ "analytic_coulomb_ls_friction": {
+  "n": 30,
+  "success": 27,
+  "mean_final_dist": 0.021342259702378557,
+  "mean_pushes": 3.7666666666666666
+ },
+ "ORACLE_true_friction_coulomb": {
+  "n": 30,
+  "success": 28,
+  "mean_final_dist": 0.016309455645170577,
+  "mean_pushes": 2.3333333333333335
+ }
+}

@@ -1,0 +1,211 @@
+{
+ "slide": {
+  "fd": {
+   "mass": {
+    "outcome": "travel",
+    "n": 150,
+    "n_sig": 0,
+    "sign_agree": NaN,
+    "corr": -0.08088748199415045,
+    "mean_abs_sim": 4.526804977407058e-05,
+    "mean_abs_model": 0.002377532422542572,
+    "ratio_median": NaN,
+    "slope": -0.9933321203719913
+   },
+   "friction": {
+    "outcome": "travel",
+    "n": 150,
+    "n_sig": 75,
+    "sign_agree": 1.0,
+    "corr": 0.873554023801993,
+    "mean_abs_sim": 0.02866082744478869,
+    "mean_abs_model": 0.013844127766788006,
+    "ratio_median": 0.7735110330866055,
+    "slope": 0.32389114631502647
+   }
+  },
+  "closed_loop": {
+   "latent": "friction",
+   "delta": 1.0,
+   "n": 50,
+   "outcome": "travel",
+   "outcome_diff_mean": 0.004296461641788482,
+   "outcome_sign_frac": 0.56
+  }
+ },
+ "lift": {
+  "fd": {
+   "mass": {
+    "outcome": "success",
+    "n": 150,
+    "n_sig": 31,
+    "sign_agree": 1.0,
+    "corr": 0.8919361831389382,
+    "mean_abs_sim": 0.20125,
+    "mean_abs_model": 0.14928217232227325,
+    "ratio_median": 0.9238482713699341,
+    "slope": 0.7277817397476323
+   },
+   "grip_friction": {
+    "outcome": "success",
+    "n": 150,
+    "n_sig": 4,
+    "sign_agree": 1.0,
+    "corr": 0.2953073202514033,
+    "mean_abs_sim": 0.020416666666666666,
+    "mean_abs_model": 0.014065202325582504,
+    "ratio_median": 0.20769602060317993,
+    "slope": 0.1426213020156047
+   },
+   "stiffness": {
+    "outcome": "success",
+    "n": 150,
+    "n_sig": 0,
+    "sign_agree": NaN,
+    "corr": NaN,
+    "mean_abs_sim": 0.0,
+    "mean_abs_model": 0.015987107530236244,
+    "ratio_median": NaN,
+    "slope": 0.0
+   }
+  },
+  "closed_loop": {
+   "latent": "mass",
+   "delta": 1.0,
+   "n": 50,
+   "outcome": "success",
+   "outcome_diff_mean": 0.08,
+   "outcome_sign_frac": 1.0,
+   "param": "grip_force",
+   "param_diff_mean": 10.597948726510628,
+   "param_sign_frac": 1.0
+  }
+ },
+ "insert": {
+  "fd": {
+   "offset_x": {
+    "outcome": "success",
+    "n": 150,
+    "n_sig": 65,
+    "sign_agree": 0.9846153846153847,
+    "corr": 0.8963186522313586,
+    "mean_abs_sim": 0.43333333333333335,
+    "mean_abs_model": 0.3129650354385376,
+    "ratio_median": 0.5930377244949341,
+    "slope": 0.5578947291924403
+   },
+   "offset_y": {
+    "outcome": "success",
+    "n": 150,
+    "n_sig": 54,
+    "sign_agree": 1.0,
+    "corr": 0.880476014439103,
+    "mean_abs_sim": 0.36,
+    "mean_abs_model": 0.2576359510421753,
+    "ratio_median": 0.542935848236084,
+    "slope": 0.5192596708182935
+   },
+   "clearance": {
+    "outcome": "success",
+    "n": 150,
+    "n_sig": 11,
+    "sign_agree": 1.0,
+    "corr": 0.3803803685248554,
+    "mean_abs_sim": 0.07333333333333333,
+    "mean_abs_model": 0.04238373413681984,
+    "ratio_median": 0.08556605875492096,
+    "slope": 0.09902911159125241
+   },
+   "stiffness": {
+    "outcome": "success",
+    "n": 150,
+    "n_sig": 0,
+    "sign_agree": NaN,
+    "corr": NaN,
+    "mean_abs_sim": 0.0,
+    "mean_abs_model": 0.01652652397751808,
+    "ratio_median": NaN,
+    "slope": 0.0
+   }
+  },
+  "closed_loop": {
+   "latent": "offset_x",
+   "delta": 1.0,
+   "n": 50,
+   "outcome": "success",
+   "outcome_diff_mean": 0.1,
+   "outcome_sign_frac": 0.6190476190476191,
+   "param": "aim_x",
+   "param_diff_mean": 0.004707410511403971,
+   "param_sign_frac": 1.0
+  }
+ },
+ "drawer": {
+  "fd": {
+   "damping": {
+    "outcome": "opening",
+    "n": 150,
+    "n_sig": 45,
+    "sign_agree": 1.0,
+    "corr": 0.8716739079327263,
+    "mean_abs_sim": 0.01672612689008626,
+    "mean_abs_model": 0.01941019855439663,
+    "ratio_median": 0.9869236253771317,
+    "slope": 0.7267962579637844
+   },
+   "breakaway": {
+    "outcome": "opening",
+    "n": 150,
+    "n_sig": 38,
+    "sign_agree": 0.8947368421052632,
+    "corr": 0.8861791964099373,
+    "mean_abs_sim": 0.03452393651474267,
+    "mean_abs_model": 0.016545400023460388,
+    "ratio_median": 0.34590293664102045,
+    "slope": 0.38112769241995825
+   }
+  },
+  "closed_loop": {
+   "latent": "damping",
+   "delta": 1.0,
+   "n": 50,
+   "outcome": "opening",
+   "outcome_diff_mean": 0.036117439642548564,
+   "outcome_sign_frac": 1.0
+  }
+ },
+ "sweep": {
+  "fd": {
+   "bulk_friction": {
+    "outcome": "progress",
+    "n": 150,
+    "n_sig": 13,
+    "sign_agree": 0.6153846153846154,
+    "corr": 0.21881482684174158,
+    "mean_abs_sim": 0.016038436127322104,
+    "mean_abs_model": 0.012092885561287403,
+    "ratio_median": 0.08878705562810121,
+    "slope": 0.044542861595438576
+   },
+   "mass": {
+    "outcome": "progress",
+    "n": 150,
+    "n_sig": 0,
+    "sign_agree": NaN,
+    "corr": NaN,
+    "mean_abs_sim": 0.0,
+    "mean_abs_model": 0.029235007241368294,
+    "ratio_median": NaN,
+    "slope": 0.0
+   }
+  },
+  "closed_loop": {
+   "latent": "bulk_friction",
+   "delta": 1.0,
+   "n": 50,
+   "outcome": "progress",
+   "outcome_diff_mean": 0.0,
+   "outcome_sign_frac": NaN
+  }
+ }
+}

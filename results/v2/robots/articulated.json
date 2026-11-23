@@ -1,0 +1,574 @@
+{
+ "drawer_open/panda": {
+  "success": 0.16666666666666666,
+  "rows": [
+   {
+    "seed": 0,
+    "status": "done",
+    "success": false,
+    "metrics": {
+     "progress": 0.814467596060543,
+     "progress_delta": 0.814467596060543,
+     "n_calls": 1,
+     "t": 7.411999999999406,
+     "collisions": 3,
+     "integrity_violations": 0,
+     "drops": 0,
+     "max_robot_contact_n": 340.87349345073346,
+     "effort_cost": 71747.70110455141,
+     "fatal": false
+    },
+    "params": {
+     "grip_force": 51.15435908901996,
+     "travel": 0.20121293183933003,
+     "speed": 0.37559610090381235
+    },
+    "wall": 2.492854356765747
+   },
+   {
+    "seed": 1,
+    "status": "done",
+    "success": false,
+    "metrics": {
+     "progress": 0.7717478399595964,
+     "progress_delta": 0.7717478399595964,
+     "n_calls": 1,
+     "t": 8.909999999999645,
+     "collisions": 0,
+     "integrity_violations": 0,
+     "drops": 0,
+     "max_robot_contact_n": 51.6511757072612,
+     "effort_cost": 2384.6754717067556,
+     "fatal": false
+    },
+    "params": {
+     "grip_force": 53.62305434652439,
+     "travel": 0.21157882837540898,
+     "speed": 0.08333905670626449
+    },
+    "wall": 2.4438812732696533
+   },
+   {
+    "seed": 2,
+    "status": "done",
+    "success": false,
+    "metrics": {
+     "progress": 0.7733610382973626,
+     "progress_delta": 0.7733610382973626,
+     "n_calls": 1,
+     "t": 7.4319999999994035,
+     "collisions": 0,
+     "integrity_violations": 0,
+     "drops": 0,
+     "max_robot_contact_n": 54.74782223298159,
+     "effort_cost": 5408.377316260792,
+     "fatal": false
+    },
+    "params": {
+     "grip_force": 65.15251793104106,
+     "travel": 0.214464111923925,
+     "speed": 0.2827339842545613
+    },
+    "wall": 2.028252124786377
+   },
+   {
+    "seed": 3,
+    "status": "done",
+    "success": false,
+    "metrics": {
+     "progress": 0.4100598318016774,
+     "progress_delta": 0.4100598318016774,
+     "n_calls": 1,
+     "t": 9.349999999999792,
+     "collisions": 0,
+     "integrity_violations": 0,
+     "drops": 0,
+     "max_robot_contact_n": 91.31392479480562,
+     "effort_cost": 10666.773312927591,
+     "fatal": false
+    },
+    "params": {
+     "grip_force": 77.0770188097173,
+     "travel": 0.19934163139326316,
+     "speed": 0.06785837111116752
+    },
+    "wall": 2.7407288551330566
+   },
+   {
+    "seed": 4,
+    "status": "done",
+    "success": false,
+    "metrics": {
+     "progress": 0.8150274958373019,
+     "progress_delta": 0.8150274958373019,
+     "n_calls": 1,
+     "t": 7.325999999999415,
+     "collisions": 0,
+     "integrity_violations": 0,
+     "drops": 0,
+     "max_robot_contact_n": 55.6310399055693,
+     "effort_cost": 6262.649839979379,
+     "fatal": false
+    },
+    "params": {
+     "grip_force": 40.123950301980734,
+     "travel": 0.2147185877837599,
+     "speed": 0.37373976347320514
+    },
+    "wall": 1.062021017074585
+   },
+   {
+    "seed": 5,
+    "status": "done",
+    "success": true,
+    "metrics": {
+     "progress": 1.0,
+     "progress_delta": 1.0,
+     "n_calls": 1,
+     "t": 7.4319999999994035,
+     "collisions": 0,
+     "integrity_violations": 0,
+     "drops": 0,
+     "max_robot_contact_n": 53.27889683888704,
+     "effort_cost": 4988.628089355452,
+     "fatal": false
+    },
+    "params": {
+     "grip_force": 46.320017461388495,
+     "travel": 0.2156116528540734,
+     "speed": 0.3621407150001631
+    },
+    "wall": 1.1337928771972656
+   }
+  ]
+ },
+ "drawer_open/ur5e_2f85": {
+  "success": 1.0,
+  "rows": [
+   {
+    "seed": 0,
+    "status": "done",
+    "success": true,
+    "metrics": {
+     "progress": 1.0,
+     "progress_delta": 1.0,
+     "n_calls": 1,
+     "t": 8.365999999999463,
+     "collisions": 0,
+     "integrity_violations": 0,
+     "drops": 0,
+     "max_robot_contact_n": 40.03426579422737,
+     "effort_cost": 215.64562154336858,
+     "fatal": false
+    },
+    "params": {
+     "grip_force": 51.15435908901996,
+     "travel": 0.20121293183933003,
+     "speed": 0.37559610090381235
+    },
+    "wall": 1.0310125350952148
+   },
+   {
+    "seed": 1,
+    "status": "done",
+    "success": true,
+    "metrics": {
+     "progress": 1.0,
+     "progress_delta": 1.0,
+     "n_calls": 1,
+     "t": 9.841999999999956,
+     "collisions": 0,
+     "integrity_violations": 0,
+     "drops": 0,
+     "max_robot_contact_n": 40.03426579422737,
+     "effort_cost": 275.96382819432495,
+     "fatal": false
+    },
+    "params": {
+     "grip_force": 53.62305434652439,
+     "travel": 0.21157882837540898,
+     "speed": 0.08333905670626449
+    },
+    "wall": 2.600116729736328
+   },
+   {
+    "seed": 2,
+    "status": "done",
+    "success": true,
+    "metrics": {
+     "progress": 1.0,
+     "progress_delta": 1.0,
+     "n_calls": 1,
+     "t": 8.361999999999462,
+     "collisions": 1,
+     "integrity_violations": 0,
+     "drops": 0,
+     "max_robot_contact_n": 208.21143494319557,
+     "effort_cost": 5385.092283723793,
+     "fatal": false
+    },
+    "params": {
+     "grip_force": 65.15251793104106,
+     "travel": 0.214464111923925,
+     "speed": 0.2827339842545613
+    },
+    "wall": 2.251891851425171
+   },
+   {
+    "seed": 3,
+    "status": "done",
+    "success": true,
+    "metrics": {
+     "progress": 1.0,
+     "progress_delta": 1.0,
+     "n_calls": 1,
+     "t": 10.350000000000126,
+     "collisions": 0,
+     "integrity_violations": 0,
+     "drops": 0,
+     "max_robot_contact_n": 40.03426579422737,
+     "effort_cost": 1302.861695546229,
+     "fatal": false
+    },
+    "params": {
+     "grip_force": 77.0770188097173,
+     "travel": 0.19934163139326316,
+     "speed": 0.06785837111116752
+    },
+    "wall": 1.0958459377288818
+   },
+   {
+    "seed": 4,
+    "status": "done",
+    "success": true,
+    "metrics": {
+     "progress": 1.0,
+     "progress_delta": 1.0,
+     "n_calls": 1,
+     "t": 8.279999999999434,
+     "collisions": 0,
+     "integrity_violations": 0,
+     "drops": 0,
+     "max_robot_contact_n": 40.03426579422737,
+     "effort_cost": 425.7279146744,
+     "fatal": false
+    },
+    "params": {
+     "grip_force": 40.123950301980734,
+     "travel": 0.2147185877837599,
+     "speed": 0.37373976347320514
+    },
+    "wall": 1.2625303268432617
+   },
+   {
+    "seed": 5,
+    "status": "done",
+    "success": true,
+    "metrics": {
+     "progress": 1.0,
+     "progress_delta": 1.0,
+     "n_calls": 1,
+     "t": 8.433999999999486,
+     "collisions": 0,
+     "integrity_violations": 0,
+     "drops": 0,
+     "max_robot_contact_n": 40.03426579422737,
+     "effort_cost": 1722.0939510555413,
+     "fatal": false
+    },
+    "params": {
+     "grip_force": 46.320017461388495,
+     "travel": 0.2156116528540734,
+     "speed": 0.3621407150001631
+    },
+    "wall": 2.21785044670105
+   }
+  ]
+ },
+ "door_open/panda": {
+  "success": 0.0,
+  "rows": [
+   {
+    "seed": 0,
+    "status": "grasp_failed",
+    "success": false,
+    "metrics": {
+     "progress": 0.0,
+     "progress_delta": 0.0,
+     "n_calls": 1,
+     "t": 6.139999999999546,
+     "collisions": 1,
+     "integrity_violations": 0,
+     "drops": 0,
+     "max_robot_contact_n": 166.97746010308384,
+     "effort_cost": 6490.68703001945,
+     "fatal": false
+    },
+    "params": {
+     "grip_force": 51.15435908901996,
+     "travel": 1.4563341846537003,
+     "speed": 0.47031958218031233
+    },
+    "wall": 1.7585177421569824
+   },
+   {
+    "seed": 1,
+    "status": "grasp_failed",
+    "success": false,
+    "metrics": {
+     "progress": 0.0,
+     "progress_delta": 0.0,
+     "n_calls": 1,
+     "t": 6.183999999999541,
+     "collisions": 0,
+     "integrity_violations": 0,
+     "drops": 0,
+     "max_robot_contact_n": 90.2562102993026,
+     "effort_cost": 132.17091040357852,
+     "fatal": false
+    },
+    "params": {
+     "grip_force": 53.62305434652439,
+     "travel": 1.535602805223716,
+     "speed": 0.11487182572383518
+    },
+    "wall": 1.4300282001495361
+   },
+   {
+    "seed": 2,
+    "status": "grasp_failed",
+    "success": false,
+    "metrics": {
+     "progress": 0.0,
+     "progress_delta": 0.0,
+     "n_calls": 1,
+     "t": 5.3799999999996295,
+     "collisions": 0,
+     "integrity_violations": 0,
+     "drops": 0,
+     "max_robot_contact_n": 110.12271144247926,
+     "effort_cost": 2383.499928701779,
+     "fatal": false
+    },
+    "params": {
+     "grip_force": 65.15251793104106,
+     "travel": 1.5576667382417797,
+     "speed": 0.3573791700393314
+    },
+    "wall": 1.5161020755767822
+   },
+   {
+    "seed": 3,
+    "status": "grasp_failed",
+    "success": false,
+    "metrics": {
+     "progress": 0.0,
+     "progress_delta": 0.0,
+     "n_calls": 1,
+     "t": 4.487999999999728,
+     "collisions": 0,
+     "integrity_violations": 0,
+     "drops": 0,
+     "max_robot_contact_n": 123.55332147330881,
+     "effort_cost": 17507.50689095216,
+     "fatal": false
+    },
+    "params": {
+     "grip_force": 77.0770188097173,
+     "travel": 1.44202424006613,
+     "speed": 0.09604396486493348
+    },
+    "wall": 1.2088508605957031
+   },
+   {
+    "seed": 4,
+    "status": "grasp_failed",
+    "success": false,
+    "metrics": {
+     "progress": 0.0,
+     "progress_delta": 0.0,
+     "n_calls": 1,
+     "t": 5.3079999999996375,
+     "collisions": 0,
+     "integrity_violations": 0,
+     "drops": 0,
+     "max_robot_contact_n": 133.52789657463597,
+     "effort_cost": 3558.186863033731,
+     "fatal": false
+    },
+    "params": {
+     "grip_force": 40.123950301980734,
+     "travel": 1.5596127301111053,
+     "speed": 0.46806187449443876
+    },
+    "wall": 1.4700703620910645
+   },
+   {
+    "seed": 5,
+    "status": "grasp_failed",
+    "success": false,
+    "metrics": {
+     "progress": 0.0,
+     "progress_delta": 0.0,
+     "n_calls": 1,
+     "t": 6.161999999999543,
+     "collisions": 0,
+     "integrity_violations": 0,
+     "drops": 0,
+     "max_robot_contact_n": 87.56335984168393,
+     "effort_cost": 120.01557947917867,
+     "fatal": false
+    },
+    "params": {
+     "grip_force": 46.320017461388495,
+     "travel": 1.566442051237032,
+     "speed": 0.45395492364884693
+    },
+    "wall": 1.7424437999725342
+   }
+  ]
+ },
+ "door_open/ur5e_2f85": {
+  "success": 0.3333333333333333,
+  "rows": [
+   {
+    "seed": 0,
+    "status": "grasp_failed",
+    "success": false,
+    "metrics": {
+     "progress": 0.0,
+     "progress_delta": 0.0,
+     "n_calls": 1,
+     "t": 5.035999999999667,
+     "collisions": 0,
+     "integrity_violations": 0,
+     "drops": 0,
+     "max_robot_contact_n": 52.266491382096916,
+     "effort_cost": 538.8183409271529,
+     "fatal": false
+    },
+    "params": {
+     "grip_force": 51.15435908901996,
+     "travel": 1.4563341846537003,
+     "speed": 0.47031958218031233
+    },
+    "wall": 1.3313207626342773
+   },
+   {
+    "seed": 1,
+    "status": "done",
+    "success": true,
+    "metrics": {
+     "progress": 1.0,
+     "progress_delta": 1.0,
+     "n_calls": 1,
+     "t": 12.016000000000682,
+     "collisions": 0,
+     "integrity_violations": 0,
+     "drops": 0,
+     "max_robot_contact_n": 110.3806757264029,
+     "effort_cost": 6351.5612560862155,
+     "fatal": false
+    },
+    "params": {
+     "grip_force": 53.62305434652439,
+     "travel": 1.535602805223716,
+     "speed": 0.11487182572383518
+    },
+    "wall": 3.3791141510009766
+   },
+   {
+    "seed": 2,
+    "status": "grasp_failed",
+    "success": false,
+    "metrics": {
+     "progress": 0.0,
+     "progress_delta": 0.0,
+     "n_calls": 1,
+     "t": 5.045999999999666,
+     "collisions": 0,
+     "integrity_violations": 0,
+     "drops": 0,
+     "max_robot_contact_n": 40.03426579422737,
+     "effort_cost": 491.4447772248172,
+     "fatal": false
+    },
+    "params": {
+     "grip_force": 65.15251793104106,
+     "travel": 1.5576667382417797,
+     "speed": 0.3573791700393314
+    },
+    "wall": 1.3772106170654297
+   },
+   {
+    "seed": 3,
+    "status": "grasp_failed",
+    "success": false,
+    "metrics": {
+     "progress": 0.0,
+     "progress_delta": 0.0,
+     "n_calls": 1,
+     "t": 5.0079999999996705,
+     "collisions": 0,
+     "integrity_violations": 0,
+     "drops": 0,
+     "max_robot_contact_n": 62.40159071366791,
+     "effort_cost": 556.1103359321087,
+     "fatal": false
+    },
+    "params": {
+     "grip_force": 77.0770188097173,
+     "travel": 1.44202424006613,
+     "speed": 0.09604396486493348
+    },
+    "wall": 1.3377900123596191
+   },
+   {
+    "seed": 4,
+    "status": "grasp_failed",
+    "success": false,
+    "metrics": {
+     "progress": 0.0,
+     "progress_delta": 0.0,
+     "n_calls": 1,
+     "t": 4.915999999999681,
+     "collisions": 0,
+     "integrity_violations": 0,
+     "drops": 0,
+     "max_robot_contact_n": 52.2333613002618,
+     "effort_cost": 502.6070877761067,
+     "fatal": false
+    },
+    "params": {
+     "grip_force": 40.123950301980734,
+     "travel": 1.5596127301111053,
+     "speed": 0.46806187449443876
+    },
+    "wall": 1.3771581649780273
+   },
+   {
+    "seed": 5,
+    "status": "done",
+    "success": true,
+    "metrics": {
+     "progress": 1.0,
+     "progress_delta": 1.0,
+     "n_calls": 1,
+     "t": 9.379999999999802,
+     "collisions": 0,
+     "integrity_violations": 0,
+     "drops": 0,
+     "max_robot_contact_n": 116.46721811796147,
+     "effort_cost": 3199.751164463004,
+     "fatal": false
+    },
+    "params": {
+     "grip_force": 46.320017461388495,
+     "travel": 1.566442051237032,
+     "speed": 0.45395492364884693
+    },
+    "wall": 2.2999424934387207
+   }
+  ]
+ }
+}

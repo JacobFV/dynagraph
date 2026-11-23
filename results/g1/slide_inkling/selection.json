@@ -1,0 +1,18 @@
+{
+ "utc": "2026-11-23T11:02:22Z",
+ "rule": "min checkpoint['val'] nll per variant",
+ "picks": {
+  "i00": {
+   "val_nll": -0.12707593935192563,
+   "seed": 1,
+   "path": "results/checkpoints/inkling-main-i00-s1.pt"
+  },
+  "i11": {
+   "val_nll": -0.36121190153062344,
+   "seed": 1,
+   "path": "results/checkpoints/inkling-main-i11-s1.pt"
+  }
+ },
+ "seeds": "0-29",
+ "label": "inkling core in the loop, sim paused during inference"
+}

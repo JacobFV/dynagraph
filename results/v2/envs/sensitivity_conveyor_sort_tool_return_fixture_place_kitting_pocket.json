@@ -1,0 +1,739 @@
+{
+ "rows": [
+  {
+   "family": "conveyor_sort",
+   "protocol": "belt speed m/s|intercept assumes 0.075",
+   "value": 0.03,
+   "seed": 1000,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 1.6455955505371094
+  },
+  {
+   "family": "conveyor_sort",
+   "protocol": "belt speed m/s|intercept assumes 0.075",
+   "value": 0.03,
+   "seed": 1001,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 1.6308977603912354
+  },
+  {
+   "family": "conveyor_sort",
+   "protocol": "belt speed m/s|intercept assumes 0.075",
+   "value": 0.05,
+   "seed": 1000,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 1.148460865020752
+  },
+  {
+   "family": "conveyor_sort",
+   "protocol": "belt speed m/s|intercept assumes 0.075",
+   "value": 0.05,
+   "seed": 1001,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 1.1300640106201172
+  },
+  {
+   "family": "conveyor_sort",
+   "protocol": "belt speed m/s|intercept assumes 0.075",
+   "value": 0.075,
+   "seed": 1000,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 1.0124914646148682
+  },
+  {
+   "family": "conveyor_sort",
+   "protocol": "belt speed m/s|intercept assumes 0.075",
+   "value": 0.075,
+   "seed": 1001,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.9799373149871826
+  },
+  {
+   "family": "conveyor_sort",
+   "protocol": "belt speed m/s|intercept assumes 0.075",
+   "value": 0.1,
+   "seed": 1000,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.7366359233856201
+  },
+  {
+   "family": "conveyor_sort",
+   "protocol": "belt speed m/s|intercept assumes 0.075",
+   "value": 0.1,
+   "seed": 1001,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.7658746242523193
+  },
+  {
+   "family": "conveyor_sort",
+   "protocol": "belt speed m/s|intercept assumes 0.075",
+   "value": 0.12,
+   "seed": 1000,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.6496119499206543
+  },
+  {
+   "family": "conveyor_sort",
+   "protocol": "belt speed m/s|intercept assumes 0.075",
+   "value": 0.12,
+   "seed": 1001,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.6522722244262695
+  },
+  {
+   "family": "tool_return",
+   "protocol": "head mass kg|imbalance 0.5 (CoM 17 mm), grip 12 N, mu_g 0.4",
+   "value": 0.1,
+   "seed": 1000,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 2.962815523147583
+  },
+  {
+   "family": "tool_return",
+   "protocol": "head mass kg|imbalance 0.5 (CoM 17 mm), grip 12 N, mu_g 0.4",
+   "value": 0.1,
+   "seed": 1001,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 2.1334526538848877
+  },
+  {
+   "family": "tool_return",
+   "protocol": "head mass kg|imbalance 0.5 (CoM 17 mm), grip 12 N, mu_g 0.4",
+   "value": 0.3,
+   "seed": 1000,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 2.432935953140259
+  },
+  {
+   "family": "tool_return",
+   "protocol": "head mass kg|imbalance 0.5 (CoM 17 mm), grip 12 N, mu_g 0.4",
+   "value": 0.3,
+   "seed": 1001,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 3.0448832511901855
+  },
+  {
+   "family": "tool_return",
+   "protocol": "head mass kg|imbalance 0.5 (CoM 17 mm), grip 12 N, mu_g 0.4",
+   "value": 0.5,
+   "seed": 1000,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 2.841259002685547
+  },
+  {
+   "family": "tool_return",
+   "protocol": "head mass kg|imbalance 0.5 (CoM 17 mm), grip 12 N, mu_g 0.4",
+   "value": 0.5,
+   "seed": 1001,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 2.806269407272339
+  },
+  {
+   "family": "tool_return",
+   "protocol": "head mass kg|imbalance 0.5 (CoM 17 mm), grip 12 N, mu_g 0.4",
+   "value": 0.7,
+   "seed": 1000,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 1.0636205673217773
+  },
+  {
+   "family": "tool_return",
+   "protocol": "head mass kg|imbalance 0.5 (CoM 17 mm), grip 12 N, mu_g 0.4",
+   "value": 0.7,
+   "seed": 1001,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.4130256175994873
+  },
+  {
+   "family": "tool_return",
+   "protocol": "head mass kg|imbalance 0.5 (CoM 17 mm), grip 12 N, mu_g 0.4",
+   "value": 0.9,
+   "seed": 1000,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.3973839282989502
+  },
+  {
+   "family": "tool_return",
+   "protocol": "head mass kg|imbalance 0.5 (CoM 17 mm), grip 12 N, mu_g 0.4",
+   "value": 0.9,
+   "seed": 1001,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.7338175773620605
+  },
+  {
+   "family": "fixture_place",
+   "protocol": "mu_grip|mass 1 kg, grip 20 N, fast carry 0.8 m/s",
+   "value": [
+    "mu_grip",
+    0.15
+   ],
+   "seed": 1000,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.2940094470977783
+  },
+  {
+   "family": "fixture_place",
+   "protocol": "mu_grip|mass 1 kg, grip 20 N, fast carry 0.8 m/s",
+   "value": [
+    "mu_grip",
+    0.15
+   ],
+   "seed": 1001,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.8609414100646973
+  },
+  {
+   "family": "fixture_place",
+   "protocol": "mu_grip|mass 1 kg, grip 20 N, fast carry 0.8 m/s",
+   "value": [
+    "mu_grip",
+    0.25
+   ],
+   "seed": 1000,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.9401400089263916
+  },
+  {
+   "family": "fixture_place",
+   "protocol": "mu_grip|mass 1 kg, grip 20 N, fast carry 0.8 m/s",
+   "value": [
+    "mu_grip",
+    0.25
+   ],
+   "seed": 1001,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.27300572395324707
+  },
+  {
+   "family": "fixture_place",
+   "protocol": "mu_grip|mass 1 kg, grip 20 N, fast carry 0.8 m/s",
+   "value": [
+    "mu_grip",
+    0.4
+   ],
+   "seed": 1000,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 0.43947649002075195
+  },
+  {
+   "family": "fixture_place",
+   "protocol": "mu_grip|mass 1 kg, grip 20 N, fast carry 0.8 m/s",
+   "value": [
+    "mu_grip",
+    0.4
+   ],
+   "seed": 1001,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 0.41125035285949707
+  },
+  {
+   "family": "fixture_place",
+   "protocol": "mu_grip|mass 1 kg, grip 20 N, fast carry 0.8 m/s",
+   "value": [
+    "mu_grip",
+    0.7
+   ],
+   "seed": 1000,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 0.43175315856933594
+  },
+  {
+   "family": "fixture_place",
+   "protocol": "mu_grip|mass 1 kg, grip 20 N, fast carry 0.8 m/s",
+   "value": [
+    "mu_grip",
+    0.7
+   ],
+   "seed": 1001,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 0.41254544258117676
+  },
+  {
+   "family": "fixture_place",
+   "protocol": "mu_grip|mass 1 kg, grip 20 N, fast carry 0.8 m/s",
+   "value": [
+    "mu_grip",
+    1.0
+   ],
+   "seed": 1000,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 0.4342367649078369
+  },
+  {
+   "family": "fixture_place",
+   "protocol": "mu_grip|mass 1 kg, grip 20 N, fast carry 0.8 m/s",
+   "value": [
+    "mu_grip",
+    1.0
+   ],
+   "seed": 1001,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 0.40894603729248047
+  },
+  {
+   "family": "fixture_place",
+   "protocol": "mass kg|mu_g 0.6, grip 20 N, fast carry",
+   "value": [
+    "mass",
+    0.3
+   ],
+   "seed": 1000,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 1.3385801315307617
+  },
+  {
+   "family": "fixture_place",
+   "protocol": "mass kg|mu_g 0.6, grip 20 N, fast carry",
+   "value": [
+    "mass",
+    0.3
+   ],
+   "seed": 1001,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 0.4150688648223877
+  },
+  {
+   "family": "fixture_place",
+   "protocol": "mass kg|mu_g 0.6, grip 20 N, fast carry",
+   "value": [
+    "mass",
+    1.0
+   ],
+   "seed": 1000,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 0.4277198314666748
+  },
+  {
+   "family": "fixture_place",
+   "protocol": "mass kg|mu_g 0.6, grip 20 N, fast carry",
+   "value": [
+    "mass",
+    1.0
+   ],
+   "seed": 1001,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 0.6910622119903564
+  },
+  {
+   "family": "fixture_place",
+   "protocol": "mass kg|mu_g 0.6, grip 20 N, fast carry",
+   "value": [
+    "mass",
+    2.0
+   ],
+   "seed": 1000,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 0.4591848850250244
+  },
+  {
+   "family": "fixture_place",
+   "protocol": "mass kg|mu_g 0.6, grip 20 N, fast carry",
+   "value": [
+    "mass",
+    2.0
+   ],
+   "seed": 1001,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.26430583000183105
+  },
+  {
+   "family": "fixture_place",
+   "protocol": "mass kg|mu_g 0.6, grip 20 N, fast carry",
+   "value": [
+    "mass",
+    3.0
+   ],
+   "seed": 1000,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.27700352668762207
+  },
+  {
+   "family": "fixture_place",
+   "protocol": "mass kg|mu_g 0.6, grip 20 N, fast carry",
+   "value": [
+    "mass",
+    3.0
+   ],
+   "seed": 1001,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.2634742259979248
+  },
+  {
+   "family": "fixture_place",
+   "protocol": "mass kg|mu_g 0.6, grip 20 N, fast carry",
+   "value": [
+    "mass",
+    4.0
+   ],
+   "seed": 1000,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.2752225399017334
+  },
+  {
+   "family": "fixture_place",
+   "protocol": "mass kg|mu_g 0.6, grip 20 N, fast carry",
+   "value": [
+    "mass",
+    4.0
+   ],
+   "seed": 1001,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.27001070976257324
+  },
+  {
+   "family": "kitting_pocket",
+   "protocol": "pocket clearance m|plain place (no compliant insert)",
+   "value": 0.001,
+   "seed": 1000,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.6214795112609863
+  },
+  {
+   "family": "kitting_pocket",
+   "protocol": "pocket clearance m|plain place (no compliant insert)",
+   "value": 0.001,
+   "seed": 1001,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.6405477523803711
+  },
+  {
+   "family": "kitting_pocket",
+   "protocol": "pocket clearance m|plain place (no compliant insert)",
+   "value": 0.0015,
+   "seed": 1000,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.6135656833648682
+  },
+  {
+   "family": "kitting_pocket",
+   "protocol": "pocket clearance m|plain place (no compliant insert)",
+   "value": 0.0015,
+   "seed": 1001,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.6507399082183838
+  },
+  {
+   "family": "kitting_pocket",
+   "protocol": "pocket clearance m|plain place (no compliant insert)",
+   "value": 0.002,
+   "seed": 1000,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.6261434555053711
+  },
+  {
+   "family": "kitting_pocket",
+   "protocol": "pocket clearance m|plain place (no compliant insert)",
+   "value": 0.002,
+   "seed": 1001,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.8652431964874268
+  },
+  {
+   "family": "kitting_pocket",
+   "protocol": "pocket clearance m|plain place (no compliant insert)",
+   "value": 0.003,
+   "seed": 1000,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 0.619189977645874
+  },
+  {
+   "family": "kitting_pocket",
+   "protocol": "pocket clearance m|plain place (no compliant insert)",
+   "value": 0.003,
+   "seed": 1001,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.6418559551239014
+  },
+  {
+   "family": "kitting_pocket",
+   "protocol": "pocket clearance m|plain place (no compliant insert)",
+   "value": 0.004,
+   "seed": 1000,
+   "outcome": 1.0,
+   "error": null,
+   "wall": 0.6112778186798096
+  },
+  {
+   "family": "kitting_pocket",
+   "protocol": "pocket clearance m|plain place (no compliant insert)",
+   "value": 0.004,
+   "seed": 1001,
+   "outcome": 0.0,
+   "error": null,
+   "wall": 0.6505062580108643
+  }
+ ],
+ "summary": [
+  {
+   "family": "conveyor_sort",
+   "protocol": "belt speed m/s|intercept assumes 0.075",
+   "outcome": "P(pick)",
+   "points": [
+    {
+     "value": 0.03,
+     "mean": 0.0,
+     "std": 0.0,
+     "n": 2
+    },
+    {
+     "value": 0.05,
+     "mean": 0.0,
+     "std": 0.0,
+     "n": 2
+    },
+    {
+     "value": 0.075,
+     "mean": 0.0,
+     "std": 0.0,
+     "n": 2
+    },
+    {
+     "value": 0.1,
+     "mean": 0.0,
+     "std": 0.0,
+     "n": 2
+    },
+    {
+     "value": 0.12,
+     "mean": 0.0,
+     "std": 0.0,
+     "n": 2
+    }
+   ],
+   "range": 0.0
+  },
+  {
+   "family": "tool_return",
+   "protocol": "head mass kg|imbalance 0.5 (CoM 17 mm), grip 12 N, mu_g 0.4",
+   "outcome": "P(success)",
+   "points": [
+    {
+     "value": 0.1,
+     "mean": 0.0,
+     "std": 0.0,
+     "n": 2
+    },
+    {
+     "value": 0.3,
+     "mean": 0.0,
+     "std": 0.0,
+     "n": 2
+    },
+    {
+     "value": 0.5,
+     "mean": 0.5,
+     "std": 0.5,
+     "n": 2
+    },
+    {
+     "value": 0.7,
+     "mean": 0.0,
+     "std": 0.0,
+     "n": 2
+    },
+    {
+     "value": 0.9,
+     "mean": 0.0,
+     "std": 0.0,
+     "n": 2
+    }
+   ],
+   "range": 0.5
+  },
+  {
+   "family": "fixture_place",
+   "protocol": "mu_grip|mass 1 kg, grip 20 N, fast carry 0.8 m/s",
+   "outcome": "P(+-2mm)",
+   "points": [
+    {
+     "value": [
+      "mu_grip",
+      0.15
+     ],
+     "mean": 0.0,
+     "std": 0.0,
+     "n": 2
+    },
+    {
+     "value": [
+      "mu_grip",
+      0.25
+     ],
+     "mean": 0.0,
+     "std": 0.0,
+     "n": 2
+    },
+    {
+     "value": [
+      "mu_grip",
+      0.4
+     ],
+     "mean": 1.0,
+     "std": 0.0,
+     "n": 2
+    },
+    {
+     "value": [
+      "mu_grip",
+      0.7
+     ],
+     "mean": 1.0,
+     "std": 0.0,
+     "n": 2
+    },
+    {
+     "value": [
+      "mu_grip",
+      1.0
+     ],
+     "mean": 1.0,
+     "std": 0.0,
+     "n": 2
+    }
+   ],
+   "range": 1.0
+  },
+  {
+   "family": "fixture_place",
+   "protocol": "mass kg|mu_g 0.6, grip 20 N, fast carry",
+   "outcome": "P(+-2mm)",
+   "points": [
+    {
+     "value": [
+      "mass",
+      0.3
+     ],
+     "mean": 1.0,
+     "std": 0.0,
+     "n": 2
+    },
+    {
+     "value": [
+      "mass",
+      1.0
+     ],
+     "mean": 1.0,
+     "std": 0.0,
+     "n": 2
+    },
+    {
+     "value": [
+      "mass",
+      2.0
+     ],
+     "mean": 0.5,
+     "std": 0.5,
+     "n": 2
+    },
+    {
+     "value": [
+      "mass",
+      3.0
+     ],
+     "mean": 0.0,
+     "std": 0.0,
+     "n": 2
+    },
+    {
+     "value": [
+      "mass",
+      4.0
+     ],
+     "mean": 0.0,
+     "std": 0.0,
+     "n": 2
+    }
+   ],
+   "range": 1.0
+  },
+  {
+   "family": "kitting_pocket",
+   "protocol": "pocket clearance m|plain place (no compliant insert)",
+   "outcome": "P(seated)",
+   "points": [
+    {
+     "value": 0.001,
+     "mean": 0.0,
+     "std": 0.0,
+     "n": 2
+    },
+    {
+     "value": 0.0015,
+     "mean": 0.0,
+     "std": 0.0,
+     "n": 2
+    },
+    {
+     "value": 0.002,
+     "mean": 0.0,
+     "std": 0.0,
+     "n": 2
+    },
+    {
+     "value": 0.003,
+     "mean": 0.5,
+     "std": 0.5,
+     "n": 2
+    },
+    {
+     "value": 0.004,
+     "mean": 0.5,
+     "std": 0.5,
+     "n": 2
+    }
+   ],
+   "range": 0.5
+  }
+ ],
+ "n_seeds": 2,
+ "wall_s": 7.792603015899658,
+ "robot": "probe (test-only)"
+}

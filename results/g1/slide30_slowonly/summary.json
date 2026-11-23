@@ -1,0 +1,28 @@
+{
+ "ORACLE_true_friction_coulomb": {
+  "n": 30,
+  "success": 4,
+  "mean_final_dist_cm": 16.659212865740194,
+  "median_final_dist_cm": 10.50948963595024,
+  "mean_pushes": 3.0,
+  "mean_objective": 0.31659212865740194,
+  "dist_after_first_push_cm": 16.669008619307117,
+  "frac_fast_chosen": 0.0,
+  "mean_latency_ms": 1.2461468014710895,
+  "rtf": 14.326984188174011,
+  "audit_clean": true
+ },
+ "stub_prior_coulomb_mu0.5": {
+  "n": 30,
+  "success": 4,
+  "mean_final_dist_cm": 16.63816351519284,
+  "median_final_dist_cm": 10.502312487521339,
+  "mean_pushes": 3.0,
+  "mean_objective": 0.3163816351519284,
+  "dist_after_first_push_cm": 16.67631758634638,
+  "frac_fast_chosen": 0.0,
+  "mean_latency_ms": 1.1964717233139608,
+  "rtf": 14.456340571768992,
+  "audit_clean": true
+ }
+}

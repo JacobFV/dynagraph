@@ -1,0 +1,464 @@
+{
+ "summary": {
+  "robot": "ur5e_2f85",
+  "n": 10,
+  "1.0mm": {
+   "success": 1.0,
+   "pick_ok": 1.0,
+   "insert_given_pick": 1.0,
+   "statuses": {
+    "done": 10
+   },
+   "dur": {
+    "n": 10,
+    "mean": 7.649000000001441,
+    "p10": 6.3636000000010196,
+    "p50": 7.522000000001375,
+    "p90": 8.839200000001835,
+    "p95": 9.348600000001996,
+    "max": 9.858000000002157,
+    "min": 6.14400000000095
+   }
+  },
+  "0.5mm": {
+   "success": 1.0,
+   "pick_ok": 1.0,
+   "insert_given_pick": 1.0,
+   "statuses": {
+    "done": 10
+   },
+   "dur": {
+    "n": 10,
+    "mean": 6.949400000001196,
+    "p10": 6.0094000000008645,
+    "p50": 6.857000000001162,
+    "p90": 7.8762000000015195,
+    "p95": 7.994100000001549,
+    "max": 8.11200000000158,
+    "min": 5.9140000000008435
+   }
+  }
+ },
+ "rows": [
+  {
+   "seed": 0,
+   "clearance": 0.001,
+   "pick": "done",
+   "insert": "done",
+   "depth_true": 0.030107456254936122,
+   "lateral": 0.00043596813872406713,
+   "success": true,
+   "searched": true,
+   "dur": 6.3880000000010275,
+   "effort": {
+    "torque_sq": 1.2553703731172443,
+    "torque_rate_sq": 317.29022760040397,
+    "joint_jerk_sq": 174755.79334904507,
+    "energy_j": 28.292488070186607,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.24925817089728525,
+    "cost": 50.74289734876401
+   },
+   "integrity": []
+  },
+  {
+   "seed": 1,
+   "clearance": 0.001,
+   "pick": "done",
+   "insert": "done",
+   "depth_true": 0.03010728262482512,
+   "lateral": 0.00016343521541710426,
+   "success": true,
+   "searched": true,
+   "dur": 9.858000000002157,
+   "effort": {
+    "torque_sq": 1.9706362302550147,
+    "torque_rate_sq": 316.96044436339696,
+    "joint_jerk_sq": 152395.57619708238,
+    "energy_j": 29.23774890200995,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.24922727244966303,
+    "cost": 49.19861577532305
+   },
+   "integrity": []
+  },
+  {
+   "seed": 2,
+   "clearance": 0.001,
+   "pick": "done",
+   "insert": "done",
+   "depth_true": 0.030107755420216143,
+   "lateral": 0.0002542841068332027,
+   "success": true,
+   "searched": true,
+   "dur": 8.666000000001787,
+   "effort": {
+    "torque_sq": 1.7570134586928303,
+    "torque_rate_sq": 317.2108572977099,
+    "joint_jerk_sq": 158222.92209487062,
+    "energy_j": 30.82141297424749,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.24992626309244728,
+    "cost": 49.60860552769336
+   },
+   "integrity": []
+  },
+  {
+   "seed": 3,
+   "clearance": 0.001,
+   "pick": "done",
+   "insert": "done",
+   "depth_true": 0.030107755420216147,
+   "lateral": 0.00042603161692095134,
+   "success": true,
+   "searched": true,
+   "dur": 6.576000000001091,
+   "effort": {
+    "torque_sq": 1.3123019550934478,
+    "torque_rate_sq": 317.27834292549176,
+    "joint_jerk_sq": 159767.53494649814,
+    "energy_j": 29.95805248448699,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.24987792331224112,
+    "cost": 49.316470267137305
+   },
+   "integrity": []
+  },
+  {
+   "seed": 4,
+   "clearance": 0.001,
+   "pick": "done",
+   "insert": "done",
+   "depth_true": 0.030107755420216167,
+   "lateral": 0.0001004812903431644,
+   "success": true,
+   "searched": true,
+   "dur": 7.270000000001314,
+   "effort": {
+    "torque_sq": 1.4338908616547652,
+    "torque_rate_sq": 317.3681585777651,
+    "joint_jerk_sq": 157346.9492994734,
+    "energy_j": 28.244908657432198,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.24985146437385974,
+    "cost": 49.18785073595294
+   },
+   "integrity": []
+  },
+  {
+   "seed": 5,
+   "clearance": 0.001,
+   "pick": "done",
+   "insert": "done",
+   "depth_true": 0.03010755329499036,
+   "lateral": 0.0001537781598940216,
+   "success": true,
+   "searched": true,
+   "dur": 7.472000000001351,
+   "effort": {
+    "torque_sq": 1.4586411198271771,
+    "torque_rate_sq": 316.99959029762914,
+    "joint_jerk_sq": 201697.70243529015,
+    "energy_j": 27.597408658658043,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.249962987132195,
+    "cost": 53.60434447970569
+   },
+   "integrity": []
+  },
+  {
+   "seed": 6,
+   "clearance": 0.001,
+   "pick": "done",
+   "insert": "done",
+   "depth_true": 0.030107755420216164,
+   "lateral": 0.00032703040397144523,
+   "success": true,
+   "searched": true,
+   "dur": 7.818000000001518,
+   "effort": {
+    "torque_sq": 1.5194490637015625,
+    "torque_rate_sq": 375.89207300184154,
+    "joint_jerk_sq": 1494347.1135338403,
+    "energy_j": 27.270874539897704,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.2499568984680027,
+    "cost": 188.81607646266875
+   },
+   "integrity": []
+  },
+  {
+   "seed": 7,
+   "clearance": 0.001,
+   "pick": "done",
+   "insert": "done",
+   "depth_true": 0.030107755420216164,
+   "lateral": 0.0002511546999468577,
+   "success": true,
+   "searched": true,
+   "dur": 6.14400000000095,
+   "effort": {
+    "torque_sq": 1.185437951581916,
+    "torque_rate_sq": 316.6364071691164,
+    "joint_jerk_sq": 198782.2793646958,
+    "energy_j": 26.3751711532344,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.24982284950238784,
+    "cost": 52.99105831649549
+   },
+   "integrity": []
+  },
+  {
+   "seed": 8,
+   "clearance": 0.001,
+   "pick": "done",
+   "insert": "done",
+   "depth_true": 0.030107755420216188,
+   "lateral": 0.00012626596069967023,
+   "success": true,
+   "searched": true,
+   "dur": 7.5720000000014,
+   "effort": {
+    "torque_sq": 1.4815439132183048,
+    "torque_rate_sq": 317.0595350327174,
+    "joint_jerk_sq": 233557.7033746567,
+    "energy_j": 27.58533047865729,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.24985377707277934,
+    "cost": 56.81912105874229
+   },
+   "integrity": []
+  },
+  {
+   "seed": 9,
+   "clearance": 0.001,
+   "pick": "done",
+   "insert": "done",
+   "depth_true": 0.030107755420216143,
+   "lateral": 0.00043774479194576244,
+   "success": true,
+   "searched": true,
+   "dur": 8.7260000000018,
+   "effort": {
+    "torque_sq": 1.7304393199718502,
+    "torque_rate_sq": 317.11201230498716,
+    "joint_jerk_sq": 151646.19893923277,
+    "energy_j": 28.058940031448568,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.24990707612097474,
+    "cost": 48.88684984470832
+   },
+   "integrity": []
+  },
+  {
+   "seed": 0,
+   "clearance": 0.0005,
+   "pick": "done",
+   "insert": "done",
+   "depth_true": 0.03010775486126087,
+   "lateral": 0.0002809229971350068,
+   "success": true,
+   "searched": true,
+   "dur": 6.636000000001069,
+   "effort": {
+    "torque_sq": 1.2982672439910088,
+    "torque_rate_sq": 316.98461961078283,
+    "joint_jerk_sq": 164832.08712126763,
+    "energy_j": 28.161363339208748,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.24986776153094828,
+    "cost": 49.761551550588145
+   },
+   "integrity": []
+  },
+  {
+   "seed": 1,
+   "clearance": 0.0005,
+   "pick": "done",
+   "insert": "done",
+   "depth_true": 0.030107755420216178,
+   "lateral": 5.585041624834411e-05,
+   "success": true,
+   "searched": true,
+   "dur": 7.626000000001415,
+   "effort": {
+    "torque_sq": 1.5106562304856122,
+    "torque_rate_sq": 317.2339219313513,
+    "joint_jerk_sq": 190064.21378346294,
+    "energy_j": 28.892459552373683,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.24994342164456687,
+    "cost": 52.529394397490776
+   },
+   "integrity": []
+  },
+  {
+   "seed": 2,
+   "clearance": 0.0005,
+   "pick": "done",
+   "insert": "done",
+   "depth_true": 0.030105918405777393,
+   "lateral": 4.44294884743148e-05,
+   "success": true,
+   "searched": true,
+   "dur": 7.850000000001513,
+   "effort": {
+    "torque_sq": 1.5609465692841649,
+    "torque_rate_sq": 317.0610696499697,
+    "joint_jerk_sq": 250651.37547728984,
+    "energy_j": 28.76240595638875,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.2497733114926979,
+    "cost": 58.619815141574
+   },
+   "integrity": []
+  },
+  {
+   "seed": 3,
+   "clearance": 0.0005,
+   "pick": "done",
+   "insert": "done",
+   "depth_true": 0.030107755420216133,
+   "lateral": 0.00018429342332204246,
+   "success": true,
+   "searched": true,
+   "dur": 6.020000000000866,
+   "effort": {
+    "torque_sq": 1.1494957095606149,
+    "torque_rate_sq": 316.7695460465109,
+    "joint_jerk_sq": 201349.40184871148,
+    "energy_j": 25.907616126113634,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.24872450060209292,
+    "cost": 53.220466660343995
+   },
+   "integrity": []
+  },
+  {
+   "seed": 4,
+   "clearance": 0.0005,
+   "pick": "done",
+   "insert": "done",
+   "depth_true": 0.030107755420216164,
+   "lateral": 0.000198561122440479,
+   "success": true,
+   "searched": true,
+   "dur": 8.11200000000158,
+   "effort": {
+    "torque_sq": 1.5810593339545103,
+    "torque_rate_sq": 382.12790946994096,
+    "joint_jerk_sq": 1591110.1758293598,
+    "energy_j": 27.762475065902258,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.24934350087051632,
+    "cost": 199.18249261454363
+   },
+   "integrity": []
+  },
+  {
+   "seed": 5,
+   "clearance": 0.0005,
+   "pick": "done",
+   "insert": "done",
+   "depth_true": 0.03010775542021615,
+   "lateral": 2.4016601798261067e-05,
+   "success": true,
+   "searched": true,
+   "dur": 7.078000000001255,
+   "effort": {
+    "torque_sq": 1.3977793347474161,
+    "torque_rate_sq": 386.38750830397055,
+    "joint_jerk_sq": 918585.3038739712,
+    "energy_j": 29.593931913488763,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.24979976776737195,
+    "cost": 132.19099987167647
+   },
+   "integrity": []
+  },
+  {
+   "seed": 6,
+   "clearance": 0.0005,
+   "pick": "done",
+   "insert": "done",
+   "depth_true": 0.030107755420216188,
+   "lateral": 0.00013235055214260536,
+   "success": true,
+   "searched": true,
+   "dur": 6.240000000000974,
+   "effort": {
+    "torque_sq": 1.2131367203008507,
+    "torque_rate_sq": 316.6562321935981,
+    "joint_jerk_sq": 169564.66748341382,
+    "energy_j": 27.27162311058736,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.24994484682256857,
+    "cost": 50.10794291910792
+   },
+   "integrity": []
+  },
+  {
+   "seed": 7,
+   "clearance": 0.0005,
+   "pick": "done",
+   "insert": "done",
+   "depth_true": 0.030103921609044612,
+   "lateral": 1.6487858690824292e-07,
+   "success": true,
+   "searched": true,
+   "dur": 6.264000000000977,
+   "effort": {
+    "torque_sq": 1.2117000080039804,
+    "torque_rate_sq": 317.01362921561775,
+    "joint_jerk_sq": 172688.9825171523,
+    "energy_j": 26.86194451757517,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.2498107982636337,
+    "cost": 50.45058062645675
+   },
+   "integrity": []
+  },
+  {
+   "seed": 8,
+   "clearance": 0.0005,
+   "pick": "done",
+   "insert": "done",
+   "depth_true": 0.030107755420216157,
+   "lateral": 4.641026449992093e-05,
+   "success": true,
+   "searched": true,
+   "dur": 5.9140000000008435,
+   "effort": {
+    "torque_sq": 1.144362126212577,
+    "torque_rate_sq": 383.04922526093605,
+    "joint_jerk_sq": 1058713.0166460837,
+    "energy_j": 28.864829182615537,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.24961196353915338,
+    "cost": 145.6092346087407
+   },
+   "integrity": []
+  },
+  {
+   "seed": 9,
+   "clearance": 0.0005,
+   "pick": "done",
+   "insert": "done",
+   "depth_true": 0.030107732549662827,
+   "lateral": 0.0003131559890288889,
+   "success": true,
+   "searched": true,
+   "dur": 7.754000000001468,
+   "effort": {
+    "torque_sq": 1.5448594788483463,
+    "torque_rate_sq": 317.3257378251621,
+    "joint_jerk_sq": 185213.51432657536,
+    "energy_j": 29.127976179999894,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.24980362683252358,
+    "cost": 52.09006445582209
+   },
+   "integrity": []
+  }
+ ]
+}

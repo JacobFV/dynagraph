@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Physical Memory Sprint</title>
+<style>
+:root{--bg:#f7f6f3;--surface:#fcfcfb;--surface2:#f0efeb;--ink:#0b0b0b;--ink2:#52514e;--ink3:#8a8984;--line:#e4e3df;
+--accent:#2a78d6;--good:#0a7d32;--warn:#a86b00;--bad:#c62f2f;--muted-bg:#eceae5;
+--b00:#2a78d6;--b10:#eb6834;--b01:#1baf7a;--b11:#eda100;--gt:#0b0b0b;--belief:#6250d6;--pred:#eb6834;--hand:#1baf7a;--target:#008300;
+color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121211;--surface:#1a1a19;--surface2:#232321;--ink:#f0efec;--ink2:#c3c2b7;--ink3:#8f8e86;--line:#33332f;
+--accent:#3987e5;--good:#3fbf6a;--warn:#e0a52a;--bad:#e66767;--muted-bg:#2a2a27;--gt:#f0efec;--belief:#9085e9;--pred:#d95926;--hand:#199e70;--target:#0ca30c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121211;--surface:#1a1a19;--surface2:#232321;--ink:#f0efec;--ink2:#c3c2b7;--ink3:#8f8e86;--line:#33332f;
+--accent:#3987e5;--good:#3fbf6a;--warn:#e0a52a;--bad:#e66767;--muted-bg:#2a2a27;--gt:#f0efec;--belief:#9085e9;--pred:#d95926;--hand:#199e70;--target:#0ca30c;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header.top{background:var(--surface);border-bottom:1px solid var(--line);padding:18px 16px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+h1{font-size:22px;margin:0 0 6px}
+h2{font-size:18px;margin:34px 0 10px;padding-top:8px;border-top:1px solid var(--line)}
+h3{font-size:15px;margin:20px 0 8px}
+p{margin:6px 0}
+nav.toc{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap}
+nav.toc a{display:inline-block;padding:8px 10px;color:var(--ink2);text-decoration:none;font-size:13px}
+nav.toc a:hover{color:var(--accent)}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.badge{display:inline-block;border:1px solid var(--line);background:var(--surface2);border-radius:999px;padding:2px 9px;font-size:12px;color:var(--ink2)}
+.badge.k{color:var(--ink);font-weight:600}
+.pill{display:inline-block;border-radius:4px;padding:0 6px;font-size:12px;font-weight:600;border:1px solid currentColor}
+.s-observed,.v-supported,.ok{color:var(--good)}.s-projected,.s-target,.v-unsupported,.warn{color:var(--warn)}
+.s-skipped{color:var(--ink3)}.s-untested,.v-untested{color:var(--ink3)}.v-contradicted,.fail{color:var(--bad)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:10px 0}
+.empty{color:var(--ink3);font-style:italic;padding:8px 0}
+.banner{border-left:4px solid var(--warn);background:var(--surface);padding:8px 12px;margin:10px 0;color:var(--ink)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{position:sticky;top:0;background:var(--surface2);font-weight:600;color:var(--ink2);white-space:nowrap}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ci{color:var(--ink3);font-size:11px}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px}
+.small{font-size:12px;color:var(--ink2)}
+img.plot{max-width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:6px;display:block;margin:6px 0}
+details{margin:6px 0}summary{cursor:pointer;color:var(--ink2)}
+select,input,button{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:4px 8px}
+button{cursor:pointer}button:hover{border-color:var(--accent)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:6px 0}
+.grid2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:12px}
+@media (max-width:820px){.grid2{grid-template-columns:1fr}}
+#replayCanvas{width:100%;display:block;background:var(--surface);border:1px solid var(--line);border-radius:6px;touch-action:none}
+.legend span{display:inline-flex;align-items:center;gap:4px;margin-right:10px;font-size:12px;color:var(--ink2)}
+.sw{width:12px;height:3px;display:inline-block;border-radius:2px}
+.prov{max-height:320px;overflow:auto;font-size:12px}
+.prov div{padding:3px 0;border-bottom:1px dashed var(--line)}
+.prov .now{background:var(--muted-bg)}
+.gt-tag{font-size:11px;color:var(--ink3);border:1px dashed var(--ink3);border-radius:3px;padding:0 4px}
+video{max-width:100%;border-radius:6px;border:1px solid var(--line)}
+.md h3{font-size:16px}.md h4{font-size:14px;margin:14px 0 6px}.md code{font-family:ui-monospace,monospace;font-size:12px;background:var(--muted-bg);padding:0 3px;border-radius:3px}.md li{margin:2px 0}
+footer{color:var(--ink3);font-size:12px;padding:30px 0}
+</style>
+</head>
+<body>
+<script>window.REPORT_DATA = window.REPORT_DATA || /*__REPORT_DATA__*/null;</script>
+<header class="top"><div class="wrap" id="hdr"><h1>Physical memory sprint report</h1><p class="small">loading data…</p></div></header>
+<nav class="toc"><div class="wrap">
+<a href="#summary">summary</a><a href="#status">status</a><a href="#hyp">hypotheses</a><a href="#fact">compact factorial</a><a href="#diag">diagnostics</a>
+<a href="#ink">Inkling core</a><a href="#g1">G1 demo</a><a href="#cost">cost</a><a href="#lim">limitations</a><a href="#files">sources</a>
+<button id="themeBtn" style="float:right;margin:4px 0" title="toggle theme">theme</button></div></nav>
+<main class="wrap" id="main"></main>
+<footer class="wrap" id="foot"></footer>
+<script>
+"use strict";
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function fmt(v,d=4){if(v===null||v===undefined||v==="")return "–";if(typeof v!=="number")return esc(v);if(!isFinite(v))return "–";
+ const a=Math.abs(v);if(a===0)return "0";if(a>=1000||a<1e-3)return v.toExponential(2);return Number(v.toPrecision(d)).toString();}
+function el(tag,attrs={},html=""){const e=document.createElement(tag);for(const k in attrs)e.setAttribute(k,attrs[k]);e.innerHTML=html;return e;}
+function table(cols,rows,opts={}){ // cols: [{h,f(row)->html,n:bool,t:title}]
+ if(!rows.length)return `<div class="empty">${esc(opts.empty||"not yet run")}</div>`;
+ let h=`<div class="tbl" ${opts.maxh?`style="max-height:${opts.maxh}px"`:""}><table><thead><tr>${cols.map(c=>`<th title="${esc(c.t||"")}">${c.h}</th>`).join("")}</tr></thead><tbody>`;
+ for(const r of rows)h+=`<tr>${cols.map(c=>`<td class="${c.n?"n":""}">${c.f(r)}</td>`).join("")}</tr>`;
+ return h+"</tbody></table></div>";}
+function rowTitle(r){return esc(`run_id=${r.run_id}\nconfig_hash=${r.hash}\neval tag=${r.tag}\nseed=${r.seed}\nn_roots=${r.n}\nstatus=${r.status}\nsource=${r.src}`+(r.x?`\n${JSON.stringify(r.x)}`:""));}
+function valCell(r){if(!r)return "–";if(r.value===null&&r.x&&r.x.success!==undefined)return `<span title="${rowTitle(r)}">${r.x.success?'<span class="ok">success</span>':'<span class="fail">fail</span>'} · final ${fmt(r.x.final_dist,3)} m · ${esc(r.x.n_pushes)} pushes</span><br><span class="ci">closed-loop episode ${esc(r.x.pair_id||"")}</span>`;if(r.value===null)return `<span class="pill s-${esc(r.status)}" title="${rowTitle(r)}">${esc(r.status)}</span>`;
+ const ci=(r.lo!==null&&r.lo!==undefined)?`<br><span class="ci">[${fmt(r.lo,3)}, ${fmt(r.hi,3)}] n=${r.n}</span>`:`<br><span class="ci">n=${r.n}</span>`;
+ return `<span title="${rowTitle(r)}">${fmt(r.value)}</span>${ci}`;}
+function modelLabel(m,v,s){let x=m==="compact"?`compact ${v}`:m==="coulomb_oracle"?"coulomb ORACLE":m.startsWith("inkling-")?`actual Inkling core ${m.slice(8)}`:(m==="constvel"||m==="coulomb")?`${m} (analytic)`:m;
+ return s!==undefined&&s>=0?`${x} · s${s}`:x;}
+function swatch(m,v){const c={b00:"var(--b00)",b10:"var(--b10)",b01:"var(--b01)",b11:"var(--b11)"}[v]||(m==="coulomb_oracle"?"var(--ink3)":m==="coulomb"?"#e87ba4":m==="constvel"?"#6250d6":m.startsWith("inkling")?(v.startsWith("i11")?"#e34948":"#008300"):"var(--ink3)");
+ return `<span class="sw" style="background:${c};width:10px;height:10px;border-radius:2px;margin-right:4px"></span>`;}
+const DEV=["devcheck","faketest","pilot","wpilot","smoke","dev","unknown"];
+function tagRank(t){t=(t||"").split(/[\/ ]/)[0];return t.startsWith("v3x")?1:(DEV.some(d=>t.startsWith(d))||t==="test")?2:0;}
+function tierBanner(tier,tag){if(!tier||tier==="main")return "";if(tier==="exploratory")return `<div class="banner"><b>Exploratory / post-hoc${tag?` (tag ${esc(tag)})`:""}</b> — analysis added after seeing results (experiment ids ending in x / fp, post_hoc=true). Hypothesis-generating only; not part of the pre-registered evidence.</div>`;
+ return `<div class="banner"><b>Evidence tier: pilot / dev-check${tag?` (${esc(tag)})`:""}</b> — engineering check only; not a result.</div>`;}
+function tierPill(t){return t?`<span class="pill ${t==="main"?"s-observed":t==="exploratory"?"s-projected":"s-skipped"}">${esc(t)}</span>`:"";}
+function sortTags(ts){return [...new Set(ts)].sort((a,b)=>tagRank(a)-tagRank(b)||(b==="main")-(a==="main")||a.localeCompare(b));}
+function tagBanner(tag){const r=tagRank(tag);return r===0?"":tierBanner(r===1?"exploratory":"pilot/dev",tag);}
+function plot(D,name){const p=D.plots&&D.plots[name];return p?`<figure style="margin:8px 0"><img class="plot" loading="lazy" src="${esc(p.asset)}" alt="${esc(p.title)}"><figcaption class="small">${esc(p.title)}</figcaption></figure>`:"";}
+function rowsTable(rows,limit=400){
+ const cols=[{h:"exp",f:r=>esc(r.exp)},{h:"stratum",f:r=>esc(r.stratum)},{h:"model",f:r=>swatch(r.model,r.variant)+esc(modelLabel(r.model,r.variant))},
+ {h:"seed",f:r=>r.seed<0?"–":r.seed,n:1},{h:"metric",f:r=>`<span class="mono">${esc(r.metric)}</span>`},{h:"value [95% CI over roots]",f:valCell,n:1},
+ {h:"status",f:r=>`<span class="pill s-${esc(r.status)}">${esc(r.status)}</span>`},{h:"tier / tag",f:r=>tierPill(r.tier)+"<br>"+esc(r.tag)+(r.x&&r.x.adaptation?`<br><span class="small">adaptation: ${esc(r.x.adaptation)}</span>`:"")},{h:"run_id / config_hash",f:r=>`<span class="mono">${esc(r.run_id)}<br>${esc(r.hash)}</span>`}];
+ const more=rows.length>limit?`<p class="small">showing ${limit} of ${rows.length} rows (all rows are in data.json)</p>`:"";
+ return more+table(cols,rows.slice(0,limit),{maxh:420});}
+function filteredRowsUI(id,rows,title){ // details block with text filter
+ if(!rows.length)return `<div class="empty">no rows yet — not yet run</div>`;
+ setTimeout(()=>{const inp=$("#f_"+id),box=$("#t_"+id);if(!inp)return;const go=()=>{const q=inp.value.toLowerCase().split(/\s+/).filter(Boolean);
+  box.innerHTML=rowsTable(rows.filter(r=>q.every(w=>`${r.exp} ${r.stratum} ${r.model} ${r.variant} s${r.seed} ${r.metric} ${r.tag} ${r.tier} ${r.status} ${(r.x&&r.x.adaptation)||""}`.toLowerCase().includes(w))));};
+  inp.addEventListener("input",go);go();},0);
+ return `<details><summary>${esc(title||"rows")} (${rows.length})</summary><div class="row"><input id="f_${id}" placeholder="filter, e.g. b11 nll@all" style="min-width:240px"></div><div id="t_${id}"></div></details>`;}
+
+// ------------------------------------------------------------------ sections
+function renderHeader(D){const m=D.meta,h=m.hardware||{},c=m.checkpoint||{},g=(D.inkling||{}).gate;
+ const gateTxt=g?(g.passed===true?"gate PASSED":g.passed_with_amendment?"gate passed with amendment (original check failed; see gate table)":g.passed===false?"gate FAILED":"gate partial (in progress)"):"gate not run";
+ $("#hdr").innerHTML=`<h1>Typed physical memory + recurrent refinement — sprint report</h1>
+ <p class="small">Generated ${esc(m.generated_utc)} from <span class="mono">${esc(m.results_dir)}</span> · ${D.rows.length} evaluation rows · sprint ${esc((m.sprint||{}).start_utc||"?")} → ${esc((m.sprint||{}).hard_stop_utc||"?")}</p>
+ <div class="badges">
+ <span class="badge k">hardware: ${esc(h.device||"GB10")}${h.capability?` (cc ${esc(h.capability.join("."))})`:""} · ${esc(h.machine||"")} · ${esc(h.host||"")}</span>
+ <span class="badge">torch ${esc(h.torch||"?")} · mujoco ${esc(h.mujoco||"?")} · transformers ${esc(h.transformers||"?")}</span></div>
+ <div class="badges">
+ <span class="badge k">compact recurrent physical-memory model (b00/b10/b01/b11, ~1.3M params) — trained from scratch</span>
+ <span class="badge k">actual Inkling-2-Mini core: ${esc(c.repo||"")} @ <span class="mono">${esc((c.revision||c.gate_revision||"?").slice(0,12))}</span> · core layers ${esc(JSON.stringify(c.core_layers||"?"))} · ${esc(c.num_passes||"?")} passes · ${esc(gateTxt)}</span>
+ <span class="badge k">unitree g1 · fixed-base simulation · synthetic sensors</span></div>
+ <p class="small" style="margin-top:8px">The compact model is never called "Inkling". Oracle / ground-truth quantities are labelled ORACLE or "ground truth (evaluator only)" wherever shown. Hover a number for its run_id, config_hash, seed and n_roots.</p>`;}
+
+function renderStatus(D){const s=el("section",{id:"status"});
+ const cols=[{h:"experiment",f:e=>`<b>${esc(e.id)}</b>`},{h:"title",f:e=>esc(e.title)||'<span class="small">—</span>'},
+ {h:"status",f:e=>`<span class="pill s-${esc(e.status)}">${esc(e.status)}</span>${e.overridden?` <span class="small">(lead)</span>${e.status!==e.status_from_rows&&e.n_rows?`<br><span class="small warn">rows say: ${esc(e.status_from_rows)}</span>`:""}`:""}`},
+ {h:"evidence tier",f:e=>tierPill(e.tier)},{h:"rows (observed)",f:e=>`${e.n_rows} (${e.n_observed})`,n:1},{h:"eval tags",f:e=>esc(e.tags.join(", "))},{h:"models",f:e=>esc(e.models.join(", "))},{h:"note",f:e=>esc(e.note)}];
+ s.innerHTML=`<h2>Experiment status (e00–e25)</h2><p class="small">Status comes from row <span class="mono">status</span> fields (observed &gt; projected &gt; target &gt; skipped &gt; untested); default untested when no rows exist. The lead can override in verdicts.json (marked "lead").</p>`+table(cols,D.experiments);
+ $("#main").append(s);}
+
+function renderHyp(D){const s=el("section",{id:"hyp"});
+ const cols=[{h:"hypothesis",f:h=>`<b>${esc(h.id)}</b>`},{h:"statement",f:h=>esc(h.title)||'<span class="small">(title in verdicts.json)</span>'},
+ {h:"verdict",f:h=>`<span class="pill v-${esc(h.verdict)}">${esc(h.verdict)}</span>`},{h:"rationale",f:h=>esc(h.rationale)},
+ {h:"evidence rows",f:h=>h.rows.length?h.rows.slice(0,8).map(i=>{const r=D.rows[i];return `<div class="small"><span class="mono">${esc(r.exp)}/${esc(r.stratum)}/${esc(modelLabel(r.model,r.variant,r.seed))}/${esc(r.metric)}</span> = ${valCell(r)}</div>`}).join("")+(h.rows.length>8?`<div class="small">+${h.rows.length-8} more</div>`:""):(h.evidence.length?'<span class="small">filters match no rows yet</span>':'<span class="small">none linked</span>')}];
+ s.innerHTML=`<h2>Hypotheses h1–h7</h2><p class="small">Verdicts are set by the lead in <span class="mono">${esc(D.meta.verdicts_source)}</span> (supported / unsupported / contradicted / untested); evidence rows are resolved from saved rows by the filters listed there.</p>`+table(cols,D.hypotheses);
+ $("#main").append(s);}
+
+const FACT_COLS=[["pos_err_m@h0.1","pos err 0.1s (m)"],["pos_err_m@h0.5","pos 0.5s"],["pos_err_m@h1.0","pos 1.0s"],["yaw_err_rad@h0.1","yaw 0.1s (rad)"],["yaw_err_rad@h0.5","yaw 0.5s"],["yaw_err_rad@h1.0","yaw 1.0s"],
+ ["vel_err_mps@h0.1","vel 0.1s (m/s)"],["vel_err_mps@h0.5","vel 0.5s"],["vel_err_mps@h1.0","vel 1.0s"],["nll@all","NLL (norm.)"],["cover50@all","cov 50%"],["cover80@all","cov 80%"],["cover95@all","cov 95%"],["friction_abs_err","|μ err|"],["friction_std","μ̂ sd"],["coulomb_res@all","Coulomb resid."]];
+function renderFactorial(D){const s=el("section",{id:"fact"});$("#main").append(s);
+ const cand=D.rows.filter(r=>!r.metric.includes(":")&&r.metric==="pos_err_m@h0.5"&&!r.model.startsWith("inkling"));
+ const tags=sortTags(cand.map(r=>r.tag));
+ s.innerHTML=`<h2>Compact factorial (b00 / b10 / b01 / b11) — compact recurrent physical-memory model</h2>
+ <p class="small">b<i>SP</i>: S=1 structured typed memory, P=1 physics loss. Values = mean over root episodes of per-root means; brackets = 95% bootstrap CI over root episodes (n = n_roots). Each seed is shown on its own row; "seed mean" rows are derived (mean of seed values, min–max across seeds, no episode CI). Analytic baselines have no seed; the ORACLE is given the true friction and is excluded from comparisons.</p>
+ <div class="row">eval tag <select id="factTag">${tags.map(t=>`<option>${esc(t)}</option>`).join("")}</select> stratum <select id="factSt"></select></div>
+ <div id="factBanner"></div><div id="factTable"></div><h3>Main effects and interaction (u11 − u10 − u01 + u00)</h3><div id="factEff"></div><h3>Paired difference vs analytic Coulomb (seed-averaged per root)</h3><div id="factDiff"></div>
+ ${plot(D,"primary_horizons")}${plot(D,"factorial_effects")}`;
+ if(!tags.length){$("#factTable").innerHTML=`<div class="empty">not yet run — no evaluation rows</div>`;return;}
+ const upd=()=>{const tag=$("#factTag").value;const strata=[...new Set(cand.filter(r=>r.tag===tag).map(r=>r.stratum))].sort((a,b)=>(a!=="test")-(b!=="test")||a.localeCompare(b));
+  const cur=$("#factSt").value;$("#factSt").innerHTML=strata.map(x=>`<option ${x===cur?"selected":""}>${esc(x)}</option>`).join("");const st=$("#factSt").value;
+  $("#factBanner").innerHTML=tagBanner(tag);
+  const R=D.rows.filter(r=>r.tag===tag&&r.stratum===st);
+  const ent={};for(const r of R){if(r.metric.includes(":")||r.model.startsWith("inkling"))continue;const k=`${r.model}|${r.variant}|${r.seed}`;(ent[k]=ent[k]||{m:r.model,v:r.variant,s:r.seed,r:{}}).r[r.metric]=r;}
+  const order={constvel:0,coulomb:1,coulomb_oracle:9};const vord={b00:2,b10:3,b01:4,b11:5};
+  let list=Object.values(ent).sort((a,b)=>((order[a.m]??vord[a.v]??6)-(order[b.m]??vord[b.v]??6))||a.s-b.s);
+  const out=[];const byV={};for(const e of list){out.push(e);if(e.m==="compact")(byV[e.v]=byV[e.v]||[]).push(e);}
+  for(const v in byV)if(byV[v].length>1){const d={m:"compact",v,s:-2,derived:true,r:{}};for(const [mk] of FACT_COLS){const vs=byV[v].map(e=>e.r[mk]).filter(x=>x&&x.value!==null);
+   if(vs.length)d.r[mk]={value:vs.reduce((a,x)=>a+x.value,0)/vs.length,lo:Math.min(...vs.map(x=>x.value)),hi:Math.max(...vs.map(x=>x.value)),n:vs.length,status:"observed",run_id:"derived: seed mean of "+vs.map(x=>x.run_id).join(", "),hash:vs[0].hash,tag,seed:"mean",src:"derived"};}
+   const i=out.lastIndexOf(byV[v][byV[v].length-1]);out.splice(i+1,0,d);}
+  const cols=[{h:"model",f:e=>swatch(e.m,e.v)+esc(e.derived?`compact ${e.v} · seed mean (n_seeds in brackets)`:modelLabel(e.m,e.v,e.s))}].concat(FACT_COLS.map(([k,h])=>({h,t:k,n:1,f:e=>{const r=e.r[k];if(!r)return "–";
+   if(e.derived)return `<span title="${esc(r.run_id)}">${fmt(r.value)}</span><br><span class="ci">min–max ${fmt(r.lo,3)}–${fmt(r.hi,3)} (${r.n} seeds)</span>`;return valCell(r);}})));
+  $("#factTable").innerHTML=table(cols,out);
+  const eff=R.filter(r=>/^(structure_main|physics_main|interaction|factorial):/.test(r.metric));const byM={};
+  for(const r of eff){const [en,m]=r.metric.split(/:(.+)/);(byM[m]=byM[m]||{})[en]=r;}
+  const effRows=Object.entries(byM).map(([m,o])=>({m,o}));
+  $("#factEff").innerHTML=effRows.length?table([{h:"metric",f:x=>`<span class="mono">${esc(x.m)}</span>`},
+   ...["structure_main","physics_main","interaction"].map(en=>({h:en.replace("_"," "),n:1,f:x=>x.o[en]?valCell(x.o[en])+(x.o[en].x&&x.o[en].x.n_seeds?`<br><span class="ci">seeds ${esc(JSON.stringify(x.o[en].x.n_seeds))}</span>`:""):(x.o.factorial?`<span class="pill s-${esc(x.o.factorial.status)}">${esc(x.o.factorial.status)}</span>`:"–")}))],effRows)
+   +(eff.some(r=>r.value===null)?`<p class="small">"untested" = not all four variants were evaluated for this tag/stratum (factorial needs b00, b10, b01, b11).</p>`:""):`<div class="empty">not yet run for this stratum</div>`;
+  const dif=R.filter(r=>r.metric.startsWith("diff_vs_coulomb:"));
+  $("#factDiff").innerHTML=dif.length?table([{h:"variant",f:r=>swatch("compact",r.variant)+esc(r.variant)},{h:"metric",f:r=>`<span class="mono">${esc(r.metric.slice(16))}</span>`},{h:"compact − coulomb",n:1,f:valCell},{h:"seeds",n:1,f:r=>esc((r.x||{}).n_seeds??"")}],dif):`<div class="empty">not yet run</div>`;};
+ $("#factTag").onchange=upd;$("#factSt").onchange=upd;upd();}
+
+const DIAG=[["e03","sensor corruption strata",["e03_occ","e03_delay","e03_drop","e03_rate"]],["e04","OOD / held-out strata (+ per-k friction rows)",["e04"]],["e05","memory edits",["e05"]],["e06","misspecified laws",["e06"]],
+ ["e07","typed-slot interventions vs simulator counterfactuals (simulator = ground truth)",["e07"]],["e10","recurrent refinement passes",["e10"]],["e11","lesions",["e11"]],["e14","relational distractor / w3",["e14"]],["e16","uncertainty vs history length",["e16"]]];
+function renderDiag(D){const s=el("section",{id:"diag"});let h=`<h2>Diagnostics and other experiments</h2><p class="small">Plots use the highest evidence tier available per experiment (tag in caption). Every plotted point is a row in the table beneath it. Exploratory (post-hoc) experiments are bannered.</p>`;
+ const vt=(D.experiments||[]);const done=new Set(["primary","e08","e08_diag","e07_inkling"]);
+ const extra=[...new Set(D.rows.map(r=>r.exp))].filter(e=>!done.has(e)&&!DIAG.some(d=>d[0]===e)).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+ const list=DIAG.concat(extra.map(e=>[e,(vt.find(x=>x.id===e)||{}).title||"",[]])).sort((a,b)=>a[0].localeCompare(b[0],undefined,{numeric:true}));
+ for(const [e,t,ps] of list){const rows=D.rows.filter(r=>r.exp===e||(e==="e14"&&r.stratum==="w3"&&r.exp==="e14"));const tiers=[...new Set(rows.map(r=>r.tier))];
+  const note=(vt.find(x=>x.id===e)||{}).note;const tags=sortTags(rows.map(r=>r.tag));
+  h+=`<h3>${esc(e)}${t?" — "+esc(t):""}</h3>`+(note?`<p class="small">${esc(note)}</p>`:"")+(rows.length?(tiers.includes("main")?"":tierBanner(tiers.includes("exploratory")?"exploratory":"pilot/dev",tags.join(", ")))+(tags.length>1?`<p class="small">tags: ${esc(tags.join(", "))}</p>`:"")+ps.map(p=>plot(D,p)).join("")+filteredRowsUI(e.replace(/\W/g,"_"),rows,`${e} rows`):`<div class="empty">not yet run</div>`);}
+ s.innerHTML=h;$("#main").append(s);}
+
+function renderInkling(D){const s=el("section",{id:"ink"});const I=D.inkling||{},g=I.gate;let h=`<h2>Actual Inkling-2-Mini core (i00 vs i11)</h2>
+ <p class="small">The pretrained Inkling-2-Mini recurrent core (frozen base, trainable read/write adapters + core LoRA) is inserted between the compact encoder and readout. Separate from the compact model throughout.</p><h3>Decision gate</h3>`;
+ if(!g)h+=`<div class="empty">results/inkling_gate.json not present — gate not yet run</div>`;
+ else{const ch=Object.entries(g.checks||{});const want=["1_checkpoint_native_outputs","2_pass_capture","3a_instrumented_equals_native","3b_zero_gated_adapters_preserve_core","4a_gate_gradients_from_physical_loss","4b_adapter_gradients_through_core","4c_pass0_read_grad_via_later_passes","5_step_changes_adapters_only","6_tiny_overfit","7_timing_memory","8_budget"];
+  const all=[...new Set(want.concat(ch.map(c=>c[0])))].map(n=>[n,(g.checks||{})[n]]);
+  h+=`<p>Overall: ${g.passed===true?'<span class="pill ok">PASSED</span>':g.passed_with_amendment?'<span class="pill warn">passed with amendment</span> <span class="small">(passed=false under the original criteria; amended check recorded alongside)</span>':g.passed===false?'<span class="pill fail">FAILED</span>':'<span class="pill warn">partial / in progress</span>'} <span class="small">start ${esc(g.time_utc_start||"?")} end ${esc(g.time_utc_end||"–")} wall ${fmt(g.wall_s)} s</span></p>`+
+  table([{h:"check",f:x=>`<span class="mono">${esc(x[0])}</span>`},{h:"result",f:x=>x[1]?(x[1].pass?'<span class="pill ok">pass</span>':'<span class="pill fail">fail</span>'):'<span class="pill s-untested">not reached</span>'},
+   {h:"details (from json)",f:x=>{if(!x[1])return "";const o={...x[1]};delete o.pass;const j=JSON.stringify(o);return `<details><summary class="mono">${esc(j.slice(0,140))}${j.length>140?"…":""}</summary><pre class="mono" style="white-space:pre-wrap">${esc(JSON.stringify(o,null,1))}</pre></details>`;}}],all);}
+ const rows=D.rows.filter(r=>r.model.startsWith("inkling-")||r.exp.startsWith("e08")||r.exp==="e07_inkling");
+ h+=`<h3>i00 vs i11 and bypass / no-LoRA diagnostics</h3>`;
+ if(rows.length){const st=[...new Set(rows.map(r=>r.stratum))];const ms=[...new Set(rows.map(r=>r.model+"|"+r.variant+"|"+r.seed))].sort();
+  const key=["pos_err_m@h0.1","pos_err_m@h0.5","pos_err_m@h1.0","nll@all","cover80@all","friction_abs_err"];const T=[];
+  for(const x of st)for(const m of ms){const rr=rows.filter(r=>r.stratum===x&&(r.model+"|"+r.variant+"|"+r.seed)===m);if(!rr.length)continue;const o={st:x,m,r:{}};for(const r of rr)o.r[r.metric]=r;T.push(o);}
+  h+=table([{h:"stratum",f:o=>esc(o.st)},{h:"model",f:o=>{const [m,v,sd]=o.m.split("|");return esc(m.replace("inkling-","actual Inkling core ")+" s"+sd)+(m.includes("[")?' <span class="small">(diagnostic)</span>':"");}}].concat(key.map(k=>({h:k,n:1,f:o=>valCell(o.r[k])}))),T,{maxh:420})+plot(D,"inkling_strata")+filteredRowsUI("ink",rows,"all Inkling rows");}
+ else h+=`<div class="empty">not yet run</div>`;
+ h+=`<h3>Learning curves, step time, memory</h3>`+plot(D,"curves_inkling");
+ const L=(I.ledger||[]).filter(r=>r.kind==="inkling_train");
+ h+=table([{h:"run_id",f:r=>`<span class="mono">${esc(r.run_id)}</span>`},{h:"status",f:r=>esc(r.status)},{h:"steps",n:1,f:r=>fmt(r.steps)},{h:"examples",n:1,f:r=>fmt(r.examples)},{h:"wall (s)",n:1,f:r=>fmt(r.wall_s)},
+  {h:"step mean / p95 (s)",n:1,f:r=>`${fmt(r.step_s_mean)} / ${fmt(r.step_s_p95)}`},{h:"peak CUDA (GB)",n:1,f:r=>fmt(r.peak_cuda_gb)},{h:"trainable",n:1,f:r=>fmt(r.n_trainable)},{h:"best val NLL @step",n:1,f:r=>`${fmt(r.best_val_nll)} @${fmt(r.best_step)}`},{h:"mem",f:r=>`<span class="mono">${esc(JSON.stringify(r.mem||"")).slice(0,120)}</span>`}],L,{empty:"no inkling_train ledger rows yet"});
+ s.innerHTML=h;$("#main").append(s);}
+
+// ------------------------------------------------------------------ G1
+function renderG1(D){const s=el("section",{id:"g1"});const G=D.g1||{};let h=`<h2>Unitree G1 · fixed-base simulation · synthetic sensors</h2>
+ <p class="small">The same push primitive and selector as the tabletop task, executed by the G1 hand via IK in MuJoCo. Success (evaluator, ground truth): centroid within 3 cm of target, speed &lt; 2 cm/s for 0.5 s, no object writes / constraints / applied forces.</p><h3>Success rates</h3>`;
+ const g1tags=(G.tags||[]);h+=g1tags.length?`<div class="row">G1 run tag <select id="g1Tag">${g1tags.map(t=>`<option ${t==="slide_compact"?"selected":""}>${esc(t)}</option>`).join("")}</select> <span class="small">(${(G.episodes||[]).length} episodes across ${g1tags.length} tags)</span></div><div id="g1Rates"></div><h3>Paired episodes</h3><div id="g1Pairs"></div><h3>Episodes</h3><div id="g1Eps"></div>`:`<div class="empty">no G1 episodes yet — not yet run</div>`;
+ h+=`<h3>Decision logs</h3>`;
+ if((G.episodes||[]).some(e=>e.decisions&&e.decisions.length)){h+=`<div class="row">episode <select id="decSel">${G.episodes.map((e,i)=>e.decisions&&e.decisions.length?`<option value="${i}">${esc(e.tag)} · ${esc(e.model)} · ${esc(e.id)}</option>`:"").join("")}</select></div><div id="decTbl"></div>`;}
+ else h+=`<div class="empty">no decision logs yet</div>`;
+ h+=`<h3>Replay viewer</h3>`;
+ if((G.replays||[]).length){h+=`<div class="row">episode <select id="rpSel">${G.replays.map((r,i)=>`<option value="${i}">${esc((r.src||"").split("/")[1]||"")} · ${esc(r.model)} · ${esc(r.id)} ${r.success===true?"✓ success":r.success===false?"✗ fail":""}</option>`).join("")}</select>
+  <button id="rpPlay">play</button><input type="range" id="rpScrub" min="0" max="1000" value="0" style="flex:1;min-width:160px"><select id="rpSpeed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
+  <span id="rpTime" class="mono"></span></div>
+  <div class="grid2"><div><canvas id="replayCanvas"></canvas><div class="legend small" style="margin-top:6px">
+  <span><i class="sw" style="background:var(--gt)"></i>object pose — ground truth (sim, evaluator only)</span><span><i class="sw" style="background:var(--belief)"></i>belief mean + 2σ ellipse (actor)</span>
+  <span><i class="sw" style="background:var(--hand)"></i>hand / pusher</span><span><i class="sw" style="background:var(--pred)"></i>predicted trajectory of chosen candidate (±1σ circles)</span>
+  <span><i class="sw" style="background:var(--ink3)"></i>realized trajectory — ground truth (eval only)</span><span><i class="sw" style="background:var(--target)"></i>target region</span><span>· candidates: predicted end points, ★ chosen</span></div>
+  <p class="small" id="rpNote"></p></div>
+  <div><div class="card" id="rpInfo"></div><div class="card"><b>Memory update provenance</b><div class="prov" id="rpProv"></div></div></div></div>`;}
+ else h+=`<div class="empty">no per-step episode dumps yet — not yet run</div>`;
+ const vids=G.videos||[];h+=`<h3>Rendered videos</h3>`+(vids.length?`<p class="small">Linked from <span class="mono">../results/</span> (report/ must sit next to results/). MuJoCo renders, fixed-base G1, synthetic sensors.</p><ul>${vids.map(v=>`<li><a href="${esc(v.href)}">${esc(v.src)}</a> <span class="small">(${v.mb} MB)</span></li>`).join("")}</ul>`:`<div class="empty">no videos yet</div>`);
+ h+=`<h3>Primitive checks (no learned model)</h3>`;
+ if(G.baseline)h+=`<p class="small">Baseline push (${esc(G.baseline.utc)}): displacement ${fmt(G.baseline.displacement_m)} m, Δyaw ${fmt(G.baseline.dyaw)} rad, max hand force ${fmt(G.baseline.max_hand_force)} N, audit object writes ${esc((G.baseline.audit||{}).external_object_writes)} / applied-force steps ${esc((G.baseline.audit||{}).applied_force_steps)}.</p>`;
+ if((G.images||[]).length)h+=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">${G.images.map(i=>`<figure style="margin:0"><img class="plot" loading="lazy" src="${esc(i.asset)}" alt="${esc(i.src)}"><figcaption class="small mono">${esc(i.src)}</figcaption></figure>`).join("")}</div>`;
+ h+=plot(D,"g1_friction_sweep");
+ if(G.sweep)h+=`<details><summary>friction sweep rows (${G.sweep.length})</summary>${table([{h:"θ",n:1,f:r=>fmt(r.theta,3)},{h:"speed",n:1,f:r=>fmt(r.speed)},{h:"duration",n:1,f:r=>fmt(r.duration)},{h:"μ (sim)",n:1,f:r=>fmt(r.friction)},{h:"disp (m)",n:1,f:r=>fmt(r.disp)},{h:"post-stop slide (m)",n:1,f:r=>fmt(r.post_stop_slide)},{h:"Δyaw",n:1,f:r=>fmt(r.dyaw)},{h:"audit clean",f:r=>esc(r.audit_clean)}],G.sweep)}</details>`;
+ s.innerHTML=h;$("#main").append(s);
+ if($("#decSel")){const show=()=>{const e=G.episodes[+$("#decSel").value];$("#decTbl").innerHTML=table([{h:"k",n:1,f:d=>esc(d.k)},{h:"t (s)",n:1,f:d=>fmt(d.t)},{h:"belief rev",n:1,f:d=>esc(d.rev)},{h:"belief x,y",n:1,f:d=>d.belief&&d.belief.length?`${fmt(d.belief[0])}, ${fmt(d.belief[1])}`:"–"},
+  {h:"chosen (model top)",f:d=>`${esc(d.chosen)}${d.model_top!==d.chosen?` <span class="warn">(top ${esc(d.model_top)}, IK fallback)</span>`:""}`},{h:"θ, φ, v, T",f:d=>`<span class="mono">${esc((d.params||[]).map(x=>fmt(x,3)).join(", "))}</span>`},
+  {h:"score",n:1,f:d=>fmt(d.score)},{h:"pred dist / sd (m)",n:1,f:d=>`${fmt(d.pred_dist)} / ${fmt(d.pred_sd)}`},{h:"feasible/cands",n:1,f:d=>`${d.n_feas}/${d.n_cand}`},{h:"μ̂ (mean, var)",f:d=>d.friction?esc(d.friction.map(x=>fmt(x,3)).join(", ")):"–"},
+  {h:"latency (s)",n:1,f:d=>fmt(d.latency)},{h:"pred pos err @ horizons <span class='gt-tag'>eval</span>",f:d=>`<span class="mono">${esc((d.err||[]).map(x=>fmt(x,2)).join(" "))}</span>`},{h:"IK rejected",f:d=>esc((d.ik_rejected||[]).join(","))}],e.decisions||[],{empty:"no decisions"});};
+  $("#decSel").onchange=show;show();}
+ if($("#g1Tag")){const up=()=>{const tg=$("#g1Tag").value;const R=(G.rates||[]).filter(r=>r.tag===tg),P=(G.pairs||[]).filter(p=>p.tag===tg),E=(G.episodes||[]).filter(e=>e.tag===tg);
+  const models=[...new Set(E.map(e=>e.model))].sort();
+  $("#g1Rates").innerHTML=`<h3>Success rates</h3>`+table([{h:"model / predictor",f:r=>esc(r.model)+(/ORACLE/i.test(r.model)?' <span class="gt-tag">uses true friction</span>':"")},{h:"success k/n",n:1,f:r=>`${r.k}/${r.n}`},{h:"rate [Wilson 95%]",n:1,f:r=>r.rate===null?"–":`${fmt(r.rate,3)}<br><span class="ci">[${fmt(r.lo,3)}, ${fmt(r.hi,3)}] derived</span>`},{h:"median final dist (m)",n:1,f:r=>fmt(r.median_final_dist)},{h:"mean pushes",n:1,f:r=>fmt(r.mean_pushes,3)}],R);
+  $("#g1Pairs").innerHTML=P.length&&models.length>1?table([{h:"pair_id",f:p=>`<span class="mono">${esc(p.key)}</span>`}].concat(models.map(m=>({h:m,f:p=>{const x=p.by_model[m];return x?`${x.success?'<span class="pill ok">success</span>':'<span class="pill fail">fail</span>'} ${fmt(x.final_dist,3)} m · ${x.n_pushes} pushes<br><span class="ci">${esc(x.status||"")}</span>`:"–";}}))),P,{maxh:360}):`<div class="empty">no paired comparison for this tag</div>`;
+  $("#g1Eps").innerHTML=`<details><summary>${E.length} episodes</summary>`+table([{h:"episode",f:e=>`<span class="mono">${esc(e.id)}</span>`},{h:"model",f:e=>esc(e.model)},{h:"seed",n:1,f:e=>esc(e.seed)},{h:"success",f:e=>e.success===true?'<span class="pill ok">yes</span>':e.success===false?'<span class="pill fail">no</span>':"–"},{h:"status",f:e=>esc(e.status)},
+  {h:"final dist (m)",n:1,f:e=>fmt(e.final_dist)},{h:"pushes",n:1,f:e=>fmt(e.n_pushes)},{h:"sim / wall (s)",n:1,f:e=>`${fmt(e.sim_time,3)} / ${fmt(e.wall_time,3)}`},{h:"infer latency (s)",n:1,f:e=>fmt(e.latency)},
+  {h:"hidden μ, m <span class='gt-tag'>eval only</span>",f:e=>e.hidden?`${fmt(e.hidden.friction,3)}, ${fmt(e.hidden.mass,3)} kg`:"–"},{h:"audit",f:e=>e.audit?(e.audit.external_object_writes===0&&e.audit.applied_force_steps===0&&!e.audit.eq_active?'<span class="ok">clean</span>':'<span class="fail">VIOLATION</span>'):"–"},{h:"source",f:e=>`<span class="mono">${esc(e.src)}</span>`}],E,{maxh:420})+`</details>`;};
+  $("#g1Tag").onchange=up;up();}
+ if((G.replays||[]).length)initReplay(G.replays);}
+
+function initReplay(reps){const cv=$("#replayCanvas"),ctx=cv.getContext("2d");let R=null,t=0,T0=0,T1=1,playing=false,last=0,B=null;
+ const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+ function load(i){R=reps[i];const F=R.frames;T0=F[0].t;T1=F[F.length-1].t;t=T0;
+  const P=[];F.forEach(f=>{P.push([f.o[0],f.o[1]]);if(f.h)P.push(f.h);});
+  (R.decisions||[]).forEach(d=>{(d.pred||[]).forEach(p=>P.push(p));if(d.h0)P.push(d.h0);if(d.h1)P.push(d.h1);});
+  if(R.target)P.push(R.target);if(R.tray){const th=R.tray_half||[0,0];P.push([R.tray[0]-th[0],R.tray[1]-th[1]],[R.tray[0]+th[0],R.tray[1]+th[1]]);}if(R.rail)P.push(R.rail);
+  let x0=Math.min(...P.map(p=>p[0])),x1=Math.max(...P.map(p=>p[0])),y0=Math.min(...P.map(p=>p[1])),y1=Math.max(...P.map(p=>p[1]));const pad=0.06;B={x0:x0-pad,x1:x1+pad,y0:y0-pad,y1:y1+pad};
+  $("#rpNote").textContent=`Top-down view, robot base toward the bottom (world +x up, +y left). Hand position: ${R.hand_source}. Source: ${R.src}.`+(R.hidden?` Hidden params (evaluator only): μ=${fmt(R.hidden.friction,3)}, m=${fmt(R.hidden.mass,3)} kg.`:"");
+  resize();}
+ function resize(){const w=cv.clientWidth||600;const asp=(B.x1-B.x0)/(B.y1-B.y0);const h=Math.max(260,Math.min(620,w*Math.min(1.3,Math.max(0.55,asp))));const d=window.devicePixelRatio||1;
+  cv.width=w*d;cv.height=h*d;cv.style.height=h+"px";ctx.setTransform(d,0,0,d,0,0);draw();}
+ function S(){const w=cv.clientWidth,h=parseFloat(cv.style.height);const s=Math.min(w/(B.y1-B.y0),h/(B.x1-B.x0));return {s,cx:w/2,cy:h/2,xm:(B.x0+B.x1)/2,ym:(B.y0+B.y1)/2};}
+ function P(x,y){const q=S();return [q.cx-(y-q.ym)*q.s,q.cy-(x-q.xm)*q.s];}
+ function box(x,y,yaw,half,stroke,fill,dash,nohead){if(!half)half=[0.04,0.04];const q=S();const [px,py]=P(x,y);ctx.save();ctx.translate(px,py);ctx.rotate(-yaw);ctx.setLineDash(dash||[]);
+  ctx.beginPath();ctx.rect(-half[1]*q.s,-half[0]*q.s,2*half[1]*q.s,2*half[0]*q.s);if(fill){ctx.fillStyle=fill;ctx.fill();}ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke();
+  if(!nohead){ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-half[0]*q.s);ctx.stroke();}ctx.restore();}
+ function frameAt(tt){const F=R.frames;let lo=0,hi=F.length-1;while(lo<hi){const m=(lo+hi+1)>>1;if(F[m].t<=tt)lo=m;else hi=m-1;}return lo;}
+ function handAt(tt,f){if(f.h)return {xy:f.h,rec:false};let d=null;for(const x of R.decisions||[])if(x.t_start!==null&&x.t_start<=tt)d=x;if(!d||!d.h0||!d.h1)return null;
+  let a;if(tt<d.t_push)a=0;else if(tt>=d.t_end)a=1;else a=(tt-d.t_push)/Math.max(1e-6,d.t_end-d.t_push);return {xy:[d.h0[0]+(d.h1[0]-d.h0[0])*a,d.h0[1]+(d.h1[1]-d.h0[1])*a],rec:true};}
+ function draw(){if(!R)return;const w=cv.clientWidth,h=parseFloat(cv.style.height);const q=S();ctx.clearRect(0,0,w,h);
+  const ink=css("--ink"),ink3=css("--ink3"),line=css("--line"),bel=css("--belief"),pred=css("--pred"),hand=css("--hand"),tgt=css("--target"),gt=css("--gt");
+  // grid 5 cm
+  ctx.strokeStyle=line;ctx.lineWidth=1;ctx.setLineDash([]);for(let x=Math.ceil(B.x0/0.05)*0.05;x<=B.x1;x+=0.05){const a=P(x,B.y0),b=P(x,B.y1);ctx.beginPath();ctx.moveTo(...a);ctx.lineTo(...b);ctx.stroke();}
+  for(let y=Math.ceil(B.y0/0.05)*0.05;y<=B.y1;y+=0.05){const a=P(B.x0,y),b=P(B.x1,y);ctx.beginPath();ctx.moveTo(...a);ctx.lineTo(...b);ctx.stroke();}
+  ctx.fillStyle=ink3;ctx.font="11px system-ui";ctx.fillText("grid 5 cm",6,h-6);
+  if(R.tray){const th=R.tray_half||[0.07,0.07];box(R.tray[0],R.tray[1],0,th,ink3,null,[2,3],true);const p=P(R.tray[0]+th[0],R.tray[1]);ctx.fillStyle=ink3;ctx.fillText("tray",p[0]-10,p[1]-4);}
+  if(R.rail){const p=P(R.rail[0],R.rail[1]);ctx.fillStyle=ink3;ctx.fillRect(p[0]-3,p[1]-3,6,6);ctx.fillText("rail",p[0]+5,p[1]+4);}
+  if(R.target){const p=P(R.target[0],R.target[1]);ctx.beginPath();ctx.arc(p[0],p[1],(R.target_radius||0.03)*q.s,0,7);ctx.fillStyle=tgt+"22";ctx.fill();ctx.strokeStyle=tgt;ctx.lineWidth=2;ctx.setLineDash([5,4]);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=tgt;ctx.fillText("target",p[0]+4,p[1]-(R.target_radius||0.03)*q.s-4);}
+  const i=frameAt(t),f=R.frames[i];
+  // trail (ground truth)
+  ctx.strokeStyle=gt;ctx.globalAlpha=0.25;ctx.lineWidth=1.5;ctx.beginPath();for(let j=0;j<=i;j++){const p=P(R.frames[j].o[0],R.frames[j].o[1]);j?ctx.lineTo(...p):ctx.moveTo(...p);}ctx.stroke();ctx.globalAlpha=1;
+  let d=null,di=-1;(R.decisions||[]).forEach((x,k)=>{if(x.t!==null&&x.t<=t){d=x;di=k;}});
+  if(d){// candidates
+   const sc=d.cands.map(c=>c.s).filter(v=>v!==null);const smin=Math.min(...sc),smax=Math.max(...sc);
+   for(const c of d.cands){const p=P(c.xy[0],c.xy[1]);ctx.beginPath();ctx.arc(p[0],p[1],3,0,7);ctx.globalAlpha=c.f?0.25+0.5*(1-((c.s??smax)-smin)/Math.max(1e-9,smax-smin)):0.25;ctx.fillStyle=c.f?ink3:"transparent";ctx.strokeStyle=ink3;ctx.lineWidth=1;c.f?ctx.fill():ctx.stroke();ctx.globalAlpha=1;}
+   const ch=d.cands.find(c=>c.id===d.chosen);if(ch){star(...P(ch.xy[0],ch.xy[1]),8,pred);}
+   // realized (eval only)
+   const real=(d.real||[]).filter(Boolean);if(real.length){ctx.strokeStyle=ink3;ctx.setLineDash([3,3]);ctx.lineWidth=1.5;ctx.beginPath();const st=P(d.frame[0],d.frame[1]);ctx.moveTo(...st);real.forEach(p=>ctx.lineTo(...P(p[0],p[1])));ctx.stroke();ctx.setLineDash([]);}
+   // prediction
+   if(d.pred&&d.pred.length){ctx.strokeStyle=pred;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(...P(d.frame[0],d.frame[1]));d.pred.forEach(p=>ctx.lineTo(...P(p[0],p[1])));ctx.stroke();
+    d.pred.forEach((p,k)=>{const c=P(p[0],p[1]);const sd=d.pred_sd[k];ctx.beginPath();ctx.arc(c[0],c[1],Math.max(2,(sd||0)*q.s),0,7);ctx.globalAlpha=0.5;ctx.strokeStyle=pred;ctx.lineWidth=1;ctx.stroke();ctx.globalAlpha=1;
+     ctx.beginPath();ctx.arc(c[0],c[1],2.5,0,7);ctx.fillStyle=pred;ctx.fill();if(k===d.pred.length-1||k===2){ctx.fillStyle=pred;ctx.fillText(`+${d.hz[k]}s`,c[0]+5,c[1]+3);}});}
+   // belief
+   if(d.belief&&d.belief.length>=2){box(d.belief[0],d.belief[1],d.yaw||0,R.half,bel,null,[4,3]);const c=P(d.belief[0],d.belief[1]);const sx=Math.sqrt(Math.max(0,(d.var||[0,0])[0])),sy=Math.sqrt(Math.max(0,(d.var||[0,0])[1]));
+    ctx.beginPath();ctx.ellipse(c[0],c[1],Math.max(3,2*sy*q.s),Math.max(3,2*sx*q.s),0,0,7);ctx.strokeStyle=bel;ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle=bel;ctx.fillText(`belief r${d.rev} (2σ=${(2000*Math.max(sx,sy)).toFixed(1)} mm)`,c[0]+8,c[1]+16);}}
+  // ground truth object
+  box(f.o[0],f.o[1],f.o[2],R.half,gt,gt+"18");
+  const hh=handAt(t,f);if(hh){const p=P(hh.xy[0],hh.xy[1]);ctx.beginPath();ctx.arc(p[0],p[1],Math.max(4,0.015*q.s),0,7);ctx.fillStyle=hand+(hh.rec?"55":"cc");ctx.fill();ctx.strokeStyle=hand;ctx.lineWidth=2;ctx.setLineDash(hh.rec?[3,2]:[]);ctx.stroke();ctx.setLineDash([]);
+   ctx.fillStyle=hand;ctx.fillText(hh.rec?"hand (reconstructed)":"hand",p[0]+8,p[1]-6);}
+  if(f.f!==undefined&&f.f>0.05){ctx.fillStyle=ink;ctx.fillText(`hand–box normal force ${f.f.toFixed(2)} N (sim)`,6,16);}
+  $("#rpTime").textContent=`t=${t.toFixed(2)} / ${T1.toFixed(2)} s · playback ${$("#rpSpeed").value}× sim time`;
+  $("#rpScrub").value=Math.round(1000*(t-T0)/Math.max(1e-9,T1-T0));
+  info(d,di,f);}
+ function star(x,y,r,c){ctx.beginPath();for(let k=0;k<10;k++){const a=-Math.PI/2+k*Math.PI/5,rr=k%2?r*0.45:r;ctx.lineTo(x+rr*Math.cos(a),y+rr*Math.sin(a));}ctx.closePath();ctx.fillStyle=c;ctx.fill();ctx.strokeStyle=css("--surface");ctx.lineWidth=1;ctx.stroke();}
+ let lastInfo="";function info(d,di,f){const key=di+"|"+(R.id);
+  const dist=R.target?Math.hypot(f.o[0]-R.target[0],f.o[1]-R.target[1]):null;
+  $("#rpInfo").innerHTML=`<b>${esc(R.model)}</b> · ${esc(R.id)} · ${R.success===true?'<span class="ok">success</span>':R.success===false?'<span class="fail">fail</span>':""}<br>
+  <span class="small">distance to target (ground truth): ${dist===null?"–":(dist*100).toFixed(1)+" cm"} · final ${R.final_dist===null?"–":(R.final_dist*100).toFixed(1)+" cm"}</span><br>`+
+  (d?`<span class="small">decision k=${d.k} at t=${fmt(d.t)} s · belief revision ${esc(d.rev)}<br>chosen <b>${esc(d.chosen)}</b> (θ,φ,v,T = ${esc((d.params||[]).map(x=>fmt(x,3)).join(", "))}) · score ${fmt(d.score)}<br>
+  μ̂ ${d.friction?esc(fmt(d.friction[0],3))+" (var "+esc(fmt(d.friction[1],3))+")":"–"} · latency ${fmt(d.latency)} s · ${d.cands.length} candidates${(d.ik_rejected||[]).length?` · IK rejected ${esc(d.ik_rejected.join(","))}`:""}</span>`:`<span class="small">before first decision</span>`);
+  if(key===lastInfo&&!R.memory.length)return;lastInfo=key;
+  let ph="";if(R.memory&&R.memory.length){const items=R.memory.filter(m=>(m.t??m.time??m.measured_at??0)<=t).slice(-40);
+   ph=items.map(fmtMem).join("")||'<div class="small">no updates yet</div>';}
+  else{const dd=(R.decisions||[]).filter((x,k)=>x.t<=t);const memLines=[];dd.forEach((x,k)=>{const ms=(x.mem||[]);if(ms.length){memLines.push(`<div class="${k===dd.length-1?"now":""}"><b>decision k=${esc(x.k)} · t=${fmt(x.t)} s · belief r${esc(x.rev)} · chose ${esc(x.chosen)}</b></div>`);ms.forEach(m=>memLines.push(fmtMem(m)));}
+    else memLines.push(`<div class="${k===dd.length-1?"now":""}">t=${fmt(x.t)} s · <b>belief r${esc(x.rev)}</b> · pose (${fmt(x.belief[0])}, ${fmt(x.belief[1])}) var (${fmt((x.var||[])[0],2)}, ${fmt((x.var||[])[1],2)}) · chose ${esc(x.chosen)}</div>`);});
+   const anyMem=(R.decisions||[]).some(x=>(x.mem||[]).length);ph=(anyMem?`<p class="small">Memory records read by each decision (actor-side events; newest decision highlighted).</p>`:`<p class="small">Per-event memory log not in this dump; showing decision-level belief revisions.</p>`)+(memLines.join("")||'<div class="small">no decisions yet</div>');}
+  $("#rpProv").innerHTML=ph;}
+ function tick(ts){if(playing){const dt=Math.min(0.1,(ts-last)/1000);t+=dt*parseFloat($("#rpSpeed").value);if(t>=T1){t=T1;playing=false;$("#rpPlay").textContent="play";}draw();}last=ts;requestAnimationFrame(tick);}
+ $("#rpPlay").onclick=()=>{if(t>=T1)t=T0;playing=!playing;$("#rpPlay").textContent=playing?"pause":"play";};
+ $("#rpScrub").oninput=e=>{t=T0+(T1-T0)*e.target.value/1000;draw();};$("#rpSpeed").onchange=draw;
+ $("#rpSel").onchange=e=>{playing=false;$("#rpPlay").textContent="play";lastInfo="";load(+e.target.value);};
+ window.addEventListener("resize",()=>R&&resize());new MutationObserver(draw).observe(document.documentElement,{attributes:true});
+ load(0);const qt=new URLSearchParams(location.search).get("replay_t");if(qt!==null){t=Math.min(T1,T0+parseFloat(qt));draw();}requestAnimationFrame(tick);}
+
+function fmtMem(m){if(typeof m!=="object"||!m)return `<div>${esc(m)}</div>`;const sh=v=>Array.isArray(v)?"["+v.map(a=>typeof a==="number"?fmt(a,3):esc(a)).join(", ")+"]":typeof v==="number"?fmt(v,4):esc(v);
+ const known=["t","time","revision","entity","prop","mean","var","source","provenance"];const rest=Object.keys(m).filter(k=>!known.includes(k)).map(k=>`${esc(k)}=${sh(m[k])}`).join(" · ");
+ return `<div><span class="mono">${m.t!==undefined?"t="+fmt(m.t,4)+" ":""}${m.revision!==undefined?"r"+esc(m.revision)+" ":""}</span><b>${esc(m.entity||"")}.${esc(m.prop||"")}</b> ${m.mean!==undefined?"mean "+sh(m.mean):""} ${m.var!==undefined?"var "+sh(m.var):""} ${m.provenance!==undefined?"· prov "+esc(m.provenance):""} ${m.source!==undefined?"· src "+esc(m.source):""}${rest?` <span class="small">${rest}</span>`:""}</div>`;}
+function renderCost(D){const s=el("section",{id:"cost"});const C=D.cost||{};let h=`<h2>Cost ledger</h2><h3>Wall time by kind (from ledger.jsonl)</h3>`;
+ const wk=Object.entries(C.wall_by_kind||{});h+=table([{h:"kind",f:x=>esc(x[0])},{h:"wall (s)",n:1,f:x=>fmt(x[1])},{h:"wall (min)",n:1,f:x=>fmt(x[1]/60,3)}],wk,{empty:"no ledger rows"});
+ h+=`<h3>GPU lock timeline</h3>`+plot(D,"gpu_timeline");
+ h+=C.gpu?table([{h:"job",f:x=>`<span class="mono">${esc(x.name)}</span>`},{h:"start (UTC)",f:x=>esc(x.start)},{h:"end (UTC)",f:x=>esc(x.end||"open")},{h:"duration (min)",n:1,f:x=>x.dur_s===null?"–":fmt(x.dur_s/60,3)},{h:"rc",f:x=>x.rc==="0"?'<span class="ok">0</span>':`<span class="fail">${esc(x.rc)}</span>`}],C.gpu.spans)+`<p class="small">source ${esc(C.gpu.source)}</p>`:`<div class="empty">gpu_ledger.log not synced into results/ yet</div>`;
+ h+=`<h3>Training / suite runs</h3>`+plot(D,"curves_compact")+table([{h:"time (UTC)",f:r=>esc(r.time_utc)},{h:"run_id",f:r=>`<span class="mono">${esc(r.run_id||r.kind)}</span>`},{h:"kind",f:r=>esc(r.kind)},{h:"tag",f:r=>esc(r.tag||"")},{h:"status",f:r=>r.status==="ok"?'<span class="ok">ok</span>':r.status?`<span class="fail" title="${esc(r.error||"")}">${esc(r.status)}</span>`:""},
+  {h:"wall (s)",n:1,f:r=>fmt(r.wall_s)},{h:"steps",n:1,f:r=>fmt(r.steps)},{h:"step (s)",n:1,f:r=>fmt(r.step_s??r.step_s_mean)},{h:"peak mem",n:1,f:r=>r.peak_mem_mib?fmt(r.peak_mem_mib)+" MiB":r.peak_cuda_gb?fmt(r.peak_cuda_gb)+" GB":"–"},{h:"params",n:1,f:r=>fmt(r.n_params??r.n_trainable)},{h:"best val NLL",n:1,f:r=>fmt(r.best_val_nll)},{h:"config_hash",f:r=>`<span class="mono">${esc(r.config_hash||"")}</span>`}],C.ledger||[],{maxh:420,empty:"no ledger rows"});
+ s.innerHTML=h;$("#main").append(s);}
+
+function renderLim(D){const s=el("section",{id:"lim"});const L=D.limitations||{};let h=`<h2>Limitations and skipped work</h2>`;
+ h+=(L.lead||[]).length?`<h3>From the lead</h3><ul>${L.lead.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:"";
+ h+=`<h3>Automatic (from what the rows show)</h3><ul>${(L.auto||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`;
+ const un=D.experiments.filter(e=>e.status==="untested").map(e=>e.id);h+=`<h3>Untested experiments</h3><p>${un.length?esc(un.join(", ")):"none"}</p>`;
+ h+=`<h3>Skipped rows</h3>`+table([{h:"exp",f:r=>esc(r.exp)},{h:"model",f:r=>esc(modelLabel(r.model,r.variant,r.seed))},{h:"stratum",f:r=>esc(r.stratum)},{h:"metric",f:r=>esc(r.metric)},{h:"reason",f:r=>esc(r.note)},{h:"tag",f:r=>esc(r.tag)}],D.skipped||[],{empty:"none"});
+ s.innerHTML=h;$("#main").append(s);}
+
+function renderFiles(D){const s=el("section",{id:"files"});const m=D.meta;
+ s.innerHTML=`<h2>Sources</h2>`+table([{h:"file (under results/)",f:f=>`<span class="mono">${esc(f.path)}</span>`},{h:"sha256[:12]",f:f=>`<span class="mono">${esc(f.sha)}</span>`},{h:"rows / records",n:1,f:f=>fmt(f.rows)}],m.files||[])+
+ ((m.notes||[]).length?`<h3>Generator notes</h3><ul>${m.notes.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:"");
+ $("#main").append(s);$("#foot").innerHTML=`Generated by scripts/make_report.py at ${esc(m.generated_utc)}. Full data: <a href="data.json">data.json</a>. Regenerate: <span class="mono">python scripts/make_report.py --results results/</span>`;}
+
+function renderSummary(D){const s=el("section",{id:"summary"});let h=`<h2>Summary</h2>`;
+ if(D.demo_video)h+=`<figure style="margin:8px 0"><video controls preload="metadata" src="${esc(D.demo_video)}" style="width:100%;max-width:900px"></video><figcaption class="small">Demo: <a href="${esc(D.demo_video)}">results/demo.mp4</a> — unitree g1 · fixed-base MuJoCo simulation · synthetic sensors.</figcaption></figure>`;
+ h+=D.findings_html?`<div class="card md">${D.findings_html}<p class="small">(rendered from results/findings.md)</p></div>`:`<div class="empty">results/findings.md not present yet</div>`;
+ s.innerHTML=h;$("#main").append(s);}
+function unpack(D){const R=D.rows;if(!R||Array.isArray(R))return D;const sc=new Set(R.strcols);
+ D.rows=R.data.map(a=>{const o={};R.cols.forEach((c,i)=>{const v=a[i];o[c]=sc.has(c)?(v===null?null:R.strings[v]):v;});if(o.x===null)delete o.x;return o;});return D;}
+function render(D){D=unpack(D);renderHeader(D);renderSummary(D);renderStatus(D);renderHyp(D);renderFactorial(D);renderDiag(D);renderInkling(D);renderG1(D);renderCost(D);renderLim(D);renderFiles(D);}
+$("#themeBtn").onclick=()=>{const r=document.documentElement;const dark=r.dataset.theme?r.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;r.dataset.theme=dark?"light":"dark";};
+function boot(){if(window.REPORT_DATA){render(window.REPORT_DATA);return;}
+ fetch("data.json").then(r=>r.json()).then(render).catch(()=>{const sc=document.createElement("script");sc.src="data.js";sc.onload=()=>window.REPORT_DATA?render(window.REPORT_DATA):fail();sc.onerror=fail;document.body.append(sc);});}
+function fail(){$("#hdr").innerHTML=`<h1>Physical memory sprint report</h1><p class="empty">No data. Run <span class="mono">python scripts/make_report.py --results results/</span>.</p>`;}
+boot();
+</script>
+</body>
+</html>

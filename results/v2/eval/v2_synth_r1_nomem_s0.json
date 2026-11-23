@@ -1,0 +1,44 @@
+{
+ "test:model": {
+  "drawer": {
+   "success_brier": 0.04259638860821724,
+   "success_auc": 0.875510515227676,
+   "success_rate": 0.05066666752099991,
+   "effort_log_rmse": 0.8157992959022522,
+   "progress_rmse": 0.21957728266716003,
+   "cont_nll": -3.2912886142730713
+  },
+  "insert": {
+   "success_brier": 0.18206070363521576,
+   "success_auc": 0.7376726830759941,
+   "success_rate": 0.3247222304344177,
+   "effort_log_rmse": 1.0985567569732666,
+   "progress_rmse": 0.4322291612625122,
+   "cont_nll": -2.499615430831909
+  },
+  "lift": {
+   "success_brier": 0.031795669347047806,
+   "success_auc": 0.9858193483390334,
+   "success_rate": 0.20625001192092896,
+   "effort_log_rmse": 0.7345796823501587,
+   "progress_rmse": 0.1814158707857132,
+   "cont_nll": -1.8613182306289673
+  },
+  "slide": {
+   "success_brier": 0.03645377978682518,
+   "success_auc": 0.9509041090979968,
+   "success_rate": 0.05233333259820938,
+   "effort_log_rmse": 0.5026335716247559,
+   "progress_rmse": 0.1589195728302002,
+   "cont_nll": -2.660154104232788
+  },
+  "sweep": {
+   "success_brier": 0.04271218180656433,
+   "success_auc": 0.9813407138355206,
+   "success_rate": 0.16495130956172943,
+   "effort_log_rmse": 0.2944546043872833,
+   "progress_rmse": 0.15923619270324707,
+   "cont_nll": -3.8121416568756104
+  }
+ }
+}

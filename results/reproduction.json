@@ -1,0 +1,24 @@
+{
+  "checkpoint": "/home/brandonin/dynagraph/results/checkpoints/compact-main-b11-s1.pt",
+  "variant": "b11",
+  "seed": 1,
+  "tolerance_rel": 0.01,
+  "metrics": {
+    "pos_err_m@h0.5": {
+      "reproduced": 0.013602410260933305,
+      "logged": 0.013602410260933305,
+      "rel_diff": 0.0
+    },
+    "nll@all": {
+      "reproduced": -1.491589978483234,
+      "logged": -1.491589978483234,
+      "rel_diff": 0.0
+    },
+    "yaw_err_rad@h0.5": {
+      "reproduced": 0.16637342286406853,
+      "logged": 0.16637342286406853,
+      "rel_diff": 0.0
+    }
+  },
+  "pass": true
+}

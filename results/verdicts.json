@@ -1,0 +1,258 @@
+{
+ "_readme": "Edited by the lead. verdict in {supported, unsupported, contradicted, untested}. evidence: list of row filters (keys exp/stratum/model/variant/seed/metric/tag; '*' suffix = prefix match) whose rows are shown next to the verdict. experiments.<id>: optional title / status override (observed|projected|target|skipped|untested) / note. Copy to results/verdicts.json to make it travel with the results.",
+ "hypotheses": {
+  "h1": {
+   "title": "persistent addressable state helps under occlusion / sparse / delayed / contradictory evidence",
+   "verdict": "supported",
+   "rationale": "Partial. Structured memory (b10/b11) lowers 0.5 s position error vs generic by 2.4 mm [2.1, 2.8] on v2 test and keeps a 2.3-2.7 mm gain in every occlusion/delay/drop/rate stratum (e03). Duplicate floods change structured outputs by exactly 0 (by construction). But stale floods, conflicting sources and authoritative corrections move every compact model by <0.06 mm, so learned stale-write handling is not distinguishable (e05); record-layer update semantics are enforced by construction in memory.py and unit-tested, not learned.",
+   "evidence": [
+    {
+     "exp": "primary",
+     "stratum": "test",
+     "metric": "pos_err_m@h0.5"
+    },
+    {
+     "exp": "e03*",
+     "metric": "pos_err_m@h0.5"
+    },
+    {
+     "exp": "e05*"
+    }
+   ]
+  },
+  "h2": {
+   "title": "physics supervision helps low-data / shifted-parameter prediction when its law applies",
+   "verdict": "contradicted",
+   "rationale": "In the tested regime the physics-loss factor HURT position error: +1.5 mm [1.3, 1.8] on v2, +2.0 mm on v3 (post-hoc), +1.9 mm at 10% data; no benefit at 1% data (all models poor, seed 0 only). NLL effect not significant. Under misspecified laws (e06) the structure gain persisted; no regime with a physics-loss gain was found. Weights were fixed by a small pilot (0.1 multiplier); other weightings untested.",
+   "evidence": [
+    {
+     "exp": "primary",
+     "stratum": "test",
+     "metric": "pos_err_m@h0.5"
+    },
+    {
+     "exp": "e17*"
+    },
+    {
+     "exp": "e02x*"
+    },
+    {
+     "exp": "e06*"
+    }
+   ]
+  },
+  "h3": {
+   "title": "more recurrent passes help when dependency length / contact ambiguity requires computation",
+   "verdict": "unsupported",
+   "rationale": "Passes 1/2/4/8 give indistinguishable error on test and on chains of length 1/2/4/8 (e10). The untied compute-matched control matches b11 on position and is worse on NLL. For the actual Inkling core only its native 3 passes were used (non-varloop checkpoint); no loop-count study.",
+   "evidence": [
+    {
+     "exp": "e10*"
+    }
+   ]
+  },
+  "h4": {
+   "title": "interventions on relevant property slots / routes produce physically appropriate prediction, action and outcome changes",
+   "verdict": "contradicted",
+   "rationale": "Friction-slot intervention 0.35->0.65 moves compact predictions by 0.07-0.10 mm vs 9.9 mm simulator finite difference on v2 (~1%) and 0.08-0.13 mm vs 25.6 mm on v3 (~0.5%), correlation ~0; Inkling i11: 0.4 mm. In the G1 demo, overwriting b11's friction slot changed the predicted final position by 0.02 cm and did not change the chosen action or the outcome. Removing the friction TOKEN costs 4-6 mm (vs 1.4-1.8 mm random), so it carries non-friction information; edge lesions had zero effect. Diagnosis: the slot collapsed to the prior (constant 0.50) although the friction-supervision gradient dominates it; the per-slot encoder likely discards the release-speed/slide-distance shape. Post-hoc b11p (explicit per-push friction summarizer into the slot) did not change this: slot still at prior, intervention effect <1%.",
+   "evidence": [
+    {
+     "exp": "e07*"
+    },
+    {
+     "exp": "e11*"
+    },
+    {
+     "exp": "e07fp*"
+    }
+   ]
+  },
+  "h5": {
+   "title": "common object/contact representation transfers across pusher encodings and robot adapters",
+   "verdict": "unsupported",
+   "rationale": "Zero-shot transfer to the G1 hand (g1cal test, 100 roots): b00 40.0 mm / b11 39.0 mm at 0.5 s, NLL 33-59 (badly overconfident), worse than a prior-friction Coulomb stub on position (29.7 mm). Fine-tuning on 2,251 G1 samples fixes calibration (80% coverage 0.94-0.97) but improves position only ~3 mm. In closed loop (50 paired seeds) compact b00 22/50, b11 15/50 vs stub 22/50, oracle 23/50. Held-out paddle pusher: structured NLL degrades sharply. After adaptation, closed-loop b11 beat b00 (20/50 vs 15/50; per-seed final error -2.20 cm [-3.76, -0.81]) but neither beat the stub (22/50) or oracle (23/50): conditional transfer requires embodiment data and still does not reach a prior-friction baseline.",
+   "evidence": [
+    {
+     "exp": "e15*"
+    },
+    {
+     "exp": "e09*"
+    },
+    {
+     "exp": "e04*",
+     "stratum": "paddle"
+    }
+   ]
+  },
+  "h6": {
+   "title": "adapting the actual pretrained Inkling core adds capability beyond the same external memory/heads/controller",
+   "verdict": "unsupported",
+   "rationale": "The core adaptation path is real (gate: bitwise native equivalence, gradients through all 3 passes into read/write adapters and 48 LoRA modules, frozen base unchanged, 52.8 GB resident, 1.4 s/step at bs 8) and the trained models depend on the core (bypass raises 0.5 s error from ~30 to ~55 mm). But i00/i11 (35 min, ~11-12k examples each) reach 29-33 mm vs 13-17 mm for compact models trained on ~1M examples in 5-6 min; i11 trained without core LoRA (1 seed) is ~1 mm worse than i11 (inconclusive). In the G1 loop i00 8/30, i11 6/30 vs stub 14/30. Benefit of pretraining vs architecture/scale was not tested (no matched random-init control).",
+   "evidence": [
+    {
+     "exp": "e08*"
+    },
+    {
+     "exp": "e08_diag*"
+    },
+    {
+     "exp": "e07_inkling*"
+    }
+   ]
+  },
+  "h7": {
+   "title": "uncertainty persists when unidentifiable and falls after informative interaction",
+   "verdict": "contradicted",
+   "rationale": "Friction posterior uncertainty is flat (0.108) at every push index on v2 and v3; structured models are MORE confident at k=0 (b11 NLL -0.30 at k=0 vs -1.41 at k=3, i.e. overconfident with no history). On the hidden-agent strata all models are badly miscalibrated (NLL ~47 at k0, ~1200 later). Overall 80% coverage on v2 test ~0.88 (slightly over-covered).",
+   "evidence": [
+    {
+     "exp": "e16*"
+    },
+    {
+     "exp": "e16x*"
+    }
+   ]
+  }
+ },
+ "experiments": {
+  "e00": {
+   "title": "",
+   "status": "observed",
+   "note": "record-layer + tensor-layer contracts: tests/test_representation.py, test_memory.py, test_models.py (exact permutation equivariance float64), test_data.py"
+  },
+  "e01": {
+   "title": "",
+   "status": "observed",
+   "note": "tests/test_causality.py: future poisoning, privileged rejection, split disjointness, train-only scalers"
+  },
+  "e02": {
+   "title": "",
+   "status": "observed",
+   "note": "compact 2x2, 3 seeds, v2"
+  },
+  "e03": {
+   "title": "sensor corruption strata (occlusion / delay / drop / rate)",
+   "status": null,
+   "note": ""
+  },
+  "e04": {
+   "title": "OOD + held-out strata (friction 0.15/0.9, held-out cells, paddle, w1)",
+   "status": null,
+   "note": ""
+  },
+  "e05": {
+   "title": "memory edits (duplicate / stale flood, conflicting source, correction, deletion)",
+   "status": null,
+   "note": ""
+  },
+  "e06": {
+   "title": "misspecified laws (velocity-dependent friction, actuation drift)",
+   "status": null,
+   "note": ""
+  },
+  "e07": {
+   "title": "typed-slot interventions vs simulator counterfactuals",
+   "status": null,
+   "note": ""
+  },
+  "e08": {
+   "title": "actual Inkling-2-Mini core: i00 vs i11 (+ bypass / no-LoRA diagnostics)",
+   "status": null,
+   "note": ""
+  },
+  "e09": {
+   "title": "",
+   "status": "observed",
+   "note": "G1 slide-to-target paired: stub/analytic/oracle n=30; b00/b11 n=50; inkling i00/i11 n=30; g1cal fine-tuned n=50 (see e15)"
+  },
+  "e10": {
+   "title": "recurrent refinement passes 1/2/4/8 (8 = extrapolation)",
+   "status": null,
+   "note": ""
+  },
+  "e11": {
+   "title": "lesions (typed token, edges) + restoration",
+   "status": null,
+   "note": ""
+  },
+  "e12": {
+   "title": "equal-information sensor re-encoding and sensor removal",
+   "status": "observed",
+   "note": "round-trip re-encoding exact (\u0394=0); removal: generic unaffected, structured degrades and becomes overconfident"
+  },
+  "e13": {
+   "title": "",
+   "status": "observed",
+   "note": "rates 10/40 Hz and delay 1/3 intervals strata (reported under e03)"
+  },
+  "e14": {
+   "title": "relational: added distractor, w3 second object",
+   "status": null,
+   "note": ""
+  },
+  "e15": {
+   "title": "",
+   "status": "observed",
+   "note": "zero-shot + adapted (g1cal, 2,251 samples) on g1cal test; closed-loop paired rerun"
+  },
+  "e16": {
+   "title": "uncertainty vs history length (push index k)",
+   "status": null,
+   "note": ""
+  },
+  "e17": {
+   "title": "",
+   "status": "observed",
+   "note": "nested 1%/10% subsets, seed 0, matched 8000 steps"
+  },
+  "e18": {
+   "title": "",
+   "status": "skipped",
+   "note": "single physics engine (MuJoCo 4.0.1)"
+  },
+  "e19": {
+   "title": "",
+   "status": "skipped",
+   "note": "no RGB/depth front end"
+  },
+  "e20": {
+   "title": "",
+   "status": "skipped",
+   "note": "no human demonstration"
+  },
+  "e21": {
+   "title": "",
+   "status": "skipped",
+   "note": "no skill composition study"
+  },
+  "e22": {
+   "title": "",
+   "status": "skipped",
+   "note": "no multi-width/rate streams"
+  },
+  "e23": {
+   "title": "",
+   "status": "skipped",
+   "note": "no multi-agent coordination"
+  },
+  "e24": {
+   "title": "",
+   "status": "skipped",
+   "note": "no diffusion/flow action head"
+  },
+  "e25": {
+   "title": "",
+   "status": "skipped",
+   "note": "no physical G1 access established; simulation only"
+  }
+ },
+ "limitations": [
+  "Exploratory 12-hour study on one GB10; 3 seeds (compact), 2 seeds (Inkling i00/i11), 1 seed (i11 no-LoRA, e17, e15).",
+  "Compute is NOT matched between Inkling and compact runs: Inkling runs saw ~11-12k examples in 35 min; compact runs ~1M examples in ~5-6 min. Inkling-vs-compact differences are dominated by this.",
+  "Friction is weakly identifiable in v2 (median post-release slide 2 mm); v3 (fast pushes) is post-hoc/exploratory.",
+  "All G1 results are fixed-base MuJoCo simulation with synthetic sensors; push task only (lift/place gate failed 3/10). Hand speed-tracking scatter (0.83-1.16x) and embodiment gap dominate outcomes; even the true-friction oracle barely beats a prior stub.",
+  "Inkling-in-the-loop runs pause the simulator during inference (~2.3 s/decision); not a real-time control result.",
+  "Gate check 6 (tiny overfit) failed its original 40-step criterion; an amended 200-step check passed and is recorded separately.",
+  "Analytic Coulomb baseline has a known push-end detection bug on v2/v3 (detects end of retract) and a speed grid capped at 0.6 m/s."
+ ]
+}

@@ -1,0 +1,47 @@
+{
+ "stub_prior_coulomb_mu0.5": {
+  "n": 30,
+  "success": 17,
+  "mean_final_dist": 0.038986182367876626,
+  "mean_pushes": 1.0,
+  "mean_sim_time": 5.638666666666269,
+  "mean_dist_after_first_push": 0.03898618236810457,
+  "mean_final_pred_err": 0.01640184835482154
+ },
+ "analytic_coulomb_ls_friction": {
+  "n": 30,
+  "success": 16,
+  "mean_final_dist": 0.039073195228463385,
+  "mean_pushes": 1.0,
+  "mean_sim_time": 5.576999999999609,
+  "mean_dist_after_first_push": 0.03907319522859903,
+  "mean_final_pred_err": 0.022551978128489306
+ },
+ "ORACLE_true_friction_coulomb": {
+  "n": 30,
+  "success": 17,
+  "mean_final_dist": 0.03844200875417365,
+  "mean_pushes": 1.0,
+  "mean_sim_time": 5.633333333332937,
+  "mean_dist_after_first_push": 0.038442008754386865,
+  "mean_final_pred_err": 0.01656783134978956
+ },
+ "stub_prior_coulomb_mu0.3": {
+  "n": 30,
+  "success": 15,
+  "mean_final_dist": 0.04131806334438815,
+  "mean_pushes": 1.0,
+  "mean_sim_time": 5.651666666666268,
+  "mean_dist_after_first_push": 0.041318063344578056,
+  "mean_final_pred_err": 0.019861926683116926
+ },
+ "stub_prior_coulomb_mu0.7": {
+  "n": 30,
+  "success": 16,
+  "mean_final_dist": 0.040658100210109765,
+  "mean_pushes": 1.0,
+  "mean_sim_time": 5.6059999999996055,
+  "mean_dist_after_first_push": 0.04065810021031974,
+  "mean_final_pred_err": 0.01872918906879735
+ }
+}

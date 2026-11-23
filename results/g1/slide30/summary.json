@@ -1,0 +1,41 @@
+{
+ "ORACLE_true_friction_coulomb": {
+  "n": 30,
+  "success": 15,
+  "mean_final_dist_cm": 5.514492639816789,
+  "median_final_dist_cm": 3.157143175818621,
+  "mean_pushes": 2.6666666666666665,
+  "mean_objective": 0.18847825973150126,
+  "dist_after_first_push_cm": 10.30288709573168,
+  "frac_fast_chosen": 0.5875,
+  "mean_latency_ms": 1.2250274507096037,
+  "rtf": 13.001528170984837,
+  "audit_clean": true
+ },
+ "analytic_coulomb_ls_friction": {
+  "n": 30,
+  "success": 8,
+  "mean_final_dist_cm": 6.154148444330352,
+  "median_final_dist_cm": 4.539136220543831,
+  "mean_pushes": 2.8,
+  "mean_objective": 0.20154148444330355,
+  "dist_after_first_push_cm": 10.345894100329552,
+  "frac_fast_chosen": 0.4642857142857143,
+  "mean_latency_ms": 31.592082124229314,
+  "rtf": 12.020446091210667,
+  "audit_clean": true
+ },
+ "stub_prior_coulomb_mu0.5": {
+  "n": 30,
+  "success": 14,
+  "mean_final_dist_cm": 5.0221798490612235,
+  "median_final_dist_cm": 3.3979873583481828,
+  "mean_pushes": 2.7666666666666666,
+  "mean_objective": 0.18855513182394562,
+  "dist_after_first_push_cm": 10.256454302661822,
+  "frac_fast_chosen": 0.5783132530120482,
+  "mean_latency_ms": 1.1180899924107106,
+  "rtf": 13.175100419060831,
+  "audit_clean": true
+ }
+}

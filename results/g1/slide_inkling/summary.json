@@ -1,0 +1,28 @@
+{
+ "inkling_i00_s1": {
+  "n": 30,
+  "success": 8,
+  "mean_final_dist_cm": 8.506627461802498,
+  "median_final_dist_cm": 7.4610134082704285,
+  "mean_pushes": 2.7,
+  "mean_objective": 0.220066274618025,
+  "dist_after_first_push_cm": 10.639540957735202,
+  "frac_fast_chosen": 0.7283950617283951,
+  "mean_latency_ms": 2294.8257525519393,
+  "rtf": 1.840354366238532,
+  "audit_clean": true
+ },
+ "inkling_i11_s1": {
+  "n": 30,
+  "success": 6,
+  "mean_final_dist_cm": 9.94369511466438,
+  "median_final_dist_cm": 5.35493610666966,
+  "mean_pushes": 2.9,
+  "mean_objective": 0.2444369511466438,
+  "dist_after_first_push_cm": 12.30243139425236,
+  "frac_fast_chosen": 0.7011494252873564,
+  "mean_latency_ms": 2336.6035477639853,
+  "rtf": 1.7712861409183485,
+  "audit_clean": true
+ }
+}

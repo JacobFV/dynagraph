@@ -1,0 +1,20 @@
+[project]
+name = "physmem"
+version = "0.1.0"
+description = "typed physical memory + recurrent refinement sprint (gb10)"
+requires-python = ">=3.12"
+dependencies = ["torch==2.9.1", "numpy", "scipy", "mujoco", "matplotlib", "pyyaml", "safetensors", "transformers", "imageio", "imageio-ffmpeg", "pytest"]
+
+[project.scripts]
+physmem = "physmem.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

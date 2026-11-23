@@ -1,0 +1,18 @@
+{
+ "utc": "2026-11-23T07:03:00Z",
+ "rule": "min ck['val']['nll'] over seeds with _final",
+ "picks": {
+  "b00": {
+   "val_nll": -1.3799759149551392,
+   "path": "results/checkpoints/compact-main-b00-s1.pt",
+   "seed": 1,
+   "config_hash": "bd2adbd9f284"
+  },
+  "b11": {
+   "val_nll": -1.587701827287674,
+   "path": "results/checkpoints/compact-main-b11-s1.pt",
+   "seed": 1,
+   "config_hash": "75910f53ba5a"
+  }
+ }
+}

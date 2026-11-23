@@ -1,0 +1,26 @@
+{
+  "time_utc": "2026-11-23T12:30:54Z",
+  "host": "promaxgb10-4dfb",
+  "machine": "aarch64",
+  "python": "3.12.13",
+  "mem_total": "125440352 kB",
+  "mem_available": "119173132 kB",
+  "swap_free": "15833576 kB",
+  "disk_free_gb": 478.0,
+  "nvidia_smi": "NVIDIA GB10, 580.178.04, 12.1",
+  "torch": "2.9.1+cu130",
+  "cuda_available": true,
+  "device": "NVIDIA GB10",
+  "capability": [
+    12,
+    1
+  ],
+  "cuda_fwd_bwd_ok": true,
+  "bf16_autocast_ok": true,
+  "mujoco": "4.0.1",
+  "transformers": "5.24.0",
+  "numpy": "2.2.6",
+  "safetensors": "0.8.0",
+  "mujoco_step_ok": true,
+  "inkling_checkpoint_present": true
+}

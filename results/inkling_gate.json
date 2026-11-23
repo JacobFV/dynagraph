@@ -1,0 +1,253 @@
+{
+  "time_utc_start": "2026-11-23T06:10:09Z",
+  "checks": {
+    "1_checkpoint_native_outputs": {
+      "pass": true,
+      "revision": "b85c3cfa615fc413cc9af3379f491b963f3b586a",
+      "arch": [
+        "Inkling2LoopForConditionalGeneration"
+      ],
+      "quant": {
+        "quant_method": "modelopt",
+        "quant_algo": "NVFP4"
+      },
+      "loop": {
+        "core_start": 6,
+        "core_end": 18,
+        "num_passes": 3,
+        "gate_rank": 64,
+        "is_varloop": false
+      },
+      "greedy_decode": "<|message_model|><|content_thinking|>The user asks: \"In one short sentence: what happens to a box pushed across a rough table after the push stops?\" Need answer one short sentence. Need reason: box pushed across",
+      "decode_s": 6.9,
+      "param_dtypes": [
+        "torch.bfloat16",
+        "torch.float32"
+      ],
+      "text_params": 25607222784
+    },
+    "2_pass_capture": {
+      "pass": true,
+      "n_passes": 3,
+      "core_layers": [
+        6,
+        17
+      ],
+      "relative_change_between_passes": [
+        0.5624845027923584,
+        1.1862733364105225
+      ]
+    },
+    "3a_instrumented_equals_native": {
+      "pass": true,
+      "max_abs_diff": 0.0
+    },
+    "3b_zero_gated_adapters_preserve_core": {
+      "pass": true,
+      "lora_targets": [
+        "self_attn.q_proj.linear",
+        "self_attn.k_proj.linear",
+        "self_attn.v_proj.linear",
+        "self_attn.o_proj.linear"
+      ],
+      "n_lora": 48,
+      "seq_len": 49
+    },
+    "4a_gate_gradients_from_physical_loss": {
+      "pass": true,
+      "loss": 3.343815326690674,
+      "read_gate_grad": [
+        -0.0002651214599609375,
+        -0.00130462646484375,
+        -0.005859375
+      ],
+      "write_gate_grad": [
+        -0.1591796875,
+        -0.1669921875,
+        0.29296875
+      ],
+      "lora_grad_nonnull": 48,
+      "note": "LoRA B=0 at init so A-grads are zero; B gets grads"
+    },
+    "4b_adapter_gradients_through_core": {
+      "pass": true,
+      "read.k": 0.0020062634721398354,
+      "read.q": 0.024093210697174072,
+      "write.q": 0.0018665363313630223,
+      "lora_A_nonzero": 48,
+      "lora_B_nonzero": 48,
+      "n_lora": 48,
+      "base_grads_none": true
+    },
+    "4c_pass0_read_grad_via_later_passes": {
+      "pass": true,
+      "read_k_grad": 0.37818998098373413
+    },
+    "5_step_changes_adapters_only": {
+      "pass": true,
+      "frozen_tensors_checked": 25,
+      "frozen_unchanged": true
+    },
+    "6_tiny_overfit": {
+      "pass": false,
+      "train_nll_first": 1.3703855276107788,
+      "train_nll_last": 1.00150728225708,
+      "train_nll_curve": [
+        1.3703855276107788,
+        1.3144837617874146,
+        1.2394700050354004,
+        1.217860221862793,
+        1.1863478422164917,
+        1.1634759902954102,
+        1.1096535921096802,
+        1.0614824295043945
+      ],
+      "val_nll_every10": [
+        1.586887001991272,
+        1.6185423135757446,
+        1.5862797498703003,
+        1.5511735677719116
+      ],
+      "note": "fixed 16-sample batch; no generalization claim"
+    },
+    "7_timing_memory": {
+      "pass": true,
+      "load_s": 47.8,
+      "mem_after_load": {
+        "MemAvailable_GB": 61.48,
+        "SwapUsed_GB": 1.06,
+        "VmHWM_GB": 17.37,
+        "VmRSS_GB": 0.84,
+        "cuda_alloc_GB": 52.83,
+        "cuda_peak_GB": 53.97,
+        "cuda_reserved_GB": 56.57
+      },
+      "mem_ready": {
+        "MemAvailable_GB": 62.51,
+        "SwapUsed_GB": 1.06,
+        "VmHWM_GB": 17.37,
+        "VmRSS_GB": 1.09,
+        "cuda_alloc_GB": 52.83,
+        "cuda_peak_GB": 53.97,
+        "cuda_reserved_GB": 55.21
+      },
+      "first_step_s": 9.519361972808838,
+      "warm_step_s": 2.673703670501709,
+      "sustained_step_s_bs16": 2.2529205526624407,
+      "step_s_by_bs": {
+        "8": 1.2784154415130615,
+        "32": 11.705308675765991
+      },
+      "peak_cuda_alloc_gb_train": 74.064411648,
+      "mem_during_train": {
+        "MemAvailable_GB": 42.37,
+        "SwapUsed_GB": 2.11,
+        "VmHWM_GB": 17.37,
+        "VmRSS_GB": 2.07,
+        "cuda_alloc_GB": 52.07,
+        "cuda_peak_GB": 74.06,
+        "cuda_reserved_GB": 74.57
+      },
+      "trainable_params": 5572599
+    },
+    "8_budget": {
+      "pass": true,
+      "chosen_bs": 8,
+      "step_s": 1.2784154415130615,
+      "run_minutes": 30,
+      "projected_steps_per_run": 1196,
+      "projected_examples_per_run": 9568,
+      "note": "pass if a run can see >=2000 training examples (~1/8 epoch); else downscope"
+    },
+    "6b_extended_overfit_AMENDED": {
+      "pass": true,
+      "steps": 200,
+      "train_nll_first": 1.3703855276107788,
+      "train_nll_last": -0.22837544977664948,
+      "train_nll_curve": [
+        1.3703855276107788,
+        1.2394700050354004,
+        1.1863478422164917,
+        1.1096535921096802,
+        0.9845287203788757,
+        0.7226230502128601,
+        0.6358439326286316,
+        0.46962347626686096,
+        0.2623160183429718,
+        0.23960228264331818,
+        0.10590105503797531,
+        0.030857393518090248,
+        0.26066434383392334,
+        -0.044605765491724014,
+        -0.08196286857128143,
+        -0.08245930820703506,
+        -0.035793486982584,
+        -0.2308262139558792,
+        -0.22927571833133698,
+        -0.40196719765663147
+      ],
+      "val_nll_every25": [
+        1.6153416633605957,
+        1.3706632852554321,
+        1.9310280084609985,
+        3.2555835247039795,
+        2.215165138244629,
+        3.4386730194091797,
+        4.9648027420043945,
+        3.84255313873291
+      ],
+      "note": "amended after check 6 failed its 40-step criterion; same batch/lr; original FAIL retained"
+    }
+  },
+  "load": {
+    "repo": "thinkingmachines/Inkling-2-Mini",
+    "revision": "b85c3cfa615fc413cc9af3379f491b963f3b586a",
+    "path": "ckpt/Inkling-2-Mini",
+    "mem_before": {
+      "MemAvailable_GB": 115.88,
+      "SwapUsed_GB": 0.52,
+      "VmHWM_GB": 0.71,
+      "VmRSS_GB": 0.71,
+      "cuda_alloc_GB": 0.0,
+      "cuda_peak_GB": 0.0,
+      "cuda_reserved_GB": 0.0
+    },
+    "load_s": 47.8,
+    "mem_after_load": {
+      "MemAvailable_GB": 61.48,
+      "SwapUsed_GB": 1.06,
+      "VmHWM_GB": 17.37,
+      "VmRSS_GB": 0.84,
+      "cuda_alloc_GB": 52.83,
+      "cuda_peak_GB": 53.97,
+      "cuda_reserved_GB": 56.57
+    },
+    "text_params": 25607222784,
+    "dtypes": [
+      "torch.bfloat16",
+      "torch.float32"
+    ],
+    "config": {
+      "hidden_size": 2304,
+      "num_hidden_layers": 24,
+      "loop_layer_index_start": 6,
+      "loop_layer_index_end": 18,
+      "loop_num_passes": 3,
+      "n_routed_experts": 128,
+      "num_experts_per_tok": 8
+    },
+    "mem_ready": {
+      "MemAvailable_GB": 62.51,
+      "SwapUsed_GB": 1.06,
+      "VmHWM_GB": 17.37,
+      "VmRSS_GB": 1.09,
+      "cuda_alloc_GB": 52.83,
+      "cuda_peak_GB": 53.97,
+      "cuda_reserved_GB": 55.21
+    }
+  },
+  "passed": false,
+  "time_utc_end": "2026-11-23T06:13:36Z",
+  "wall_s": 206.36975979804993,
+  "passed_with_amendment": true
+}

@@ -1,0 +1,17 @@
+# large / regenerable artifacts (live on gb10-direct; provenance in results/manifest.json)
+results/checkpoints/
+results/eval_cache/
+results/**/*.pt
+results/**/*.npz
+data/
+ckpt/
+assets/
+logs/
+*.pt
+*.safetensors
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.claude/
+*.log

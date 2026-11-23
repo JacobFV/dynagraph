@@ -1,0 +1,1514 @@
+{
+ "summary": {
+  "robot": "gen3_2f85",
+  "n": 50,
+  "vmax": 1.0,
+  "ratio": {
+   "n": 42,
+   "mean": 1.0028691988216982,
+   "p10": 0.9944418569641328,
+   "p50": 1.0026578396059318,
+   "p90": 1.0143679222207138,
+   "p95": 1.0179863529793447,
+   "max": 1.0355555078168948,
+   "min": 0.9563804621574427
+  },
+  "release_ratio": {
+   "n": 42,
+   "mean": 0.9771080952023603,
+   "p10": 0.9537350164622818,
+   "p50": 0.9981516798361633,
+   "p90": 1.006870510481686,
+   "p95": 1.0079630889542357,
+   "max": 1.0191962936786187,
+   "min": 0.6447159110589796
+  },
+  "err_mid_max": {
+   "n": 42,
+   "mean": 0.002898835497588439,
+   "p10": 0.0008311876250979847,
+   "p50": 0.002406657473058708,
+   "p90": 0.005386827861563707,
+   "p95": 0.006358685634137943,
+   "max": 0.011350808479908813,
+   "min": 0.0002657202487017749
+  },
+  "err_mid_mean": {
+   "n": 42,
+   "mean": 0.0020703314102552164,
+   "p10": 0.0006413029059236351,
+   "p50": 0.0017718391345613275,
+   "p90": 0.0034867827348379265,
+   "p95": 0.004816755184142313,
+   "max": 0.0073634109775978784,
+   "min": 0.00022105075862166902
+  },
+  "stalls": 0,
+  "retimed": 0,
+  "skipped": 8,
+  "peak_torque_rate": {
+   "n": 42,
+   "mean": 1.6518862939513088,
+   "p10": 0.5279862021147406,
+   "p50": 0.979079812405387,
+   "p90": 3.017333056954277,
+   "p95": 6.212350935488338,
+   "max": 6.408980832805374,
+   "min": 0.4595187425351847
+  },
+  "peak_joint_jerk": {
+   "n": 42,
+   "mean": 138.91076987272785,
+   "p10": 78.5843475783636,
+   "p50": 121.8274202666698,
+   "p90": 233.41129359239332,
+   "p95": 264.5293946389819,
+   "max": 294.9159880712704,
+   "min": 60.28039592109735
+  },
+  "time_at_limit_s": 1.8140000000000014,
+  "frac_ratio_within_7pct": 1.0,
+  "integrity": [],
+  "sim_s": 146.1639999999698,
+  "wall_s": 10.992663913988508,
+  "rt_factor": 13.29650402701492,
+  "ratio_by_speed": {
+   "0.1-0.2": {
+    "n": 15,
+    "mean": 0.9974791936124656,
+    "p10": 0.982539055929196,
+    "p50": 1.0009938457906493,
+    "p90": 1.0117370324059995,
+    "p95": 1.0151163383694422,
+    "max": 1.0166286016353556,
+    "min": 0.9563804621574427
+   },
+   "0.2-0.4": {
+    "n": 15,
+    "mean": 1.0037909126358542,
+    "p10": 0.9991311738932738,
+    "p50": 1.0032392353789752,
+    "p90": 1.0092470400005558,
+    "p95": 1.0109737521002546,
+    "max": 1.012410482242774,
+    "min": 0.9968063748690038
+   },
+   "0.4-0.6": {
+    "n": 6,
+    "mean": 1.0096569762070338,
+    "p10": 0.9984308072211392,
+    "p50": 1.0037334607033166,
+    "p90": 1.0268066606966457,
+    "p95": 1.0311810842567701,
+    "max": 1.0355555078168948,
+    "min": 0.9942235447951332
+   },
+   "0.6-0.81": {
+    "n": 5,
+    "mean": 1.0084086278845121,
+    "p10": 0.9998806350603079,
+    "p50": 1.0054642803424463,
+    "p90": 1.0192447598018186,
+    "p95": 1.021171282290292,
+    "max": 1.0230978047787656,
+    "min": 0.9993714513716401
+   },
+   "0.81-2.0": {
+    "n": 1,
+    "mean": 1.0014697601217686,
+    "p10": 1.0014697601217686,
+    "p50": 1.0014697601217686,
+    "p90": 1.0014697601217686,
+    "p95": 1.0014697601217686,
+    "max": 1.0014697601217686,
+    "min": 1.0014697601217686
+   }
+  }
+ },
+ "rows": [
+  {
+   "i": 0,
+   "eff": "hand",
+   "v_cmd": 0.4334726365239159,
+   "v_cmd_retimed": 0.4334726365239159,
+   "retime": 1.0,
+   "length": 0.22697867137638703,
+   "status": "done",
+   "ratio": 1.0040015916095748,
+   "release_ratio": 0.9913375244971399,
+   "err_mid_max": 0.002436940614044723,
+   "err_mid_mean": 0.0018929187356560057,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.18077904613722884,
+    "torque_rate_sq": 0.8434453114495957,
+    "joint_jerk_sq": 4982.686010440907,
+    "energy_j": 23.986191753150862,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.4360792925966468,
+    "cost": 1.0032540958577878
+   },
+   "peaks": {
+    "torque_rate": 1.8117827545540233,
+    "joint_jerk": 106.74898858417616,
+    "torque_norm": 0.6510649606335542
+   }
+  },
+  {
+   "i": 1,
+   "eff": "hand",
+   "v_cmd": 0.9935962318215361,
+   "skipped": true,
+   "ratio": null,
+   "release_ratio": null,
+   "err_mid_max": null,
+   "err_mid_mean": null,
+   "stall": false,
+   "retime": 1.0,
+   "effort": {
+    "torque_sq": 0.0,
+    "torque_rate_sq": 0.0,
+    "joint_jerk_sq": 0.0,
+    "energy_j": 0.0,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.0,
+    "cost": 0.0
+   },
+   "peaks": {
+    "torque_rate": 0.0,
+    "joint_jerk": 0.0,
+    "torque_norm": 0.0
+   }
+  },
+  {
+   "i": 2,
+   "eff": "hand",
+   "v_cmd": 0.8224672522509526,
+   "skipped": true,
+   "ratio": null,
+   "release_ratio": null,
+   "err_mid_max": null,
+   "err_mid_mean": null,
+   "stall": false,
+   "retime": 1.0,
+   "effort": {
+    "torque_sq": 0.0,
+    "torque_rate_sq": 0.0,
+    "joint_jerk_sq": 0.0,
+    "energy_j": 0.0,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.0,
+    "cost": 0.0
+   },
+   "peaks": {
+    "torque_rate": 0.0,
+    "joint_jerk": 0.0,
+    "torque_norm": 0.0
+   }
+  },
+  {
+   "i": 3,
+   "eff": "hand",
+   "v_cmd": 0.3467551919064373,
+   "v_cmd_retimed": 0.3467551919064373,
+   "retime": 1.0,
+   "length": 0.2071694122671205,
+   "status": "done",
+   "ratio": 0.9997266518984169,
+   "release_ratio": 0.9910854145077851,
+   "err_mid_max": 0.0011176455702965337,
+   "err_mid_mean": 0.0007704437368885094,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.061593156995824044,
+    "torque_rate_sq": 0.12393280502557094,
+    "joint_jerk_sq": 4117.583541453043,
+    "energy_j": 21.47183458937753,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.34819314157764636,
+    "cost": 0.7004631375374608
+   },
+   "peaks": {
+    "torque_rate": 0.6816162673659777,
+    "joint_jerk": 125.98972168152397,
+    "torque_norm": 0.25595840125559494
+   }
+  },
+  {
+   "i": 4,
+   "eff": "hand",
+   "v_cmd": 0.261086332783797,
+   "v_cmd_retimed": 0.261086332783797,
+   "retime": 1.0,
+   "length": 0.23520259749571498,
+   "status": "done",
+   "ratio": 1.006095357597242,
+   "release_ratio": 0.9932238051524123,
+   "err_mid_max": 0.0032203799606644315,
+   "err_mid_mean": 0.002231812662640445,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.05876477357856932,
+    "torque_rate_sq": 0.38985735336665045,
+    "joint_jerk_sq": 3943.3712016413233,
+    "energy_j": 14.532855169336099,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.26395321557753887,
+    "cost": 0.6374161807727278
+   },
+   "peaks": {
+    "torque_rate": 1.4375801185716495,
+    "joint_jerk": 140.16533417642032,
+    "torque_norm": 0.35904996240416037
+   }
+  },
+  {
+   "i": 5,
+   "eff": "hand",
+   "v_cmd": 0.21875101004132194,
+   "v_cmd_retimed": 0.21875101004132194,
+   "retime": 1.0,
+   "length": 0.2013248380983514,
+   "status": "done",
+   "ratio": 1.0008172356010947,
+   "release_ratio": 0.998529518540897,
+   "err_mid_max": 0.0005749815487599034,
+   "err_mid_mean": 0.0005406530226631498,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.04880459289768617,
+    "torque_rate_sq": 0.06930425624867065,
+    "joint_jerk_sq": 3234.7109193720444,
+    "energy_j": 10.683415792014424,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.2209795003475379,
+    "cost": 0.48604026837990194
+   },
+   "peaks": {
+    "torque_rate": 0.4595187425351847,
+    "joint_jerk": 119.01203219507403,
+    "torque_norm": 0.2258636467340287
+   }
+  },
+  {
+   "i": 6,
+   "eff": "hand",
+   "v_cmd": 0.5338902881728154,
+   "v_cmd_retimed": 0.5338902881728154,
+   "retime": 1.0,
+   "length": 0.2260741854253709,
+   "status": "done",
+   "ratio": 1.002638069647145,
+   "release_ratio": 1.0001618135238832,
+   "err_mid_max": 0.002748315201639995,
+   "err_mid_mean": 0.0026289358149843623,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.19860984466991463,
+    "torque_rate_sq": 0.8380349973618529,
+    "joint_jerk_sq": 3510.873028960335,
+    "energy_j": 17.31381741378376,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.5362992815764643,
+    "cost": 0.806638821439971
+   },
+   "peaks": {
+    "torque_rate": 1.666607199003575,
+    "joint_jerk": 79.44330429748848,
+    "torque_norm": 0.6701153288263927
+   }
+  },
+  {
+   "i": 7,
+   "eff": "hand",
+   "v_cmd": 0.1606607841710625,
+   "v_cmd_retimed": 0.1606607841710625,
+   "retime": 1.0,
+   "length": 0.29266165064133104,
+   "status": "done",
+   "ratio": 0.9825129986323664,
+   "release_ratio": 0.6895320614862486,
+   "err_mid_max": 0.004624135605518422,
+   "err_mid_mean": 0.0022139094271254513,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.7598727516943242,
+    "torque_rate_sq": 0.8638083497393353,
+    "joint_jerk_sq": 4356.91607649266,
+    "energy_j": 24.111192026190004,
+    "time_at_limit_s": 0.35000000000000026,
+    "peak_ee_speed": 0.16243830742530005,
+    "cost": 1.8730571145794241
+   },
+   "peaks": {
+    "torque_rate": 1.9349988538626424,
+    "joint_jerk": 178.87210039818635,
+    "torque_norm": 1.0
+   }
+  },
+  {
+   "i": 8,
+   "eff": "hand",
+   "v_cmd": 0.45096320519112776,
+   "v_cmd_retimed": 0.45096320519112776,
+   "retime": 1.0,
+   "length": 0.24617856334681842,
+   "status": "done",
+   "ratio": 0.9942235447951332,
+   "release_ratio": 1.0021557939415053,
+   "err_mid_max": 0.0023763743320726932,
+   "err_mid_mean": 0.0011690880073585447,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.05193379536384226,
+    "torque_rate_sq": 0.3358875512781744,
+    "joint_jerk_sq": 3294.522726760346,
+    "energy_j": 12.042333206684075,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.45450651529204444,
+    "cost": 0.535398155234535
+   },
+   "peaks": {
+    "torque_rate": 1.2724155994527073,
+    "joint_jerk": 79.12910835836031,
+    "torque_norm": 0.2170759453177532
+   }
+  },
+  {
+   "i": 9,
+   "eff": "hand",
+   "v_cmd": 0.24482260756170457,
+   "v_cmd_retimed": 0.24482260756170457,
+   "retime": 1.0,
+   "length": 0.2733331833675533,
+   "status": "done",
+   "ratio": 1.0052298421942096,
+   "release_ratio": 1.0040289058828176,
+   "err_mid_max": 0.001739467118448526,
+   "err_mid_mean": 0.0015138063057889488,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.10902990700972152,
+    "torque_rate_sq": 0.1020713002849728,
+    "joint_jerk_sq": 5491.0849680252,
+    "energy_j": 20.544215985758598,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.2460523190740501,
+    "cost": 0.8737876936983249
+   },
+   "peaks": {
+    "torque_rate": 0.5104896007226771,
+    "joint_jerk": 181.27759009613806,
+    "torque_norm": 0.3014664970369486
+   }
+  },
+  {
+   "i": 10,
+   "eff": "hand",
+   "v_cmd": 0.17158372808486327,
+   "v_cmd_retimed": 0.17158372808486327,
+   "retime": 1.0,
+   "length": 0.21739739108404538,
+   "status": "done",
+   "ratio": 0.9563804621574427,
+   "release_ratio": 0.6447159110589796,
+   "err_mid_max": 0.009725571826014846,
+   "err_mid_mean": 0.0048585810496851525,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.8140229919866788,
+    "torque_rate_sq": 0.761079419836908,
+    "joint_jerk_sq": 8092.041332235417,
+    "energy_j": 23.34253867912114,
+    "time_at_limit_s": 0.3840000000000003,
+    "peak_ee_speed": 0.17119607719018667,
+    "cost": 2.316760453985123
+   },
+   "peaks": {
+    "torque_rate": 1.9517955940078278,
+    "joint_jerk": 196.34336609011817,
+    "torque_norm": 1.0
+   }
+  },
+  {
+   "i": 11,
+   "eff": "hand",
+   "v_cmd": 0.6428477399061181,
+   "v_cmd_retimed": 0.6428477399061181,
+   "retime": 1.0,
+   "length": 0.2332145291639766,
+   "status": "done",
+   "ratio": 1.0054642803424463,
+   "release_ratio": 0.99845442899112,
+   "err_mid_max": 0.004314106467361824,
+   "err_mid_mean": 0.003389334025318096,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.2108814872317833,
+    "torque_rate_sq": 1.72638756724523,
+    "joint_jerk_sq": 3437.7802632149915,
+    "energy_j": 24.41417621009911,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.6543101215943139,
+    "cost": 0.9714400323787966
+   },
+   "peaks": {
+    "torque_rate": 2.730500342634303,
+    "joint_jerk": 60.28039592109735,
+    "torque_norm": 0.6829467895171868
+   }
+  },
+  {
+   "i": 12,
+   "eff": "hand",
+   "v_cmd": 0.2877641565235132,
+   "v_cmd_retimed": 0.2877641565235132,
+   "retime": 1.0,
+   "length": 0.2780483501532154,
+   "status": "done",
+   "ratio": 1.0009698515662857,
+   "release_ratio": 1.0032401857354032,
+   "err_mid_max": 0.0011366750772997393,
+   "err_mid_mean": 0.0009690291263995053,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.05748832703399021,
+    "torque_rate_sq": 0.11540880168096394,
+    "joint_jerk_sq": 3343.481785894949,
+    "energy_j": 9.05986010651591,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.29009557916191336,
+    "cost": 0.49397598685674066
+   },
+   "peaks": {
+    "torque_rate": 0.588167977221135,
+    "joint_jerk": 104.78446942385756,
+    "torque_norm": 0.20765222736977348
+   }
+  },
+  {
+   "i": 13,
+   "eff": "hand",
+   "v_cmd": 0.1833057391512261,
+   "v_cmd_retimed": 0.1833057391512261,
+   "retime": 1.0,
+   "length": 0.21402204783840562,
+   "status": "done",
+   "ratio": 1.0076394399673423,
+   "release_ratio": 1.0079737283277532,
+   "err_mid_max": 0.002600076729842433,
+   "err_mid_mean": 0.002025808845527883,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.3198879125580385,
+    "torque_rate_sq": 2.850247561241705,
+    "joint_jerk_sq": 19612.985432585887,
+    "energy_j": 28.76590875346609,
+    "time_at_limit_s": 0.1340000000000001,
+    "peak_ee_speed": 0.18755645339822716,
+    "cost": 2.9878702994754587
+   },
+   "peaks": {
+    "torque_rate": 6.379153281292747,
+    "joint_jerk": 264.883559431689,
+    "torque_norm": 1.0
+   }
+  },
+  {
+   "i": 14,
+   "eff": "hand",
+   "v_cmd": 0.10858768123359501,
+   "v_cmd_retimed": 0.10858768123359501,
+   "retime": 1.0,
+   "length": 0.2812811658297013,
+   "status": "done",
+   "ratio": 1.0166286016353556,
+   "release_ratio": 1.0024896040998423,
+   "err_mid_max": 0.0026705351550677056,
+   "err_mid_mean": 0.001253412755219284,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.6304522893983185,
+    "torque_rate_sq": 0.23524375879190249,
+    "joint_jerk_sq": 1035.5253954676593,
+    "energy_j": 10.600834615660442,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.11146670377860733,
+    "cost": 0.8635375509808791
+   },
+   "peaks": {
+    "torque_rate": 0.6224003298107001,
+    "joint_jerk": 71.74500743836916,
+    "torque_norm": 0.7953111297499217
+   }
+  },
+  {
+   "i": 15,
+   "eff": "hand",
+   "v_cmd": 0.9849818310389484,
+   "skipped": true,
+   "ratio": null,
+   "release_ratio": null,
+   "err_mid_max": null,
+   "err_mid_mean": null,
+   "stall": false,
+   "retime": 1.0,
+   "effort": {
+    "torque_sq": 0.0,
+    "torque_rate_sq": 0.0,
+    "joint_jerk_sq": 0.0,
+    "energy_j": 0.0,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.0,
+    "cost": 0.0
+   },
+   "peaks": {
+    "torque_rate": 0.0,
+    "joint_jerk": 0.0,
+    "torque_norm": 0.0
+   }
+  },
+  {
+   "i": 16,
+   "eff": "hand",
+   "v_cmd": 0.2927768249979179,
+   "v_cmd_retimed": 0.2927768249979179,
+   "retime": 1.0,
+   "length": 0.2569446020327097,
+   "status": "done",
+   "ratio": 1.0000579892198904,
+   "release_ratio": 0.9899257389143759,
+   "err_mid_max": 0.0008220360163537482,
+   "err_mid_mean": 0.0005339002029495261,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.07180854076283981,
+    "torque_rate_sq": 0.12998615232271682,
+    "joint_jerk_sq": 6405.582057189052,
+    "energy_j": 24.948535964435205,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.2939039902039133,
+    "cost": 0.9748507213583687
+   },
+   "peaks": {
+    "torque_rate": 0.705243768174592,
+    "joint_jerk": 197.9836062952255,
+    "torque_norm": 0.27795129351369613
+   }
+  },
+  {
+   "i": 17,
+   "eff": "hand",
+   "v_cmd": 0.1900259221784492,
+   "v_cmd_retimed": 0.1900259221784492,
+   "retime": 1.0,
+   "length": 0.25181295408812887,
+   "status": "done",
+   "ratio": 1.0023496033709645,
+   "release_ratio": 0.997527981929395,
+   "err_mid_max": 0.0018362089036263424,
+   "err_mid_mean": 0.0016507595334666492,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.09967635953528714,
+    "torque_rate_sq": 0.1314700358074273,
+    "joint_jerk_sq": 3473.2629827660558,
+    "energy_j": 7.294089831530712,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.19307900496277358,
+    "cost": 0.5330905597079426
+   },
+   "peaks": {
+    "torque_rate": 0.7166469909759395,
+    "joint_jerk": 166.32303236870789,
+    "torque_norm": 0.3250010648990182
+   }
+  },
+  {
+   "i": 18,
+   "eff": "hand",
+   "v_cmd": 0.9312918383821356,
+   "skipped": true,
+   "ratio": null,
+   "release_ratio": null,
+   "err_mid_max": null,
+   "err_mid_mean": null,
+   "stall": false,
+   "retime": 1.0,
+   "effort": {
+    "torque_sq": 0.0,
+    "torque_rate_sq": 0.0,
+    "joint_jerk_sq": 0.0,
+    "energy_j": 0.0,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.0,
+    "cost": 0.0
+   },
+   "peaks": {
+    "torque_rate": 0.0,
+    "joint_jerk": 0.0,
+    "torque_norm": 0.0
+   }
+  },
+  {
+   "i": 19,
+   "eff": "hand",
+   "v_cmd": 0.8185860762514332,
+   "skipped": true,
+   "ratio": null,
+   "release_ratio": null,
+   "err_mid_max": null,
+   "err_mid_mean": null,
+   "stall": false,
+   "retime": 1.0,
+   "effort": {
+    "torque_sq": 0.0,
+    "torque_rate_sq": 0.0,
+    "joint_jerk_sq": 0.0,
+    "energy_j": 0.0,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.0,
+    "cost": 0.0
+   },
+   "peaks": {
+    "torque_rate": 0.0,
+    "joint_jerk": 0.0,
+    "torque_norm": 0.0
+   }
+  },
+  {
+   "i": 20,
+   "eff": "hand",
+   "v_cmd": 0.32417357059282625,
+   "v_cmd_retimed": 0.32417357059282625,
+   "retime": 1.0,
+   "length": 0.2561924690695141,
+   "status": "done",
+   "ratio": 0.9968063748690038,
+   "release_ratio": 0.9856134943909289,
+   "err_mid_max": 0.002834024945700204,
+   "err_mid_mean": 0.002214028875020443,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.19656806613522682,
+    "torque_rate_sq": 0.24119139568771666,
+    "joint_jerk_sq": 2777.9554460499685,
+    "energy_j": 10.349574027580156,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.3277489679802795,
+    "cost": 0.6019784905847969
+   },
+   "peaks": {
+    "torque_rate": 0.9128376573563574,
+    "joint_jerk": 78.53549398405963,
+    "torque_norm": 0.5158550936045001
+   }
+  },
+  {
+   "i": 21,
+   "eff": "hand",
+   "v_cmd": 0.35437746115875796,
+   "v_cmd_retimed": 0.35437746115875796,
+   "retime": 1.0,
+   "length": 0.24898189215543598,
+   "status": "done",
+   "ratio": 1.0032392353789752,
+   "release_ratio": 1.0016889734192116,
+   "err_mid_max": 0.001236819563664627,
+   "err_mid_mean": 0.0010323729386782392,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.06389867977423205,
+    "torque_rate_sq": 0.13390466027200404,
+    "joint_jerk_sq": 3386.885036182268,
+    "energy_j": 16.37468795583951,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.35621374426524477,
+    "cost": 0.5797245289780543
+   },
+   "peaks": {
+    "torque_rate": 0.6570173538567946,
+    "joint_jerk": 87.02228875606677,
+    "torque_norm": 0.24418615288255888
+   }
+  },
+  {
+   "i": 22,
+   "eff": "hand",
+   "v_cmd": 0.2156718290177152,
+   "v_cmd_retimed": 0.2156718290177152,
+   "retime": 1.0,
+   "length": 0.2604542483673927,
+   "status": "done",
+   "ratio": 1.0026776095647185,
+   "release_ratio": 1.0021855103631823,
+   "err_mid_max": 0.0018313258721124137,
+   "err_mid_mean": 0.001438362860109093,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.09440696065042026,
+    "torque_rate_sq": 0.15406127329027336,
+    "joint_jerk_sq": 3020.941741481802,
+    "energy_j": 6.602428216975951,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.21734345785182843,
+    "cost": 0.4779315442973874
+   },
+   "peaks": {
+    "torque_rate": 0.741065958955137,
+    "joint_jerk": 101.64653370254261,
+    "torque_norm": 0.31081714338203736
+   }
+  },
+  {
+   "i": 23,
+   "eff": "hand",
+   "v_cmd": 0.17302771386529595,
+   "v_cmd_retimed": 0.17302771386529595,
+   "retime": 1.0,
+   "length": 0.2660294994672673,
+   "status": "done",
+   "ratio": 1.0009938457906493,
+   "release_ratio": 0.999226780949197,
+   "err_mid_max": 0.0002657202487017749,
+   "err_mid_mean": 0.00023088828068030325,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.08183038019555061,
+    "torque_rate_sq": 0.058249229823772244,
+    "joint_jerk_sq": 5972.021257933959,
+    "energy_j": 19.435294254380963,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.17335155489836315,
+    "cost": 0.8792103715151334
+   },
+   "peaks": {
+    "torque_rate": 0.557636282916109,
+    "joint_jerk": 257.8002635775476,
+    "torque_norm": 0.26417282075400617
+   }
+  },
+  {
+   "i": 24,
+   "eff": "hand",
+   "v_cmd": 0.8264065446447655,
+   "v_cmd_retimed": 0.8264065446447655,
+   "retime": 1.0,
+   "length": 0.11381724556034747,
+   "status": "done",
+   "ratio": 1.0014697601217686,
+   "release_ratio": 1.0044404039828343,
+   "err_mid_max": 0.002000695124866676,
+   "err_mid_mean": 0.0015729118879259595,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.3109974131370872,
+    "torque_rate_sq": 2.463553587297274,
+    "joint_jerk_sq": 5594.1448290746,
+    "energy_j": 28.13031692357853,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.8297261605649788,
+    "cost": 1.3980704240100599
+   },
+   "peaks": {
+    "torque_rate": 3.0196367950118317,
+    "joint_jerk": 85.97993040715401,
+    "torque_norm": 0.711605097033853
+   }
+  },
+  {
+   "i": 25,
+   "eff": "hand",
+   "v_cmd": 0.11030113961625414,
+   "v_cmd_retimed": 0.11030113961625414,
+   "retime": 1.0,
+   "length": 0.20851664076784773,
+   "status": "done",
+   "ratio": 0.9964066664851289,
+   "release_ratio": 0.9372178553421326,
+   "err_mid_max": 0.0003756968615034618,
+   "err_mid_mean": 0.00022105075862166902,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.14542258270296152,
+    "torque_rate_sq": 0.1381656478264395,
+    "joint_jerk_sq": 7001.481759092161,
+    "energy_j": 23.901840129249113,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.11098394713411273,
+    "cost": 1.098405724687313
+   },
+   "peaks": {
+    "torque_rate": 0.874307119223271,
+    "joint_jerk": 294.9159880712704,
+    "torque_norm": 0.2902859239652322
+   }
+  },
+  {
+   "i": 26,
+   "eff": "hand",
+   "v_cmd": 0.6290054922006169,
+   "v_cmd_retimed": 0.6290054922006169,
+   "retime": 1.0,
+   "length": 0.2211705704041257,
+   "status": "done",
+   "ratio": 1.0230978047787656,
+   "release_ratio": 0.9873392075780663,
+   "err_mid_max": 0.005752144398471038,
+   "err_mid_mean": 0.003497610369229019,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.3798650296637625,
+    "torque_rate_sq": 7.153852742633044,
+    "joint_jerk_sq": 12105.17974144882,
+    "energy_j": 31.342058946624363,
+    "time_at_limit_s": 0.20400000000000015,
+    "peak_ee_speed": 0.6574364537937955,
+    "cost": 2.823188867538193
+   },
+   "peaks": {
+    "torque_rate": 6.352363958770589,
+    "joint_jerk": 227.05090350687297,
+    "torque_norm": 1.0
+   }
+  },
+  {
+   "i": 27,
+   "eff": "hand",
+   "v_cmd": 0.1292566053976125,
+   "v_cmd_retimed": 0.1292566053976125,
+   "retime": 1.0,
+   "length": 0.21163513454020244,
+   "status": "done",
+   "ratio": 0.9900443047085391,
+   "release_ratio": 1.00234258148581,
+   "err_mid_max": 0.004110384135299562,
+   "err_mid_mean": 0.002628085661147185,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.615791320238324,
+    "torque_rate_sq": 1.3784303359233812,
+    "joint_jerk_sq": 2059.532276213301,
+    "energy_j": 18.806453666893326,
+    "time_at_limit_s": 0.2720000000000002,
+    "peak_ee_speed": 0.13435655043050473,
+    "cost": 1.4196521181209256
+   },
+   "peaks": {
+    "torque_rate": 1.9253292964487894,
+    "joint_jerk": 93.86224195341575,
+    "torque_norm": 1.0
+   }
+  },
+  {
+   "i": 28,
+   "eff": "hand",
+   "v_cmd": 0.11917806213610686,
+   "v_cmd_retimed": 0.11917806213610686,
+   "retime": 1.0,
+   "length": 0.2755499905008375,
+   "status": "done",
+   "ratio": 0.9989443545183654,
+   "release_ratio": 0.9959351223324194,
+   "err_mid_max": 0.0007461324522784867,
+   "err_mid_mean": 0.0006307185542028336,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.13658170581694565,
+    "torque_rate_sq": 0.056531315621950115,
+    "joint_jerk_sq": 1261.092360896471,
+    "energy_j": 8.86515979648869,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.12167322313091526,
+    "cost": 0.35699567143367467
+   },
+   "peaks": {
+    "torque_rate": 0.5051285727283951,
+    "joint_jerk": 84.29845459513585,
+    "torque_norm": 0.22092831724482206
+   }
+  },
+  {
+   "i": 29,
+   "eff": "hand",
+   "v_cmd": 0.1851052541677049,
+   "v_cmd_retimed": 0.1851052541677049,
+   "retime": 1.0,
+   "length": 0.2182892862899409,
+   "status": "done",
+   "ratio": 1.0076402427032087,
+   "release_ratio": 0.9918446000290316,
+   "err_mid_max": 0.0010507776018299875,
+   "err_mid_mean": 0.000736562071410848,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.06259190455863509,
+    "torque_rate_sq": 0.12651889677861833,
+    "joint_jerk_sq": 4189.072797751087,
+    "energy_j": 14.687568500023538,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.18682719992988553,
+    "cost": 0.641026759011841
+   },
+   "peaks": {
+    "torque_rate": 0.5969846415556879,
+    "joint_jerk": 141.87091566687707,
+    "torque_norm": 0.20670828840147587
+   }
+  },
+  {
+   "i": 30,
+   "eff": "hand",
+   "v_cmd": 0.3729280001484571,
+   "v_cmd_retimed": 0.3729280001484571,
+   "retime": 1.0,
+   "length": 0.2027710001414813,
+   "status": "done",
+   "ratio": 1.007580584085484,
+   "release_ratio": 0.9913414545074334,
+   "err_mid_max": 0.004829210029632405,
+   "err_mid_mean": 0.004022063738828438,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.1446272613613299,
+    "torque_rate_sq": 0.7309551170230864,
+    "joint_jerk_sq": 4311.76381976868,
+    "energy_j": 18.120814993193193,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.3832246696594759,
+    "cost": 0.8301073049724385
+   },
+   "peaks": {
+    "torque_rate": 2.0370222961477396,
+    "joint_jerk": 95.56637812341285,
+    "torque_norm": 0.3474890760434312
+   }
+  },
+  {
+   "i": 31,
+   "eff": "hand",
+   "v_cmd": 0.15492893782766667,
+   "v_cmd_retimed": 0.15492893782766667,
+   "retime": 1.0,
+   "length": 0.27343743534003256,
+   "status": "done",
+   "ratio": 1.0019483480535332,
+   "release_ratio": 1.004497015343221,
+   "err_mid_max": 0.001212177251862308,
+   "err_mid_mean": 0.0010929661858033685,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.1880694122330622,
+    "torque_rate_sq": 0.09887949278160978,
+    "joint_jerk_sq": 2317.441775759256,
+    "energy_j": 8.143075671671973,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.15748906029529106,
+    "cost": 0.5111322958038685
+   },
+   "peaks": {
+    "torque_rate": 0.8432129021916405,
+    "joint_jerk": 118.8120655592536,
+    "torque_norm": 0.3268872861008668
+   }
+  },
+  {
+   "i": 32,
+   "eff": "hand",
+   "v_cmd": 0.6022415906645404,
+   "v_cmd_retimed": 0.6022415906645404,
+   "retime": 1.0,
+   "length": 0.24416206587674777,
+   "status": "done",
+   "ratio": 1.0134651923363984,
+   "release_ratio": 1.0180416061765165,
+   "err_mid_max": 0.0035458023150538626,
+   "err_mid_mean": 0.0029293349628260854,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.2520538590583996,
+    "torque_rate_sq": 0.7791735190202481,
+    "joint_jerk_sq": 2987.9146346387383,
+    "energy_j": 24.43184069816191,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.614474503570458,
+    "cost": 0.8730810814059173
+   },
+   "peaks": {
+    "torque_rate": 1.2049111416235379,
+    "joint_jerk": 77.4487584773425,
+    "torque_norm": 0.7333660465612075
+   }
+  },
+  {
+   "i": 33,
+   "eff": "hand",
+   "v_cmd": 0.3575645473438995,
+   "v_cmd_retimed": 0.3575645473438995,
+   "retime": 1.0,
+   "length": 0.23236745269219114,
+   "status": "done",
+   "ratio": 1.012410482242774,
+   "release_ratio": 0.9978489306812065,
+   "err_mid_max": 0.0035808717709142407,
+   "err_mid_mean": 0.0032225970008470262,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.14153755979766172,
+    "torque_rate_sq": 0.5751875995273685,
+    "joint_jerk_sq": 2711.2121550345546,
+    "energy_j": 12.315812042887211,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.3656652084002548,
+    "cost": 0.5933356556827262
+   },
+   "peaks": {
+    "torque_rate": 1.6003199185960393,
+    "joint_jerk": 87.20856516429565,
+    "torque_norm": 0.3730722483418498
+   }
+  },
+  {
+   "i": 34,
+   "eff": "hand",
+   "v_cmd": 0.3071660063111375,
+   "v_cmd_retimed": 0.3071660063111375,
+   "retime": 1.0,
+   "length": 0.29357786670487673,
+   "status": "done",
+   "ratio": 1.005084490571864,
+   "release_ratio": 0.9503372047103017,
+   "err_mid_max": 0.001361684616203589,
+   "err_mid_mean": 0.0010555918276716908,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.1676218157586227,
+    "torque_rate_sq": 1.6347434633221138,
+    "joint_jerk_sq": 12186.445820929976,
+    "energy_j": 34.62188480099622,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.3096620919174397,
+    "cost": 1.895959592193794
+   },
+   "peaks": {
+    "torque_rate": 2.996599414436286,
+    "joint_jerk": 216.6053502954679,
+    "torque_norm": 0.6598568136394862
+   }
+  },
+  {
+   "i": 35,
+   "eff": "hand",
+   "v_cmd": 0.5953195073065308,
+   "v_cmd_retimed": 0.5953195073065308,
+   "retime": 1.0,
+   "length": 0.24256369414215495,
+   "status": "done",
+   "ratio": 1.0034653297970584,
+   "release_ratio": 1.0021661370928903,
+   "err_mid_max": 0.0029063790980355733,
+   "err_mid_mean": 0.002445434200207163,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.13133940645478331,
+    "torque_rate_sq": 0.5923375407156232,
+    "joint_jerk_sq": 3370.739939089834,
+    "energy_j": 23.12838751054097,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.6006365914617193,
+    "cost": 0.7589310295407388
+   },
+   "peaks": {
+    "torque_rate": 1.5334164787761733,
+    "joint_jerk": 79.02402992709945,
+    "torque_norm": 0.3502257860305139
+   }
+  },
+  {
+   "i": 36,
+   "eff": "hand",
+   "v_cmd": 0.16807555753128167,
+   "v_cmd_retimed": 0.16807555753128167,
+   "retime": 1.0,
+   "length": 0.21669236551067583,
+   "status": "done",
+   "ratio": 1.0035958755568253,
+   "release_ratio": 1.0028129364529939,
+   "err_mid_max": 0.0009135521037961131,
+   "err_mid_mean": 0.000766511436631514,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.1259790780448168,
+    "torque_rate_sq": 0.05981692997562529,
+    "joint_jerk_sq": 4111.659592619621,
+    "energy_j": 18.160456899510812,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.16900624211421603,
+    "cost": 0.7247312992994496
+   },
+   "peaks": {
+    "torque_rate": 0.5168700791559796,
+    "joint_jerk": 146.18404080899177,
+    "torque_norm": 0.2627729869043838
+   }
+  },
+  {
+   "i": 37,
+   "eff": "hand",
+   "v_cmd": 0.8133188510077417,
+   "skipped": true,
+   "ratio": null,
+   "release_ratio": null,
+   "err_mid_max": null,
+   "err_mid_mean": null,
+   "stall": false,
+   "retime": 1.0,
+   "effort": {
+    "torque_sq": 0.0,
+    "torque_rate_sq": 0.0,
+    "joint_jerk_sq": 0.0,
+    "energy_j": 0.0,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.0,
+    "cost": 0.0
+   },
+   "peaks": {
+    "torque_rate": 0.0,
+    "joint_jerk": 0.0,
+    "torque_norm": 0.0
+   }
+  },
+  {
+   "i": 38,
+   "eff": "hand",
+   "v_cmd": 0.1748147614902623,
+   "v_cmd_retimed": 0.1748147614902623,
+   "retime": 1.0,
+   "length": 0.20358470067253837,
+   "status": "done",
+   "ratio": 1.0000567931916289,
+   "release_ratio": 0.9843153222301023,
+   "err_mid_max": 0.0012643022793744343,
+   "err_mid_mean": 0.0009743978950589791,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.08262923546686093,
+    "torque_rate_sq": 0.15520392570287117,
+    "joint_jerk_sq": 2484.1783249310615,
+    "energy_j": 7.383459118676807,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.17830885724506199,
+    "cost": 0.4204020517170223
+   },
+   "peaks": {
+    "torque_rate": 0.9291079552275573,
+    "joint_jerk": 124.64280833826558,
+    "torque_norm": 0.25456701589845787
+   }
+  },
+  {
+   "i": 39,
+   "eff": "hand",
+   "v_cmd": 0.21799020248635612,
+   "v_cmd_retimed": 0.21799020248635612,
+   "retime": 1.0,
+   "length": 0.23198860112258016,
+   "status": "done",
+   "ratio": 0.9987341885565116,
+   "release_ratio": 0.9937390078167226,
+   "err_mid_max": 0.0011126025136748618,
+   "err_mid_mean": 0.0010505983366443975,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.0983394442988508,
+    "torque_rate_sq": 0.08113258862234517,
+    "joint_jerk_sq": 6545.885512128959,
+    "energy_j": 19.28444843650779,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.22054704671400266,
+    "cost": 0.9538857387390592
+   },
+   "peaks": {
+    "torque_rate": 0.5246917486923662,
+    "joint_jerk": 234.1180036018956,
+    "torque_norm": 0.27243328134070527
+   }
+  },
+  {
+   "i": 40,
+   "eff": "hand",
+   "v_cmd": 0.6214496156099969,
+   "v_cmd_retimed": 0.6214496156099969,
+   "retime": 1.0,
+   "length": 0.23202748341878132,
+   "status": "done",
+   "ratio": 0.9993714513716401,
+   "release_ratio": 1.0077609408574018,
+   "err_mid_max": 0.003147836793139642,
+   "err_mid_mean": 0.002840777693784047,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.10370681980049909,
+    "torque_rate_sq": 0.3656364806528955,
+    "joint_jerk_sq": 2978.531799954555,
+    "energy_j": 24.153883186511028,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.6267938273065897,
+    "cost": 0.6796624797263544
+   },
+   "peaks": {
+    "torque_rate": 0.8682303088270972,
+    "joint_jerk": 66.06030703818975,
+    "torque_norm": 0.3913375244536092
+   }
+  },
+  {
+   "i": 41,
+   "eff": "hand",
+   "v_cmd": 0.4836210327820329,
+   "v_cmd_retimed": 0.4836210327820329,
+   "retime": 1.0,
+   "length": 0.2628201320955813,
+   "status": "done",
+   "ratio": 1.0180578135763967,
+   "release_ratio": 0.9880090923597978,
+   "err_mid_max": 0.005073372306971567,
+   "err_mid_mean": 0.003078939526006645,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.14854300393793918,
+    "torque_rate_sq": 1.7329092357182945,
+    "joint_jerk_sq": 3902.495880333243,
+    "energy_j": 24.03227294949254,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.4998810585303766,
+    "cost": 0.9524062450380183
+   },
+   "peaks": {
+    "torque_rate": 2.670118415507481,
+    "joint_jerk": 127.33671255734,
+    "torque_norm": 0.6345665978085481
+   }
+  },
+  {
+   "i": 42,
+   "eff": "hand",
+   "v_cmd": 0.6423172378345819,
+   "v_cmd_retimed": 0.6423172378345819,
+   "retime": 1.0,
+   "length": 0.2661784453710733,
+   "status": "done",
+   "ratio": 1.0006444105933097,
+   "release_ratio": 1.0071342321637378,
+   "err_mid_max": 0.0037168853035944,
+   "err_mid_mean": 0.003054217447160653,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.36083574991601447,
+    "torque_rate_sq": 2.8271327724243878,
+    "joint_jerk_sq": 9404.976947904475,
+    "energy_j": 25.08092563563235,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.666994487459744,
+    "cost": 1.8348559783052243
+   },
+   "peaks": {
+    "torque_rate": 3.552103493125826,
+    "joint_jerk": 150.26161040754272,
+    "torque_norm": 0.6127069923885557
+   }
+  },
+  {
+   "i": 43,
+   "eff": "hand",
+   "v_cmd": 0.32248608061318196,
+   "v_cmd_retimed": 0.32248608061318196,
+   "retime": 1.0,
+   "length": 0.2837665842534558,
+   "status": "done",
+   "ratio": 1.0070757855807346,
+   "release_ratio": 0.9989998841550205,
+   "err_mid_max": 0.0014325625542768489,
+   "err_mid_mean": 0.0011744055437535948,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.06710826115846286,
+    "torque_rate_sq": 0.2103766352238457,
+    "joint_jerk_sq": 4389.017117387545,
+    "energy_j": 19.745736560200402,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.3266182960029919,
+    "cost": 0.724505002021606
+   },
+   "peaks": {
+    "torque_rate": 1.0290516695832168,
+    "joint_jerk": 112.57703370121109,
+    "torque_norm": 0.2261119520117781
+   }
+  },
+  {
+   "i": 44,
+   "eff": "hand",
+   "v_cmd": 0.8897957024553286,
+   "skipped": true,
+   "ratio": null,
+   "release_ratio": null,
+   "err_mid_max": null,
+   "err_mid_mean": null,
+   "stall": false,
+   "retime": 1.0,
+   "effort": {
+    "torque_sq": 0.0,
+    "torque_rate_sq": 0.0,
+    "joint_jerk_sq": 0.0,
+    "energy_j": 0.0,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.0,
+    "cost": 0.0
+   },
+   "peaks": {
+    "torque_rate": 0.0,
+    "joint_jerk": 0.0,
+    "torque_norm": 0.0
+   }
+  },
+  {
+   "i": 45,
+   "eff": "hand",
+   "v_cmd": 0.1486857694567373,
+   "v_cmd_retimed": 0.1486857694567373,
+   "retime": 1.0,
+   "length": 0.2510620140855131,
+   "status": "done",
+   "ratio": 0.9825781418744405,
+   "release_ratio": 0.8621569388766422,
+   "err_mid_max": 0.011350808479908813,
+   "err_mid_mean": 0.0073634109775978784,
+   "stall": false,
+   "effort": {
+    "torque_sq": 1.0541029992174513,
+    "torque_rate_sq": 0.27990908536693393,
+    "joint_jerk_sq": 3336.9979030452073,
+    "energy_j": 19.59885009720413,
+    "time_at_limit_s": 0.23400000000000018,
+    "peak_ee_speed": 0.15040272688193973,
+    "cost": 1.8457821990307068
+   },
+   "peaks": {
+    "torque_rate": 0.9112550233404753,
+    "joint_jerk": 128.71642765259483,
+    "torque_norm": 1.0
+   }
+  },
+  {
+   "i": 46,
+   "eff": "hand",
+   "v_cmd": 0.18720441531157134,
+   "v_cmd_retimed": 0.18720441531157134,
+   "retime": 1.0,
+   "length": 0.2505721739283977,
+   "status": "done",
+   "ratio": 1.0144682255411934,
+   "release_ratio": 0.9931936639596455,
+   "err_mid_max": 0.0023436070372494975,
+   "err_mid_mean": 0.0019747766155413763,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.20084784717373766,
+    "torque_rate_sq": 0.31555251994813727,
+    "joint_jerk_sq": 3023.628335722425,
+    "energy_j": 10.0678276570542,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.1932444127849954,
+    "cost": 0.6354442093113359
+   },
+   "peaks": {
+    "torque_rate": 1.2372431001636588,
+    "joint_jerk": 156.87530306749548,
+    "torque_norm": 0.41514168171169663
+   }
+  },
+  {
+   "i": 47,
+   "eff": "hand",
+   "v_cmd": 0.21464002492977968,
+   "v_cmd_retimed": 0.21464002492977968,
+   "retime": 1.0,
+   "length": 0.20039398700545966,
+   "status": "done",
+   "ratio": 1.0103580106106036,
+   "release_ratio": 1.0191962936786187,
+   "err_mid_max": 0.005421656256518389,
+   "err_mid_mean": 0.0031625298931549275,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.3547373226519661,
+    "torque_rate_sq": 0.2702300725700809,
+    "joint_jerk_sq": 2669.1976677919015,
+    "energy_j": 6.247304835032319,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.21878868533360857,
+    "cost": 0.7111531450384875
+   },
+   "peaks": {
+    "torque_rate": 0.9048645107458784,
+    "joint_jerk": 100.35564713267372,
+    "torque_norm": 0.7458187402266749
+   }
+  },
+  {
+   "i": 48,
+   "eff": "hand",
+   "v_cmd": 0.9782274693155951,
+   "skipped": true,
+   "ratio": null,
+   "release_ratio": null,
+   "err_mid_max": null,
+   "err_mid_mean": null,
+   "stall": false,
+   "retime": 1.0,
+   "effort": {
+    "torque_sq": 0.0,
+    "torque_rate_sq": 0.0,
+    "joint_jerk_sq": 0.0,
+    "energy_j": 0.0,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.0,
+    "cost": 0.0
+   },
+   "peaks": {
+    "torque_rate": 0.0,
+    "joint_jerk": 0.0,
+    "torque_norm": 0.0
+   }
+  },
+  {
+   "i": 49,
+   "eff": "hand",
+   "v_cmd": 0.44929200263427826,
+   "v_cmd_retimed": 0.44929200263427826,
+   "retime": 1.0,
+   "length": 0.29772095291080614,
+   "status": "done",
+   "ratio": 1.0355555078168948,
+   "release_ratio": 0.9947723909745022,
+   "err_mid_max": 0.006390608857067783,
+   "err_mid_mean": 0.004900380440504194,
+   "stall": false,
+   "effort": {
+    "torque_sq": 0.4295049918498221,
+    "torque_rate_sq": 5.900440057407835,
+    "joint_jerk_sq": 8354.009092009586,
+    "energy_j": 25.236973288755284,
+    "time_at_limit_s": 0.23600000000000018,
+    "peak_ee_speed": 0.47137376578947393,
+    "cost": 2.3433196396791174
+   },
+   "peaks": {
+    "torque_rate": 6.408980832805374,
+    "joint_jerk": 286.4946618241215,
+    "torque_norm": 1.0
+   }
+  }
+ ]
+}

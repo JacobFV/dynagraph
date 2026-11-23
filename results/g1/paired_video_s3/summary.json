@@ -1,0 +1,20 @@
+{
+ "stub_prior_coulomb_mu0.5": {
+  "n": 1,
+  "success": 1,
+  "mean_final_dist": 0.008655469495798209,
+  "mean_pushes": 4.0,
+  "mean_sim_time": 16.430000000001773,
+  "mean_dist_after_first_push": 0.02231596082599006,
+  "mean_final_pred_err": 0.025005876761733863
+ },
+ "analytic_coulomb_ls_friction": {
+  "n": 1,
+  "success": 1,
+  "mean_final_dist": 0.018465050057035463,
+  "mean_pushes": 5.0,
+  "mean_sim_time": 19.91999999999984,
+  "mean_dist_after_first_push": 0.02231596082599006,
+  "mean_final_pred_err": 0.07199588248365771
+ }
+}

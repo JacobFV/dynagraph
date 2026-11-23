@@ -1,0 +1,167 @@
+{
+ "summary": {
+  "robot": "aloha",
+  "n": 10,
+  "success": 0.8,
+  "statuses": {
+   "dropped": 2,
+   "done": 8
+  }
+ },
+ "rows": [
+  {
+   "seed": 0,
+   "pick": "done",
+   "handover": "done",
+   "success": true,
+   "z": 0.17188496312119114,
+   "effort": {
+    "torque_sq": 3.199233265525685,
+    "torque_rate_sq": 823.9176216507169,
+    "joint_jerk_sq": 218021.2293276081,
+    "energy_j": 90.3205870090911,
+    "time_at_limit_s": 0.21600000000000016,
+    "peak_ee_speed": 0.19293950173754504,
+    "cost": 108.5123242334491
+   },
+   "integrity": []
+  },
+  {
+   "seed": 1,
+   "pick": "done",
+   "handover": "done",
+   "success": true,
+   "z": 0.17304365482801515,
+   "effort": {
+    "torque_sq": 3.189043049826817,
+    "torque_rate_sq": 823.8997157494209,
+    "joint_jerk_sq": 197152.89680649285,
+    "energy_j": 88.08572938172597,
+    "time_at_limit_s": 0.21600000000000016,
+    "peak_ee_speed": 0.19292998066405503,
+    "cost": 106.39116159923545
+   },
+   "integrity": []
+  },
+  {
+   "seed": 2,
+   "pick": "done",
+   "handover": "done",
+   "success": true,
+   "z": 0.1746426720640431,
+   "effort": {
+    "torque_sq": 3.2146854107597953,
+    "torque_rate_sq": 823.9812968332681,
+    "joint_jerk_sq": 257725.88612100127,
+    "energy_j": 93.74892817743275,
+    "time_at_limit_s": 0.21600000000000016,
+    "peak_ee_speed": 0.19289713952331825,
+    "cost": 112.53889298796106
+   },
+   "integrity": []
+  },
+  {
+   "seed": 3,
+   "pick": "done",
+   "handover": "done",
+   "success": true,
+   "z": 0.17432748393197758,
+   "effort": {
+    "torque_sq": 3.2071753688950695,
+    "torque_rate_sq": 823.8988685804059,
+    "joint_jerk_sq": 132057.32421500148,
+    "energy_j": 91.99234585654985,
+    "time_at_limit_s": 0.21600000000000016,
+    "peak_ee_speed": 0.19291363357481436,
+    "cost": 99.93871810700129
+   },
+   "integrity": []
+  },
+  {
+   "seed": 4,
+   "pick": "dropped",
+   "handover": null,
+   "success": false,
+   "z": 0.03989224457978383,
+   "effort": null,
+   "integrity": []
+  },
+  {
+   "seed": 5,
+   "pick": "done",
+   "handover": "done",
+   "success": true,
+   "z": 0.17399547886333794,
+   "effort": {
+    "torque_sq": 3.193095785561733,
+    "torque_rate_sq": 823.9582170022531,
+    "joint_jerk_sq": 232370.49346187277,
+    "energy_j": 88.86445051270375,
+    "time_at_limit_s": 0.21600000000000016,
+    "peak_ee_speed": 0.19291088337246456,
+    "cost": 109.93061133710137
+   },
+   "integrity": []
+  },
+  {
+   "seed": 6,
+   "pick": "done",
+   "handover": "done",
+   "success": true,
+   "z": 0.1734465798763398,
+   "effort": {
+    "torque_sq": 3.2088104143594323,
+    "torque_rate_sq": 823.9488837322235,
+    "joint_jerk_sq": 223542.90028652013,
+    "energy_j": 92.38055657966976,
+    "time_at_limit_s": 0.21600000000000016,
+    "peak_ee_speed": 0.19292251970713398,
+    "cost": 109.0977943820305
+   },
+   "integrity": []
+  },
+  {
+   "seed": 7,
+   "pick": "dropped",
+   "handover": null,
+   "success": false,
+   "z": 0.03989224457978384,
+   "effort": null,
+   "integrity": []
+  },
+  {
+   "seed": 8,
+   "pick": "done",
+   "handover": "done",
+   "success": true,
+   "z": 0.17297719323041186,
+   "effort": {
+    "torque_sq": 3.1931470036401306,
+    "torque_rate_sq": 823.9379801839448,
+    "joint_jerk_sq": 274104.2783207575,
+    "energy_j": 88.89825085450586,
+    "time_at_limit_s": 0.21600000000000016,
+    "peak_ee_speed": 0.19294901268455844,
+    "cost": 114.10235536265542
+   },
+   "integrity": []
+  },
+  {
+   "seed": 9,
+   "pick": "done",
+   "handover": "done",
+   "success": true,
+   "z": 0.17478455933849754,
+   "effort": {
+    "torque_sq": 3.204786445327102,
+    "torque_rate_sq": 823.870424857344,
+    "joint_jerk_sq": 36958.00754655255,
+    "energy_j": 91.48480318273646,
+    "time_at_limit_s": 0.21600000000000016,
+    "peak_ee_speed": 0.1929318583160463,
+    "cost": 90.41847771754412
+   },
+   "integrity": []
+  }
+ ]
+}

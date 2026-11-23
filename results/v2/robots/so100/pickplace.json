@@ -1,0 +1,673 @@
+{
+ "summary": {
+  "robot": "so100",
+  "n": 20,
+  "success": 0.15,
+  "pick_ok": 0.65,
+  "err_xy": {
+   "n": 13,
+   "mean": 0.5359398914303181,
+   "p10": 0.013019771284242726,
+   "p50": 0.07887533762229967,
+   "p90": 1.1817792959969329,
+   "p95": 2.272581862534297,
+   "max": 3.7083592297416055,
+   "min": 0.006660515370180419
+  },
+  "failures": {
+   "done": 9,
+   "stuck": 1,
+   "grasp_failed": 1,
+   "dropped": 6
+  },
+  "integrity_violations": 0,
+  "rt_factor": 6.402470079355802,
+  "mean_duration_s": 6.454899999999509
+ },
+ "rows": [
+  {
+   "seed": 100,
+   "eff": "hand",
+   "mass": 0.07462036287772716,
+   "half": [
+    0.01700988978301205,
+    0.02005408525751278,
+    0.019958008925130617
+   ],
+   "pick": "done",
+   "place": "done",
+   "err_xy": 0.6313740750634974,
+   "upright": 1.0,
+   "success": false,
+   "effort_pick": {
+    "torque_sq": 1.0250900219823282,
+    "torque_rate_sq": 398.02762218184404,
+    "joint_jerk_sq": 16973324.310374428,
+    "energy_j": 4.043343508855546,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.2005293531476188,
+    "cost": 1738.200716712698
+   },
+   "effort_place": {
+    "torque_sq": 2.3126124739420355,
+    "torque_rate_sq": 1722.9115334845353,
+    "joint_jerk_sq": 76970886.48872009,
+    "energy_j": 6.808397724052747,
+    "time_at_limit_s": 0.16600000000000012,
+    "peak_ee_speed": 0.3232611433424798,
+    "cost": 7871.926498671645
+   },
+   "dur": 7.609999999999362,
+   "integrity": []
+  },
+  {
+   "seed": 101,
+   "eff": "hand",
+   "mass": 0.04184830557743137,
+   "half": [
+    0.017661195033663323,
+    0.01956553652437722,
+    0.02597755590022908
+   ],
+   "pick": "done",
+   "place": "stuck",
+   "err_xy": 0.018483968546482706,
+   "upright": 0.0,
+   "success": false,
+   "effort_pick": {
+    "torque_sq": 1.0142252082414316,
+    "torque_rate_sq": 334.68186170911304,
+    "joint_jerk_sq": 262803.8542894188,
+    "energy_j": 3.0530377730632905,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.22651839387202852,
+    "cost": 60.793327185825255
+   },
+   "effort_place": {
+    "torque_sq": 1.7628999848733167,
+    "torque_rate_sq": 2048.4949499188374,
+    "joint_jerk_sq": 179658003.83327854,
+    "energy_j": 4.132298322191074,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.38377307655255016,
+    "cost": 18172.454101287836
+   },
+   "dur": 7.215999999999405,
+   "integrity": []
+  },
+  {
+   "seed": 102,
+   "eff": "hand",
+   "mass": 0.034551293603894376,
+   "half": [
+    0.012959946870025822,
+    0.015238085916375483,
+    0.019366075387143616
+   ],
+   "pick": "done",
+   "place": "done",
+   "err_xy": 0.647308675733608,
+   "upright": 0.0,
+   "success": false,
+   "effort_pick": {
+    "torque_sq": 1.295667879966556,
+    "torque_rate_sq": 704.0928745158664,
+    "joint_jerk_sq": 8852493.004566876,
+    "energy_j": 4.0488725345597185,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.2052784795596627,
+    "cost": 956.9947445135865
+   },
+   "effort_place": {
+    "torque_sq": 1.9225283818506147,
+    "torque_rate_sq": 1484.1549687934207,
+    "joint_jerk_sq": 23909893.330814008,
+    "energy_j": 5.544356184720652,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.31826633553400197,
+    "cost": 2541.382801904441
+   },
+   "dur": 7.389999999999386,
+   "integrity": []
+  },
+  {
+   "seed": 103,
+   "eff": "hand",
+   "mass": 0.059694304348777386,
+   "half": [
+    0.013876099396337684,
+    0.014809897982408336,
+    0.01539145044321987
+   ],
+   "pick": "dropped",
+   "place": null,
+   "err_xy": 0.10995813921965834,
+   "upright": 1.0,
+   "success": false,
+   "effort_pick": {
+    "torque_sq": 1.0821107114517161,
+    "torque_rate_sq": 632.9007501907492,
+    "joint_jerk_sq": 51848254.6930646,
+    "energy_j": 4.3587928038834285,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.2675929811849182,
+    "cost": 5249.241242965025
+   },
+   "effort_place": null,
+   "dur": 4.601999999999693,
+   "integrity": []
+  },
+  {
+   "seed": 104,
+   "eff": "hand",
+   "mass": 0.04477336895243103,
+   "half": [
+    0.017031388874217214,
+    0.02056786215756977,
+    0.019239564593160202
+   ],
+   "pick": "done",
+   "place": "done",
+   "err_xy": 0.011653721968682728,
+   "upright": 1.0,
+   "success": true,
+   "effort_pick": {
+    "torque_sq": 0.9858001731066622,
+    "torque_rate_sq": 329.8040027259987,
+    "joint_jerk_sq": 207080.67558167552,
+    "energy_j": 3.2110643656780744,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.21467892013737475,
+    "cost": 54.70637864753087
+   },
+   "effort_place": {
+    "torque_sq": 1.8905001188961907,
+    "torque_rate_sq": 1489.5141383820724,
+    "joint_jerk_sq": 23605328.90282728,
+    "energy_j": 4.743897426449116,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.38052701539404266,
+    "cost": 2511.422243214096
+   },
+   "dur": 7.635999999999359,
+   "integrity": []
+  },
+  {
+   "seed": 105,
+   "eff": "hand",
+   "mass": 0.052428972792997436,
+   "half": [
+    0.015829172001609267,
+    0.02053736819724019,
+    0.01674786031434123
+   ],
+   "pick": "dropped",
+   "place": null,
+   "err_xy": 0.09393820045924572,
+   "upright": 1.0,
+   "success": false,
+   "effort_pick": {
+    "torque_sq": 1.08395715637925,
+    "torque_rate_sq": 740.1629529844296,
+    "joint_jerk_sq": 76315405.06894359,
+    "energy_j": 4.013800763299799,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.31013507076942876,
+    "cost": 7706.680897356814
+   },
+   "effort_place": null,
+   "dur": 4.949999999999655,
+   "integrity": []
+  },
+  {
+   "seed": 106,
+   "eff": "hand",
+   "mass": 0.03150246468734075,
+   "half": [
+    0.017894447132780014,
+    0.01811132865281355,
+    0.019212767090653258
+   ],
+   "pick": "done",
+   "place": "done",
+   "err_xy": 0.006660515370180419,
+   "upright": 1.0,
+   "success": true,
+   "effort_pick": {
+    "torque_sq": 1.1425062172941485,
+    "torque_rate_sq": 344.6255266361294,
+    "joint_jerk_sq": 557636.2582885072,
+    "energy_j": 3.2078470678615267,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.1998310364101552,
+    "cost": 91.40076318043643
+   },
+   "effort_place": {
+    "torque_sq": 1.755883457560004,
+    "torque_rate_sq": 1572.754794905287,
+    "joint_jerk_sq": 468406.58578145853,
+    "energy_j": 4.271943782105632,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.3726304288746941,
+    "cost": 205.91474096405562
+   },
+   "dur": 7.517999999999372,
+   "integrity": []
+  },
+  {
+   "seed": 107,
+   "eff": "hand",
+   "mass": 0.079374631459313,
+   "half": [
+    0.015891215516401547,
+    0.018168531117846127,
+    0.02068468036693968
+   ],
+   "pick": "done",
+   "place": "done",
+   "err_xy": 0.054680396796842536,
+   "upright": 1.0,
+   "success": false,
+   "effort_pick": {
+    "torque_sq": 1.1594489252352163,
+    "torque_rate_sq": 594.9453879312091,
+    "joint_jerk_sq": 60070942.60464372,
+    "energy_j": 4.416587035149414,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.21642568615116697,
+    "cost": 6067.7924140530795
+   },
+   "effort_place": {
+    "torque_sq": 1.7886334236026675,
+    "torque_rate_sq": 1668.217344748343,
+    "joint_jerk_sq": 31521554.854018483,
+    "energy_j": 7.587562274166276,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.3714435317462882,
+    "cost": 3320.841728923027
+   },
+   "dur": 6.829999999999448,
+   "integrity": []
+  },
+  {
+   "seed": 108,
+   "eff": "hand",
+   "mass": 0.057093985150994994,
+   "half": [
+    0.01713596290397157,
+    0.02038635598571221,
+    0.018348218054111073
+   ],
+   "pick": "done",
+   "place": "done",
+   "err_xy": 0.10098886059099922,
+   "upright": 1.0,
+   "success": false,
+   "effort_pick": {
+    "torque_sq": 1.0319079781277232,
+    "torque_rate_sq": 334.3317664835877,
+    "joint_jerk_sq": 299837.3843844162,
+    "energy_j": 3.1866189040856234,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.20203994160365732,
+    "cost": 64.48068925396898
+   },
+   "effort_place": {
+    "torque_sq": 2.3528984673268276,
+    "torque_rate_sq": 1702.5940348639672,
+    "joint_jerk_sq": 96728523.55336255,
+    "energy_j": 5.88445736405873,
+    "time_at_limit_s": 0.17000000000000012,
+    "peak_ee_speed": 0.3411777309439351,
+    "cost": 9845.693501863621
+   },
+   "dur": 7.907999999999377,
+   "integrity": []
+  },
+  {
+   "seed": 109,
+   "eff": "hand",
+   "mass": 0.050233175597090035,
+   "half": [
+    0.015262453493506675,
+    0.019115042505912488,
+    0.022131254226175807
+   ],
+   "pick": "done",
+   "place": "done",
+   "err_xy": 0.07887533762229967,
+   "upright": 1.0,
+   "success": false,
+   "effort_pick": {
+    "torque_sq": 1.1195668731675903,
+    "torque_rate_sq": 370.02930790616784,
+    "joint_jerk_sq": 9193150.654307296,
+    "energy_j": 3.660048624055667,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.21737592086084245,
+    "cost": 957.4741635807546
+   },
+   "effort_place": {
+    "torque_sq": 2.4081684156620202,
+    "torque_rate_sq": 1547.2234830530483,
+    "joint_jerk_sq": 30963699.223788377,
+    "energy_j": 5.974370764763311,
+    "time_at_limit_s": 0.09000000000000007,
+    "peak_ee_speed": 0.37319274191950813,
+    "cost": 3253.650182807453
+   },
+   "dur": 8.179999999999467,
+   "integrity": []
+  },
+  {
+   "seed": 110,
+   "eff": "hand",
+   "mass": 0.043058575909414094,
+   "half": [
+    0.0175829568690618,
+    0.020286008290716674,
+    0.02509991706232716
+   ],
+   "pick": "done",
+   "place": "done",
+   "err_xy": 3.7083592297416055,
+   "upright": 0.0,
+   "success": false,
+   "effort_pick": {
+    "torque_sq": 0.974791806319749,
+    "torque_rate_sq": 435.9684052298597,
+    "joint_jerk_sq": 26939613.58114595,
+    "energy_j": 3.263293715482032,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.223852445844391,
+    "cost": 2738.5656233810555
+   },
+   "effort_place": {
+    "torque_sq": 1.7165170456050138,
+    "torque_rate_sq": 2385.5021183939725,
+    "joint_jerk_sq": 276375202.8147525,
+    "energy_j": 7.22411297778751,
+    "time_at_limit_s": 0.006,
+    "peak_ee_speed": 0.381191404590664,
+    "cost": 27877.865251490035
+   },
+   "dur": 6.793999999999452,
+   "integrity": []
+  },
+  {
+   "seed": 111,
+   "eff": "hand",
+   "mass": 0.07812475441670841,
+   "half": [
+    0.012921968135713998,
+    0.013578287693792889,
+    0.01684480098556698
+   ],
+   "pick": "dropped",
+   "place": null,
+   "err_xy": 0.0942857549816908,
+   "upright": 1.0,
+   "success": false,
+   "effort_pick": {
+    "torque_sq": 1.2210904485751666,
+    "torque_rate_sq": 956.6650511384851,
+    "joint_jerk_sq": 98887694.94746667,
+    "energy_j": 4.464707957144259,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.25288491644457695,
+    "cost": 9985.701737388665
+   },
+   "effort_place": null,
+   "dur": 4.727999999999679,
+   "integrity": []
+  },
+  {
+   "seed": 112,
+   "eff": "hand",
+   "mass": 0.03571393069142864,
+   "half": [
+    0.012698754078045932,
+    0.015914663666280835,
+    0.018784048520547717
+   ],
+   "pick": "done",
+   "place": "done",
+   "err_xy": 0.032948572865209004,
+   "upright": 0.0,
+   "success": false,
+   "effort_pick": {
+    "torque_sq": 1.3219944884350936,
+    "torque_rate_sq": 878.5957843322433,
+    "joint_jerk_sq": 49762700.6023692,
+    "energy_j": 3.8211766179968087,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.18965336312116937,
+    "cost": 5065.489844924759
+   },
+   "effort_place": {
+    "torque_sq": 1.844565755172765,
+    "torque_rate_sq": 1484.7901799012623,
+    "joint_jerk_sq": 29559552.972023044,
+    "energy_j": 3.910583345731107,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.34338818234567786,
+    "cost": 3106.3179867810604
+   },
+   "dur": 8.21399999999948,
+   "integrity": []
+  },
+  {
+   "seed": 113,
+   "eff": "hand",
+   "mass": 0.030227527481511828,
+   "half": [
+    0.01242346863768335,
+    0.012985763337890026,
+    0.01350254198714112
+   ],
+   "pick": "dropped",
+   "place": null,
+   "err_xy": 0.032185547299633195,
+   "upright": 1.0,
+   "success": false,
+   "effort_pick": {
+    "torque_sq": 1.069154016888884,
+    "torque_rate_sq": 646.675638308105,
+    "joint_jerk_sq": 3749744.7502978947,
+    "energy_j": 4.464792756839712,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.20219495923950023,
+    "cost": 440.7558408050573
+   },
+   "effort_place": null,
+   "dur": 3.8639999999997743,
+   "integrity": []
+  },
+  {
+   "seed": 114,
+   "eff": "hand",
+   "mass": 0.020606483335052102,
+   "half": [
+    0.016367329647058112,
+    0.017065359186769845,
+    0.020623335138775165
+   ],
+   "pick": "grasp_failed",
+   "place": null,
+   "err_xy": 0.11025695174112203,
+   "upright": 1.0,
+   "success": false,
+   "effort_pick": {
+    "torque_sq": 1.2816356119308703,
+    "torque_rate_sq": 1581.8418172916524,
+    "joint_jerk_sq": 2498813.5745566403,
+    "energy_j": 5.854136801443506,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.36163835409750456,
+    "cost": 409.4057161647747
+   },
+   "effort_place": null,
+   "dur": 5.333999999999612,
+   "integrity": []
+  },
+  {
+   "seed": 115,
+   "eff": "hand",
+   "mass": 0.04458431482772604,
+   "half": [
+    0.016214028145132682,
+    0.019150594907996008,
+    0.02150793162708379
+   ],
+   "pick": "done",
+   "place": "done",
+   "err_xy": 0.01895377858250428,
+   "upright": 1.0,
+   "success": true,
+   "effort_pick": {
+    "torque_sq": 1.121158492763838,
+    "torque_rate_sq": 366.71114797629485,
+    "joint_jerk_sq": 1747689.6822732906,
+    "energy_j": 3.8375501100586025,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.24428830326714757,
+    "cost": 212.59961701882295
+   },
+   "effort_place": {
+    "torque_sq": 1.7618346478182578,
+    "torque_rate_sq": 1495.6205014502648,
+    "joint_jerk_sq": 397962.3445608143,
+    "energy_j": 4.625609239813279,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.38829568213255855,
+    "cost": 191.1663753413243
+   },
+   "dur": 7.465999999999378,
+   "integrity": []
+  },
+  {
+   "seed": 116,
+   "eff": "hand",
+   "mass": 0.030695126149559486,
+   "half": [
+    0.013034218595228162,
+    0.016463216955177315,
+    0.020519860214000388
+   ],
+   "pick": "done",
+   "place": "done",
+   "err_xy": 0.3415345046494605,
+   "upright": 1.0,
+   "success": false,
+   "effort_pick": {
+    "torque_sq": 1.1286347492830249,
+    "torque_rate_sq": 567.0960643051569,
+    "joint_jerk_sq": 267421.90001302504,
+    "energy_j": 3.7011310045208896,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.20122400342538527,
+    "cost": 84.61744249114643
+   },
+   "effort_place": {
+    "torque_sq": 2.119485880507693,
+    "torque_rate_sq": 1959.7003983548452,
+    "joint_jerk_sq": 144941690.05668527,
+    "energy_j": 5.180826625844195,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.3110112959652724,
+    "cost": 14692.310339650778
+   },
+   "dur": 7.0579999999994225,
+   "integrity": []
+  },
+  {
+   "seed": 117,
+   "eff": "hand",
+   "mass": 0.03891626490874801,
+   "half": [
+    0.01725007056044316,
+    0.0180671080035212,
+    0.02350212893576374
+   ],
+   "pick": "dropped",
+   "place": null,
+   "err_xy": 0.08949120119307617,
+   "upright": 0.0,
+   "success": false,
+   "effort_pick": {
+    "torque_sq": 1.034852908926311,
+    "torque_rate_sq": 438.3072468095795,
+    "joint_jerk_sq": 26288184.106052246,
+    "energy_j": 3.8581779805835774,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.21072740022043904,
+    "cost": 2673.722569974915
+   },
+   "effort_place": null,
+   "dur": 4.065999999999752,
+   "integrity": []
+  },
+  {
+   "seed": 118,
+   "eff": "hand",
+   "mass": 0.07259856814503345,
+   "half": [
+    0.017584137867751013,
+    0.022530003269130437,
+    0.020512468964902716
+   ],
+   "pick": "done",
+   "place": "done",
+   "err_xy": 1.3153969510627637,
+   "upright": 0.0,
+   "success": false,
+   "effort_pick": {
+    "torque_sq": 1.150999802197186,
+    "torque_rate_sq": 412.96137841530947,
+    "joint_jerk_sq": 16985418.282294437,
+    "energy_j": 3.541130255810661,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.20081715230780062,
+    "cost": 1741.02437717573
+   },
+   "effort_place": {
+    "torque_sq": 2.085610347992919,
+    "torque_rate_sq": 1813.285162924851,
+    "joint_jerk_sq": 103407728.07415596,
+    "energy_j": 7.503051341629805,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.37874890939162176,
+    "cost": 10524.261964569492
+   },
+   "dur": 6.955999999999434,
+   "integrity": []
+  },
+  {
+   "seed": 119,
+   "eff": "hand",
+   "mass": 0.07285671581116956,
+   "half": [
+    0.01773744239624766,
+    0.021633181855171733,
+    0.026453807947661594
+   ],
+   "pick": "dropped",
+   "place": null,
+   "err_xy": 0.14951119861356463,
+   "upright": 1.0,
+   "success": false,
+   "effort_pick": {
+    "torque_sq": 1.1055436082917605,
+    "torque_rate_sq": 369.0029919957616,
+    "joint_jerk_sq": 5672214.291957321,
+    "energy_j": 4.35831514227084,
+    "time_at_limit_s": 0.0,
+    "peak_ee_speed": 0.24503662859225536,
+    "cost": 605.2708551550227
+   },
+   "effort_place": null,
+   "dur": 4.777999999999674,
+   "integrity": []
+  }
+ ]
+}

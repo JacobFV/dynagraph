@@ -1,0 +1,195 @@
+{
+ "created_utc": "2026-11-23T11:19:16Z",
+ "seed": 29,
+ "seed_note": "representative fixed seed chosen before looking at outcomes (continuity with slide_video_s29)",
+ "benchmark": "slide-to-target",
+ "controller": "v1",
+ "checkpoints": {
+  "b11": "results/checkpoints/compact-main-b11-s1.pt",
+  "b00": "results/checkpoints/compact-main-b00-s1.pt"
+ },
+ "segments": [
+  {
+   "n": 1,
+   "kind": "title card",
+   "clip": "results/g1/demo/clips/s1_title.mp4",
+   "seconds": 8
+  },
+  {
+   "n": 2,
+   "kind": "held-out episode",
+   "model": "b11",
+   "seed": 29,
+   "json": "results/g1/demo/seed29_b11.json",
+   "clip": "results/g1/demo/clips/ep_seed29_b11.mp4",
+   "playback": "1x, no cuts"
+  },
+  {
+   "n": 3,
+   "kind": "friction belief",
+   "model": "b11",
+   "seed": 29,
+   "friction_true": 0.3206668607064778,
+   "estimates": [
+    [
+     0.4997499883174896,
+     0.01183032151311636
+    ],
+    [
+     0.5007570385932922,
+     0.01195596344769001
+    ],
+    null
+   ],
+   "json": "results/g1/demo/seed29_b11.json"
+  },
+  {
+   "n": 4,
+   "kind": "paired baseline side-by-side",
+   "models": [
+    "b00",
+    "b11"
+   ],
+   "seed": 29,
+   "json": [
+    "results/g1/demo/seed29_b00.json",
+    "results/g1/demo/seed29_b11.json"
+   ],
+   "clip": "results/g1/demo/clips/s4_paired.mp4"
+  },
+  {
+   "n": 5,
+   "kind": "FRICTION slot intervention",
+   "model": "b11",
+   "seed": 29,
+   "value": 0.7,
+   "true": 0.3206668607064778,
+   "decision0": {
+    "friction_normal": 0.4997499883174896,
+    "friction_intervened": 0.699999988079071,
+    "pred_change_mean_cm": 0.01891379803419113,
+    "pred_change_max_cm": 0.06048130989074707,
+    "argmin_normal_vs_intervened": null
+   },
+   "chosen_normal": "c16",
+   "chosen_intervened": "c16",
+   "realized_normal_cm": 3.8925736605322308,
+   "realized_intervened_cm": 3.8925736605322308,
+   "json": "results/g1/demo/seed29_b11_friction_slot.json",
+   "clip": "results/g1/demo/clips/ep_seed29_b11_friction_slot.mp4"
+  },
+  {
+   "n": "5b",
+   "kind": "inkling decision-log panel (no video recorded)",
+   "json": "results/g1/slide_inkling/g1slide-s29__inkling_i11_s1.json"
+  },
+  {
+   "n": 6,
+   "kind": "end panels",
+   "sources": [
+    "results/g1/slide30/metrics.jsonl",
+    "results/g1/slide_compact/metrics.jsonl",
+    "results/g1/slide_inkling/metrics.jsonl",
+    "results/g1/rail_gate.json"
+   ],
+   "tables": {
+    "slide30": {
+     "stub_prior_coulomb_mu0.5": {
+      "n": 30,
+      "succ": 14,
+      "final": 5.0221798490612235,
+      "med": 3.3979873583481828,
+      "lat": 1.1180899924107106,
+      "rtf": 13.175100419060831
+     },
+     "analytic_coulomb_ls_friction": {
+      "n": 30,
+      "succ": 8,
+      "final": 6.154148444330352,
+      "med": 4.539136220543831,
+      "lat": 31.592082124229314,
+      "rtf": 12.020446091210667
+     },
+     "ORACLE_true_friction_coulomb": {
+      "n": 30,
+      "succ": 15,
+      "final": 5.514492639816789,
+      "med": 3.157143175818621,
+      "lat": 1.2250274507096037,
+      "rtf": 13.001528170984837
+     }
+    },
+    "slide_compact": {
+     "stub_prior_coulomb_mu0.5": {
+      "n": 50,
+      "succ": 22,
+      "final": 6.181409792686252,
+      "med": 3.511149575368006,
+      "lat": 1.6963808269550404,
+      "rtf": 10.46098744083021
+     },
+     "ORACLE_true_friction_coulomb": {
+      "n": 50,
+      "succ": 23,
+      "final": 6.309924960431812,
+      "med": 3.6293171225680627,
+      "lat": 1.8596214288845658,
+      "rtf": 10.781417354102581
+     },
+     "compact_compact-main-b00-s1_p4": {
+      "n": 50,
+      "succ": 22,
+      "final": 7.254976784574407,
+      "med": 5.161726965708088,
+      "lat": 1144.0853516518837,
+      "rtf": 3.0083728039995425
+     },
+     "compact_compact-main-b11-s1_p4": {
+      "n": 50,
+      "succ": 15,
+      "final": 7.5880786025925335,
+      "med": 5.9528481661830766,
+      "lat": 1337.958605575259,
+      "rtf": 2.67441418361599
+     }
+    },
+    "slide_inkling": {
+     "inkling_i00_s1": {
+      "n": 30,
+      "succ": 8,
+      "final": 8.506627461802498,
+      "med": 7.4610134082704285,
+      "lat": 2294.8257525519393,
+      "rtf": 1.840354366238532
+     },
+     "inkling_i11_s1": {
+      "n": 30,
+      "succ": 6,
+      "final": 9.94369511466438,
+      "med": 5.35493610666966,
+      "lat": 2336.6035477639853,
+      "rtf": 1.7712861409183485
+     }
+    }
+   }
+  }
+ ],
+ "output": {
+  "path": "results/demo.mp4",
+  "duration_s": 110.7,
+  "size": 4154844,
+  "build_wall_s": 71.5,
+  "clips": [
+   "results/g1/demo/clips/s1_title.mp4",
+   "results/g1/demo/clips/s2_title.mp4",
+   "results/g1/demo/clips/ep_seed29_b11.mp4",
+   "results/g1/demo/clips/s3_friction.mp4",
+   "results/g1/demo/clips/s4_paired.mp4",
+   "results/g1/demo/clips/s5_card.mp4",
+   "results/g1/demo/clips/ep_seed29_b11_friction_slot.mp4",
+   "results/g1/demo/clips/s5b_inkling.mp4",
+   "results/g1/demo/clips/s6_results.mp4",
+   "results/g1/demo/clips/s6_limits.mp4"
+  ]
+ }
+}
