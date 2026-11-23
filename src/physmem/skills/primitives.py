@@ -562,16 +562,41 @@ def push(ctx: SkillContext, call, est: ObjectEstimate):
                 ref = c.ctrl.reference(eff)
                 samples.append((t, float(vv @ d), float(np.linalg.norm(pp - ref[0])), float(np.linalg.norm(vv - d * (vv @ d)))))
         ctx.ctrl.set_mode('track', eff, measure_ft=True)
-        st = ctx.run(monitor=mon, max_t=(T_r + T_c + T_d) * k + 2.0, effector=eff)
+        # force limit (params f_max [N], comply [bool]): the wrist F/T component opposing the push. Exceeded ->
+        # comply: finish the stroke in low-stiffness impedance (presses with <= ~f_max instead of position-tracking
+        # through a jammed cluster); else: abort and hold where the hand is (status 'force_limited').
+        f_max = p.get('f_max')
+        limited = {'hit': False, 't': None}
+
+        def over(c):
+            if f_max is None or limited['hit']:
+                return False
+            Fp = -float(c.ctrl.st[eff]['ft'] @ d)
+            if Fp > float(f_max):
+                limited['hit'], limited['t'] = True, float(c.data.time)
+                if p.get('comply', False):
+                    K = float(p.get('comply_k', max(50.0, float(f_max) / 0.02)))   # f_max over ~2 cm of lag
+                    c.ctrl.set_mode('impedance', eff, stiffness=K, rot_stiffness=20.0, measure_ft=True)
+                    return False
+                return True
+            return False
+        st = ctx.run(monitor=mon, until=over, max_t=(T_r + T_c + T_d) * k + 2.0, effector=eff)
+        if st == 'until':        # abort: hold where we are
+            here, hq = _tcp(ctx, eff)
+            ctx.ctrl.command(BlendedTrajectory(effector=eff, waypoints=[(here, hq)], durations=[0.2]), preempt=True)
+            ctx.run(max_t=0.4, effector=eff)
+        ctx.ctrl.set_mode('track', eff)
         st2 = _move(ctx, eff, [_tcp(ctx, eff)[0] + np.array([0, 0, 0.06])], 0.3, q)
         S = np.array(samples) if samples else np.zeros((0, 4))
-        log = dict(cmd_speed=v, retime=k, F_max=F_max)
+        log = dict(cmd_speed=v, retime=k, F_max=F_max, force_limited=limited['hit'], t_force_limit=limited['t'])
         if len(S) > 6:
             n = len(S)
             mid = S[n // 4: 3 * n // 4]
             log.update(speed_ratio=float(np.mean(mid[:, 1]) / (v / k)), release_ratio=float(np.mean(S[-3:, 1]) / (v / k)),
                        track_err_mid_max=float(np.max(mid[:, 2])), track_err_mid_mean=float(np.mean(mid[:, 2])),
                        lateral_speed_mid=float(np.mean(mid[:, 3])))
+        if st == 'until':
+            return r.result(False, 'force_limited', **log)
         return r.result(st == 'done', st, **log)
 
 
@@ -842,7 +867,7 @@ def move_base(ctx: SkillContext, call, est: ObjectEstimate = None):
         dxy = np.array([p['x'], p['y']], float) - np.asarray(mpos[:2], float)
         c, s_ = math.cos(myaw), math.sin(myaw)
         tq = np.array([c * dxy[0] + s_ * dxy[1], -s_ * dxy[0] + c * dxy[1], _wrap(float(p.get('yaw', myaw)) - myaw)])
-        qb = ctx.data.qpos[emb.base['qadr']].copy()
+        qb = np.asarray(emb.proprio(ctx.data)['base']['q'], float).copy()     # base encoders (actor-legal)
         tq[2] = qb[2] + _wrap(tq[2] - qb[2])
         if p.get('arm', 'keep') == 'tuck':
             here, hq = _tcp(ctx, eff)
@@ -852,7 +877,7 @@ def move_base(ctx: SkillContext, call, est: ObjectEstimate = None):
                   1.875 * abs(tq[2] - qb[2]) / max(float(p.get('yaw_rate', 0.8)), 1e-3))
         ctx.ctrl.command_base(tq, dur)
         st = ctx.run(max_t=dur + 1.0)
-        qe = ctx.data.qpos[emb.base['qadr']]
+        qe = np.asarray(emb.proprio(ctx.data)['base']['q'], float)
         err = float(np.linalg.norm(qe[:2] - tq[:2]))
         return r.result(st == 'done' and err < 0.03, 'done' if err < 0.03 else 'blocked', pos_err=err,
                         yaw_err=float(abs(_wrap(qe[2] - tq[2]))), duration_plan=dur)

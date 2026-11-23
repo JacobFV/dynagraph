@@ -202,7 +202,14 @@ def main():
 
     t0 = time.time()
     n_done = 0
-    with Pool(a.procs, maxtasksperchild=50) as pool:
+    import signal as _sig
+
+    def _stop(signum, frame):        # SIGTERM -> stop cleanly: flush every buffer + write a (partial) manifest
+        raise KeyboardInterrupt
+    _sig.signal(_sig.SIGTERM, _stop)
+    stopped = False
+    try:
+      with Pool(a.procs, maxtasksperchild=50) as pool:
         for r in pool.imap_unordered(_job, tasks, chunksize=1):
             if r.get("error", "") and str(r.get("error")).startswith("timeout"):
                 r.setdefault("policy", r["task"]["params"].get("policy"))
@@ -233,6 +240,11 @@ def main():
             if n_done % 200 == 0:
                 rows.flush()
                 print(f"[{n_done}/{len(tasks)}] {time.time() - t0:.0f}s", flush=True)
+    except KeyboardInterrupt:
+        stopped = True
+        print(f"STOPPED at {n_done}/{len(tasks)}: flushing buffers", flush=True)
+    manifest["partial"] = stopped
+    manifest["planned"] = len(tasks)
     for key in list(buf):
         flush(key, final=True)
     wall = time.time() - t0

@@ -264,3 +264,168 @@ class SmallPegInsert(PegInsert):
         params.setdefault("chamfer", 0.0 if rng.random() < 0.4 else float(rng.uniform(0.0003, 0.001)))
         super().build(scene, rng, params)
         self.safe_z = self.surface_z + 0.12
+
+
+# ====================================================================== (f') shelf restock along an aisle (mobile)
+from .base import StationEnv                               # noqa: E402
+
+
+class ShelfRestock(StationEnv):
+    """A 2.2 m aisle: a cart at the start of the aisle holds 3-5 items; each item carries a (visible, CAD) bay
+    assignment and must be restocked into its bay on the shelf. Mobile manipulators drive along the aisle with
+    ROBOTS' `move_base` skill (SkillCall("move_base", {x, y, yaw, speed}); encode with SkillCall.vector(dim=32));
+    the test-only gantry probe covers the aisle without driving."""
+    family = "shelf_restock"
+    category = "bulk"
+    station = "aisle_restock"
+    tool = "parallel"
+    probe_kw = dict(max_open=0.06, grip_max=100.0)
+    settle_s = 0.8
+    SHELF_Y, TOP = 0.35, 0.62
+    BAYS = (-0.2, 0.35, 0.9)
+    success_doc = ("every item rests upright inside its assigned bay region on the shelf; none damaged or dropped")
+    hidden_doc = ("item mass (incl. heavy x3-6), item<->gripper friction (oily), fragile items (crush 15-45 N): grip "
+                  "force / lift speed; drive distance (time) along the aisle")
+
+    def build(self, scene, rng, params):
+        from .scene import DARK
+        from .stations import standard_mounts
+        top, sy = self.TOP, self.SHELF_Y
+        # shelf (one tier, robot side open) along the aisle + the source cart at the start of the aisle
+        scene.static_box((0.35, sy, top - 0.015), (0.85, 0.15, 0.015), rgba=(0.7, 0.55, 0.2, 1), name="shelf")
+        for x in (-0.48, 1.18):
+            scene.static_box((x, sy, (top - 0.03) / 2), (0.02, 0.13, (top - 0.03) / 2), rgba=DARK)
+        scene.static_box((0.35, sy + 0.16, top + 0.15), (0.85, 0.01, 0.15), rgba=(0.55, 0.45, 0.2, 1))
+        cx = -0.85
+        scene.static_box((cx, sy, top - 0.015), (0.2, 0.15, 0.015), rgba=(0.5, 0.52, 0.55, 1), name="cart")
+        for dx in (-0.17, 0.17):
+            scene.static_box((cx + dx, sy, (top - 0.03) / 2), (0.02, 0.12, (top - 0.03) / 2), rgba=DARK)
+        scene.region("cart", (cx, sy, top + 0.05), (0.2, 0.15, 0.06), support_z=top)
+        for i, bx in enumerate(self.BAYS):
+            scene.region(f"bay{i}", (bx, sy, top + 0.05), (0.2, 0.12, 0.08), support_z=top)
+            scene.marker((bx, sy), (0.2, 0.12), top, rgba=(0.1, 0.8, 0.2, 0.3))
+        self.surface_z = top
+        self.safe_z = top + 0.25
+        n = int(params.get("n_items", rng.integers(3, 6)))
+        self.assign = {}
+        for k in range(n):
+            shape = "box" if rng.random() < 0.7 else "cylinder"
+            h = [float(rng.uniform(0.02, 0.035)), float(rng.uniform(0.02, 0.035)), float(rng.uniform(0.025, 0.05))]
+            if shape == "cylinder":
+                h[1] = h[0]
+            heavy = rng.random() < 0.15
+            mass = float(8 * np.prod(h) * rng.uniform(300, 1500) * (rng.uniform(3, 6) if heavy else 1.0))
+            oily = rng.random() < 0.15
+            bay = int(rng.integers(len(self.BAYS)))
+            eid = f"item{k}"
+            x = cx + (k % 3 - 1) * 0.11 + rng.uniform(-0.01, 0.01)
+            y = sy + (k // 3 - 0.5) * 0.1 + rng.uniform(-0.01, 0.01)
+            scene.part(eid, shape, tuple(h), (x, y, top + h[2] + 0.002), yaw=rng.uniform(-0.3, 0.3), mass=mass,
+                       mu=float(rng.uniform(0.3, 0.8)), mu_grip=float(rng.uniform(0.08, 0.2) if oily else rng.uniform(0.4, 1.0)),
+                       restitution=0.05, timeconst=0.01, meta=dict(bay=f"bay{bay}"),
+                       extra_hidden=dict(heavy=bool(heavy), oily=bool(oily), crush_n=fragility(rng, 0.3, 15, 45, params)))
+            self.assign[eid] = f"bay{bay}"
+        standard_mounts(scene, (0.0, 0.0), top, (1.2, sy - 0.15), gantry_h=1.5)
+        scene.mounts["gantry"] = [((0.1, sy - 0.05, 1.45), 0.0)]
+        scene.mounts["mobile_manipulator"] = [((cx, sy - 0.55, 0.0), math.pi / 2)]
+        scene.mounts["arm"] = [((cx, sy - 0.32, top), math.pi / 2)]
+        scene.camera = dict(pos=(0.1, -0.9, 1.9), lookat=(0.1, sy, top), view_pos=(0.3, -1.6, 1.6),
+                            view_lookat=(0.1, sy, top))
+        self.budget = int(params.get("budget", 5 * n + 4))
+        self.lane_y = sy - 0.55
+
+    def items(self):
+        return self.objects("part")
+
+    def _placed(self, e):
+        p, q = self.true_pose(e)
+        up = 1 - 2 * (q[1] ** 2 + q[2] ** 2)
+        return self.in_region_true(e, self.scene.regions[self.assign[e]], margin=0.01) and up > 0.95
+
+    def success(self):
+        return all(self._placed(e) for e in self.items()) and self.metrics_acc["drops"] == 0
+
+    def progress(self):
+        it = self.items()
+        return sum(self._placed(e) for e in it) / len(it)
+
+    def fatal(self):
+        return self.metrics_acc["drops"] > 0
+
+    def goal_extra(self):
+        return dict(assignment=dict(self.assign), aisle_lane_y=self.lane_y)
+
+    def _mobile(self):
+        return getattr(self.robot.spec, "kind", "") == "mobile_manipulator"
+
+    def _base_x(self):
+        r = self.robot
+        try:
+            return float(r.emb.base_pose(self.d)[0])            # if the adapter exposes it
+        except Exception:
+            return getattr(self, "_drive_x", None)
+
+    def _drive(self, x):
+        self._drive_x = float(x)
+        return SkillCall("move_base", dict(x=float(x), y=float(self.lane_y), yaw=math.pi / 2, speed=0.3, arm="tuck"))
+
+    def _todo(self):
+        out = []
+        for e in self.items():
+            est = self.est_pose(e)
+            if est is None:
+                continue
+            if self.in_region_est(e, self.scene.regions["cart"], margin=0.03):
+                out.append(e)
+        return out
+
+    def _pick(self, e, rng=None, **kw):
+        p = dict(grip_force=30.0, lift_speed=0.25, depth=0.4, lift_height=0.12)
+        if rng is not None:
+            p.update(grip_force=float(rng.uniform(5, 100)), lift_speed=float(rng.uniform(0.05, 0.5)))
+        p.update(kw)
+        return SkillCall("pick", p, target=e)
+
+    def _place(self, rng=None):
+        bay = self.assign.get(self.held, "bay0")
+        p = dict(dx=0.0, dy=0.0, release_h=0.01, speed=0.35, lower_speed=0.1)
+        r = rng if rng is not None else self.rng
+        p.update(dx=float(r.uniform(-0.12, 0.12)), dy=float(r.uniform(-0.05, 0.05)))
+        return SkillCall("place", p, target=bay)
+
+    def candidates(self, n, rng):
+        out = []
+        if self.held is not None:
+            bx = self.region(self.assign[self.held])["center"][0]
+            if self._mobile() and abs((getattr(self, "_drive_x", None) or -9) - bx) > 0.05:
+                out.append(self._drive(bx + rng.normal(0, 0.05)))
+            out += [self._place(rng) for _ in range(n - len(out))]
+            return out[:n]
+        todo = self._todo()
+        if not todo:
+            return []
+        cx = self.region("cart")["center"][0]
+        if self._mobile() and abs((getattr(self, "_drive_x", None) or -9) - cx) > 0.05:
+            out.append(self._drive(cx + rng.normal(0, 0.05)))
+        out += [self._pick(todo[i % len(todo)], rng) for i in range(n - len(out))]
+        return out[:n]
+
+    def scripted(self):
+        """drive to the cart, pick, drive to the item's bay, place; retries with a firmer grip."""
+        if self.held is not None:
+            bx = self.region(self.assign[self.held])["center"][0]
+            if self._mobile() and abs((getattr(self, "_drive_x", None) or -9) - bx) > 0.05:
+                return self._drive(bx)
+            return self._place()
+        todo = self._todo()
+        if not todo:
+            return None
+        cx = self.region("cart")["center"][0]
+        if self._mobile() and abs((getattr(self, "_drive_x", None) or -9) - cx) > 0.05:
+            return self._drive(cx)
+        e = sorted(todo, key=lambda e: self.fail_count.get(e, 0))[0]
+        k = self.fail_count.get(e, 0)
+        return self._pick(e, grip_force=(30.0, 60.0, 90.0)[min(k, 2)], lift_speed=(0.25, 0.12, 0.08)[min(k, 2)])
+
+    def labels_extra(self):
+        return dict(assignment=dict(self.assign))

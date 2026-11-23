@@ -126,7 +126,7 @@ class EmbodimentRobot:
                     # suction lips need a contact MARGIN: MuJoCo adhesion acts only through existing contacts, so with
                     # margin 0 the lip contact vanishes at the first micron of separation and the vacuum cannot hold
                     s.add_pair(geomname1=pg, geomname2=gname, condim=4, friction=[mu, mu, 0.005, 0.0001, 0.0001],
-                               solref=[0.004, 1.0], solimp=[0.95, 0.99, 0.001, 0.5, 2.0],
+                               solref=[max(0.004, 2.5 * ts), 1.0], solimp=[0.9, 0.95, 0.001, 0.5, 2.0],
                                margin=0.002 if "_lip" in pg else 0.0)
             for bn in pad_bodies:
                 s.add_exclude(bodyname1=info.body, bodyname2=bn)
@@ -529,6 +529,8 @@ class EmbodimentSkills:
         # probe: theta = contact-point angle, phi = rotation of the inward normal; ROBOTS: theta = push direction
         q = dict(theta=float(p["theta"] + math.pi + p.get("phi", 0.0)), speed=p.get("speed", 0.2),
                  distance=p.get("distance", 0.05), height=p.get("height", 0.012))
+        if "f_max" in p:      # force-limited push (wrist F/T opposing the push); comply or abort
+            q.update(f_max=float(p["f_max"]), comply=bool(p.get("comply", False)))
         if self.r.spec.kind == "humanoid":
             # G1: push with the hand's natural (reachable) orientation, either hand; see humanoid.g1_push
             from physmem.embodiments.humanoid import g1_push

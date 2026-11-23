@@ -305,8 +305,8 @@ class MjEmbodiment:
                         continue
                     if not gm.name:
                         gm.name = f'{bn}_pad{k}'
-                    gm.solref = [0.004, 1.0]
-                    gm.solimp = [0.95, 0.99, 0.001, 0.5, 2.0]
+                    gm.solref = [0.004, 1.0]      # rescaled to >= 2.5 dt of the scene in build()
+                    gm.solimp = [0.9, 0.95, 0.001, 0.5, 2.0]   # ENVS dmin/dmax 0.95/0.99 ejected parts at 70 N
                     gm.margin = 0.0
         for e in cfg.effectors:
             if e.gripper.pad_friction:
@@ -339,6 +339,17 @@ class MjEmbodiment:
 
     def build(self, mjspec: mujoco.MjSpec, mount_pose=((0, 0, 0), (1, 0, 0, 0))) -> None:
         child = self.load_child()
+        # pad contact time constant: 0.004 s (ENVS convention at 1 ms) but never below 2.5 x the scene timestep
+        # (at 2 ms a 0.004 s constant is marginal and a 70 N pinch can eject a part)
+        tc = max(0.004, 2.5 * float(mjspec.option.timestep))
+        for e in self.cfg.effectors:
+            if e.gripper.kind == 'suction':
+                continue
+            for bn in e.gripper.pad_bodies:
+                b = child.body(bn)
+                for gm in (b.geoms if b is not None else []):
+                    if gm.contype or gm.conaffinity:
+                        gm.solref = [tc, 1.0]
         pos, quat = mount_pose
         qy = np.array([np.cos(-self.cfg.front_yaw / 2), 0, 0, np.sin(-self.cfg.front_yaw / 2)])
         qf = np.zeros(4)

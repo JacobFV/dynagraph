@@ -698,3 +698,62 @@ The first two are in ENVS's scripted policy / tracker (reported to ENVS); the th
 - **gantry_vacuum:** conveyor parts are small and often cylindrical; a flat 30 mm cup lip does not seal on curved
   tops, so it is a poor tool for that family.
 - **gantry_clamp:** places parts (2 in the first smoke episode) with collisions against the belt rails.
+
+### Round 6 additions
+- **`move_base` skill** (tidybot; params x, y, yaw world/station frame, speed, yaw_rate, arm keep|tuck): min-jerk
+  base move through the computed-torque base servo, effort-metered; `done` within 3 cm, else `blocked`. Test:
+  `tests/test_skills.py::test_move_base_tidybot`.
+- **Push force limit:** `f_max` (N) + `comply` (bool). Abort (`force_limited`) or finish compliantly at
+  K = f_max / 0.02 m.
+- **Pad contacts:**
+  - Named pad geoms `<body>_pad<k>`, margin 0, solref (max(0.004, 2.5·dt), 1), solimp (0.9, 0.95, 0.001, 0.5, 2).
+  - ENVS's (0.95, 0.99) solimp ejected a 70 N Panda pinch at 2 ms, so it was not adopted. Regression gates are below.
+
+
+## 10. Env matrix on envs-r3 (current; `results/v2/robots/env_runs_r5.jsonl` → `env_matrix.json`)
+
+This run uses ENVS's round-3 fixes (conveyor re-target fix, bin pad pairs, depalletize with exception lane, TidyBot
+on a 0.62 m bench, light-parts station) and ROBOTS code as of round 5 (lip margin, compact cup plate, transit
+clearance, radian gantry yaw). The pad-contact change of round 6 came after this run. 5 seeds per cell.
+
+| family | panda | ur5e_2f85 | gen3_2f85 | aloha | tidybot | gantry_vacuum | gantry_clamp | ur5e_suction | ur5e_suction2 | fr3_suction | z1 | so100 | g1_dex3 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| bin_clearing | 0/5 (0.00) | 0/5 (0.43) | 0/5 (0.53) | 0/5 (0.00) | 0/5 (0.28) | - | - | - | - | - | - | - | - |
+| bulk_sweep | 2/5 (0.83) | 1/5 (0.82) | 0/5 (0.63) | 0/5 (0.00) | 0/5 (0.15) | - | - | - | - | - | - | - | - |
+| connector_insert | 4/5 (0.80) | 5/5 (1.00) | 5/5 (1.00) | 0/5 (0.00) | 3/5 (0.76) | - | - | - | - | - | - | - | - |
+| conveyor_sort | 1/5 (0.28) | 1/5 (0.90) | 0/5 (0.21) | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.04) | 1/5 (0.78) | - | - | - | - | - | - |
+| depalletize | 0/5 (0.40) | 0/5 (0.20) | 0/5 (0.25) | 3/5 (0.80) | 0/5 (0.25) | 1/5 (0.62) | - | 0/5 (0.12) | 0/5 (0.20) | 0/5 (0.40) | - | - | - |
+| door_open | 4/5 (1.00) | 2/5 (1.00) | 5/5 (1.00) | 0/5 (0.00) | 1/5 (0.67) | - | - | - | - | - | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.41) |
+| drawer_open | 3/5 (0.96) | 3/5 (1.00) | 2/5 (0.90) | 3/5 (0.61) | 4/5 (1.00) | - | - | - | - | - | 3/5 (0.62) | 0/5 (0.00) | 1/5 (0.47) |
+| fixture_place | 4/5 (0.96) | 5/5 (1.00) | 5/5 (1.00) | 0/5 (0.00) | 4/5 (1.00) | - | - | 0/5 (0.00) | 0/5 (0.00) | 0/5 (0.00) | - | - | 0/5 (0.00) |
+| kitting_pocket | 1/5 (0.43) | 2/5 (0.80) | 0/5 (0.50) | 0/5 (0.07) | 1/5 (0.73) | - | - | - | - | - | - | - | - |
+| machine_tending | 0/5 (0.40) | 0/5 (0.80) | 0/5 (0.13) | 0/5 (0.00) | 0/5 (0.13) | - | - | - | - | - | - | - | - |
+| peg_insert | 5/5 (1.00) | 5/5 (1.00) | 4/5 (0.80) | 0/5 (0.00) | 4/5 (0.80) | - | - | - | - | - | - | - | - |
+| pouch_transfer | 4/5 (0.80) | 3/5 (0.60) | 2/5 (0.40) | 0/5 (0.00) | 2/5 (0.40) | - | - | - | - | - | - | - | - |
+| singulation | 1/5 (0.80) | 5/5 (1.00) | 1/5 (0.55) | 3/5 (0.75) | 2/5 (0.64) | - | - | 0/5 (0.61) | 2/5 (0.56) | 0/5 (0.68) | 0/5 (0.24) | 0/5 (0.08) | 0/5 (0.32) |
+| small_parts_pick | 0/5 (0.00) | 0/5 (0.33) | 0/5 (0.37) | 0/5 (0.68) | 0/5 (0.15) | - | - | - | - | - | 0/5 (0.00) | 0/5 (0.07) | - |
+| small_peg_insert | 1/5 (0.20) | 5/5 (1.00) | 2/5 (0.40) | 0/5 (0.00) | 0/5 (0.00) | - | - | - | - | - | 2/5 (0.40) | 0/5 (0.00) | - |
+| tool_return | 2/5 (0.40) | 4/5 (0.80) | 1/5 (0.20) | 2/5 (0.40) | 2/5 (0.40) | - | - | - | - | - | - | - | - |
+| tote_transfer | 0/5 (0.17) | 1/5 (0.67) | 1/5 (0.20) | 0/5 (0.00) | 0/5 (0.00) | - | 0/5 (0.30) | - | - | - | - | - | - |
+| twist_lock | 3/5 (0.98) | 5/5 (1.00) | 3/5 (1.00) | 2/5 (0.49) | 0/5 (0.77) | - | - | - | - | - | - | - | - |
+| **total** | 35/90 | 47/90 | 31/90 | 13/90 | 23/90 | 1/10 | 1/10 | 0/15 | 2/15 | 0/15 | 5/25 | 0/25 | 1/20 |
+violations total: 3
+
+Highlights:
+- **depalletize, redefined (overweight cartons go to the exception lane):** ALOHA 3/5 (its payload makes most
+  cartons "overweight", so correct flagging scores) and gantry_vacuum 1/5 (0.62).
+- **conveyor_sort, scripted re-target fixed:** UR5e 1/5 (0.90), Panda 1/5, gantry_clamp 1/5 (0.78).
+- **TidyBot on the lower bench:** 4/5 on fixture, peg and drawer, and 3/5 connector (was 0).
+- **Light-parts station:** UR5e small_peg_insert 5/5; Z1 2/5; SO-100 still 0/25 on its station (small_parts
+  progress 0.07).
+
+**Integrity:** 3 violations, all in one ALOHA bulk_sweep episode (seed 4). The episode's 300 s wall guard raised
+`TimeoutError` in the middle of a sweep skill and the following calls ran from that interrupted state. It needs a
+clean skill abort on the guard; not fixed.
+
+### Round-6 regression check (pad contact params on real pads)
+- **pick/place:** 20/20 on Panda, UR5e and Gen3 (placement p50 1.5–3.5 mm).
+- **bin_clearing:** 0/5 for both; progress Panda 0.18 (r5: 0.00), UR5e 0.51 (r5: 0.43). No regression.
+- **singulation:** UR5e 1/5 (r5: 5/5), Panda 0/5 (r5: 1/5). The failing episodes end `fatal` after 2–18 calls.
+  ENVS changed singulation after r5 (new fatal conditions: a cycle-time limit and every object staying in the work
+  region). The pad change could also contribute; the A/B was not run.

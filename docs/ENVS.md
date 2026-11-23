@@ -294,22 +294,28 @@ in order, each with its own `data/v2_envs_large/<tranche>/manifest.json` (+ `man
   train on it); its rows moved to `results/v2/envs/generation_large_aborted_tranche2.jsonl`.
 - **From tranche 2 on, every tranche runs from a FROZEN code copy `gb10-direct:~/dynagraph_r3`** (envs + embodiments
   + skills; nobody syncs into it; sha256 of the envs sources = `7095b278...0388`), env version **envs-r3**:
-  - tranche2_envs_r3: 16887 episodes - RUNNING since 21:37Z. At 22:47Z-local-host-time 6020 done (probe 5614 = all, ur5e 406); real-robot episodes take ~25 s wall each under host load ~27 (UR5e mean 24.5 s), so the remaining ~10.9k real-robot episodes need ~8-12 h on 10 procs (ETA ~08:00-12:00Z). tranche5_r4 (5.5k of its 8.6k are real robots) adds ~5-7 h. Lead: say if tranche2 should be trimmed (e.g. drop ALOHA/G1 bulk families) to land r4 sooner.
-  - tranche3_heldout_robot_envs_r3 and tranche4_envs_r3: CANCELLED (lead, 2026-11-23 ~23:40Z) - replaced by r4 tranches.
-  - tranche3_heldout_robot_r4: 776 episodes, gen3_2f85 only (split heldout_robot), all its executable families incl.
-    the r3/r4 ones - QUEUED (starts when tranche2 finishes; ~30-45 min).
-  - tranche5_r4: 8630 episodes, all executable robot x family pairs (ROBOTS' measured runs + round-3 pairs: TidyBot on
-    the lower bench, suction depalletize, light-parts families), 2x weight on the decision-relevant families
-    (depalletize, connector_insert, bin_clearing, bulk_sweep, kitting_pocket, drawer_open, door_open, tool_return,
-    fixture_place, twist_lock); by robot: probe 3087, ur5e 1472, panda 1472, tidybot 620, aloha 598, ur5e_suction
-    580, z1 213, fr3_suction 198, g1_dex3_fixed 180, so100 146, g1_dex3 64 - QUEUED after tranche3_r4 (~3-4 h).
+  - **tranche2_envs_r3_partial: FINAL (stopped early on the lead's decision, ~22:50Z host clock).** Planned 16887,
+    completed 3600 episodes on disk (probe 3400, ur5e_2f85 200), 1.44 GB, envs-r3. About 2400 more episodes had
+    finished but sat in the generator's per-(robot, family, split) buffers (< 50 each) and were lost when the run was
+    killed; their rows remain in `results/v2/envs/generation_large.jsonl` without data. `manifest.json` records planned
+    vs completed per robot; manifest.sha256 `38f31df11fcea0e32d4de90604e610995cb719a89d0b378b2dbdac694a5d7d67`.
+    The remainder of tranche 2 is only resumed if nothing higher-priority is queued.
+  - tranche3_heldout_robot_envs_r3 and tranche4_envs_r3: CANCELLED (lead) - replaced by r4 tranches.
+  - tranche3_heldout_robot_r4: 776 episodes, gen3_2f85 only (split heldout_robot), envs-r4 - RUNNING since ~22:51Z
+    host clock (~40 min).
+  - tranche5_r4: TRIMMED to fit ~4 h (`plan/tranche5_r4_trim.json`, 7532 episodes, output dir `tranche5_r4`): all
+    probe (3087), UR5e (1472), Panda (1472), ur5e_suction (580), fr3_suction (198), z1 (213), so100 (146) pairs (2x
+    weight on the decision-relevant families); ALOHA / G1 floating / G1 fixed / TidyBot capped at 100 / 64 / 100 /
+    100; real-arm bulk_sweep capped at 93 in total. QUEUED right after tranche3_r4; ETA ~3-3.5 h after it starts.
+  - **CPU budget:** 20 cores, load was ~27. ENVS generation uses 10 processes (not 12, given the load). ROBOTS /
+    MODEL: please keep to your budgets (<= 8 processes each, COORDINATION.md) while tranche5_r4 runs.
   - How to check without ENVS: `ls ~/dynagraph/data/v2_envs_large/*/manifest.sha256`; progress lines `[n/N]` in
     `~/dynagraph/logs/envs_large_<dir>.log`.
   - r4 tranches run from the FROZEN copy `gb10-direct:~/dynagraph_r4` (ENV_VERSION envs-r4; sha256 of the envs
-    sources `8f970b81...832d`); chain log `~/dynagraph/logs/envs_large_chain_r4.log`.
+    sources `8f970b81...832d`); chain log `~/dynagraph/logs/envs_large_chain_r4b.log`.
   - MODEL-V2: a tranche is FINAL when `<dir>/manifest.sha256` exists (written after manifest.json); per-tranche
     summary in `~/dynagraph/logs/envs_large_<dir>.md`. Status lines here are updated by ENVS when each one lands.
-- Env versions: tranche1 = envs-r2; tranche2_envs_r3 = envs-r3 (frozen `~/dynagraph_r3`); tranche3_heldout_robot_r4 and tranche5_r4 = envs-r4 (frozen `~/dynagraph_r4`). Every manifest records `env_version` (tranche1/2 via `code_hash`, the field was added in r3).
+- Env versions: tranche1 = envs-r2; tranche2_envs_r3_partial = envs-r3 (frozen `~/dynagraph_r3`); tranche3_heldout_robot_r4 and tranche5_r4 = envs-r4 (frozen `~/dynagraph_r4`). Every manifest records `env_version` (tranche1/2 via `code_hash`, the field was added in r3).
 Policy: per episode 10 % `explore` (random feasible candidates), 90 % `mixed` (per decision 0.4 scripted / 0.4 random
 feasible candidate / 0.2 scripted with speed/force/grasp/approach params x U(0.7, 1.3)); `steps[i].policy_source`.
 Per step stored: call, policy_source, t_start/t_end (skill segment boundaries; the events inside are the 25 Hz
@@ -562,3 +568,26 @@ ROBOTS round 5 notes for ENVS (envs-r3):
   - Suggestion: remember placed cartons (as for conveyor_sort), and base flagging on the robot's payload or
     measured lift force rather than on failure count.
 - **tote_transfer:** the same stale-estimate re-target was seen after a successful tote place.
+
+ROBOTS round 6 (answers to ENVS requests):
+- **Pad contacts on real grippers.** Every collision geom on a finger/pad body is named `<prefix>/<body>_pad<k>`
+  (stable; use these for the squeeze checks) and gets margin 0 and solref (max(0.004, 2.5·dt), 1).
+  - solimp is (0.9, 0.95, 0.001, 0.5, 2), NOT (0.95, 0.99, ...): with dmin/dmax 0.95/0.99 a 70 N Panda pinch ejected
+    a 0.6 kg box out of the fingers at 2 ms (isolated on the ROBOTS bench; with 0.9/0.95 the same seed holds).
+  - The adapter's explicit pad↔part pairs use the same values. Suction-cup lip pairs keep a 2 mm margin (adhesion
+    needs it).
+- **`move_base`** (mobile manipulators: tidybot; status `unsupported` on fixed bases):
+  - Call: `SkillCall("move_base", dict(x, y, yaw, speed=0.3, yaw_rate=0.8, arm="keep"|"tuck"))`, with x, y, yaw in
+    the station (world) frame.
+  - Motion: a min-jerk base trajectory through the controller's computed-torque base servo (torques only,
+    effort-metered), done when the time is up.
+  - Status: `done` if the base ends within 3 cm, else `blocked`. Log: pos_err, yaw_err.
+  - Adapter: `sk_move_base`. The automatic lateral base alignment before other skills is skipped for this call.
+  - LEAD: `api.SkillCall.vector()`'s one-hot list has no "move_base" (it would raise); please append it to `names`.
+- **Force-limited push.** Push params `f_max` (N) and `comply` (bool), passed through the adapter when the call has
+  `f_max`.
+  - Input: the wrist F/T component opposing the push.
+  - Above `f_max`: with `comply=True`, the rest of the stroke runs in impedance at K = f_max / 2 cm (it presses with
+    about f_max instead of position-tracking through a jammed cluster).
+  - Otherwise it aborts and holds (status `force_limited`).
+  - Log: `force_limited`, `t_force_limit`, `F_max`.

@@ -14,7 +14,9 @@ import importlib
 # cartons, mobile lower bench, light-parts station (small_parts_pick, small_peg_insert).
 # envs-r4: fragile parts (hidden crush limits, pad-squeeze damage, solved() = success and no damage), snapshot /
 # restore / set_hidden / resimulate, bin_clearing 3-6 parts, singulation bounded work area, peg cycle-time limit.
-ENV_VERSION = "envs-r4"
+# envs-r5 (dev): peg spiral time cost + dent limit, pouch squeeze limit, singulation pick option + cycle limit,
+# shelf_restock (mobile aisle with move_base), generator flushes buffers on SIGTERM.
+ENV_VERSION = "envs-r5-dev"
 
 _REG = {
     "bin_clearing": ("families_bulk", "BinClearing"),
@@ -35,6 +37,7 @@ _REG = {
     "machine_tending": ("families_extra", "MachineTending"),
     "small_parts_pick": ("families_extra", "SmallPartsPick"),
     "small_peg_insert": ("families_extra", "SmallPegInsert"),
+    "shelf_restock": ("families_extra", "ShelfRestock"),
 }
 
 FAMILIES = tuple(_REG)

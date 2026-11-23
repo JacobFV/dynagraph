@@ -50,8 +50,9 @@ HELDOUT_OBJECTS = {
     "machine_tending": dict(mass=8.0),
     "small_parts_pick": dict(shapes=("mesh", "ellipsoid")),
     "small_peg_insert": dict(peg_half=0.0085),
+    "shelf_restock": dict(n_items=7),
 }
-COUNT_SHIFT = {"depalletize": dict(layers=3), "conveyor_sort": dict(n_parts=7), "tote_transfer": dict(n_totes=4),
+COUNT_SHIFT = {"shelf_restock": dict(n_items=7), "depalletize": dict(layers=3), "conveyor_sort": dict(n_parts=7), "tote_transfer": dict(n_totes=4),
                "pouch_transfer": dict(mass=0.8)}
 
 
