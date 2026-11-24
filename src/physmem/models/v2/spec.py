@@ -87,7 +87,8 @@ SEG_T = 64          # resampled samples per segment
 SEG_RATE_HINT = 50  # Hz suggested raw logging rate (>= 50 Hz, any rate accepted; we resample)
 
 # ----------------------------------------------------------------- skills
-SKILLS = ["reach", "push", "sweep", "pick", "place", "insert", "open", "close", "handover", "regrasp"]
+SKILLS = ["reach", "push", "sweep", "pick", "place", "insert", "open", "close", "handover", "regrasp", "move_base"]
+N_SKILLS_LEGACY = 10   # r4 checkpoints before move_base (api SKILLS_V2) was added
 CALL_DIM = 24       # api.SkillCall.vector()
 
 # ----------------------------------------------------------------- outcome layout
@@ -307,7 +308,8 @@ CALLN_DIM = len(SKILLS) + 2 * N_PARAM
 
 def named_call_vector(skill: str, params: dict) -> np.ndarray:
     v = np.zeros(CALLN_DIM, np.float32)
-    v[SKILLS.index(skill)] = 1.0
+    if skill in SKILLS:
+        v[SKILLS.index(skill)] = 1.0
     o = len(SKILLS)
     for k, x in params.items():
         if k in P_INDEX and np.isscalar(x) and x is not None:

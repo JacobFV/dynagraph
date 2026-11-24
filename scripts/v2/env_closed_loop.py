@@ -21,6 +21,9 @@ for name, ck in cks.items():
 RES = [c for c in os.environ.get("RESIDUAL", "").split(",") if c]     # ensemble checkpoints (training seeds)
 if RES:
     pols["planner_residual"] = ("planner", H.ResidualPlanner([CEMPlanner(load_model(c)[0], "typed", cfg) for c in RES]))
+    if os.environ.get("TRUST"):
+        tr = {f: v["trusted"] for f, v in json.load(open(os.environ["TRUST"]))["families"].items()}
+        pols["planner_residual_gated"] = ("planner", H.ResidualPlanner(pols["planner_residual"][1].planners, trust=tr))
 for _, pl_ in pols.values():
     if pl_ is not None and not isinstance(pl_, H.ResidualPlanner):
         pl_.search = os.environ.get("SEARCH", "ranked")      # real stations: support-constrained ranking by default

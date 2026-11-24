@@ -218,6 +218,9 @@ def load_stores(data, split, device, families=None, max_episodes=None):
             if max_episodes is not None:     # contiguous prefix of whole episodes (adapter-data budget)
                 n = int((arr["ep_index"] < max_episodes).sum())
                 arr = {k: v[:n] for k, v in arr.items()}
+            if len(arr["k"]) == 0:
+                print(f"[load] {fam}_{split}: empty after sanitize, skipped", flush=True)
+                continue
             st[fam] = FamilyStore(arr, fam, device)
     return st
 
@@ -418,7 +421,9 @@ def calibrate(model, stores, bs=1024):
 def load_model(ck, device=None):
     dev = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
     c = torch.load(ck, map_location=dev, weights_only=False)
-    m = PhysMemV2(c["variant"], d=c["d"], phys=c.get("phys", False)).to(dev)
+    sd0 = c["state"]
+    w = sd0["head.call.0.weight"].shape[1]                 # infer the skill one-hot width of this checkpoint
+    m = PhysMemV2(c["variant"], d=c["d"], phys=c.get("phys", False), n_skills=w - 2 * S.N_PARAM).to(dev)
     sd = c["state"]
     if "ev_supervised" not in sd:
         sd["ev_supervised"] = torch.ones(S.N_EVENTS, dtype=torch.bool, device=dev)

@@ -59,8 +59,8 @@ def decide_env_ranked(planner: CEMPlanner, ad, hist, emb, rng, n_cand=16, n_pert
     if sc is not None:
         pool.append(sc)
         for _ in range(n_pert):
-            pool.append(api.SkillCall(sc.skill, {k: (v * float(rng.uniform(0.7, 1.3)) if np.isscalar(v) and not
-                                                      isinstance(v, bool) else v) for k, v in sc.params.items()},
+            pool.append(api.SkillCall(sc.skill, {k: (v * float(rng.uniform(0.7, 1.3)) if isinstance(v, (int, float))
+                                                      and not isinstance(v, bool) else v) for k, v in sc.params.items()},
                                       target=sc.target, effector=sc.effector))
     if not pool:
         return None
@@ -101,8 +101,11 @@ class ResidualPlanner:
     models (independent training seeds). Deviate from scripted only when the lower confidence bound of the predicted
     improvement, mean_m(dC) - k * std_m(dC), is > 0 (epistemic uncertainty = ensemble disagreement)."""
 
-    def __init__(self, planners, k=1.0, n_pert=15, n_cand=16, pert=0.15):
+    def __init__(self, planners, k=1.0, n_pert=15, n_cand=16, pert=0.15, trust=None):
+        """trust: optional {family: bool} competence gate from VALIDATION calibration (results/v2/trust_*.json):
+        in untrusted families the planner never deviates from the scripted action."""
         self.planners, self.k, self.n_pert, self.n_cand, self.pert = planners, k, n_pert, n_cand, pert
+        self.trust = trust
         self.mode = planners[0].mode
         self.search = "residual"
         self.log = []
@@ -114,10 +117,12 @@ class ResidualPlanner:
     def decide(self, ad, hist, emb, rng):
         from .env_adapter import rel_params
         sc = ad.env.scripted() if hasattr(ad.env, "scripted") else None
+        if sc is not None and self.trust is not None and not self.trust.get(ad.task.family, False):
+            return sc, dict(deviated=False, gated=True)
         pool = list(ad.candidate_skills(None, self.n_cand, rng))
         if sc is None:
             return pool[0] if pool else None, {}
-        pool = [sc] + [api.SkillCall(sc.skill, {k: (v * float(rng.uniform(1 - self.pert, 1 + self.pert)) if np.isscalar(v)
+        pool = [sc] + [api.SkillCall(sc.skill, {k: (v * float(rng.uniform(1 - self.pert, 1 + self.pert)) if isinstance(v, (int, float))
                                                     and not isinstance(v, bool) else v) for k, v in sc.params.items()},
                                      target=sc.target, effector=sc.effector) for _ in range(self.n_pert)] + pool
         scores = np.full((len(self.planners), len(pool)), np.nan)

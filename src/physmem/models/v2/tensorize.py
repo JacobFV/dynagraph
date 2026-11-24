@@ -148,6 +148,15 @@ def build_family_arrays(episodes, emb_of_robot, rng=None):
     return out
 
 
+def upgrade_call_width(call: np.ndarray) -> np.ndarray:
+    """legacy named-call arrays (10-skill one-hot, before move_base) -> current width (zero move_base column)."""
+    legacy = S.N_SKILLS_LEGACY + 2 * S.N_PARAM
+    if call.shape[-1] == legacy and legacy != S.CALLN_DIM:
+        pad = np.zeros(call.shape[:-1] + (S.CALLN_DIM - legacy,), call.dtype)
+        call = np.concatenate([call[..., :S.N_SKILLS_LEGACY], pad, call[..., S.N_SKILLS_LEGACY:]], -1)
+    return call
+
+
 class FamilyStore:
     """device-resident arrays for one family + sample gathering."""
 
@@ -157,7 +166,7 @@ class FamilyStore:
         self.n = len(arrays["k"])
         dv = device
         self.seg = torch.as_tensor(arrays["seg"], device=dv)                       # fp16 (n,T,C)
-        self.call = torch.as_tensor(arrays["call"], device=dv)
+        self.call = torch.as_tensor(upgrade_call_width(arrays["call"]), device=dv)
         self.an = torch.as_tensor(arrays["an"], device=dv)
         self.tend = torch.as_tensor(arrays["tend"], device=dv, dtype=torch.float32)
         self.on_t = torch.as_tensor(arrays["on_t"], device=dv)
@@ -254,7 +263,7 @@ def arrays_hash(arrays: dict) -> str:
 
 def concat_arrays(parts: list) -> dict:
     """concatenate build_family_arrays outputs (same family): re-index episodes / ep_start, pad entities."""
-    parts = [p for p in parts if p is not None and len(p["k"])]
+    parts = [dict(p, call=upgrade_call_width(p["call"])) for p in parts if p is not None and len(p["k"])]
     nmax = max(p["ent"].shape[1] for p in parts)
     out, row0, ep0 = {}, 0, 0
     acc = {k: [] for k in parts[0]}

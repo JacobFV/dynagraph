@@ -266,14 +266,14 @@ def test_harness_paired_episode_runs():
 
 
 # ----------------------------------------------------------------- learned-model gates (need a trained checkpoint)
-CK = sorted(glob.glob("results/v2/checkpoints/v2_synth_r1_typed_s[0-9].pt"))
+CK = sorted(glob.glob("results/v2/checkpoints/v2_synth_r4_typed_s[0-9].pt"))
 
 
-@pytest.mark.skipif(not CK or not os.path.exists("data/v2_synth/slide_test.npz"), reason="no trained synth checkpoint")
+@pytest.mark.skipif(not CK or not os.path.exists("data/v2_synth_r4/slide_test.npz"), reason="no trained synth checkpoint")
 def test_trained_latent_recovery_gate():
     from physmem.v2_train import evaluate, load_model, load_stores
     m, _ = load_model(CK[-1], torch.device("cpu"))
-    st = load_stores("data/v2_synth", "test", torch.device("cpu"), ["slide", "drawer"])
+    st = load_stores("data/v2_synth_r4", "test", torch.device("cpu"), ["slide", "drawer"])
     for s in st.values():   # subsample for speed
         pass
     ev = evaluate(m, st, max_hist=(1, 2))

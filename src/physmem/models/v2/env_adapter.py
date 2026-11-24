@@ -286,7 +286,7 @@ class EnvAdapter:
                 evs[j], emask[j] = float(bool(m[name])), True
         self.lat = map_labels(out.labels, tids)
         inter = S.Interaction(episode_id=getattr(self.env, "episode_id", ""), step=self.k, family=self.task.family,
-                              robot=self.task.robot, call_vec=rcall.vector(), skill=call.skill,
+                              robot=self.task.robot, call_vec=_safe_vec(rcall), skill=call.skill,
                               params=rcall.params, target_is_query=True, segment=seg,
                               effort_cost=out.result.effort.cost(), effort=out.result.effort.as_dict(), t_end=t1,
                               outcome_cont=cont, outcome_cont_mask=np.ones(S.N_CONT, bool), outcome_events=evs,
@@ -389,6 +389,23 @@ def robot_spec(name):
     return spec
 
 
+def _safe_vec(call):
+    """legacy api.SkillCall.vector() (kept only for compatibility; the model uses spec.named_call_vector)."""
+    try:
+        return call.vector()
+    except (TypeError, ValueError):
+        return np.zeros(S.CALL_DIM, np.float32)
+
+
+def _num(x, default=0.0):
+    """robust numeric read of an ENVS log field (some carry reason strings, e.g. metrics['fatal'] = 'lift failed twice')."""
+    try:
+        v = float(x)
+        return v if np.isfinite(v) else default
+    except (TypeError, ValueError):
+        return default
+
+
 def convert_episode(ep: dict):
     """stored ENVS episode dict (physmem.envs.io) -> (family, robot, steps[dict(frame, inter)]) with labels."""
     task = ep["task"]
@@ -405,34 +422,34 @@ def convert_episode(ep: dict):
         c = st["call"]
         call = api.SkillCall(c["skill"], dict(c["params"]), target=c.get("target"), effector=c.get("effector"))
         ad.pool = [call]
-        ad.env.t = float(st["t_start"])
+        ad.env.t = _num(st["t_start"])
         tids = ad.target_ids(call.target)
         frame = ad.frame(call.target)
         p0 = ad.target_pos(call.target)
-        seg = build_segment(ad.idx, float(st["t_start"]), float(st["t_end"]), tids, p0)
-        ad.env.t = float(st["t_end"])
+        seg = build_segment(ad.idx, _num(st["t_start"]), _num(st["t_end"]), tids, p0)
+        ad.env.t = _num(st["t_end"])
         p1 = ad.target_pos(call.target)
         m = st["metrics"]
         peak = float(np.abs(seg[:, 12:15]).max()) if len(seg) else 0.0
-        cont = np.array([*(p1 - p0), float(m.get("progress", 0.0)), peak / 50.0, float(st.get("duration_s", 0.0)),
-                         float(m.get("progress_delta", 0.0)), float(m.get("max_robot_contact_n", 0.0)) / 150.0],
+        cont = np.array([*(p1 - p0), _num(m.get("progress", 0.0)), peak / 50.0, _num(st.get("duration_s", 0.0)),
+                         _num(m.get("progress_delta", 0.0)), _num(m.get("max_robot_contact_n", 0.0)) / 150.0],
                         np.float32)
         evs = np.zeros(S.N_EVENTS, np.float32)
         emask = np.ones(S.N_EVENTS, bool)
         evs[0] = float(st.get("success", False) or m.get("success", False))
         evs[1] = float(bool(m.get("slip", False)))
-        evs[2] = float(bool(m.get("drop", False)) or m.get("drops", 0) > prev.get("drops", 0))
+        evs[2] = float(bool(m.get("drop", False)) or _num(m.get("drops", 0)) > _num(prev.get("drops", 0)))
         evs[3] = float(bool(m.get("jam", False)))
-        evs[4] = float(bool(m.get("collision", False)) or m.get("collisions", 0) > prev.get("collisions", 0))
+        evs[4] = float(bool(m.get("collision", False)) or _num(m.get("collisions", 0)) > _num(prev.get("collisions", 0)))
         evs[5] = float(bool(m.get("stall", False)) or st.get("status") in ("guard_tripped", "timeout", "unreachable"))
         prev = m
         eff = st.get("effort", {})
         rcall = replace(call, params=rel_params(call.params, p0))
         tid = tids[0] if len(tids) == 1 else f"pile:{call.target}"
         inter = S.Interaction(episode_id=ep.get("episode_id", ""), step=k, family=fam, robot=robot,
-                              call_vec=rcall.vector(), skill=call.skill, params=rcall.params, target_is_query=True,
-                              segment=seg, effort_cost=float(eff.get("cost", 0.0)), effort=dict(eff),
-                              t_end=float(st["t_end"]), outcome_cont=cont, outcome_cont_mask=np.ones(S.N_CONT, bool),
+                              call_vec=_safe_vec(rcall), skill=call.skill, params=rcall.params, target_is_query=True,
+                              segment=seg, effort_cost=_num(eff.get("cost", 0.0)), effort=dict(eff),
+                              t_end=_num(st["t_end"]), outcome_cont=cont, outcome_cont_mask=np.ones(S.N_CONT, bool),
                               outcome_events=evs, outcome_events_mask=emask,
                               labels=map_labels(st.get("labels", {}), tids), target_id=tid)
         steps.append(dict(frame=frame, inter=inter))

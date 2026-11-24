@@ -1,8 +1,10 @@
 # MODEL_V2 — typed physical-memory world model, planner, and data contract (owner: agent MODEL-V2)
 
-Status (2026-11-23 ~21:30Z): contract (sec 1), model / planner (2-3), synthetic proof (4-5), real-station results (5f-5g),
-bugs (6), API (7), pending (8). Summary: latent physics WORKS (G4 synthetic largely met, partial on real stations);
-closed-loop utility G3 and family transfer G5 are NOT met; the outcome head / planner, not latent estimation, is the bottleneck.
+Status (2026-11-24 ~05:00Z): r4 (sec 9) supersedes the r1 closed-loop verdicts. Summary: latent physics WORKS
+(G4 synthetic largely met, partial on real stations); the physics-structured head makes the model-based planner beat
+the scripted heuristic on the synthetic world (3 seeds, sec 9f) but NOT the generic-memory planner; on real robots
+(sec 9g) only the safe residual planner (3-seed ensemble LCB + validation competence gate) is roughly heuristic-level
+with small gains, one significant loss (probe depalletize); the current families have value-of-latent <= ~0.1.
 
 Code: `src/physmem/models/v2/` (spec, synth, tensorize, model, harness), `src/physmem/planner.py`,
 `src/physmem/v2_train.py`, tests `tests/test_v2_model.py`.
@@ -436,3 +438,130 @@ Multi-robot latent recovery (tranche1 test): bulk friction 0.90 @1, fixture_plac
 machine_tending mass 0.94 @2, tool_return mass 0.90 @3; door/drawer damping, clearance, singulation friction fail.
 Data hygiene: 5-16% of real-robot episodes in bin_clearing / conveyor_sort / machine_tending / tool_return /
 pouch_transfer contain simulator blow-ups and are dropped (counts in the training logs) — flagged to ENVS/ROBOTS.
+
+### 9e. Real-robot failure diagnosis (lead request 3; `scripts/v2/diagnose_env.py`, t1 model, UR5e, 4 episodes each)
+- **door_open**: at the FIRST decision the planner deviates from the scripted `open(grip 20 N, speed 0.15)` to a
+  high grip force (54-94 N) and slower speed, because the grip-margin physics feature says more grip = less slip
+  (predicted p_success 0.24 -> 0.36). Reality: `handle_slipped` anyway, or contact forces up to 429 N with 4
+  collisions; the door is then in a state from which every subsequent (scripted) call fails. Predicted effort
+  150-470 vs realised 20k-74k (100x under-predicted: probe-dominated effort scale). Wrong quantities: the sign of
+  the grip-force effect on success for this handle (slip is not grip-limited here) and the effort scale.
+- **singulation**: the planner picks faster and longer pushes (0.37-0.71 m/s, 6-12 cm vs scripted 0.15 m/s, 4 cm)
+  predicting +0.07-0.10 success; realised progress lower and effort 50k-310k vs predicted 0.1-4k. Success
+  predictions are nearly uniform (0.08-0.22) -> the model does not discriminate pushes on real arms (~250 UR5e rows).
+- Root causes: (i) ~75% probe rows (probe effort ~100x smaller, different dynamics), ~100 episodes per arm x family;
+  (ii) the planner's selection exploited confident-but-wrong predictions; (iii) one bad first action is
+  unrecoverable in door/drawer.
+- Fixes applied: robot-balanced sampling (`--robot-balance`, inverse robot frequency per family) on tranche1 +
+  tranche2-partial UR5e (`data/v2_robots_t12`), and the **residual planner** (`harness.ResidualPlanner`): scripted
+  call + 15 x U(0.85,1.15) perturbations + 16 env candidates, scored by a 3-seed ensemble; deviate only if
+  LCB = mean_m(dC) - 1.0 * sqrt(std_ens^2 + latent spread^2) > 0.
+- Calibration after the fix (t12b typed s0, test): effort log-bias (pred - true) panda -0.01, ur5e +0.06,
+  probe 0.00 (per-row log-RMSE 1.7-2.1: real-arm effort is heavy-tailed); success mean predicted vs rate
+  panda 0.18 / 0.17, ur5e 0.20 / 0.18, probe 0.11 / 0.09.
+
+### 9f. HEADLINE — synthetic G3, 3 training seeds (r4 s0/s1/s2), 100 paired episodes per seed per cell (n=300),
+Δ success vs scripted heuristic [95% bootstrap CI over pooled paired episodes] / effort ratio vs heuristic
+(geometric mean of per-episode EffortMeter cost ratios) — `results/v2/closed_loop/agg_r4_lot{1,4}_3seeds.{json,txt}`
+| split:family | typed | generic | no-memory | oracle (labelled) | prior-mean | value of latent (oracle - prior) |
+|---|---|---|---|---|---|---|
+| test:drawer | **+0.44 [+0.38,+0.50] / 0.11** | +0.44 / 0.11 | +0.45 / 0.11 | +0.41 / 0.11 | +0.38 / 0.13 | +0.03 |
+| test:slide | **+0.09 [+0.06,+0.12] / 0.38** | +0.09 / 0.35 | +0.09 / 0.47 | +0.09 / 0.54 | +0.07 / 0.70 | +0.02 |
+| test:lift | +0.04 [+0.02,+0.06] / 0.77 | +0.04 / 0.81 | +0.04 / 0.62 | +0.04 / 0.71 | +0.04 / 0.72 | 0.00 |
+| test:insert | +0.05 [+0.03,+0.08] / 3.03 | +0.05 / 1.03 | +0.05 / 1.34 | +0.05 / 0.74 | +0.05 / 1.23 | 0.00 |
+| test:sweep | +0.00 / 0.76 | -0.00 / 2.16 | -0.01 / 1.49 | +0.00 / 1.04 | -0.00 / 1.29 | 0.00 |
+| held-out robot:drawer | +0.31 [+0.25,+0.37] / 0.16 | **+0.36** / 0.17 | +0.34 / 0.18 | +0.29 / 0.14 | +0.21 / 0.20 | +0.08 |
+| held-out robot:slide | +0.05 / 0.35 | +0.05 / 0.34 | +0.05 / 0.53 | +0.05 / 0.60 | +0.03 / 0.94 | +0.02 |
+| held-out robot:sweep | **+0.00 / 0.62** | -0.07 [-0.10,-0.04] / 3.35 | -0.02 / 1.73 | +0.00 / 0.94 | -0.01 / 1.11 | +0.01 |
+| lot-4 test:drawer | +0.53 [+0.47,+0.59] / 0.13 | **+0.57** / 0.11 | +0.56 / 0.11 | +0.48 / 0.12 | +0.43 / 0.13 | +0.05 |
+| lot-4 test:slide | +0.10 [+0.07,+0.14] / 0.52 | +0.10 / 0.52 | +0.10 / 0.53 | +0.10 / 0.61 | +0.08 / 0.79 | +0.02 |
+| lot-4 held-out robot:drawer | +0.25 [+0.17,+0.33] / 0.16 | **+0.39** / 0.19 | +0.39 / 0.19 | +0.19 / 0.14 | +0.11 / 0.17 | +0.08 |
+| lot-4 held-out robot:sweep | **-0.00 / 0.95** | -0.08 [-0.11,-0.05] / 1.71 | -0.05 / 1.81 | +0.00 / 1.03 | -0.03 / 1.20 | +0.03 |
+(lift / insert lot-4 and held-out-robot lift / insert: all planners +0.02..+0.06, same pattern; full table in the txt.)
+Per-seed success is stable (e.g. typed drawer 0.97 / 0.98 / 0.99). **Synthetic G3 vs heuristic: met** (success
++0.04..+0.57 with CIs excluding 0 in drawer, slide, lift, insert; effort 0.11-0.77x except insert, where the typed
+planner's VOI probe costs 3x). **vs generic memory: not met** (equal success; typed is better only on held-out-robot
+sweep, where generic/no-memory lose 0.05-0.08 success and use 1.7-3.4x the effort, and worse on held-out-robot drawer).
+**Value of latent** (oracle - prior-mean) is <= +0.08 in every synthetic family -> these families cannot show a
+latent-memory advantage (reported separately per the lead's rule; they count for general competence).
+
+### 9g. HEADLINE — real robots (MuJoCo stations, ROBOTS embodiments), paired n=30 per cell
+Model: robot-balanced, trained on tranche1 + tranche2-partial + **tranche5_r4** (real-arm data; `data/v2_robots_t125`,
+probe / panda / ur5e_2f85 / ur5e_suction / fr3_suction / aloha / tidybot / so100 / z1 / g1; Gen3 held out). Policies:
+- **typed**: ranked planner with scripted anchor (margin 0.15), seed 0;
+- **residual**: ensemble of 3 typed training seeds (s0/s1/s2), deviate only if LCB = mean - 1 * sqrt(ens^2 + latent^2) > 0;
+- **residual_gated**: residual + competence gate — deviations allowed only in families whose VALIDATION success AUC
+  >= 0.8 (`results/v2/trust_t125.json`: untrusted = twist_lock 0.62, bulk_sweep 0.64, singulation 0.69,
+  kitting_pocket 0.795). In untrusted families it plays the scripted action every step, i.e. exactly the heuristic
+  policy on the same seeded tasks (its column there equals the heuristic by construction);
+- **generic**: generic-memory model, same ranked planner; **oracle**: typed model + true latents (labelled).
+Cells: Δ success vs the scripted heuristic [95% paired bootstrap CI] / effort ratio (geometric mean of per-episode
+EffortMeter cost ratios); full table `results/v2/closed_loop/robot_table_t125.{md,json}`, rows
+`experiment=v2_g3_env_closed_loop`, run ids `v2_tab_t125_<robot>_<family>`.
+
+| robot | family | heur. | typed | residual (dev rate) | **residual_gated** | generic | oracle |
+|---|---|---|---|---|---|---|---|
+| ur5e | peg_insert | 0.63 | +0.00 / 1.01 | +0.10 [+0.00,+0.20] / 0.66 (0.29) | **+0.10 [+0.00,+0.20] / 0.66** | +0.00 / 1.03 | +0.00 / 1.02 |
+| ur5e | fixture_place | 0.67 | +0.00 / 1.02 | +0.07 [+0.00,+0.17] / 1.16 | **+0.07 / 1.16** | +0.07 / 1.02 | +0.00 / 1.03 |
+| ur5e | door_open | 0.53 | -0.17 [-0.30,-0.07] / 5.11 | +0.00 / 1.17 (0.07) | **+0.00 / 1.17** | -0.40 [-0.57,-0.23] / 4.31 | -0.07 / 4.37 |
+| ur5e | drawer_open | 0.93 | +0.00 / 1.04 | +0.00 / 0.98 | **+0.00 / 0.98** | +0.00 / 0.75 | -0.03 / 1.16 |
+| ur5e | tool_return | 0.63 | -0.03 / 1.04 | -0.03 [-0.17,+0.13] / 0.95 | -0.03 / 0.95 | -0.07 / 1.15 | -0.03 / 1.04 |
+| ur5e | singulation* | 0.77 | -0.30 [-0.53,-0.07] / 4.22 | -0.40 [-0.63,-0.17] / 4.03 (0.94) | **+0.00 / 1.00** | -0.30 / 3.63 | -0.23 / 4.07 |
+| ur5e | twist_lock* | 0.67 | -0.13 [-0.27,-0.03] / 5.02 | +0.00 / 1.30 | **+0.00 / 1.00** | -0.13 / 4.29 | -0.03 / 4.24 |
+| ur5e | kitting_pocket* | 0.63 | -0.17 / 1.05 | +0.00 / 1.24 | **+0.00 / 1.00** | +0.07 / 1.26 | -0.30 [-0.53,-0.07] / 0.42 |
+| panda | fixture_place | 0.63 | +0.07 / 1.32 | +0.13 [+0.03,+0.27] / 1.34 | **+0.13 [+0.03,+0.27] / 1.34** | +0.00 / 1.05 | +0.10 / 1.30 |
+| panda | peg_insert | 0.73 | +0.00 / 1.01 | +0.07 [-0.07,+0.20] / 0.91 | **+0.07 / 0.91** | +0.00 / 1.05 | +0.00 / 1.01 |
+| panda | tool_return | 0.33 | +0.00 / 1.02 | +0.10 [-0.03,+0.23] / 1.07 | **+0.10 / 1.07** | +0.03 / 1.12 | +0.00 / 1.07 |
+| panda | door_open | 0.50 | -0.20 [-0.40,+0.00] / 5.40 | -0.13 [-0.30,+0.00] / 2.11 | -0.13 [-0.30,+0.03] / 2.11 | -0.37 [-0.57,-0.17] / 5.86 | +0.03 / 3.42 |
+| panda | drawer_open | 0.47 | +0.00 / 0.90 | +0.00 / 1.00 | +0.00 / 1.00 | +0.00 / 0.99 | +0.00 / 0.99 |
+| panda | singulation* | 0.73 | -0.30 [-0.53,-0.03] / 1.80 | -0.30 [-0.50,-0.10] / 1.96 | **+0.00 / 1.00** | -0.37 / 1.11 | -0.47 [-0.67,-0.27] / 1.77 |
+| panda | twist_lock* | 0.57 | -0.03 / 2.60 | +0.00 / 1.00 | **+0.00 / 1.00** | -0.10 / 3.72 | -0.07 / 3.57 |
+| panda | kitting_pocket* | 0.63 | -0.27 [-0.47,-0.07] / 0.46 | +0.03 / 1.35 | **+0.00 / 1.00** | -0.03 / 1.63 | -0.33 [-0.53,-0.13] / 0.62 |
+| probe | bin_clearing | 0.23 | -0.03 / 0.95 | +0.07 [-0.07,+0.20] / 1.08 | **+0.07 / 1.08** | +0.03 / 1.17 | -0.07 / 1.42 |
+| probe | conveyor_sort | 0.30 | +0.07 / 0.90 | +0.03 / 0.83 | **+0.03 / 0.83** | -0.03 / 0.97 | +0.03 / 0.88 |
+| probe | bulk_sweep* | 0.70 | +0.03 / 0.89 | -0.03 / 1.09 | **+0.00 / 1.00** | -0.03 / 1.12 | -0.03 / 1.11 |
+| fr3_suction | depalletize | 0.00 | +0.03 / ~0 | +0.03 / ~0 | +0.03 / ~0 | +0.03 / ~0 | +0.03 / ~0 |
+| **gen3 (held out)** | door_open | 0.87 | -0.20 [-0.37,-0.03] / 7.25 | -0.03 [-0.10,+0.00] / 1.25 | -0.03 / 1.25 | -0.60 [-0.77,-0.40] / 4.17 | +0.03 / 5.05 |
+| gen3 | drawer_open | 0.30 | +0.03 / 2.00 | +0.00 / 1.00 | +0.00 / 1.00 | +0.00 / 0.98 | +0.03 / 3.75 |
+| gen3 | fixture_place | 0.80 | +0.00 / 1.07 | -0.07 [-0.17,+0.00] / 1.23 | -0.07 / 1.23 | +0.00 / 0.97 | +0.00 / 1.06 |
+| gen3 | peg_insert | 0.13 | +0.00 / 1.00 | -0.07 [-0.17,+0.00] / 1.09 | -0.07 / 1.09 | +0.00 / 1.02 | +0.00 / 1.10 |
+| gen3 | tool_return | 0.33 | -0.07 / 0.87 | -0.10 [-0.27,+0.07] / 0.78 | -0.10 / 0.78 | -0.20 [-0.37,-0.03] / 0.94 | -0.17 [-0.30,-0.03] / 0.86 |
+| gen3 | singulation* | 0.53 | -0.10 / 3.42 | -0.17 / 3.08 | **+0.00 / 1.00** | -0.30 [-0.53,-0.07] / 3.82 | -0.20 / 3.53 |
+| gen3 | twist_lock* | 0.77 | -0.13 [-0.27,+0.00] / 2.89 | +0.00 / 1.00 | **+0.00 / 1.00** | -0.17 / 1.48 | +0.00 / 3.33 |
+| probe | depalletize | 0.60 | -0.60 [-0.77,-0.43] / ~0 | -0.23 [-0.43,-0.03] / 1.50 (0.50) | **-0.23 [-0.43,-0.03] / 1.50** | -0.47 [-0.67,-0.23] / 2.09 | -0.57 [-0.73,-0.37] / 0.18 |
+| ur5e_suction | depalletize | 0.00 | +0.00 | +0.00 (0.96) | +0.00 | +0.00 | +0.00 |
+| gen3 | kitting_pocket* | 0.20 | -0.03 / 1.60 | +0.10 [-0.03,+0.23] / 1.40 | +0.00 / 1.00 | +0.07 / 1.28 | -0.03 / 0.46 |
+(* = family untrusted by the validation gate; 30 cells total.)
+
+**Verdicts (real robots, single n=30 cells):**
+- **G3 vs heuristic**: the competence-gated residual planner is significantly worse than the scripted policy in
+  ONE of 30 cells — probe depalletize -0.23 [-0.43,-0.03] (a family that passed the validation gate, AUC 0.95: the
+  exception-lane decision (flag vs lift an overweight carton) is where the model is confidently wrong; the gate is
+  necessary but not sufficient) — otherwise within CI of the heuristic (next worst panda door_open -0.13
+  [-0.30,+0.03]) and better in 9/30 cells, significantly in panda fixture_place (+0.13 [+0.03,+0.27]); ur5e
+  peg_insert +0.10 [+0.00,+0.20] with 0.66x servo pain. Typed-alone,
+  generic and even the ORACLE planner are significantly worse in door / singulation / kitting / twist_lock
+  (3-7x effort) -> the failure mode is action selection under model error, not latent estimation. G3 overall:
+  **partially met** (safe, small gains on fine-manipulation families; no family-wide significant win yet).
+- **vs generic memory**: residual_gated >= generic in 28/30 cells; generic is significantly worse than the
+  heuristic in 10 cells.
+- **G5 (Gen3 held out, zero adapter data)**: residual_gated within -0.10..+0.00 of the heuristic in all 8 cells
+  (none significant); ratio to in-distribution success (residual_gated, gen3 / ur5e): door 0.84/0.53, drawer
+  0.30/0.93, fixture 0.73/0.73, peg 0.07/0.73, tool 0.23/0.60, twist 0.77/0.67 — the Gen3 gap is mostly the
+  scripted policy's own gap on that robot (heuristic gen3 peg 0.13 vs ur5e 0.63), not the model's.
+- **value of latent (oracle vs typed)**: oracle - typed is between -0.17 and +0.20 with overlapping CIs in every cell;
+  together with the synthetic check (<= +0.08), none of the current families is decision-relevant enough to show a
+  latent-memory gain — reported separately as the lead asked; ENVS is redesigning several families for this.
+
+
+### 9h. Pending / next
+- 3-seed real-robot evaluation of the typed / generic single models (the real-robot table uses seed 0 for typed /
+  generic / oracle; the residual planner is the 3-seed ensemble). On-policy rounds on real stations not run (CPU
+  budget); the synthetic loop is in 9c.
+- `move_base` (api SKILLS_V2) is in the named encoding (`spec.SKILLS`, 11 skills; legacy 10-skill checkpoints load via
+  `n_skills`), but no trained model has seen mobile-base data yet (tranche6_r5 / shelf_restock).
+- Depalletize exception-lane error (planner lifts / flags wrongly) needs a dedicated diagnosis; ENVS' redesigned
+  decision-relevant families (overweight -> exception lane, peeling cartons, twist-lock breakaway, tool_return grip,
+  conveyor speed) are where a latent-memory advantage can actually show (current value-of-latent <= ~0.1).
+- Effort on real arms is heavy-tailed (per-row log-RMSE ~2, unbiased per robot); servo-pain distributions per
+  policy are in the closed-loop JSONs (`effort` per episode) and summarised as effort ratios / medians / p90.

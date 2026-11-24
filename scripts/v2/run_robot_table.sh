@@ -8,6 +8,7 @@ run() { ROBOT=$1 SPLIT=$2 python scripts/v2/env_closed_loop.py v2_tab_${tag}_$1_
 cells=()
 for r in ur5e_2f85 panda gen3_2f85; do for f in peg_insert drawer_open door_open twist_lock singulation fixture_place tool_return kitting_pocket; do
   sp=test; [ $r = gen3_2f85 ] && sp=heldout_robot; cells+=("$r $sp $f"); done; done
+for f in depalletize; do cells+=("ur5e_suction test $f" "fr3_suction test $f"); done
 for f in depalletize bulk_sweep conveyor_sort bin_clearing; do cells+=("probe test $f"); done
 export -f run; export C N tag
 printf '%s\n' "${cells[@]}" | xargs -P ${PROCS:-8} -L 1 bash -c 'run $0 $1 $2'

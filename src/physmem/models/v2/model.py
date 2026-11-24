@@ -39,7 +39,7 @@ def mlp(i, h, o, n=2, act=nn.GELU):
 class SegmentEncoder(nn.Module):
     """raw interaction time series -> embedding. (B,K,T,C) -> (B,K,d)."""
 
-    def __init__(self, d=128, layers=2):
+    def __init__(self, d=128, layers=2, calln=None):
         super().__init__()
         C = S.N_CH
         self.conv = nn.Sequential(
@@ -51,7 +51,7 @@ class SegmentEncoder(nn.Module):
         self.tf = nn.TransformerEncoder(el, layers)
         self.pool_q = nn.Parameter(torch.randn(1, 1, d) * 0.02)
         self.pool = nn.MultiheadAttention(d, 4, batch_first=True)
-        self.call = mlp(S.CALLN_DIM, d, d)
+        self.call = mlp(calln or S.CALLN_DIM, d, d)
         self.an = mlp(S.N_AN, d, d)
         self.emb = mlp(S.EMB_DIM, d, d)
         self.out = mlp(4 * d, 2 * d, d)
@@ -127,15 +127,17 @@ class FiLMHead(nn.Module):
     the learned residual trunk is FiLM-modulated by the typed slots + physics features. Latent physics enters ONLY
     through zin (typed-slot values) and the physics features computed from them."""
 
-    def __init__(self, d=128, h=256, n_layers=3, zdim=2 * L, phys=True):
+    def __init__(self, d=128, h=256, n_layers=3, zdim=2 * L, phys=True, n_skills=None):
         super().__init__()
         self.phys = phys
+        self.n_skills = n_skills or len(S.SKILLS)
+        calln = self.n_skills + 2 * S.N_PARAM
         kp = K_PHYS if phys else 0
-        self.call = mlp(S.CALLN_DIM, d, d)
+        self.call = mlp(calln, d, d)
         self.inp = nn.Linear(2 * d + zdim + kp, h)
         self.layers = nn.ModuleList([nn.Linear(h, h) for _ in range(n_layers)])
         self.norms = nn.ModuleList([nn.LayerNorm(h, elementwise_affine=False) for _ in range(n_layers + 1)])
-        self.film = mlp(zdim + kp + S.CALLN_DIM, h, 2 * h * (n_layers + 1))
+        self.film = mlp(zdim + kp + calln, h, 2 * h * (n_layers + 1))
         self.n_layers = n_layers
         self.cont = nn.Linear(h, 2 * S.N_CONT)
         self.ev = nn.Linear(h, S.N_EVENTS)
@@ -143,7 +145,7 @@ class FiLMHead(nn.Module):
         nn.init.zeros_(self.film[-1].weight)
         nn.init.zeros_(self.film[-1].bias)
         if phys:
-            self.margin = mlp(K_PHYS + len(S.SKILLS), 64, S.N_EVENTS + 1, n=3)   # events + effort base
+            self.margin = mlp(K_PHYS + self.n_skills, 64, S.N_EVENTS + 1, n=3)   # events + effort base
             self.gate_ev = nn.Parameter(torch.tensor(-1.0))
             self.gate_cont = nn.Parameter(torch.tensor(-1.0))
 
@@ -163,7 +165,7 @@ class FiLMHead(nn.Module):
         out = {}
         if self.phys:
             phi, base, bmask = phys
-            mg = self.margin(torch.cat([phi, call[:, :len(S.SKILLS)]], -1))
+            mg = self.margin(torch.cat([phi, call[:, :self.n_skills]], -1))
             ge, gc = torch.sigmoid(self.gate_ev), torch.sigmoid(self.gate_cont)
             out["ev_res"], out["cont_res"] = ev, torch.where(bmask, cont_mu, torch.zeros_like(cont_mu))
             ev = mg[:, :S.N_EVENTS] + ge * ev
@@ -175,14 +177,16 @@ class FiLMHead(nn.Module):
 
 
 class PhysMemV2(nn.Module):
-    def __init__(self, variant="typed", d=128, n_slots=8, seg_layers=2, phys=True):
+    def __init__(self, variant="typed", d=128, n_slots=8, seg_layers=2, phys=True, n_skills=None):
         super().__init__()
+        self.n_skills = n_skills or len(S.SKILLS)
+        calln = self.n_skills + 2 * S.N_PARAM
         assert variant in ("typed", "generic", "nomem")
         self.variant = variant
         self.phys = phys
-        self.seg = SegmentEncoder(d, seg_layers) if variant != "nomem" else None
+        self.seg = SegmentEncoder(d, seg_layers, calln) if variant != "nomem" else None
         self.scene = SceneEncoder(d, n_slots)
-        self.head = FiLMHead(d, phys=phys)
+        self.head = FiLMHead(d, phys=phys, n_skills=self.n_skills)
         if variant == "typed":
             self.est = mlp(d, d, 2 * L)
             self.prior = mlp(d + S.EMB_DIM, d, 2 * L)            # prior from target token + embodiment
@@ -191,7 +195,7 @@ class PhysMemV2(nn.Module):
             self.mem = mlp(d + 1, d, d)
             self.to_z = nn.Linear(d, 2 * L)
         # info head: predicted per-latent log-variance a candidate call would yield (planner VOI)
-        self.info = mlp(d + S.CALLN_DIM, d, L) if variant == "typed" else None
+        self.info = mlp(d + calln, d, L) if variant == "typed" else None
         # outcome scalers (raw = norm*std + mean), fit on train
         self.register_buffer("cont_mean", torch.zeros(S.N_CONT))
         self.register_buffer("cont_std", torch.ones(S.N_CONT))
@@ -205,9 +209,10 @@ class PhysMemV2(nn.Module):
         self.register_buffer("call_std", torch.ones(S.N_PARAM))
 
     def norm_call(self, call):
+        """full-width named call [skills(len(S.SKILLS)), values, mask] -> model width (n_skills one-hot columns)."""
         nk, P = len(S.SKILLS), S.N_PARAM
         vals = ((call[..., nk:nk + P] - self.call_mean) / self.call_std).clamp(-8, 8) * call[..., nk + P:]
-        return torch.cat([call[..., :nk], vals, call[..., nk + P:]], -1)
+        return torch.cat([call[..., :self.n_skills], vals, call[..., nk + P:]], -1)
 
     def head_eval(self, ctx, call_raw, zin, emb, ent, ent_mask):
         """the ONLY path from (context, candidate call, typed-slot values) to outcomes; physics features are computed
