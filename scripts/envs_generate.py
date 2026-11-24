@@ -106,10 +106,15 @@ def main():
         sub = os.path.join(a.out, f) if len(robots) == 1 else os.path.join(a.out, rob, f)
         os.makedirs(sub, exist_ok=True)
         k = chunk_i.get(key, 0)
-        chunk_i[key] = k + 1
         path = os.path.join(sub, f"{sp}_{k:04d}.pkl.gz")
-        with gzip.open(path, "wb", compresslevel=4) as fh:
+        while os.path.exists(path):      # resumed run into the same --out: never overwrite an earlier shard
+            k += 1
+            path = os.path.join(sub, f"{sp}_{k:04d}.pkl.gz")
+        chunk_i[key] = k + 1
+        tmp = path + ".tmp"              # atomic: a stop mid-write never leaves a truncated shard
+        with gzip.open(tmp, "wb", compresslevel=4) as fh:
             pickle.dump(recs, fh, protocol=4)
+        os.replace(tmp, path)
         manifest["files"][path] = dict(sha256=hashlib.sha256(open(path, "rb").read()).hexdigest(), n=len(recs),
                                        bytes=os.path.getsize(path), seeds=[r["task"]["seed"] for r in recs])
         buf[key] = []
@@ -118,7 +123,15 @@ def main():
     n_done = 0
     import signal as _sig
 
+    main_pid = os.getpid()
+    state = dict(flushing=False, pending=False)
+
     def _stop(signum, frame):        # SIGTERM -> stop cleanly: flush every buffer + write a (partial) manifest
+        if os.getpid() != main_pid:  # pool worker (pool.terminate()): just exit
+            os._exit(0)
+        if state["flushing"]:        # never interrupt a shard write: stop right after it
+            state["pending"] = True
+            return
         raise KeyboardInterrupt
     _sig.signal(_sig.SIGTERM, _stop)
     stopped = False
@@ -150,12 +163,17 @@ def main():
                                        wall_s=r["wall_s"], effort_cost=sum(s["effort"]["cost"] for s in r["steps"]),
                                        collisions=m.get("collisions"), violations=m.get("integrity_violations"),
                                        drops=m.get("drops"), error=r["error"])) + "\n")
+            state["flushing"] = True
             flush(key)
+            state["flushing"] = False
+            if state["pending"]:
+                raise KeyboardInterrupt
             if n_done % 200 == 0:
                 rows.flush()
                 print(f"[{n_done}/{len(tasks)}] {time.time() - t0:.0f}s", flush=True)
     except KeyboardInterrupt:
         stopped = True
+        _sig.signal(_sig.SIGTERM, _sig.SIG_IGN)      # a second TERM must not interrupt the final flush
         print(f"STOPPED at {n_done}/{len(tasks)}: flushing buffers", flush=True)
     manifest["partial"] = stopped
     manifest["planned"] = len(tasks)

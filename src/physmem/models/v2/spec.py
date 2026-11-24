@@ -15,7 +15,7 @@ from typing import Optional
 
 import numpy as np
 
-V2_MODEL_SCHEMA = "physmem-v2-model-1"
+V2_MODEL_SCHEMA = "physmem-v2-model-3"   # r5: + crush latent, damage event, 3 margins; r6: + stiffness evidence tokens
 G = 9.81
 
 # ----------------------------------------------------------------- latent vocabulary (typed slots)
@@ -32,6 +32,7 @@ LATENTS = [
     ("damping", "log", np.log(15.0), 1.0, "N*s/m"),       # articulation (drawer/door) viscous damping
     ("breakaway", "log", np.log(8.0), 0.7, "N"),          # articulation static breakaway force
     ("bulk_friction", "lin", 0.5, 0.2, "1"),              # granular / bulk-pile effective friction
+    ("crush", "log", np.log(40.0), 0.8, "N"),             # part force limit: crush (per pad squeeze) / dent limit (r5)
 ]
 LATENT_NAMES = [l[0] for l in LATENTS]
 N_LATENT = len(LATENTS)
@@ -102,9 +103,9 @@ OUT_CONT = [
 ]
 N_CONT = len(OUT_CONT)
 # binary events (logits)
-OUT_EVENTS = ["success", "slip", "drop", "jam", "collision", "stall"]
+OUT_EVENTS = ["success", "slip", "drop", "jam", "collision", "stall", "damage"]
 N_EVENTS = len(OUT_EVENTS)
-RISK_EVENTS = ("drop", "jam", "collision", "stall")   # summed into "risk" probability for the planner
+RISK_EVENTS = ("drop", "jam", "collision", "stall", "damage")   # summed into "risk" probability for the planner
 
 # ----------------------------------------------------------------- embodiment token
 KINDS = ["arm", "bimanual", "humanoid", "mobile_manipulator"]
@@ -125,7 +126,9 @@ def embodiment_vector(spec) -> np.ndarray:
 
 # ----------------------------------------------------------------- entity tokens
 ENT_TYPES = ["object", "effector", "fixture", "agent", "link", "particle", "goal_region"]
-ENT_DIM = len(ENT_TYPES) + 3 + 4 + 3 + 3 + 3  # type one-hot, pos(rel target), quat, size(half), vel, (is_target, age, valid)
+ENT_DIM = len(ENT_TYPES) + 3 + 4 + 3 + 3 + 3 + 3  # type one-hot, pos, quat, size, vel, (is_target, age, valid),
+# r6: actor-legal stiffness evidence (log vision-material reading, log tactile-squeeze reading, has tactile)
+STIFF_REF = np.log(20000.0)
 
 
 @dataclass
@@ -141,6 +144,7 @@ class EntityFrame:
     valid: np.ndarray           # (N,) bool
     target: int = 0             # index of the query target
     edges: Optional[np.ndarray] = None   # (Ed,3) int: src, dst, rel (schema.Rel)
+    stiff: Optional[np.ndarray] = None   # (N,2) N/m readings [vision, tactile] (nan = none) - actor-legal SENSOR streams
 
     def tokens(self) -> np.ndarray:
         N = len(self.types)
@@ -154,6 +158,12 @@ class EntityFrame:
         t[self.target, o + 13] = 1
         t[:, o + 14] = np.log1p(self.age)
         t[:, o + 15] = self.valid
+        if self.stiff is not None:
+            st = np.asarray(self.stiff, float)
+            for j in range(2):
+                ok = np.isfinite(st[:, j]) & (st[:, j] > 0)
+                t[ok, o + 16 + j] = (np.log(st[ok, j]) - STIFF_REF) / 2.0
+            t[:, o + 18] = np.isfinite(st[:, 1]) & (st[:, 1] > 0)
         return t
 
 

@@ -565,3 +565,85 @@ EffortMeter cost ratios); full table `results/v2/closed_loop/robot_table_t125.{m
   conveyor speed) are where a latent-memory advantage can actually show (current value-of-latent <= ~0.1).
 - Effort on real arms is heavy-tailed (per-row log-RMSE ~2, unbiased per robot); servo-pain distributions per
   policy are in the closed-loop JSONs (`effort` per episode) and summarised as effort ratios / medians / p90.
+
+## 10. Round 3 (2026-11-24): fragile parts, safe residual, envs-r6 (lead + ENVS r6)
+
+### 10a. Changes (model schema `physmem-v2-model-3`; r4/r5 checkpoints are legacy and do not load)
+- **Fragility in the typed memory**: new typed latent `crush` (N per pad; ENVS `crush_n`, and `dent_n` for pegs;
+  parts ENVS marks unbreakable (`inf`) are labelled 500 N so the latent learns the fragile/robust mixture), new
+  supervised event `damage` (increase of the cumulative `metrics.damaged`), counted in the planner's risk term.
+- **Physics head**: +3 margins — crush margin log(crush) - log(grip_force) for pick/open/close, dent margin
+  log(crush) - log(down_force) for insert, and the exception-lane margin log(m g) - log(payload g) for `handover`.
+  Minimal safe grip = max(slip margin from mass / grip friction, crush margin) is now an explicit trade-off.
+- **Actor-legal fragility evidence (ENVS r6)**: entity tokens carry the latest `vision_material` and
+  `tactile_squeeze` STIFFNESS readings (log, plus a has-tactile flag); the typed-slot prior network reads the target
+  token, so a tactile reading tightens the crush prior. Labels map `stiffness` -> STIFFNESS (N/m).
+- **Identifiability finding (before r6)**: with r2-r5 data the crush limit is NOT recoverable (corr ~0 after 0-3
+  interactions in bin_clearing / conveyor / tool_return / fixture / twist_lock; pouch 0.5-0.8 via compliance, because
+  pouch crush = 4 + Young/2500). Requested a legal signal in docs/ENVS.md; ENVS r6 added it (vision + tactile).
+- **Residual planner**: (i) may lower grip_force (x0.25-0.85) and speed caps (x0.5-0.7) of the scripted call;
+  (ii) **parameter-only** — it never changes the scripted discrete decision (skill + target), see 10b;
+  (iii) variant anchored on the ENVS probe-then-act scripted call (`residual_gated_probe`).
+- **Baselines reported separately**: plain scripted heuristic and the ENVS probe-then-act heuristic
+  (`env.probe_then_act`: 4 N first squeeze, then grip <= 0.7 x estimated crush limit).
+- **Data**: zero-length skill windows (rejected calls, t_start == t_end, NaN EE velocity) are guarded in
+  `build_segment` instead of dropping the episode: load-time drops on train went from 1,759 episodes / 27.6k rows to
+  74 / 1.6k; episodes with ENVS `integrity.unstable` / `metrics.unstable` are skipped at conversion. G5: drawer_open
+  train/val episodes excluded from every tranche (held-out family); Gen3 = held-out robot.
+- **Evaluation**: envs-r6 site-dressed scenes (`params["dressing"] = "site"`), 3 training seeds for typed / generic /
+  oracle, damage rate per policy.
+
+### 10b. Depalletize diagnosis (probe, residual_gated -0.23 [-0.43,-0.03] in round 2)
+The scripted baseline is an information-gathering protocol: heft every carton with a 4 cm lift, estimate its mass
+from wrist F/T (or a lower bound from a failed full-suction lift), then deliver it, or put it back and flag it
+(`handover`). The round-2 residual pool also contained the env's random candidates (20% `handover` on un-hefted
+cartons, picks with lift_height 0.1 m and random suction): a deviation could flag a light carton or lift an overweight
+one clear of the pallet, both of which fail the episode. Fix: the residual planner only modifies the continuous
+parameters of the scripted call (same skill, same target), never the protocol's discrete decision.
+
+### 10c. State at the shared-host hold (2026-11-24 07:12Z) and the resume plan
+**Done (r6 schema):** r2-r6 tranches re-converted with the zero-length-window guard (`data/v2_r6_t{1,2,5,6,3}`,
+merged `data/v2_r6_base`, drawer_open train/val excluded); interim typed models `v2_robots_r6i0_typed_s{0,1,2}`
+(VAL gate: singulation 0.54, twist_lock 0.61, bulk_sweep 0.56, kitting 0.79 untrusted; the other 12 trusted);
+**on-policy round 1** on dressed r6 scenes (gated residual, 20% exploration, 24 train-range episodes per cell, all
+interactions incl. failures kept: `data/v2_r6_rollouts/round1`, merged `data/v2_r6_op1`); round-1 retrain
+`v2_robots_r6i1_typed_s{0,1}` finished.
+
+Round-1 rollout success / damage per cell (planner + 20% random exploration, so NOT an evaluation):
+| robot | conveyor | bin_clear | singul. | door | tool_ret | pouch | twist | mach_tend | fixture |
+|---|---|---|---|---|---|---|---|---|---|
+| ur5e | 0.00 / 0.58 | 0.00 / 0.67 | 0.25 / 0.75 | 0.25 / 0.67 | 0.75 / 0.17 | 0.13 / 0.83 | 0.67 / 0.29 | 0.04 / 0.71 | 0.50 / 0.29 |
+| panda | 0.08 / 0.58 | 0.00 / 0.38 | 0.17 / 0.83 | 0.42 / 0.46 | 0.38 / 0.33 | 0.33 / 0.63 | 0.58 / 0.33 | 0.04 / 0.46 | 0.71 / 0.17 |
+probe: conveyor 0.17 / 0.63, singulation 0.21 / 0.75, depalletize 0.67 / 0.00; ur5e_suction depalletize 0.00 / 0.00.
+These interim models were trained on r2-r5 data WITHOUT the r6 stiffness evidence (crush corr ~0 there), so damage
+stays high; the round-1 rollouts are the first r6 data with vision/tactile stiffness readings in the training set.
+
+**Stopped at the hold:** `v2_robots_r6i1_typed_s2` (GPU, ~60% of 8k steps, started before incremental checkpoints
+existed -> re-run, 12 min), the r6 pipeline driver and its watcher. Nothing else of MODEL-V2 runs; `~/dynagraph/HOLD`
+is set (every MODEL-V2 script waits while it exists).
+
+**Resume** (one command, idempotent; skips finished outputs, waits while HOLD exists, CPU niced, GPU via gpu_heavy):
+`rm ~/dynagraph/HOLD; nohup scripts/v2/r6_resume.sh > logs/v2_r6_resume.log 2>&1 &`
+1. `v2_robots_r6i1_typed_s2` (12 min GPU) -> VAL gate `trust_r6i1.json` (2 min CPU).
+2. On-policy round 2: 22 cells x 24 episodes with the round-1 ensemble (~35 min on 8 procs) ->
+   `data/v2_r6_rollouts/round2`.
+3. `r6_final.sh`: wait for tranche8_r6_site (ENVS; 9,875 dressed episodes with stiffness evidence, G1 cell, tidybot
+   move_base), convert, merge base + tranche8 + rollouts rounds 1-2 -> `data/v2_r6_final`; FINAL models
+   `v2_robots_r6f_{typed,generic}_s{0,1,2}` + `nomem_s0` (7 x ~12 min GPU, incremental checkpoints every 2k steps);
+   VAL gate `trust_r6f.json`.
+4. Final robot table (`run_robot_table_r6.sh`, n=30 paired episodes per cell, site-dressed, skips finished cells,
+   partial JSON every 5 tasks): ur5e / panda x {conveyor_sort, bin_clearing, singulation, tool_return, pouch,
+   twist_lock, machine_tending, tote_transfer, door_open, drawer_open (G5 family), fixture_place}; gen3 (G5 robot) x
+   {conveyor, bin_clearing, door, tool_return, twist_lock, fixture}; probe / ur5e_suction / fr3_suction depalletize;
+   probe conveyor + singulation. Policies: plain heuristic, probe-then-act heuristic, typed / generic / oracle x 3
+   seeds, residual_gated (plain anchor), residual_gated_probe (probe-then-act anchor). ~33 cells x 13 policies x 30
+   -> ~6-7 h on 8 procs. Table: `scripts/v2/robot_table5.py r6f` -> `results/v2/closed_loop/robot_table5_r6f.md`
+   (Δ success vs plain AND vs probe-then-act heuristic [95% paired CI], damage rate, effort ratio, n per group).
+5. Paired videos: `pick_video_cells.py` takes the cells where a residual variant is significantly better than the
+   plain heuristic (CI > 0), best first, up to 4, with a PRE-REGISTERED seed rule (first paired task where the
+   heuristic fails and the planner succeeds, same planner rng as in the table); `paired_videos.py` renders
+   heuristic | residual side by side (same seed, dressed scene, label strip: policy, live SUCCESS / FAIL (damaged
+   part), effort; ENVS Recorder) -> `results/v2/videos_paired/*.mp4` + `.json` + `stills/*.png`; the lead's rsync then
+   copies 4 stills to `~/Downloads/dynagraph_gallery/paired/`. If no cell is significantly positive, no videos are
+   rendered (reported as such).
+Compute if run serially after the hold: ~1.5 h GPU + ~8 h CPU (8 procs), plus the tranche8 wait.

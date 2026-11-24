@@ -162,9 +162,16 @@ def _convert_shard(path):
     from physmem.envs.io import load_shard
     from physmem.models.v2 import env_adapter as A
     out, fails = [], 0
+    drop_g5 = os.environ.get("EXCLUDE_TRAINVAL_FAMILY")       # r6 G5: drop this family's train/val episodes
     for ep in load_shard(path):
         if ep.get("error"):
             fails += 1
+            continue
+        integ = ep.get("integrity") or {}
+        if integ.get("unstable") or any((st.get("metrics") or {}).get("unstable") for st in ep.get("steps", [])):
+            fails += 1                                            # real solver events (r6 flag): drop the episode
+            continue
+        if drop_g5 and ep["task"]["family"] == drop_g5 and ep["task"]["split"] in ("train", "val"):
             continue
         try:
             out.append((ep["task"]["split"], A.convert_episode(ep)))
@@ -379,6 +386,10 @@ def train(args):
                     if ("corr@k1" in k or k in ("success_brier", "success_auc", "progress_rmse", "effort_log_rmse"))}
             curve.append(dict(step=step, val=summ))
             print(json.dumps(dict(step=step, val={k: round(v, 3) for k, v in summ.items()})), flush=True)
+            # incremental checkpoint (a stopped job keeps its progress; the final save overwrites the same run name)
+            torch.save(dict(state=model.state_dict(), variant=args.variant, d=args.d, phys=model.phys, cfg=cfg,
+                            cfg_hash=cfg_hash, params=nparam, partial_step=step),
+                       os.path.join(RESULTS, "checkpoints", f"{args.run}.partial.pt"))
     elapsed = time.time() - t0
     if model.variant == "typed":
         print("val variance temperature:", np.round(calibrate(model, va), 3).tolist(), flush=True)

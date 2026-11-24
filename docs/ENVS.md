@@ -307,7 +307,18 @@ in order, each with its own `data/v2_envs_large/<tranche>/manifest.json` (+ `man
     probe (3087), UR5e (1472), Panda (1472), ur5e_suction (580), fr3_suction (198), z1 (213), so100 (146) pairs (2x
     weight on the decision-relevant families); ALOHA / G1 floating / G1 fixed / TidyBot capped at 100 / 64 / 100 /
     100; real-arm bulk_sweep capped at 93 in total. QUEUED right after tranche3_r4; ETA ~3-3.5 h after it starts.
-  - **tranche8_r6_site: RUNNING** (started 2026-11-24 05:48Z; `plan/tranche8_r6_site.json` from
+  - **tranche8_r6_site: PAUSED at 6258 / 9875** (stopped cleanly 2026-11-24 07:14Z with the SIGTERM flush; box lent to
+    another project until ~2026-11-25 14:00Z; partial manifest run, NO manifest.sha256, so neither the status watcher
+    nor MODEL's `scripts/v2/r6_pipeline.sh` treats it as final). **Resume** (when the box is clear):
+    `cd ~/dynagraph_r6 && ~/dynagraph/.venv/bin/python scripts/envs_tranche_ctl.py resume tranche8_r6_site 27000`
+    It reruns plan minus every stored (robot, family, split, seed) - the 3617 remaining, including the episodes that
+    were in flight - into the same dir without overwriting shards (the generator now picks the next free shard index,
+    writes shards atomically and defers a SIGTERM that lands mid-write). It also starts `envs_tranche_ctl.py finish`,
+    which writes the aggregate manifest run + manifest.sha256 only when all 9875 are stored, and the watcher then
+    appends FINAL. `... status tranche8_r6_site` shows planned / stored / remaining; `... stop tranche8_r6_site`
+    pauses again (it signals only the pid in `<dir>/generator.pid`). Tested end to end on a 120-task copy: stop at
+    101, resume 19, 120 stored, no duplicates, FINAL written.
+    Original launch (started 2026-11-24 05:48Z; `plan/tranche8_r6_site.json` from
     `scripts/envs_plan_large.py --r6 --scale 1.2`, 9875 episodes, envs-r6 from the frozen copy `~/dynagraph_r6` (envs
     sources sha256 `08692ebe...0cfc`), `dressing="site"` on every task, 8 processes, 7.5 h cap with SIGTERM flush;
     est. ~5 h). All executable pairs (ROBOTS' runs + earlier tranche pairs + g1_dex3_fixed tote_transfer G1 cell +

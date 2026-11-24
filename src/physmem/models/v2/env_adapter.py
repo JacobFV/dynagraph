@@ -18,11 +18,14 @@ import numpy as np
 from physmem.v2 import api
 from . import spec as S
 
+STIFF_PROP = 7   # schema.Prop.STIFFNESS (ENVS r6 vision_material / tactile_squeeze streams)
 POSKEY = re.compile(r"^([xyz])\d*$|^.*_([xyz])$")
 AX = {"x": 0, "y": 1, "z": 2}
 # ENVS hidden-label names -> spec.LATENTS
+NOT_FRAGILE_N = 500.0    # crush/dent label used for parts ENVS marks unbreakable (crush_n = inf)
 HIDDEN_MAP = {"mass": "mass", "mu": "friction", "mu_grip": "grip_friction", "clearance": "clearance",
-              "damping": "damping", "frictionloss": "breakaway"}
+              "damping": "damping", "frictionloss": "breakaway", "crush_n": "crush", "dent_n": "crush",
+              "stiffness": "stiffness"}
 
 try:  # ENVS extended props (absent -> adapter unusable but importable)
     from physmem.envs.props import XProp
@@ -55,6 +58,13 @@ class EventIndex:
         for e in events:
             self.d.setdefault((e.entity_id, int(e.property_type)), []).append(
                 (e.measured_at, e.available_at, np.asarray(e.value, float)))
+            if int(e.property_type) == STIFF_PROP:      # r6 fragility evidence, kept per source
+                self.d.setdefault((e.entity_id, int(e.property_type), e.source_id), []).append(
+                    (e.measured_at, e.available_at, np.asarray(e.value, float)))
+
+    def latest_src(self, eid, prop, src, now):
+        rows = [r for r in self.d.get((eid, int(prop), src), []) if r[1] <= now]
+        return max(rows, key=lambda r: r[0])[2] if rows else None
 
     def series(self, eid, prop, t0=-np.inf, t1=np.inf):
         rows = sorted(r for r in self.d.get((eid, int(prop)), []) if t0 <= r[0] <= t1)
@@ -67,14 +77,17 @@ class EventIndex:
         return max(rows, key=lambda r: r[0])[2] if rows else None
 
     def entities(self, prop):
-        return sorted({e for (e, p) in self.d if p == int(prop)})
+        return sorted({k[0] for k in self.d if len(k) == 2 and k[1] == int(prop)})
 
 
 def build_segment(idx: EventIndex, t0, t1, target_ids, p0, hand="robot/hand", max_rows=400):
     """events in [t0,t1] -> (T_raw, N_CH) segment (positions relative to p0)."""
+    if not (t1 - t0 > 1e-6):            # r2-r5 zero-length (rejected) calls: give the window a nominal length
+        t1 = t0 + 0.05
     tw, W = idx.series(hand, XProp.WRENCH, t0, t1)
     if len(tw) < 2:
         tw, _ = idx.series(hand, XProp.EE_POSE, t0, t1)
+    tw = np.unique(tw) if len(tw) else tw
     if len(tw) < 2:
         tw = np.linspace(t0, t1, 8)
     if len(tw) > max_rows:
@@ -89,7 +102,7 @@ def build_segment(idx: EventIndex, t0, t1, target_ids, p0, hand="robot/hand", ma
 
     ee = interp(hand, XProp.EE_POSE, (0, 1, 2)) - p0[None]
     x[:, 6:9] = ee
-    x[:, 9:12] = np.gradient(ee, tw, axis=0) if len(tw) > 1 else 0
+    x[:, 9:12] = np.nan_to_num(np.gradient(ee, tw, axis=0)) if len(tw) > 1 else 0
     x[:, 12:18] = interp(hand, XProp.WRENCH, range(6))
     g = interp(hand, XProp.GRIPPER, (0, 1, 2))
     x[:, S.CH["grip_pos"]] = g[:, 0]
@@ -142,6 +155,7 @@ class EnvAdapter:
         self._labels = None
         self.lat = {}
         self.pool = self.env.candidate_skills(None, 64, np.random.default_rng(task.seed))
+        self._damaged_prev = 0
         return ev
 
     @property
@@ -174,24 +188,33 @@ class EnvAdapter:
         return np.mean(ps, 0) if ps else np.zeros(3)
 
     def frame(self, target=None) -> S.EntityFrame:
+        """actor-legal entity snapshot at `now`, positions relative to the target; r6: per-object stiffness evidence
+        (latest vision-material and tactile-squeeze readings)."""
         target = target or (self.pool[0].target if self.pool else None)
         p0 = self.target_pos(target)
         ET = S.ENT_TYPES.index
         bulk = len(self.object_ids()) > 12
-        rows = []
+        NAN2 = (np.nan, np.nan)
+
+        def stiff_of(e):
+            vk = self.idx.latest_src(e, STIFF_PROP, "vision_material", self.now)
+            tk = self.idx.latest_src(e, STIFF_PROP, "tactile_squeeze", self.now)
+            return (float(vk[0]) if vk is not None else np.nan, float(tk[0]) if tk is not None else np.nan)
+
+        rows = []      # (type, pos, size, stiff(2))
         tids = self.target_ids(target)
         if len(tids) > 1:       # pooled pile entity as the target token
             ps = np.array([self.idx.latest(e, XProp.POSE3, self.now)[:3] for e in tids
                            if self.idx.latest(e, XProp.POSE3, self.now) is not None])
-            rows.append((ET("object"), ps.mean(0) - p0, ps.std(0) * 2 if len(ps) else np.full(3, 0.01)))
+            rows.append((ET("object"), (ps.mean(0) if len(ps) else np.zeros(3)) - p0,
+                         ps.std(0) * 2 if len(ps) else np.full(3, 0.01), NAN2))
         for e in self.object_ids():
             v = self.idx.latest(e, XProp.POSE3, self.now)
             if v is None:
                 continue
             sz = self.idx.latest(e, S_PROP_SIZE, self.now)
             sz = np.asarray(sz[:3]) if sz is not None else np.full(3, 0.02)
-            typ = ET("particle") if bulk else ET("object")
-            r = (typ, v[:3] - p0, sz)
+            r = (ET("particle") if bulk else ET("object"), v[:3] - p0, sz, stiff_of(e))
             if len(tids) == 1 and e == tids[0]:
                 rows.insert(0, r)
             else:
@@ -201,23 +224,24 @@ class EnvAdapter:
             if v is None:
                 continue
             name = e.lower()
-            typ = ET("goal_region") if any(s in name for s in ("target", "tote", "goal", "kit", "place", "hole")) \
+            typ = ET("goal_region") if any(k in name for k in ("target", "tote", "goal", "kit", "place", "hole")) \
                 else ET("fixture")
-            rows.append((typ, np.asarray(v[:3]) - p0, np.asarray(v[3:6])))
+            rows.append((typ, np.asarray(v[:3]) - p0, np.asarray(v[3:6]), NAN2))
         ee = self.idx.latest("robot/hand", XProp.EE_POSE, self.now)
         if ee is not None:
-            rows.append((ET("effector"), ee[:3] - p0, np.full(3, 0.02)))
+            rows.append((ET("effector"), ee[:3] - p0, np.full(3, 0.02), NAN2))
         for e in self.idx.entities(XProp.JOINT):
             if e.startswith("robot"):
                 continue
             v = self.idx.latest(e, XProp.JOINT, self.now)
-            rows.append((ET("link"), np.array([v[0], 0, 0]), np.full(3, 0.02)))
+            rows.append((ET("link"), np.array([v[0], 0, 0]), np.full(3, 0.02), NAN2))
         if not rows:
-            rows = [(ET("object"), np.zeros(3), np.full(3, 0.02))]
+            rows = [(ET("object"), np.zeros(3), np.full(3, 0.02), NAN2)]
         n = len(rows)
         return S.EntityFrame(types=np.array([r[0] for r in rows]), pos=np.array([r[1] for r in rows], float),
                              quat=np.tile([1.0, 0, 0, 0], (n, 1)), size=np.array([r[2] for r in rows], float),
-                             vel=np.zeros((n, 3)), age=np.zeros(n), valid=np.ones(n, bool), target=0)
+                             vel=np.zeros((n, 3)), age=np.zeros(n), valid=np.ones(n, bool), target=0,
+                             stiff=np.array([r[3] for r in rows], float))
 
     # ---------------------------------------------------------- skills
     def candidate_skills(self, belief, n, rng):
@@ -264,6 +288,7 @@ class EnvAdapter:
         tids = self.target_ids(target)          # resolve BEFORE executing (a place releases the held object)
         t0 = self.now
         before = dict(self.env.metrics_acc) if hasattr(self.env, "metrics_acc") else {}
+        before["damaged"] = getattr(self, "_damaged_prev", 0)
         out = self.env.execute(wcall)
         self.idx.add(out.events)
         t1 = self.now
@@ -271,6 +296,7 @@ class EnvAdapter:
         p1 = self.target_pos(target)
         rcall = replace(wcall, params=rel_params(wcall.params, p0))
         m = out.metrics
+        self._damaged_prev = _num(m.get("damaged", 0))
         peak = float(np.abs(seg[:, 12:15]).max()) if len(seg) else 0.0
         cont = np.array([*(p1 - p0), float(m.get("progress", 0.0)), peak / 50.0, out.result.duration_s,
                          float(m.get("progress_delta", 0.0)), float(m.get("max_robot_contact_n", 0.0)) / 150.0],
@@ -281,6 +307,7 @@ class EnvAdapter:
         evs[2], emask[2] = float(m.get("drops", 0) > before.get("drops", 0)), True
         evs[4], emask[4] = float(m.get("collisions", 0) > before.get("collisions", 0)), True
         evs[5], emask[5] = float(out.result.status in ("guard_tripped", "timeout", "unreachable")), True
+        evs[6], emask[6] = float(_num(m.get("damaged", 0)) > _num(before.get("damaged", 0))), True
         for name, j in (("slip", 1), ("jam", 3)):
             if name in m:
                 evs[j], emask[j] = float(bool(m[name])), True
@@ -319,8 +346,11 @@ def map_labels(labels: dict, target_ids) -> dict:
         return out
     if len(rows) == 1:
         for k, v in rows[0].items():
-            if k in HIDDEN_MAP and np.isscalar(v) and v is not None:
-                out[HIDDEN_MAP[k]] = float(v)
+            if k in HIDDEN_MAP and np.isscalar(v) and v is not None and not isinstance(v, str):
+                v = float(v)
+                if k in ("crush_n", "dent_n") and not np.isfinite(v):
+                    v = NOT_FRAGILE_N          # unbreakable part: a large finite limit, so the latent learns the mixture
+                out[HIDDEN_MAP[k]] = v
     else:
         if all("mass" in r for r in rows):
             out["mass"] = float(sum(r["mass"] for r in rows))
@@ -442,6 +472,7 @@ def convert_episode(ep: dict):
         evs[3] = float(bool(m.get("jam", False)))
         evs[4] = float(bool(m.get("collision", False)) or _num(m.get("collisions", 0)) > _num(prev.get("collisions", 0)))
         evs[5] = float(bool(m.get("stall", False)) or st.get("status") in ("guard_tripped", "timeout", "unreachable"))
+        evs[6] = float(_num(m.get("damaged", 0)) > _num(prev.get("damaged", 0)))
         prev = m
         eff = st.get("effort", {})
         rcall = replace(call, params=rel_params(call.params, p0))

@@ -23,11 +23,12 @@ import torch
 from . import spec as S
 
 G = 9.81
-K_PHYS = 20
+K_PHYS = 23
 PHYS_NAMES = ["grip_margin", "payload_margin", "log_grip_force", "lift_height", "push_force_margin",
               "push_goal_err", "push_goal_abs", "log_travel", "breakaway_margin", "open_goal_err", "open_goal_abs",
               "slam_speed", "open_grip_margin", "insert_capture", "insert_search", "jam", "sweep_goal_err",
-              "sweep_goal_abs", "sweep_stall_margin", "log_mass"]
+              "sweep_goal_abs", "sweep_stall_margin", "log_mass",
+              "crush_margin", "dent_margin", "overweight"]
 NK = len(S.SKILLS)
 SK = {n: i for i, n in enumerate(S.SKILLS)}
 GOAL_T = S.ENT_TYPES.index("goal_region")
@@ -138,4 +139,12 @@ def physics_features(z, call_raw, emb, ent, ent_mask):
     depth = torch.where(H("depth"), P("depth").abs(), torch.ones_like(v))
     phi[:, 18] = sw * (lg(fmax) - lg(mub * m * G * (1 + 0.5 * v) * depth))
     phi[:, 19] = lg(m)
+    # ---- r5: part force limits and the depalletize exception lane
+    crush = lat["crush"]
+    gf = torch.where(H("grip_force"), P("grip_force").abs(), torch.zeros_like(v))
+    grips = (is_("pick") | is_("open") | is_("close")) & H("grip_force")
+    phi[:, 20] = torch.where(grips, lg(crush) - lg(gf.clamp(min=0.5)), torch.zeros_like(v))      # > 0: squeeze below limit
+    phi[:, 21] = torch.where(is_("insert") & H("down_force"), lg(crush) - lg(P("down_force").abs().clamp(min=0.5)),
+                             torch.zeros_like(v))
+    phi[:, 22] = torch.where(is_("handover"), lg(m * G) - lg(payload * G), torch.zeros_like(v))  # > 0: overweight -> flag
     return phi.clamp(-10, 10), base, bmask

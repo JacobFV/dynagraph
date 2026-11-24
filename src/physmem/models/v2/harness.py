@@ -101,11 +101,14 @@ class ResidualPlanner:
     models (independent training seeds). Deviate from scripted only when the lower confidence bound of the predicted
     improvement, mean_m(dC) - k * std_m(dC), is > 0 (epistemic uncertainty = ensemble disagreement)."""
 
-    def __init__(self, planners, k=1.0, n_pert=15, n_cand=16, pert=0.15, trust=None):
+    def __init__(self, planners, k=1.0, n_pert=15, n_cand=16, pert=0.15, trust=None, same_call_only=True):
         """trust: optional {family: bool} competence gate from VALIDATION calibration (results/v2/trust_*.json):
         in untrusted families the planner never deviates from the scripted action."""
         self.planners, self.k, self.n_pert, self.n_cand, self.pert = planners, k, n_pert, n_cand, pert
         self.trust = trust
+        # r5 (depalletize diagnosis): the scripted policy's DISCRETE decision (skill + target: heft -> deliver / put
+        # back / flag) is an information-gathering protocol; deviations may only change that call's continuous params
+        self.same_call_only = same_call_only
         self.mode = planners[0].mode
         self.search = "residual"
         self.log = []
@@ -117,14 +120,29 @@ class ResidualPlanner:
     def decide(self, ad, hist, emb, rng):
         from .env_adapter import rel_params
         sc = ad.env.scripted() if hasattr(ad.env, "scripted") else None
+        if sc is not None and getattr(self, "anchor_probe", False) and hasattr(ad.env, "probe_then_act"):
+            sc = ad.env.probe_then_act(sc)          # anchor on the probe-then-act scripted variant
         if sc is not None and self.trust is not None and not self.trust.get(ad.task.family, False):
             return sc, dict(deviated=False, gated=True)
         pool = list(ad.candidate_skills(None, self.n_cand, rng))
         if sc is None:
             return pool[0] if pool else None, {}
+        def scaled(**f):
+            return api.SkillCall(sc.skill, {k: (v * f[k] if k in f and isinstance(v, (int, float)) and not isinstance(v, bool)
+                                                else v) for k, v in sc.params.items()}, target=sc.target, effector=sc.effector)
+        gentle = []
+        if "grip_force" in sc.params:          # r5: allow a gentler grip (fragile parts) and slower lifts / moves
+            for g in (0.25, 0.4, 0.55, 0.7, 0.85):
+                for sp in (1.0, 0.7, 0.5):
+                    gentle.append(scaled(grip_force=g, lift_speed=sp, speed=sp, approach_speed=sp))
+        else:
+            for sp in (0.7, 0.5):
+                gentle.append(scaled(lift_speed=sp, speed=sp, approach_speed=sp))
         pool = [sc] + [api.SkillCall(sc.skill, {k: (v * float(rng.uniform(1 - self.pert, 1 + self.pert)) if isinstance(v, (int, float))
                                                     and not isinstance(v, bool) else v) for k, v in sc.params.items()},
-                                     target=sc.target, effector=sc.effector) for _ in range(self.n_pert)] + pool
+                                     target=sc.target, effector=sc.effector) for _ in range(self.n_pert)] + gentle + pool
+        if self.same_call_only:
+            pool = [c for c in pool if c.skill == sc.skill and c.target == sc.target]
         scores = np.full((len(self.planners), len(pool)), np.nan)
         lat_sd = np.zeros((len(self.planners), len(pool)))
         for (skill, target) in {(c.skill, c.target) for c in pool}:
@@ -240,6 +258,13 @@ def run_episode(env, task: api.TaskSpec, policy: str, planner: Optional[CEMPlann
     return rec
 
 
+def _damaged(out):
+    try:
+        return float(out.metrics.get("damaged", 0) or 0) > 0
+    except (TypeError, ValueError):
+        return bool(out.metrics.get("damaged"))
+
+
 def run_env_episode(ad, task, policy, planner=None, rng_seed=0, max_steps=None, record=None, explore=0.0):
     """closed loop on an ENVS station through the adapter (policies: heuristic = env.scripted(), random, planner)."""
     ad.reset(task)
@@ -250,8 +275,10 @@ def run_env_episode(ad, task, policy, planner=None, rng_seed=0, max_steps=None, 
     if planner is not None:
         planner.reset()
     for k in range(max_steps or getattr(ad.env, "budget", 20)):
-        if policy == "heuristic":
+        if policy in ("heuristic", "heuristic_probe"):
             call = ad.env.scripted()
+            if call is not None and policy == "heuristic_probe":
+                call = ad.env.probe_then_act(call)     # r6 fragility-aware probe-then-act scripted variant (actor-legal)
             if call is None:
                 break
             out = ad.execute(call, relative=False)
@@ -299,6 +326,7 @@ def run_env_episode(ad, task, policy, planner=None, rng_seed=0, max_steps=None, 
         rec["duration"] += out.result.duration_s
         ev = hist[-1].outcome_events
         rec["risk_events"] += int(ev[2] + ev[4] + ev[5] > 0)
+        rec["damage"] = int(rec.get("damage", 0) or (len(ev) > 6 and ev[6] > 0) or _damaged(out))
         if out.success:
             rec["success"] = True
         if out.done:
@@ -306,12 +334,12 @@ def run_env_episode(ad, task, policy, planner=None, rng_seed=0, max_steps=None, 
     return rec
 
 
-def paired_eval(env_factory: Callable, tasks, policies: dict, seed=0):
+def paired_eval(env_factory: Callable, tasks, policies: dict, seed=0, offset=0):
     """policies: {name: (policy_str, planner_or_None)} -> per-policy episode records (same tasks, same order)."""
     res = {name: [] for name in policies}
     for i, task in enumerate(tasks):
         for name, (pol, pl) in policies.items():
-            res[name].append(run_episode(env_factory(), task, pol, pl, rng_seed=seed * 100003 + i))
+            res[name].append(run_episode(env_factory(), task, pol, pl, rng_seed=seed * 100003 + offset + i))
     return res
 
 

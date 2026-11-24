@@ -51,7 +51,7 @@ PARAM_BOUNDS = {
 }
 # event supervision mask (spec.OUT_EVENTS: success, slip, drop, jam, collision, stall). Events that cannot occur in a
 # family are SUPERVISED AS 0 (a drawer cannot jam), so the risk head is meaningful everywhere.
-EVENT_MASK = {f: [1, 1, 1, 1, 1, 1] for f in ("slide", "lift", "insert", "drawer", "sweep")}
+EVENT_MASK = {f: [1] * S.N_EVENTS for f in ("slide", "lift", "insert", "drawer", "sweep")}
 MAX_STEPS = {"slide": 5, "lift": 4, "insert": 6, "drawer": 5, "sweep": 6}
 
 
