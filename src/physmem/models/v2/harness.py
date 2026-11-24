@@ -95,6 +95,10 @@ def decide_env_ranked(planner: CEMPlanner, ad, hist, emb, rng, n_cand=16, n_pert
     return best
 
 
+# offsets / angles / slot coordinates: a multiplicative jitter is meaningless (depalletize place dx/dy = outfeed slot)
+NO_SCALE_KEYS = {"dx", "dy", "dz", "dyaw", "yaw", "close_yaw", "theta", "phi", "align", "correct", "vx", "vy"}
+
+
 class ResidualPlanner:
     """safe residual planner on real stations (lead request): the scripted action is the default; candidates are
     the scripted call, small perturbations of it and the env's feasible candidates; each is scored by an ENSEMBLE of
@@ -131,15 +135,26 @@ class ResidualPlanner:
             return api.SkillCall(sc.skill, {k: (v * f[k] if k in f and isinstance(v, (int, float)) and not isinstance(v, bool)
                                                 else v) for k, v in sc.params.items()}, target=sc.target, effector=sc.effector)
         gentle = []
+        sp_keys = ("lift_speed", "speed", "approach_speed", "lower_speed")
         if "grip_force" in sc.params:          # r5: allow a gentler grip (fragile parts) and slower lifts / moves
             for g in (0.25, 0.4, 0.55, 0.7, 0.85):
                 for sp in (1.0, 0.7, 0.5):
-                    gentle.append(scaled(grip_force=g, lift_speed=sp, speed=sp, approach_speed=sp))
+                    gentle.append(scaled(grip_force=g, **{k: sp for k in sp_keys}))
+        elif "down_force" in sc.params:        # round 3: damage in tool_return / pegs happens while pressing in (dent)
+            for df in (0.4, 0.6, 0.8):
+                for sp in (1.0, 0.6):
+                    for cp in (1.0, 1.5):
+                        gentle.append(scaled(down_force=df, compliance=cp, **{k: sp for k in sp_keys}))
         else:
             for sp in (0.7, 0.5):
-                gentle.append(scaled(lift_speed=sp, speed=sp, approach_speed=sp))
-        pool = [sc] + [api.SkillCall(sc.skill, {k: (v * float(rng.uniform(1 - self.pert, 1 + self.pert)) if isinstance(v, (int, float))
-                                                    and not isinstance(v, bool) else v) for k, v in sc.params.items()},
+                gentle.append(scaled(**{k: sp for k in sp_keys}))
+        from .env_adapter import _axis as _pos_axis       # positional params (x, y, dx, slot coords, ...) are never scaled
+        def jitter(k, v):
+            if (not isinstance(v, (int, float)) or isinstance(v, bool) or _pos_axis(k) is not None
+                    or k in NO_SCALE_KEYS):
+                return v
+            return v * float(rng.uniform(1 - self.pert, 1 + self.pert))
+        pool = [sc] + [api.SkillCall(sc.skill, {k: jitter(k, v) for k, v in sc.params.items()},
                                      target=sc.target, effector=sc.effector) for _ in range(self.n_pert)] + gentle + pool
         if self.same_call_only:
             pool = [c for c in pool if c.skill == sc.skill and c.target == sc.target]

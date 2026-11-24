@@ -647,3 +647,39 @@ is set (every MODEL-V2 script waits while it exists).
    copies 4 stills to `~/Downloads/dynagraph_gallery/paired/`. If no cell is significantly positive, no videos are
    rendered (reported as such).
 Compute if run serially after the hold: ~1.5 h GPU + ~8 h CPU (8 procs), plus the tranche8 wait.
+
+### 10d. Damage diagnosis on the interim (round-1) models (`scripts/v2/diag_damage.py`, per-step skill / grip /
+evaluator crush label / damage increment / residual decision)
+- **tool_return (panda)**: damage happens during `insert` (status `jammed`: the tool pressed into the holder above its
+  limit), not during the grip. The residual's gentle candidates only scaled grip force and speeds, so they could not
+  avoid it. FIX (for the final run): gentle insert candidates (down_force x0.4-0.8, speed x0.6, compliance x1.5).
+  The residual already deviated on picks (12-17 N regrasps), and in one task its gentle regrasp led to a successful
+  insert where the heuristic failed.
+- **conveyor_sort (ur5e)**: on the fragile item (crush 21.8 N) the residual did NOT deviate and kept the scripted
+  40 N grip -> damaged; on robust items it changed reach timing / regrasp force. The round-1 models were trained almost
+  entirely on r2-r5 data, which has no stiffness evidence, so they cannot tell a fragile item from a robust one
+  although the r6 vision reading is in the token. The final models (tranche8 = r6 data with vision + tactile
+  readings, plus the two on-policy rounds) are the ones that can make this decision.
+- Interim partial cells (n = 10-25, round-1 models): no significant wins; damage rates similar across policies
+  (conveyor 0.3-0.6, tool_return 0.3-0.7), fixture_place success ~0.8-0.9 everywhere.
+
+### 10e. INTERIM table (round-1 models `r6i1`, n = 30 paired episodes, site-dressed; superseded by the final r6f table)
+Δ success vs plain heuristic [95% CI] (vs probe-then-act) / damage rate; typed and oracle = seed-0 model only here.
+| robot | family | heuristic / dmg | probe-then-act / dmg | typed | oracle | residual_gated | residual_gated_probe |
+|---|---|---|---|---|---|---|---|
+| panda | fixture_place | 0.67 / 0.03 | 0.40 / 0.03 | **+0.13 [+0.03,+0.27]** (+0.40) / 0.03 | **+0.20 [+0.07,+0.33]** | **+0.13 [+0.03,+0.27]** (+0.40) / 0.00 | -0.20 / 0.13 |
+| panda | tool_return | 0.27 / 0.47 | 0.40 / 0.43 | **+0.17 [+0.03,+0.30]** (+0.03) / 0.47 | **+0.17** | **+0.17 [+0.03,+0.30]** (+0.03) / 0.47 | +0.10 / 0.43 |
+| panda | conveyor_sort | 0.13 / 0.53 | 0.00 / 0.43 | -0.10 (+0.03) / 0.57 | -0.03 | -0.10 [-0.20,+0.00] (+0.03) / 0.50 | -0.13 / 0.47 |
+| ur5e | bin_clearing | 0.03 / 0.60 | 0.10 / 0.13 | +0.07 (+0.00) / 0.37 | +0.07 | +0.00 (-0.07) / 0.57 | +0.03 / 0.43 |
+| ur5e | conveyor_sort | 0.20 / 0.53 | 0.17 / 0.47 | +0.00 / 0.60 | -0.03 | -0.03 / 0.60 | -0.10 / 0.60 |
+| ur5e | fixture_place | 0.77 / 0.10 | 0.80 / 0.00 | +0.00 / 0.10 | -0.03 | +0.07 / 0.17 | +0.00 / 0.17 |
+| ur5e | tool_return | 0.67 / 0.20 | 0.77 / 0.13 | -0.07 (-0.17) / 0.20 | -0.07 | -0.07 (-0.17) / 0.20 | -0.10 / 0.13 |
+| probe | depalletize | 0.63 / 0.00 | 0.63 / 0.00 | **-0.47 [-0.67,-0.23]** | -0.47 | **-0.23 [-0.40,-0.07]** | -0.23 |
+Reading: first significantly positive real-robot cells (panda fixture_place, panda tool_return); damage is NOT
+reduced yet (the interim models cannot see fragility, 10d); the probe-then-act heuristic is stronger than plain on
+damage (ur5e bin_clearing 0.13 vs 0.60) and the residual does not beat it.
+
+**Depalletize, root cause #2 (found via this table):** the residual's random +-15% perturbations scaled EVERY scalar
+param, including `place` dx / dy = the outfeed slot coordinates (~0.3 m -> ~4.5 cm off-slot). FIX: jitter never
+scales positional params, offsets or angles (`harness.NO_SCALE_KEYS` + the adapter's position-key rule). Check on 10
+paired probe depalletize episodes: residual_gated 0.70 = heuristic 0.70 (was -0.23), deviating on 51% of steps.

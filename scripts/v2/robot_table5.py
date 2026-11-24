@@ -33,7 +33,7 @@ def paired(ref, eps_lists):
 rows = ["| robot | family | heuristic succ / dmg | probe-then-act succ / dmg | " + " | ".join(GROUPS) + " |",
         "|---|---|---|---|" + "---|" * len(GROUPS)]
 summary = {}
-for f in sorted(glob.glob(f"results/v2/closed_loop/v2_tab5_{tag}_*.json")):
+for f in sorted(x for x in glob.glob(f"results/v2/closed_loop/v2_tab5_{tag}_*.json") if not x.endswith(".partial.json")):
     name = os.path.basename(f)[len(f"v2_tab5_{tag}_"):-5]
     d = json.load(open(f))
     for fam, v in d.items():
@@ -45,6 +45,8 @@ for f in sorted(glob.glob(f"results/v2/closed_loop/v2_tab5_{tag}_*.json")):
         cells = []
         for g, pre in GROUPS.items():
             keys = [k for k in ep if (k.startswith(pre) if pre.endswith("_s") else k == pre)]
+            if not keys and pre.endswith("_s") and pre[:-2] in ep:      # single-model runs (interim): exact name
+                keys = [pre[:-2]]
             if not keys:
                 cells.append("–"); continue
             dh, lh, hh, er, dr, n = paired(Hh, [ep[k] for k in keys])

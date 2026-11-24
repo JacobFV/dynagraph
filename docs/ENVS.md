@@ -307,7 +307,13 @@ in order, each with its own `data/v2_envs_large/<tranche>/manifest.json` (+ `man
     probe (3087), UR5e (1472), Panda (1472), ur5e_suction (580), fr3_suction (198), z1 (213), so100 (146) pairs (2x
     weight on the decision-relevant families); ALOHA / G1 floating / G1 fixed / TidyBot capped at 100 / 64 / 100 /
     100; real-arm bulk_sweep capped at 93 in total. QUEUED right after tranche3_r4; ETA ~3-3.5 h after it starts.
-  - **tranche8_r6_site: PAUSED at 6258 / 9875** (stopped cleanly 2026-11-24 07:14Z with the SIGTERM flush; box lent to
+  - **tranche8_r6_site: FINAL 2026-11-24 18:08Z** - 9875 / 9875 episodes, 3.40 GB, 2.68 h generator time over 2 runs
+    (6258 at 8 procs, paused for the other project, 3617 at 6 procs), errors 2, integrity violations 0, manifest
+    sha256 `8a309cfa...0bcb8`; 0 duplicates / 0 lost (checked by (robot, family, split, seed)). Physical blow-up scan:
+    8 / 9875 (0.08 %: 6 parts > 5 m - bin_clearing / small_parts_pick / pouch, 2 bulk_sweep BADQACC); `integrity.unstable`
+    on 3 (bulk_sweep). probe-then-act in 4517 episodes. Success by robot: probe 0.40, g1_dex3_fixed 0.33, ur5e 0.32,
+    panda 0.26, gen3 (held out) 0.20, tidybot 0.12, aloha / z1 0.10, suction arms ~0.01 (as in r5), so100 0.00.
+    History of the pause (kept for reference): PAUSED at 6258 / 9875 (stopped cleanly 2026-11-24 07:14Z with the SIGTERM flush; box lent to
     another project until ~2026-11-25 14:00Z; partial manifest run, NO manifest.sha256, so neither the status watcher
     nor MODEL's `scripts/v2/r6_pipeline.sh` treats it as final). **Resume** (when the box is clear):
     `cd ~/dynagraph_r6 && ~/dynagraph/.venv/bin/python scripts/envs_tranche_ctl.py resume tranche8_r6_site 27000`
