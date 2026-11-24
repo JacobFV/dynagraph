@@ -1,0 +1,101 @@
+{
+ "family": "conveyor_sort",
+ "robot": "ur5e_2f85",
+ "seed": 22,
+ "split": "test",
+ "success": false,
+ "failure_reason": "damaged part",
+ "progress": 0.75,
+ "sim_t": 70.5,
+ "playback_speed": 2,
+ "frames": 1140,
+ "video_s": 38.0,
+ "effort_cost": 179078.0,
+ "calls": 14,
+ "steps": [
+  [
+   "reach",
+   "pick_window",
+   "done"
+  ],
+  [
+   "reach",
+   "pick_window",
+   "done"
+  ],
+  [
+   "pick",
+   "item0",
+   "grasp_failed"
+  ],
+  [
+   "pick",
+   "item0",
+   "grasp_failed"
+  ],
+  [
+   "pick",
+   "item0",
+   "done"
+  ],
+  [
+   "place",
+   "bin_A",
+   "done"
+  ],
+  [
+   "pick",
+   "item1",
+   "grasp_failed"
+  ],
+  [
+   "pick",
+   "item1",
+   "grasp_failed"
+  ],
+  [
+   "pick",
+   "item2",
+   "grasp_failed"
+  ],
+  [
+   "pick",
+   "item2",
+   "done"
+  ],
+  [
+   "place",
+   "bin_A",
+   "done"
+  ],
+  [
+   "pick",
+   "item3",
+   "grasp_failed"
+  ],
+  [
+   "pick",
+   "item3",
+   "done"
+  ],
+  [
+   "place",
+   "bin_B",
+   "done"
+  ]
+ ],
+ "env_version": "envs-r6",
+ "matrix_cell": {
+  "n": 5,
+  "success": 1,
+  "progress": 0.9,
+  "errors": 0,
+  "violations": 0,
+  "wall_mean": 9.9,
+  "sim_mean": 58.2
+ },
+ "path": "results/v2/videos_site/conveyor_sort__ur5e_2f85__s22.mp4",
+ "integrity_violations": 0,
+ "wall_s": 52.5,
+ "dressed": true
+}

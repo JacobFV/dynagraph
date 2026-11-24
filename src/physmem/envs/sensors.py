@@ -26,6 +26,9 @@ from ..schema import EntityType, ObservationEvent, Prop, Provenance
 from .props import SHAPES, XProp
 
 
+_RAY_GROUPS = np.array([1, 1, 0, 1, 1, 1], np.uint8)
+
+
 def quat_yaw(q):
     w, x, y, z = q
     return math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z))
@@ -112,7 +115,8 @@ class SensorSuite:
         vec = p - self.cam
         dist = float(np.linalg.norm(vec))
         gid = np.array([-1], np.int32)
-        hit = mujoco.mj_ray(m, d, self.cam, vec / dist, None, 1, -1, gid)
+        # geom group 2 = visual-only site dressing (background): it cannot occlude the tracker
+        hit = mujoco.mj_ray(m, d, self.cam, vec / dist, _RAY_GROUPS, 1, -1, gid)
         if gid[0] < 0:
             return True
         return m.geom_bodyid[gid[0]] == body_id or hit >= dist - 0.002

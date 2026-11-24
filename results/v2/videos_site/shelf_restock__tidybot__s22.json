@@ -1,0 +1,126 @@
+{
+ "family": "shelf_restock",
+ "robot": "tidybot",
+ "seed": 22,
+ "split": "test",
+ "success": false,
+ "failure_reason": "pick: skipped_after_failures x7",
+ "progress": 0.6666666666666666,
+ "sim_t": 79.1,
+ "playback_speed": 3,
+ "frames": 864,
+ "video_s": 28.8,
+ "effort_cost": 23920.9,
+ "calls": 19,
+ "steps": [
+  [
+   "move_base",
+   null,
+   "done"
+  ],
+  [
+   "pick",
+   "item0",
+   "done"
+  ],
+  [
+   "move_base",
+   null,
+   "done"
+  ],
+  [
+   "place",
+   "bay2",
+   "done"
+  ],
+  [
+   "move_base",
+   null,
+   "done"
+  ],
+  [
+   "pick",
+   "item1",
+   "done"
+  ],
+  [
+   "move_base",
+   null,
+   "done"
+  ],
+  [
+   "place",
+   "bay0",
+   "done"
+  ],
+  [
+   "move_base",
+   null,
+   "done"
+  ],
+  [
+   "pick",
+   "item2",
+   "grasp_failed"
+  ],
+  [
+   "pick",
+   "item2",
+   "grasp_failed"
+  ],
+  [
+   "pick",
+   "item2",
+   "grasp_failed"
+  ],
+  [
+   "pick",
+   "item2",
+   "skipped_after_failures"
+  ],
+  [
+   "pick",
+   "item2",
+   "skipped_after_failures"
+  ],
+  [
+   "pick",
+   "item2",
+   "skipped_after_failures"
+  ],
+  [
+   "pick",
+   "item2",
+   "skipped_after_failures"
+  ],
+  [
+   "pick",
+   "item2",
+   "skipped_after_failures"
+  ],
+  [
+   "pick",
+   "item2",
+   "skipped_after_failures"
+  ],
+  [
+   "pick",
+   "item2",
+   "skipped_after_failures"
+  ]
+ ],
+ "env_version": "envs-r6",
+ "matrix_cell": {
+  "n": 5,
+  "success": 0,
+  "progress": 0.67,
+  "errors": 0,
+  "violations": 0,
+  "wall_mean": 14.4,
+  "sim_mean": 106.4
+ },
+ "path": "results/v2/videos_site/shelf_restock__tidybot__s22.mp4",
+ "integrity_violations": 0,
+ "wall_s": 45.1,
+ "dressed": true
+}

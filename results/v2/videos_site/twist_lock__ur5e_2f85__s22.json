@@ -1,0 +1,56 @@
+{
+ "family": "twist_lock",
+ "robot": "ur5e_2f85",
+ "seed": 22,
+ "split": "test",
+ "success": false,
+ "failure_reason": "damaged part",
+ "progress": 0.7969480747801119,
+ "sim_t": 38.5,
+ "playback_speed": 1,
+ "frames": 1202,
+ "video_s": 40.1,
+ "effort_cost": 34497.4,
+ "calls": 5,
+ "steps": [
+  [
+   "open",
+   "knob",
+   "done"
+  ],
+  [
+   "open",
+   "knob",
+   "done"
+  ],
+  [
+   "open",
+   "knob",
+   "done"
+  ],
+  [
+   "open",
+   "knob",
+   "done"
+  ],
+  [
+   "open",
+   "knob",
+   "done"
+  ]
+ ],
+ "env_version": "envs-r6",
+ "matrix_cell": {
+  "n": 5,
+  "success": 5,
+  "progress": 1.0,
+  "errors": 0,
+  "violations": 0,
+  "wall_mean": 3.8,
+  "sim_mean": 19.4
+ },
+ "path": "results/v2/videos_site/twist_lock__ur5e_2f85__s22.mp4",
+ "integrity_violations": 0,
+ "wall_s": 42.9,
+ "dressed": true
+}

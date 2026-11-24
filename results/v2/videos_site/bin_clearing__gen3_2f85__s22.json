@@ -1,0 +1,71 @@
+{
+ "family": "bin_clearing",
+ "robot": "gen3_2f85",
+ "seed": 22,
+ "split": "test",
+ "success": false,
+ "failure_reason": "damaged part",
+ "progress": 0.75,
+ "sim_t": 37.0,
+ "playback_speed": 4,
+ "frames": 349,
+ "video_s": 11.6,
+ "effort_cost": 2220.0,
+ "calls": 8,
+ "steps": [
+  [
+   "pick",
+   "part00",
+   "done"
+  ],
+  [
+   "place",
+   "tote",
+   "done"
+  ],
+  [
+   "pick",
+   "part01",
+   "done"
+  ],
+  [
+   "place",
+   "tote",
+   "done"
+  ],
+  [
+   "pick",
+   "part03",
+   "done"
+  ],
+  [
+   "place",
+   "tote",
+   "done"
+  ],
+  [
+   "reach",
+   "tote",
+   "done"
+  ],
+  [
+   "reach",
+   "tote",
+   "done"
+  ]
+ ],
+ "env_version": "envs-r6",
+ "matrix_cell": {
+  "n": 5,
+  "success": 0,
+  "progress": 0.53,
+  "errors": 0,
+  "violations": 0,
+  "wall_mean": 9.1,
+  "sim_mean": 46.4
+ },
+ "path": "results/v2/videos_site/bin_clearing__gen3_2f85__s22.mp4",
+ "integrity_violations": 0,
+ "wall_s": 21.3,
+ "dressed": true
+}

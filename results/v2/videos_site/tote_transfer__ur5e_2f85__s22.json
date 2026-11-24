@@ -1,0 +1,61 @@
+{
+ "family": "tote_transfer",
+ "robot": "ur5e_2f85",
+ "seed": 22,
+ "split": "heldout_family",
+ "success": false,
+ "failure_reason": "damaged part",
+ "progress": 0.0,
+ "sim_t": 50.2,
+ "playback_speed": 3,
+ "frames": 575,
+ "video_s": 19.2,
+ "effort_cost": 296867.6,
+ "calls": 6,
+ "steps": [
+  [
+   "pick",
+   "tote0",
+   "done"
+  ],
+  [
+   "place",
+   "cart",
+   "done"
+  ],
+  [
+   "pick",
+   "tote1",
+   "done"
+  ],
+  [
+   "place",
+   "cart",
+   "done"
+  ],
+  [
+   "pick",
+   "tote1",
+   "done"
+  ],
+  [
+   "place",
+   "cart",
+   "done"
+  ]
+ ],
+ "env_version": "envs-r6",
+ "matrix_cell": {
+  "n": 5,
+  "success": 1,
+  "progress": 0.67,
+  "errors": 0,
+  "violations": 0,
+  "wall_mean": 11.0,
+  "sim_mean": 42.9
+ },
+ "path": "results/v2/videos_site/tote_transfer__ur5e_2f85__s22.mp4",
+ "integrity_violations": 0,
+ "wall_s": 34.4,
+ "dressed": true
+}

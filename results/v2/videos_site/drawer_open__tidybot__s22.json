@@ -1,0 +1,36 @@
+{
+ "family": "drawer_open",
+ "robot": "tidybot",
+ "seed": 22,
+ "split": "test",
+ "success": true,
+ "failure_reason": "",
+ "progress": 1.0,
+ "sim_t": 10.7,
+ "playback_speed": 1,
+ "frames": 384,
+ "video_s": 12.8,
+ "effort_cost": 521.1,
+ "calls": 1,
+ "steps": [
+  [
+   "open",
+   "drawer",
+   "done"
+  ]
+ ],
+ "env_version": "envs-r6",
+ "matrix_cell": {
+  "n": 5,
+  "success": 5,
+  "progress": 1.0,
+  "errors": 0,
+  "violations": 0,
+  "wall_mean": 2.9,
+  "sim_mean": 10.6
+ },
+ "path": "results/v2/videos_site/drawer_open__tidybot__s22.mp4",
+ "integrity_violations": 0,
+ "wall_s": 13.5,
+ "dressed": true
+}

@@ -31,6 +31,11 @@ SPEED = {"door_open": 1, "drawer_open": 1, "twist_lock": 1, "peg_insert": 1, "sm
          "kitting_pocket": 2, "conveyor_sort": 2, "tote_transfer": 3, "bulk_sweep": 3, "shelf_restock": 3,
          "small_parts_pick": 3, "bin_clearing": 4, "depalletize": 4}
 MAX_SIM = 360.0
+DRESS = False          # --dressing: envs-r6 TalOS-style warehouse site (params["dressing"] = "site")
+# camera hints for the dressed layouts (direction FROM the work area TO the camera in world xy, elevation, distance)
+CAM_HINT = {"shelf_restock": ((0.9, -0.6), -30.0, 2.5), "tote_transfer": ((0.35, -1.0), -18.0, 2.3),
+            "depalletize": ((1.0, -0.5), -52.0, 2.6), "conveyor_sort": ((0.6, -1.0), -30.0, 2.4),
+            "kitting_pocket": ((0.8, -1.0), -38.0, 1.6)}
 FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 FONTB = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 
@@ -98,6 +103,11 @@ class Recorder:
         cam.distance = float(np.clip(1.1 * spread + 0.6, 0.85, 2.8))
         cam.azimuth = math.degrees(math.atan2(dirv[1], dirv[0]))
         cam.elevation = -35.0
+        hint = CAM_HINT.get(env.family) if getattr(env, "dress_stats", None) else None
+        if hint is not None:
+            (hx, hy), el, dist = hint
+            cam.azimuth = math.degrees(math.atan2(hy, hx))
+            cam.elevation, cam.distance = el, dist
         return cam
 
     def frame(self, final=False):
@@ -128,7 +138,8 @@ class Recorder:
         col = (90, 220, 110) if st.startswith("SUCCESS") else ((240, 90, 80) if st.startswith("FAIL") else (230, 200, 90))
         d.text((14, y0 + 32), f"sim t = {env.t:6.1f} s   playback {self.speed}x   effort cost {self.effort:,.0f}   "
                f"skill: {self.skill}", font=self.f2, fill=(200, 200, 200))
-        d.text((14, y0 + 58), "simulation · synthetic sensors · MuJoCo", font=self.f2, fill=(150, 150, 150))
+        site = "  ·  site: TalOS-style warehouse (envs-r6 dressing)" if getattr(env, "dress_stats", None) else ""
+        d.text((14, y0 + 58), "simulation · synthetic sensors · MuJoCo" + site, font=self.f2, fill=(150, 150, 150))
         d.text((W - 420, y0 + 28), st, font=self.fb, fill=col)
         self.proc.stdin.write(canvas.tobytes())
         self.n_frames += 1
@@ -147,16 +158,23 @@ class Recorder:
         self.inset.close()
 
 
-def record(fam, out_dir=OUT):
+def record(fam, out_dir=None, robot=None):
+    out_dir = out_dir or OUT
     from physmem.envs import ENV_VERSION, family_class, make_env
     from physmem.envs.splits import HELDOUT_FAMILIES, make_tasks
     rob, mstat = best_robot(fam)
+    if robot:
+        rob, mstat = robot, {}
     split = "heldout_family" if fam in HELDOUT_FAMILIES.values() else "test"
     task = make_tasks(fam, split, 1, rob)[0]
+    if DRESS:
+        from dataclasses import replace as _rep
+        task = _rep(task, params=dict(task.params, dressing="site"))
     env = make_env(fam)
     t0 = time.time()
     env.reset(task)
     speed = SPEED.get(fam, 2)
+    os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, f"{fam}__{rob}__s{task.seed}.mp4")
     info = dict(robot=rob, family=fam, seed=task.seed, split=split)
     rec = Recorder(env, path, info, speed)
@@ -195,22 +213,64 @@ def record(fam, out_dir=OUT):
     rec.status = "SUCCESS" if ok else f"FAIL ({why})"
     rec.skill = "-"
     rec.close()
-    return dict(family=fam, robot=rob, seed=task.seed, split=split, success=ok, failure_reason=why,
+    info = dict(family=fam, robot=rob, seed=task.seed, split=split, success=ok, failure_reason=why,
                 progress=float(env.progress()), sim_t=round(env.t, 1), playback_speed=speed, frames=rec.n_frames,
                 video_s=round(rec.n_frames / FPS, 1), effort_cost=round(rec.effort, 1), calls=len(steps),
                 steps=steps, env_version=ENV_VERSION, matrix_cell=mstat, path=path,
-                integrity_violations=env.metrics_acc.get("integrity_violations", 0), wall_s=round(time.time() - t0, 1))
+                integrity_violations=env.metrics_acc.get("integrity_violations", 0), wall_s=round(time.time() - t0, 1),
+                dressed=bool(getattr(env, "dress_stats", None)))
+    json.dump(info, open(path[:-4] + ".json", "w"), indent=1, default=str)      # sidecar: survives a stopped batch
+    return info
 
 
-def _job(fam):
+def _job(arg):
+    fam, robot = arg if isinstance(arg, tuple) else (arg, None)
     try:
-        return record(fam)
+        return record(fam, robot=robot)
     except Exception as e:
         return dict(family=fam, error=repr(e)[:300])
 
 
-def montage(out_dir=OUT, per=9.0):
+HERO = [("depalletize", "probe", 2), ("conveyor_sort", "ur5e_2f85", 1), ("tote_transfer", "g1_dex3_fixed", 0),
+        ("shelf_restock", "tidybot", 3), ("kitting_pocket", "ur5e_2f85", 1), ("tote_transfer", "ur5e_2f85", 1)]
+
+
+def still(arg):
+    """hero still: dressed scene, scripted policy run for `k` calls, then a 1280x720 frame (no strip)."""
+    fam, rob, k = arg
+    from dataclasses import replace as _rep
+    from physmem.envs import make_env
+    from physmem.envs.splits import HELDOUT_FAMILIES, make_tasks
+    split = "heldout_family" if fam in HELDOUT_FAMILIES.values() else "test"
+    task = make_tasks(fam, split, 1, rob)[0]
+    task = _rep(task, params=dict(task.params, dressing="site"))
+    env = make_env(fam)
+    env.reset(task)
+    for _ in range(k):
+        c = env.scripted()
+        if c is None:
+            break
+        env.execute(c)
+    m = env.m
+    m.vis.global_.offwidth, m.vis.global_.offheight = max(m.vis.global_.offwidth, W), max(m.vis.global_.offheight, H)
+    rec = Recorder.__new__(Recorder)
+    rec.env = env
+    cam = Recorder._main_cam(rec)
+    r = mujoco.Renderer(m, H, W)
+    r.update_scene(env.d, cam)
+    img = Image.fromarray(r.render())
+    dr = ImageDraw.Draw(img)
+    dr.text((16, H - 34), f"{fam} · {rob} · seed {task.seed} · simulation (MuJoCo, envs-r6 site dressing)",
+            font=_font(20), fill=(255, 255, 255))
+    os.makedirs(os.path.join(OUT, "stills"), exist_ok=True)
+    path = os.path.join(OUT, "stills", f"{fam}__{rob}__s{task.seed}.png")
+    img.save(path)
+    return path
+
+
+def montage(out_dir=None, per=9.0):
     """~9 s per family (19 families -> ~3 min): each clip sped up by an extra factor f to fit, with an overlay stating f."""
+    out_dir = out_dir or OUT
     idx = json.load(open(os.path.join(out_dir, "index.json")))
     clips, tmp = [], os.path.join(out_dir, "_montage")
     os.makedirs(tmp, exist_ok=True)
@@ -244,15 +304,26 @@ def main():
     ap.add_argument("--families", default="all")
     ap.add_argument("--procs", type=int, default=6)
     ap.add_argument("--montage", action="store_true")
+    ap.add_argument("--dressing", action="store_true")
+    ap.add_argument("--stills", action="store_true")
+    ap.add_argument("--robot", default="")
     a = ap.parse_args()
+    global OUT, DRESS
+    if a.dressing:
+        OUT, DRESS = "results/v2/videos_site", True
     os.makedirs(OUT, exist_ok=True)
+    if a.stills:
+        with Pool(min(a.procs, len(HERO))) as pool:
+            for p in pool.map(still, HERO, chunksize=1):
+                print(p)
+        return
     if a.montage:
         print(montage())
         return
     from physmem.envs import FAMILIES
     fams = list(FAMILIES) if a.families == "all" else a.families.split(",")
     with Pool(a.procs, maxtasksperchild=1) as pool:
-        res = pool.map(_job, fams, chunksize=1)
+        res = pool.map(_job, [(f, a.robot or None) for f in fams], chunksize=1)
     ipath = os.path.join(OUT, "index.json")
     idx = json.load(open(ipath)) if os.path.exists(ipath) else {}
     for r in res:

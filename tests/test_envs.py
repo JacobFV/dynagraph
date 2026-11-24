@@ -362,3 +362,36 @@ def test_episode_timeout_aborts_cleanly_even_through_skill_exception_handlers(mo
     assert rec["aborted"] and rec["error"] == "timeout"
     assert calls["n"] == 2 and len(rec["steps"]) == 1          # the interrupted call is not recorded, none after it
     assert not rec["success"]
+
+
+# ------------------------------------------------------------------ envs-r6 site dressing
+DRESSED = ["depalletize", "conveyor_sort", "tote_transfer", "shelf_restock", "kitting_pocket"]
+
+
+@pytest.mark.parametrize("fam", DRESSED)
+def test_dressing_keeps_task_and_is_deterministic(fam):
+    a, b, c = make_env(fam), make_env(fam), make_env(fam)
+    a.reset(task(fam, 5))
+    b.reset(task(fam, 5, dressing="site"))
+    c.reset(task(fam, 5, dressing="site"))
+    # same task randomisation (separate dressing rng): identical object poses / hidden physics
+    for e in a.objects():
+        assert np.allclose(a.true_pose(e)[0], b.true_pose(e)[0], atol=1e-6)
+        assert a.scene.entities[e].hidden == b.scene.entities[e].hidden
+    assert b.m.ngeom > a.m.ngeom + 100 and b.dress_stats["visual_geoms"] > 0
+    assert b.m.ngeom == c.m.ngeom and np.array_equal(b.d.qpos, c.d.qpos)          # deterministic per seed
+    assert b.metrics_acc["drops"] == 0 and b.metrics_acc["integrity_violations"] == 0
+    # visual-only dressing is group 2 and has no collisions; it never occludes the tracker
+    vis = (b.m.geom_group == 2)
+    assert np.all(b.m.geom_contype[vis] == 0) and np.all(b.m.geom_conaffinity[vis] == 0)
+    seen_a = [a.sensors.visible(a.body_id[e], a.true_pose(e)[0]) for e in a.objects()]
+    seen_b = [b.sensors.visible(b.body_id[e], b.true_pose(e)[0]) for e in b.objects()]
+    assert sum(seen_b) >= sum(seen_a) - 1
+
+
+def test_dressing_props_are_collision_real_near_the_station():
+    env = make_env("depalletize")
+    env.reset(task("depalletize", 1, dressing="site"))
+    assert env.dress_stats["collision_geoms"] > 20                                     # crates, racking, conveyor
+    ev = env.reset(task("depalletize", 1, dressing="site"))
+    assert all(e.provenance in (Provenance.SENSOR, Provenance.DERIVED) for e in ev)

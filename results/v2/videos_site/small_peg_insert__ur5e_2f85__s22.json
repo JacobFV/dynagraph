@@ -1,0 +1,41 @@
+{
+ "family": "small_peg_insert",
+ "robot": "ur5e_2f85",
+ "seed": 22,
+ "split": "test",
+ "success": true,
+ "failure_reason": "",
+ "progress": 1.0,
+ "sim_t": 10.7,
+ "playback_speed": 1,
+ "frames": 396,
+ "video_s": 13.2,
+ "effort_cost": 4487.9,
+ "calls": 2,
+ "steps": [
+  [
+   "pick",
+   "peg",
+   "done"
+  ],
+  [
+   "insert",
+   "hole",
+   "done"
+  ]
+ ],
+ "env_version": "envs-r6",
+ "matrix_cell": {
+  "n": 5,
+  "success": 5,
+  "progress": 1.0,
+  "errors": 0,
+  "violations": 0,
+  "wall_mean": 4.7,
+  "sim_mean": 10.3
+ },
+ "path": "results/v2/videos_site/small_peg_insert__ur5e_2f85__s22.mp4",
+ "integrity_violations": 0,
+ "wall_s": 17.8,
+ "dressed": true
+}

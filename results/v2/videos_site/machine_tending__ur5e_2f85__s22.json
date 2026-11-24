@@ -1,0 +1,56 @@
+{
+ "family": "machine_tending",
+ "robot": "ur5e_2f85",
+ "seed": 22,
+ "split": "test",
+ "success": false,
+ "failure_reason": "damaged part",
+ "progress": 1.0,
+ "sim_t": 56.7,
+ "playback_speed": 2,
+ "frames": 931,
+ "video_s": 31.0,
+ "effort_cost": 19911.7,
+ "calls": 5,
+ "steps": [
+  [
+   "open",
+   "door",
+   "done"
+  ],
+  [
+   "pick",
+   "blank",
+   "done"
+  ],
+  [
+   "insert",
+   "vise",
+   "done"
+  ],
+  [
+   "close",
+   "door",
+   "done"
+  ],
+  [
+   "close",
+   "door",
+   "done"
+  ]
+ ],
+ "env_version": "envs-r6",
+ "matrix_cell": {
+  "n": 5,
+  "success": 0,
+  "progress": 0.8,
+  "errors": 0,
+  "violations": 0,
+  "wall_mean": 13.3,
+  "sim_mean": 60.1
+ },
+ "path": "results/v2/videos_site/machine_tending__ur5e_2f85__s22.mp4",
+ "integrity_violations": 0,
+ "wall_s": 42.3,
+ "dressed": true
+}

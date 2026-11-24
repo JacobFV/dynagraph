@@ -1,0 +1,41 @@
+{
+ "family": "connector_insert",
+ "robot": "ur5e_2f85",
+ "seed": 22,
+ "split": "heldout_family",
+ "success": true,
+ "failure_reason": "",
+ "progress": 1.0,
+ "sim_t": 15.9,
+ "playback_speed": 1,
+ "frames": 551,
+ "video_s": 18.4,
+ "effort_cost": 3921.9,
+ "calls": 2,
+ "steps": [
+  [
+   "pick",
+   "module",
+   "done"
+  ],
+  [
+   "insert",
+   "slot",
+   "done"
+  ]
+ ],
+ "env_version": "envs-r6",
+ "matrix_cell": {
+  "n": 5,
+  "success": 5,
+  "progress": 1.0,
+  "errors": 0,
+  "violations": 0,
+  "wall_mean": 5.2,
+  "sim_mean": 16.5
+ },
+ "path": "results/v2/videos_site/connector_insert__ur5e_2f85__s22.mp4",
+ "integrity_violations": 0,
+ "wall_s": 23.5,
+ "dressed": true
+}

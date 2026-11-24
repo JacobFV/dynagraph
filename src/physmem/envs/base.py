@@ -86,6 +86,10 @@ class StationEnv:
         if cp[1] < lk[1]:
             cam["pos"] = (float(cp[0]), float(2 * lk[1] - cp[1]), float(cp[2]))
             self.scene.camera = cam
+        self.dress_stats = None
+        if task.params.get("dressing") == "site":        # envs-r6: realistic warehouse site around the station
+            from .dressing import dress
+            self.dress_stats = dress(self, self.scene, np.random.default_rng(seed_of(task, "dress")))
         if task.params.get("layout") == "rot180":
             from .scene import rotate_station
             rotate_station(self.scene, math.pi, center=self.station_center)

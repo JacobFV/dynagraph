@@ -1,0 +1,66 @@
+{
+ "family": "kitting_pocket",
+ "robot": "ur5e_2f85",
+ "seed": 22,
+ "split": "test",
+ "success": true,
+ "failure_reason": "",
+ "progress": 1.0,
+ "sim_t": 59.5,
+ "playback_speed": 2,
+ "frames": 960,
+ "video_s": 32.0,
+ "effort_cost": 16242.7,
+ "calls": 7,
+ "steps": [
+  [
+   "pick",
+   "part0",
+   "done"
+  ],
+  [
+   "insert",
+   "pocket_part0",
+   "done"
+  ],
+  [
+   "pick",
+   "part1",
+   "done"
+  ],
+  [
+   "insert",
+   "pocket_part1",
+   "jammed"
+  ],
+  [
+   "pick",
+   "part1",
+   "grasp_failed"
+  ],
+  [
+   "pick",
+   "part2",
+   "done"
+  ],
+  [
+   "insert",
+   "pocket_part2",
+   "not_found"
+  ]
+ ],
+ "env_version": "envs-r6",
+ "matrix_cell": {
+  "n": 5,
+  "success": 2,
+  "progress": 0.8,
+  "errors": 0,
+  "violations": 0,
+  "wall_mean": 25.6,
+  "sim_mean": 53.8
+ },
+ "path": "results/v2/videos_site/kitting_pocket__ur5e_2f85__s22.mp4",
+ "integrity_violations": 0,
+ "wall_s": 66.8,
+ "dressed": true
+}

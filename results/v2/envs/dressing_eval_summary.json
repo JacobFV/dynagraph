@@ -1,0 +1,70 @@
+{
+ "note": "scripted baseline, same 12 seeds bare vs dressed (envs-r6), scripts/envs_dressing_eval.py; us/step = wall time per physics step",
+ "depalletize": {
+  "robot": "probe",
+  "n": 12,
+  "success_bare": 1.0,
+  "success_site": 1.0,
+  "progress_bare": 1.0,
+  "progress_site": 1.0,
+  "paired_flips": 0,
+  "us_bare": 52.8,
+  "us_site": 56.2,
+  "overhead_pct": 6.5
+ },
+ "conveyor_sort": {
+  "robot": "probe",
+  "n": 12,
+  "success_bare": 0.25,
+  "success_site": 0.25,
+  "progress_bare": 0.775,
+  "progress_site": 0.775,
+  "paired_flips": 0,
+  "us_bare": 71.2,
+  "us_site": 76.0,
+  "overhead_pct": 6.6
+ },
+ "tote_transfer": {
+  "robot": "probe",
+  "n": 12,
+  "success_bare": 0.333,
+  "success_site": 0.333,
+  "progress_bare": 0.75,
+  "progress_site": 0.75,
+  "paired_flips": 0,
+  "us_bare": 87.8,
+  "us_site": 91.5,
+  "overhead_pct": 4.2
+ },
+ "kitting_pocket": {
+  "robot": "probe",
+  "n": 12,
+  "success_bare": 0.417,
+  "success_site": 0.417,
+  "progress_bare": 0.694,
+  "progress_site": 0.694,
+  "paired_flips": 0,
+  "us_bare": 49.0,
+  "us_site": 52.0,
+  "overhead_pct": 6.4
+ },
+ "shelf_restock": {
+  "robot": "tidybot",
+  "n": 12,
+  "success_bare": 0.083,
+  "success_site": 0.083,
+  "progress_bare": 0.604,
+  "progress_site": 0.614,
+  "paired_flips": 0,
+  "us_bare": 152.7,
+  "us_site": 156.3,
+  "overhead_pct": 2.4
+ },
+ "shelf_restock_probe_known_regression": {
+  "robot": "probe",
+  "n": 12,
+  "success_bare": 0.167,
+  "success_site": 0.0,
+  "note": "test-only gantry descends from above through the rack's upper level"
+ }
+}

@@ -1,0 +1,41 @@
+{
+ "family": "peg_insert",
+ "robot": "panda",
+ "seed": 22,
+ "split": "test",
+ "success": true,
+ "failure_reason": "",
+ "progress": 1.0,
+ "sim_t": 14.8,
+ "playback_speed": 1,
+ "frames": 517,
+ "video_s": 17.2,
+ "effort_cost": 4718.4,
+ "calls": 2,
+ "steps": [
+  [
+   "pick",
+   "peg",
+   "done"
+  ],
+  [
+   "insert",
+   "hole",
+   "done"
+  ]
+ ],
+ "env_version": "envs-r6",
+ "matrix_cell": {
+  "n": 5,
+  "success": 5,
+  "progress": 1.0,
+  "errors": 0,
+  "violations": 0,
+  "wall_mean": 8.5,
+  "sim_mean": 14.2
+ },
+ "path": "results/v2/videos_site/peg_insert__panda__s22.mp4",
+ "integrity_violations": 0,
+ "wall_s": 26.0,
+ "dressed": true
+}

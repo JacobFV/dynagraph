@@ -1,0 +1,91 @@
+{
+ "family": "depalletize",
+ "robot": "aloha",
+ "seed": 22,
+ "split": "test",
+ "success": false,
+ "failure_reason": "pick: too_wide x12",
+ "progress": 0.0,
+ "sim_t": 0.2,
+ "playback_speed": 4,
+ "frames": 75,
+ "video_s": 2.5,
+ "effort_cost": 0.0,
+ "calls": 12,
+ "steps": [
+  [
+   "pick",
+   "carton0",
+   "too_wide"
+  ],
+  [
+   "pick",
+   "carton0",
+   "too_wide"
+  ],
+  [
+   "pick",
+   "carton0",
+   "too_wide"
+  ],
+  [
+   "pick",
+   "carton1",
+   "too_wide"
+  ],
+  [
+   "pick",
+   "carton1",
+   "too_wide"
+  ],
+  [
+   "pick",
+   "carton1",
+   "too_wide"
+  ],
+  [
+   "pick",
+   "carton3",
+   "too_wide"
+  ],
+  [
+   "pick",
+   "carton3",
+   "too_wide"
+  ],
+  [
+   "pick",
+   "carton3",
+   "too_wide"
+  ],
+  [
+   "pick",
+   "carton2",
+   "too_wide"
+  ],
+  [
+   "pick",
+   "carton2",
+   "too_wide"
+  ],
+  [
+   "pick",
+   "carton2",
+   "too_wide"
+  ]
+ ],
+ "env_version": "envs-r6",
+ "matrix_cell": {
+  "n": 5,
+  "success": 3,
+  "progress": 0.8,
+  "errors": 0,
+  "violations": 0,
+  "wall_mean": 2.4,
+  "sim_mean": 8.1
+ },
+ "path": "results/v2/videos_site/depalletize__aloha__s22.mp4",
+ "integrity_violations": 0,
+ "wall_s": 3.8,
+ "dressed": true
+}

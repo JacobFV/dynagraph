@@ -1,0 +1,51 @@
+{
+ "family": "pouch_transfer",
+ "robot": "panda",
+ "seed": 22,
+ "split": "test",
+ "success": false,
+ "failure_reason": "damaged part",
+ "progress": 1.0,
+ "sim_t": 26.7,
+ "playback_speed": 2,
+ "frames": 470,
+ "video_s": 15.7,
+ "effort_cost": 935.6,
+ "calls": 4,
+ "steps": [
+  [
+   "pick",
+   "pouch",
+   "dropped"
+  ],
+  [
+   "pick",
+   "pouch",
+   "dropped"
+  ],
+  [
+   "pick",
+   "pouch",
+   "done"
+  ],
+  [
+   "place",
+   "tote",
+   "done"
+  ]
+ ],
+ "env_version": "envs-r6",
+ "matrix_cell": {
+  "n": 5,
+  "success": 4,
+  "progress": 0.8,
+  "errors": 0,
+  "violations": 0,
+  "wall_mean": 6.1,
+  "sim_mean": 16.5
+ },
+ "path": "results/v2/videos_site/pouch_transfer__panda__s22.mp4",
+ "integrity_violations": 0,
+ "wall_s": 31.8,
+ "dressed": true
+}

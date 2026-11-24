@@ -507,6 +507,77 @@ conveyor_sort, tote_transfer, machine_tending (ur5e), pouch_transfer (panda), bi
 shelf_restock (tidybot) "skipped_after_failures"; singulation (ur5e) policy gave up; bulk_sweep (panda) not completed
 in 307 s.
 
+### envs-r6: warehouse site dressing after the TalOS warehouse (`envs/dressing.py`, `params["dressing"] = "site"`)
+**Source.** `~/Documents/commandagi/working/home+org-talos/worlds/talos-warehouse` (hall shell, materials, lights) and
+the demo bays it places (`demos/g1-h1-aisle` layout.ts, `demos/depalletise-kitting` LAYOUT, `demos/g1-tote-picking`).
+No MJCF / MuJoCo versions of the props exist there (the racks, pallets, crates and cartons are NVIDIA SimReady
+`.glb` meshes, CC BY 4.0; totes, conveyors and the hall are CAD sketches), so:
+* PORTED: dimensions, layouts and colours - EUR pallet 1200 x 800 x 144 (22 mm boards, 78 mm blocks), KLT VDA 4314 /
+  4322 totes, 600 x 400 x 253 crates in layers on pallets, selective racking (1.08 m deep, beam tops 0.506 / 1.65 /
+  2.509 m, blue uprights #2f5d8c, orange beams, galvanised decks), gravity roller conveyor (480 mm, d50 rollers at
+  100 mm pitch), belt conveyor (rubber, aluminium rails), floor #9b9890 (lightened) with 100 mm safety-yellow lane
+  lines and walkway green, precast wall band + cladding, steel-blue columns, high-bay lights.
+* RE-MODELLED as MjSpec primitives (boxes / cylinders, procedural textures): every prop above, plus a packing table
+  (ESD top, upper shelf, light bar) and cardboard clutter. Nothing imports a mesh.
+* Physics: props within ~0.9 m of the station footprint or a robot mount are collision-real (obstacles and tracker
+  occluders, geom group 0); the rest (hall, background racking, far stacks) is visual-only (contype = conaffinity = 0,
+  geom group 2; the tracker's ray test ignores group 2). Nothing is placed in the station footprint or within 0.75 m
+  of a robot mount. Station geoms that the dressing re-draws (pallet slab, outfeed / cart tables) keep their
+  colliders (made invisible), so task geometry and semantics are unchanged. Layout, clutter, tote colours and light
+  colour/intensity come from a SEPARATE rng (`seed_of(task, "dress")`): object poses and hidden physics of a dressed
+  episode are identical to the bare one (tested).
+* Rendering: hall walls / ceiling (no black void), textured concrete floor, lane markings, 6 ceiling spot lights (one
+  casting shadows, shadowsize 4096), dimmed headlight, per-seed light colour temperature.
+* Layouts: `depalletize` (EUR pallet under the stack, outfeed ROLLER conveyor continuing out of the cell, crate stacks,
+  racking row behind), `conveyor_sort` (roller infeed into the driven belt, racking with blue totes, crate stacks),
+  `tote_transfer` (flow rack -> racking bay with uprights / orange beams / galvanised decks; cart -> roller conveyor;
+  NEW humanoid cell for G1 robots: cart at the humanoid's right at 0.75 m, humanoid mount 0.32 m in front of the lower
+  tier - in the old cell the G1 stood inside the cart: 40 / 17 reset collisions -> 0), `shelf_restock` (shelf ->
+  racking bay with a loaded upper level, a second racking run across a ~1.5 m aisle for TidyBot, cart -> roller
+  section), `kitting_pocket` (packing table with an upper shelf and light bar, supply roller conveyor, racking). Other
+  families get the hall + background + a generic aisle (`generic_layout`).
+* Cost: dressed models have 400-700 geoms (bare 17-66); wall time per physics step +6.5 % depalletize, +6.6 %
+  conveyor_sort, +4.2 % tote_transfer, +6.4 % kitting_pocket (probe), +2.4 % shelf_restock (TidyBot);
+  reset +0.02-0.1 s.
+
+**Scripted baseline, bare vs dressed (same 12 seeds, `scripts/envs_dressing_eval.py`, results/v2/envs/dressing_eval_summary.json):**
+
+| family | robot | success bare | success site | progress bare / site | paired flips | violations (site) |
+|---|---|---|---|---|---|---|
+| depalletize | probe | 1.00 | 1.00 | 1.00 / 1.00 | 0 | 0 |
+| conveyor_sort | probe | 0.25 | 0.25 | 0.78 / 0.78 | 0 | 0 |
+| tote_transfer | probe | 0.33 | 0.33 | 0.75 / 0.75 | 0 | 0 |
+| kitting_pocket | probe | 0.42 | 0.42 | 0.69 / 0.69 | 0 | 0 |
+| shelf_restock | tidybot | 0.08 | 0.08 | 0.60 / 0.61 | 0 | 0 |
+
+Regressions found and fixed on the way (all measured): kitting 0.42 -> 0.00 because the packing table's collision-real
+upper shelf hid the work surface from the tracker (an overhead tracker -> 0.08: the part under the gripper is unseen,
+no in-hand correction; a side tracker -> 0.17) - fixed by making the upper shelf + its cartons visual-only (it is
+0.62 m above the table at the back, outside the kitting motions); TidyBot shelf_restock 0.6 -> 0.03 progress because a
+new rack upright 4 cm from the cart blocked the arm - removed. KNOWN: the test-only gantry probe cannot do the dressed
+shelf_restock (it descends from above through the rack's upper level: 0.17 -> 0.00); TidyBot / arms approach from the
+front. G1 in the humanoid cell: reset contact-free, but every pick is `unreachable` both bare and dressed - the ROBOTS
+adapter does not forward the `two_palm=1` tote pick yet (request below).
+
+**Decision relevance in the site** (oracle- vs prior-parameterised scripted, 16 paired seeds, probe;
+results/v2/envs/decision_relevance_site_*.json): depalletize +0.62 [+0.38, +0.88], kitting_pocket +0.31 [+0.06, +0.56],
+tote_transfer +0.19 [-0.06, +0.44], conveyor_sort +0.00 - identical to the bare re-run on the same seeds (+0.62 /
++0.31 / +0.19 / +0.00): the dressing does not collapse any gap.
+
+**Videos and stills** (`scripts/envs_videos.py --dressing [--stills|--montage]`): `results/v2/videos_site/` -
+19 dressed episodes (same robots, pre-registered seed 22, scripted policy; every success/fail outcome identical to
+the bare set), `index.json` + per-video `.json` sidecars, `montage_all_families.mp4`; 6 hero stills 1280x720 in
+`results/v2/videos_site/stills/` (depalletize probe, conveyor_sort ur5e, tote_transfer G1 humanoid cell and ur5e,
+shelf_restock TidyBot aisle, kitting_pocket ur5e), copied to `~/Downloads/dynagraph_gallery/site/`.
+
+**ENV_VERSION "envs-r6"** (dev tree `~/dynagraph_dev`, not frozen; frozen r4/r5 copies untouched). Tests 68/68
+(new: dressing keeps task randomisation + determinism + no drops/violations + visual-only geoms non-occluding;
+collision-real props near the station).
+
+### Requests to ROBOTS (from ENVS, round 6)
+* G1 tote lift in the new tote_transfer humanoid cell: the env sends `pick` with `two_palm=1` (your documented G1 tote
+  lift); `envs/robots.py` does not forward it to `run_skill`, so every pick returns `unreachable`.
+
 ### Requests to ROBOTS (from ENVS, round 4)
 1. **Pad contact settings:** please adopt the ENVS pad-pair settings for the real grippers' explicit pad<->object
    pairs: `solref=(0.004, 1.0)`, `solimp=(0.95, 0.99, 0.001, 0.5, 2.0)`, `margin=0` (probe: `envs/probe.py`

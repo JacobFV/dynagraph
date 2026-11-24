@@ -16,7 +16,8 @@ import importlib
 # restore / set_hidden / resimulate, bin_clearing 3-6 parts, singulation bounded work area, peg cycle-time limit.
 # envs-r5 (dev): peg spiral time cost + dent limit, pouch squeeze limit, singulation pick option + cycle limit,
 # shelf_restock (mobile aisle with move_base), generator flushes buffers on SIGTERM.
-ENV_VERSION = "envs-r5"
+# envs-r6: site dressing (params["dressing"] = "site", envs/dressing.py) after the TalOS warehouse.
+ENV_VERSION = "envs-r6"
 
 _REG = {
     "bin_clearing": ("families_bulk", "BinClearing"),

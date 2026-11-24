@@ -1,0 +1,66 @@
+{
+ "family": "tool_return",
+ "robot": "ur5e_2f85",
+ "seed": 22,
+ "split": "test",
+ "success": false,
+ "failure_reason": "damaged part",
+ "progress": 1.0,
+ "sim_t": 52.4,
+ "playback_speed": 1,
+ "frames": 1659,
+ "video_s": 55.3,
+ "effort_cost": 94532.0,
+ "calls": 7,
+ "steps": [
+  [
+   "pick",
+   "tool",
+   "done"
+  ],
+  [
+   "insert",
+   "holder",
+   "not_found"
+  ],
+  [
+   "pick",
+   "tool",
+   "dropped"
+  ],
+  [
+   "pick",
+   "tool",
+   "done"
+  ],
+  [
+   "insert",
+   "holder",
+   "jammed"
+  ],
+  [
+   "pick",
+   "tool",
+   "done"
+  ],
+  [
+   "insert",
+   "holder",
+   "jammed"
+  ]
+ ],
+ "env_version": "envs-r6",
+ "matrix_cell": {
+  "n": 5,
+  "success": 4,
+  "progress": 0.8,
+  "errors": 0,
+  "violations": 0,
+  "wall_mean": 12.0,
+  "sim_mean": 25.2
+ },
+ "path": "results/v2/videos_site/tool_return__ur5e_2f85__s22.mp4",
+ "integrity_violations": 0,
+ "wall_s": 78.1,
+ "dressed": true
+}

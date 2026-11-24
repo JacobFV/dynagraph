@@ -1,0 +1,20 @@
+{
+ "shelf_restock": {
+  "n": 12,
+  "robot": "tidybot",
+  "success_bare": 0.08333333333333333,
+  "success_site": 0.08333333333333333,
+  "progress_bare": 0.6041666666666666,
+  "progress_site": 0.6138888888888889,
+  "paired_flips": 0,
+  "violations_site": 0,
+  "collisions_bare": 0.0,
+  "collisions_site": 0.08333333333333333,
+  "us_per_step_bare": 152.7,
+  "us_per_step_site": 156.3,
+  "overhead_pct": 2.4,
+  "ngeom_bare": 66,
+  "ngeom_site": 447,
+  "errors": []
+ }
+}

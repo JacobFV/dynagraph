@@ -1,0 +1,1281 @@
+{
+ "bin_clearing": {
+  "family": "bin_clearing",
+  "robot": "gen3_2f85",
+  "seed": 22,
+  "split": "test",
+  "success": false,
+  "failure_reason": "damaged part",
+  "progress": 0.75,
+  "sim_t": 37.0,
+  "playback_speed": 4,
+  "frames": 349,
+  "video_s": 11.6,
+  "effort_cost": 2220.0,
+  "calls": 8,
+  "steps": [
+   [
+    "pick",
+    "part00",
+    "done"
+   ],
+   [
+    "place",
+    "tote",
+    "done"
+   ],
+   [
+    "pick",
+    "part01",
+    "done"
+   ],
+   [
+    "place",
+    "tote",
+    "done"
+   ],
+   [
+    "pick",
+    "part03",
+    "done"
+   ],
+   [
+    "place",
+    "tote",
+    "done"
+   ],
+   [
+    "reach",
+    "tote",
+    "done"
+   ],
+   [
+    "reach",
+    "tote",
+    "done"
+   ]
+  ],
+  "env_version": "envs-r6",
+  "matrix_cell": {
+   "n": 5,
+   "success": 0,
+   "progress": 0.53,
+   "errors": 0,
+   "violations": 0,
+   "wall_mean": 9.1,
+   "sim_mean": 46.4
+  },
+  "path": "results/v2/videos_site/bin_clearing__gen3_2f85__s22.mp4",
+  "integrity_violations": 0,
+  "wall_s": 21.3,
+  "dressed": true
+ },
+ "singulation": {
+  "family": "singulation",
+  "robot": "ur5e_2f85",
+  "seed": 22,
+  "split": "test",
+  "success": false,
+  "failure_reason": "policy finished",
+  "progress": 1.0,
+  "sim_t": 32.4,
+  "playback_speed": 2,
+  "frames": 563,
+  "video_s": 18.8,
+  "effort_cost": 198602.7,
+  "calls": 13,
+  "steps": [
+   [
+    "push",
+    "obj3",
+    "done"
+   ],
+   [
+    "push",
+    "obj6",
+    "done"
+   ],
+   [
+    "push",
+    "obj3",
+    "done"
+   ],
+   [
+    "push",
+    "obj2",
+    "done"
+   ],
+   [
+    "push",
+    "obj3",
+    "done"
+   ],
+   [
+    "push",
+    "obj5",
+    "done"
+   ],
+   [
+    "push",
+    "obj3",
+    "done"
+   ],
+   [
+    "push",
+    "obj1",
+    "done"
+   ],
+   [
+    "push",
+    "obj3",
+    "done"
+   ],
+   [
+    "push",
+    "obj1",
+    "done"
+   ],
+   [
+    "push",
+    "obj0",
+    "done"
+   ],
+   [
+    "push",
+    "obj6",
+    "done"
+   ],
+   [
+    "push",
+    "obj0",
+    "done"
+   ]
+  ],
+  "env_version": "envs-r6",
+  "matrix_cell": {
+   "n": 5,
+   "success": 5,
+   "progress": 1.0,
+   "errors": 0,
+   "violations": 0,
+   "wall_mean": 5.5,
+   "sim_mean": 19.6
+  },
+  "path": "results/v2/videos_site/singulation__ur5e_2f85__s22.mp4",
+  "integrity_violations": 0,
+  "wall_s": 28.1,
+  "dressed": true
+ },
+ "bulk_sweep": {
+  "family": "bulk_sweep",
+  "robot": "panda",
+  "seed": 22,
+  "split": "test",
+  "success": false,
+  "failure_reason": "not completed",
+  "progress": 0.4857142857142857,
+  "sim_t": 362.7,
+  "playback_speed": 3,
+  "frames": 3700,
+  "video_s": 123.3,
+  "effort_cost": 2656.8,
+  "calls": 12,
+  "steps": [
+   [
+    "sweep",
+    "target",
+    "done"
+   ],
+   [
+    "sweep",
+    "target",
+    "done"
+   ],
+   [
+    "sweep",
+    "target",
+    "done"
+   ],
+   [
+    "sweep",
+    "target",
+    "done"
+   ],
+   [
+    "sweep",
+    "target",
+    "done"
+   ],
+   [
+    "sweep",
+    "target",
+    "done"
+   ],
+   [
+    "sweep",
+    "target",
+    "done"
+   ],
+   [
+    "sweep",
+    "target",
+    "done"
+   ],
+   [
+    "sweep",
+    "target",
+    "done"
+   ],
+   [
+    "sweep",
+    "target",
+    "done"
+   ],
+   [
+    "sweep",
+    "target",
+    "done"
+   ],
+   [
+    "sweep",
+    "target",
+    "done"
+   ]
+  ],
+  "env_version": "envs-r6",
+  "matrix_cell": {
+   "n": 5,
+   "success": 2,
+   "progress": 0.83,
+   "errors": 0,
+   "violations": 0,
+   "wall_mean": 160.0,
+   "sim_mean": 346.9
+  },
+  "path": "results/v2/videos_site/bulk_sweep__panda__s22.mp4",
+  "integrity_violations": 0,
+  "wall_s": 307.1,
+  "dressed": true
+ },
+ "peg_insert": {
+  "family": "peg_insert",
+  "robot": "panda",
+  "seed": 22,
+  "split": "test",
+  "success": true,
+  "failure_reason": "",
+  "progress": 1.0,
+  "sim_t": 14.8,
+  "playback_speed": 1,
+  "frames": 517,
+  "video_s": 17.2,
+  "effort_cost": 4718.4,
+  "calls": 2,
+  "steps": [
+   [
+    "pick",
+    "peg",
+    "done"
+   ],
+   [
+    "insert",
+    "hole",
+    "done"
+   ]
+  ],
+  "env_version": "envs-r6",
+  "matrix_cell": {
+   "n": 5,
+   "success": 5,
+   "progress": 1.0,
+   "errors": 0,
+   "violations": 0,
+   "wall_mean": 8.5,
+   "sim_mean": 14.2
+  },
+  "path": "results/v2/videos_site/peg_insert__panda__s22.mp4",
+  "integrity_violations": 0,
+  "wall_s": 26.0,
+  "dressed": true
+ },
+ "connector_insert": {
+  "family": "connector_insert",
+  "robot": "ur5e_2f85",
+  "seed": 22,
+  "split": "heldout_family",
+  "success": true,
+  "failure_reason": "",
+  "progress": 1.0,
+  "sim_t": 15.9,
+  "playback_speed": 1,
+  "frames": 551,
+  "video_s": 18.4,
+  "effort_cost": 3921.9,
+  "calls": 2,
+  "steps": [
+   [
+    "pick",
+    "module",
+    "done"
+   ],
+   [
+    "insert",
+    "slot",
+    "done"
+   ]
+  ],
+  "env_version": "envs-r6",
+  "matrix_cell": {
+   "n": 5,
+   "success": 5,
+   "progress": 1.0,
+   "errors": 0,
+   "violations": 0,
+   "wall_mean": 5.2,
+   "sim_mean": 16.5
+  },
+  "path": "results/v2/videos_site/connector_insert__ur5e_2f85__s22.mp4",
+  "integrity_violations": 0,
+  "wall_s": 23.5,
+  "dressed": true
+ },
+ "tool_return": {
+  "family": "tool_return",
+  "robot": "ur5e_2f85",
+  "seed": 22,
+  "split": "test",
+  "success": false,
+  "failure_reason": "damaged part",
+  "progress": 1.0,
+  "sim_t": 52.4,
+  "playback_speed": 1,
+  "frames": 1659,
+  "video_s": 55.3,
+  "effort_cost": 94532.0,
+  "calls": 7,
+  "steps": [
+   [
+    "pick",
+    "tool",
+    "done"
+   ],
+   [
+    "insert",
+    "holder",
+    "not_found"
+   ],
+   [
+    "pick",
+    "tool",
+    "dropped"
+   ],
+   [
+    "pick",
+    "tool",
+    "done"
+   ],
+   [
+    "insert",
+    "holder",
+    "jammed"
+   ],
+   [
+    "pick",
+    "tool",
+    "done"
+   ],
+   [
+    "insert",
+    "holder",
+    "jammed"
+   ]
+  ],
+  "env_version": "envs-r6",
+  "matrix_cell": {
+   "n": 5,
+   "success": 4,
+   "progress": 0.8,
+   "errors": 0,
+   "violations": 0,
+   "wall_mean": 12.0,
+   "sim_mean": 25.2
+  },
+  "path": "results/v2/videos_site/tool_return__ur5e_2f85__s22.mp4",
+  "integrity_violations": 0,
+  "wall_s": 78.1,
+  "dressed": true
+ },
+ "fixture_place": {
+  "family": "fixture_place",
+  "robot": "ur5e_2f85",
+  "seed": 22,
+  "split": "test",
+  "success": true,
+  "failure_reason": "",
+  "progress": 1.0,
+  "sim_t": 11.5,
+  "playback_speed": 1,
+  "frames": 418,
+  "video_s": 13.9,
+  "effort_cost": 1729.5,
+  "calls": 2,
+  "steps": [
+   [
+    "pick",
+    "fixture",
+    "done"
+   ],
+   [
+    "place",
+    "mark",
+    "done"
+   ]
+  ],
+  "env_version": "envs-r6",
+  "matrix_cell": {
+   "n": 5,
+   "success": 5,
+   "progress": 1.0,
+   "errors": 0,
+   "violations": 0,
+   "wall_mean": 3.6,
+   "sim_mean": 11.6
+  },
+  "path": "results/v2/videos_site/fixture_place__ur5e_2f85__s22.mp4",
+  "integrity_violations": 0,
+  "wall_s": 18.1,
+  "dressed": true
+ },
+ "kitting_pocket": {
+  "family": "kitting_pocket",
+  "robot": "ur5e_2f85",
+  "seed": 22,
+  "split": "test",
+  "success": true,
+  "failure_reason": "",
+  "progress": 1.0,
+  "sim_t": 59.5,
+  "playback_speed": 2,
+  "frames": 960,
+  "video_s": 32.0,
+  "effort_cost": 16242.7,
+  "calls": 7,
+  "steps": [
+   [
+    "pick",
+    "part0",
+    "done"
+   ],
+   [
+    "insert",
+    "pocket_part0",
+    "done"
+   ],
+   [
+    "pick",
+    "part1",
+    "done"
+   ],
+   [
+    "insert",
+    "pocket_part1",
+    "jammed"
+   ],
+   [
+    "pick",
+    "part1",
+    "grasp_failed"
+   ],
+   [
+    "pick",
+    "part2",
+    "done"
+   ],
+   [
+    "insert",
+    "pocket_part2",
+    "not_found"
+   ]
+  ],
+  "env_version": "envs-r6",
+  "matrix_cell": {
+   "n": 5,
+   "success": 2,
+   "progress": 0.8,
+   "errors": 0,
+   "violations": 0,
+   "wall_mean": 25.6,
+   "sim_mean": 53.8
+  },
+  "path": "results/v2/videos_site/kitting_pocket__ur5e_2f85__s22.mp4",
+  "integrity_violations": 0,
+  "wall_s": 66.8,
+  "dressed": true
+ },
+ "drawer_open": {
+  "family": "drawer_open",
+  "robot": "tidybot",
+  "seed": 22,
+  "split": "test",
+  "success": true,
+  "failure_reason": "",
+  "progress": 1.0,
+  "sim_t": 10.7,
+  "playback_speed": 1,
+  "frames": 384,
+  "video_s": 12.8,
+  "effort_cost": 521.1,
+  "calls": 1,
+  "steps": [
+   [
+    "open",
+    "drawer",
+    "done"
+   ]
+  ],
+  "env_version": "envs-r6",
+  "matrix_cell": {
+   "n": 5,
+   "success": 5,
+   "progress": 1.0,
+   "errors": 0,
+   "violations": 0,
+   "wall_mean": 2.9,
+   "sim_mean": 10.6
+  },
+  "path": "results/v2/videos_site/drawer_open__tidybot__s22.mp4",
+  "integrity_violations": 0,
+  "wall_s": 13.5,
+  "dressed": true
+ },
+ "door_open": {
+  "family": "door_open",
+  "robot": "gen3_2f85",
+  "seed": 22,
+  "split": "test",
+  "success": true,
+  "failure_reason": "",
+  "progress": 1.0,
+  "sim_t": 13.3,
+  "playback_speed": 1,
+  "frames": 460,
+  "video_s": 15.3,
+  "effort_cost": 279.6,
+  "calls": 1,
+  "steps": [
+   [
+    "open",
+    "door",
+    "done"
+   ]
+  ],
+  "env_version": "envs-r6",
+  "matrix_cell": {
+   "n": 5,
+   "success": 5,
+   "progress": 1.0,
+   "errors": 0,
+   "violations": 0,
+   "wall_mean": 3.0,
+   "sim_mean": 13.1
+  },
+  "path": "results/v2/videos_site/door_open__gen3_2f85__s22.mp4",
+  "integrity_violations": 0,
+  "wall_s": 16.3,
+  "dressed": true
+ },
+ "depalletize": {
+  "family": "depalletize",
+  "robot": "aloha",
+  "seed": 22,
+  "split": "test",
+  "success": false,
+  "failure_reason": "pick: too_wide x12",
+  "progress": 0.0,
+  "sim_t": 0.2,
+  "playback_speed": 4,
+  "frames": 75,
+  "video_s": 2.5,
+  "effort_cost": 0.0,
+  "calls": 12,
+  "steps": [
+   [
+    "pick",
+    "carton0",
+    "too_wide"
+   ],
+   [
+    "pick",
+    "carton0",
+    "too_wide"
+   ],
+   [
+    "pick",
+    "carton0",
+    "too_wide"
+   ],
+   [
+    "pick",
+    "carton1",
+    "too_wide"
+   ],
+   [
+    "pick",
+    "carton1",
+    "too_wide"
+   ],
+   [
+    "pick",
+    "carton1",
+    "too_wide"
+   ],
+   [
+    "pick",
+    "carton3",
+    "too_wide"
+   ],
+   [
+    "pick",
+    "carton3",
+    "too_wide"
+   ],
+   [
+    "pick",
+    "carton3",
+    "too_wide"
+   ],
+   [
+    "pick",
+    "carton2",
+    "too_wide"
+   ],
+   [
+    "pick",
+    "carton2",
+    "too_wide"
+   ],
+   [
+    "pick",
+    "carton2",
+    "too_wide"
+   ]
+  ],
+  "env_version": "envs-r6",
+  "matrix_cell": {
+   "n": 5,
+   "success": 3,
+   "progress": 0.8,
+   "errors": 0,
+   "violations": 0,
+   "wall_mean": 2.4,
+   "sim_mean": 8.1
+  },
+  "path": "results/v2/videos_site/depalletize__aloha__s22.mp4",
+  "integrity_violations": 0,
+  "wall_s": 3.8,
+  "dressed": true
+ },
+ "conveyor_sort": {
+  "family": "conveyor_sort",
+  "robot": "ur5e_2f85",
+  "seed": 22,
+  "split": "test",
+  "success": false,
+  "failure_reason": "damaged part",
+  "progress": 0.75,
+  "sim_t": 70.5,
+  "playback_speed": 2,
+  "frames": 1140,
+  "video_s": 38.0,
+  "effort_cost": 179078.0,
+  "calls": 14,
+  "steps": [
+   [
+    "reach",
+    "pick_window",
+    "done"
+   ],
+   [
+    "reach",
+    "pick_window",
+    "done"
+   ],
+   [
+    "pick",
+    "item0",
+    "grasp_failed"
+   ],
+   [
+    "pick",
+    "item0",
+    "grasp_failed"
+   ],
+   [
+    "pick",
+    "item0",
+    "done"
+   ],
+   [
+    "place",
+    "bin_A",
+    "done"
+   ],
+   [
+    "pick",
+    "item1",
+    "grasp_failed"
+   ],
+   [
+    "pick",
+    "item1",
+    "grasp_failed"
+   ],
+   [
+    "pick",
+    "item2",
+    "grasp_failed"
+   ],
+   [
+    "pick",
+    "item2",
+    "done"
+   ],
+   [
+    "place",
+    "bin_A",
+    "done"
+   ],
+   [
+    "pick",
+    "item3",
+    "grasp_failed"
+   ],
+   [
+    "pick",
+    "item3",
+    "done"
+   ],
+   [
+    "place",
+    "bin_B",
+    "done"
+   ]
+  ],
+  "env_version": "envs-r6",
+  "matrix_cell": {
+   "n": 5,
+   "success": 1,
+   "progress": 0.9,
+   "errors": 0,
+   "violations": 0,
+   "wall_mean": 9.9,
+   "sim_mean": 58.2
+  },
+  "path": "results/v2/videos_site/conveyor_sort__ur5e_2f85__s22.mp4",
+  "integrity_violations": 0,
+  "wall_s": 52.5,
+  "dressed": true
+ },
+ "tote_transfer": {
+  "family": "tote_transfer",
+  "robot": "ur5e_2f85",
+  "seed": 22,
+  "split": "heldout_family",
+  "success": false,
+  "failure_reason": "damaged part",
+  "progress": 0.0,
+  "sim_t": 50.2,
+  "playback_speed": 3,
+  "frames": 575,
+  "video_s": 19.2,
+  "effort_cost": 296867.6,
+  "calls": 6,
+  "steps": [
+   [
+    "pick",
+    "tote0",
+    "done"
+   ],
+   [
+    "place",
+    "cart",
+    "done"
+   ],
+   [
+    "pick",
+    "tote1",
+    "done"
+   ],
+   [
+    "place",
+    "cart",
+    "done"
+   ],
+   [
+    "pick",
+    "tote1",
+    "done"
+   ],
+   [
+    "place",
+    "cart",
+    "done"
+   ]
+  ],
+  "env_version": "envs-r6",
+  "matrix_cell": {
+   "n": 5,
+   "success": 1,
+   "progress": 0.67,
+   "errors": 0,
+   "violations": 0,
+   "wall_mean": 11.0,
+   "sim_mean": 42.9
+  },
+  "path": "results/v2/videos_site/tote_transfer__ur5e_2f85__s22.mp4",
+  "integrity_violations": 0,
+  "wall_s": 34.4,
+  "dressed": true
+ },
+ "pouch_transfer": {
+  "family": "pouch_transfer",
+  "robot": "panda",
+  "seed": 22,
+  "split": "test",
+  "success": false,
+  "failure_reason": "damaged part",
+  "progress": 1.0,
+  "sim_t": 26.7,
+  "playback_speed": 2,
+  "frames": 470,
+  "video_s": 15.7,
+  "effort_cost": 935.6,
+  "calls": 4,
+  "steps": [
+   [
+    "pick",
+    "pouch",
+    "dropped"
+   ],
+   [
+    "pick",
+    "pouch",
+    "dropped"
+   ],
+   [
+    "pick",
+    "pouch",
+    "done"
+   ],
+   [
+    "place",
+    "tote",
+    "done"
+   ]
+  ],
+  "env_version": "envs-r6",
+  "matrix_cell": {
+   "n": 5,
+   "success": 4,
+   "progress": 0.8,
+   "errors": 0,
+   "violations": 0,
+   "wall_mean": 6.1,
+   "sim_mean": 16.5
+  },
+  "path": "results/v2/videos_site/pouch_transfer__panda__s22.mp4",
+  "integrity_violations": 0,
+  "wall_s": 31.8,
+  "dressed": true
+ },
+ "twist_lock": {
+  "family": "twist_lock",
+  "robot": "ur5e_2f85",
+  "seed": 22,
+  "split": "test",
+  "success": false,
+  "failure_reason": "damaged part",
+  "progress": 0.7969480747801119,
+  "sim_t": 38.5,
+  "playback_speed": 1,
+  "frames": 1202,
+  "video_s": 40.1,
+  "effort_cost": 34497.4,
+  "calls": 5,
+  "steps": [
+   [
+    "open",
+    "knob",
+    "done"
+   ],
+   [
+    "open",
+    "knob",
+    "done"
+   ],
+   [
+    "open",
+    "knob",
+    "done"
+   ],
+   [
+    "open",
+    "knob",
+    "done"
+   ],
+   [
+    "open",
+    "knob",
+    "done"
+   ]
+  ],
+  "env_version": "envs-r6",
+  "matrix_cell": {
+   "n": 5,
+   "success": 5,
+   "progress": 1.0,
+   "errors": 0,
+   "violations": 0,
+   "wall_mean": 3.8,
+   "sim_mean": 19.4
+  },
+  "path": "results/v2/videos_site/twist_lock__ur5e_2f85__s22.mp4",
+  "integrity_violations": 0,
+  "wall_s": 42.9,
+  "dressed": true
+ },
+ "machine_tending": {
+  "family": "machine_tending",
+  "robot": "ur5e_2f85",
+  "seed": 22,
+  "split": "test",
+  "success": false,
+  "failure_reason": "damaged part",
+  "progress": 1.0,
+  "sim_t": 56.7,
+  "playback_speed": 2,
+  "frames": 931,
+  "video_s": 31.0,
+  "effort_cost": 19911.7,
+  "calls": 5,
+  "steps": [
+   [
+    "open",
+    "door",
+    "done"
+   ],
+   [
+    "pick",
+    "blank",
+    "done"
+   ],
+   [
+    "insert",
+    "vise",
+    "done"
+   ],
+   [
+    "close",
+    "door",
+    "done"
+   ],
+   [
+    "close",
+    "door",
+    "done"
+   ]
+  ],
+  "env_version": "envs-r6",
+  "matrix_cell": {
+   "n": 5,
+   "success": 0,
+   "progress": 0.8,
+   "errors": 0,
+   "violations": 0,
+   "wall_mean": 13.3,
+   "sim_mean": 60.1
+  },
+  "path": "results/v2/videos_site/machine_tending__ur5e_2f85__s22.mp4",
+  "integrity_violations": 0,
+  "wall_s": 42.3,
+  "dressed": true
+ },
+ "small_parts_pick": {
+  "family": "small_parts_pick",
+  "robot": "aloha",
+  "seed": 22,
+  "split": "test",
+  "success": false,
+  "failure_reason": "pick: grasp_failed x8",
+  "progress": 0.25,
+  "sim_t": 57.7,
+  "playback_speed": 3,
+  "frames": 650,
+  "video_s": 21.7,
+  "effort_cost": 36561.2,
+  "calls": 16,
+  "steps": [
+   [
+    "pick",
+    "part01",
+    "dropped"
+   ],
+   [
+    "pick",
+    "part01",
+    "grasp_failed"
+   ],
+   [
+    "pick",
+    "part01",
+    "grasp_failed"
+   ],
+   [
+    "pick",
+    "part02",
+    "grasp_failed"
+   ],
+   [
+    "pick",
+    "part02",
+    "grasp_failed"
+   ],
+   [
+    "pick",
+    "part02",
+    "dropped"
+   ],
+   [
+    "pick",
+    "part03",
+    "grasp_failed"
+   ],
+   [
+    "pick",
+    "part03",
+    "done"
+   ],
+   [
+    "place",
+    "tote",
+    "done"
+   ],
+   [
+    "pick",
+    "part00",
+    "grasp_failed"
+   ],
+   [
+    "pick",
+    "part00",
+    "grasp_failed"
+   ],
+   [
+    "pick",
+    "part00",
+    "grasp_failed"
+   ],
+   [
+    "pick",
+    "part01",
+    "skipped_after_failures"
+   ],
+   [
+    "pick",
+    "part01",
+    "skipped_after_failures"
+   ],
+   [
+    "pick",
+    "part01",
+    "skipped_after_failures"
+   ],
+   [
+    "pick",
+    "part01",
+    "skipped_after_failures"
+   ]
+  ],
+  "env_version": "envs-r6",
+  "matrix_cell": {
+   "n": 5,
+   "success": 0,
+   "progress": 0.68,
+   "errors": 0,
+   "violations": 0,
+   "wall_mean": 5.6,
+   "sim_mean": 29.0
+  },
+  "path": "results/v2/videos_site/small_parts_pick__aloha__s22.mp4",
+  "integrity_violations": 0,
+  "wall_s": 33.1,
+  "dressed": true
+ },
+ "small_peg_insert": {
+  "family": "small_peg_insert",
+  "robot": "ur5e_2f85",
+  "seed": 22,
+  "split": "test",
+  "success": true,
+  "failure_reason": "",
+  "progress": 1.0,
+  "sim_t": 10.7,
+  "playback_speed": 1,
+  "frames": 396,
+  "video_s": 13.2,
+  "effort_cost": 4487.9,
+  "calls": 2,
+  "steps": [
+   [
+    "pick",
+    "peg",
+    "done"
+   ],
+   [
+    "insert",
+    "hole",
+    "done"
+   ]
+  ],
+  "env_version": "envs-r6",
+  "matrix_cell": {
+   "n": 5,
+   "success": 5,
+   "progress": 1.0,
+   "errors": 0,
+   "violations": 0,
+   "wall_mean": 4.7,
+   "sim_mean": 10.3
+  },
+  "path": "results/v2/videos_site/small_peg_insert__ur5e_2f85__s22.mp4",
+  "integrity_violations": 0,
+  "wall_s": 17.8,
+  "dressed": true
+ },
+ "shelf_restock": {
+  "family": "shelf_restock",
+  "robot": "tidybot",
+  "seed": 22,
+  "split": "test",
+  "success": false,
+  "failure_reason": "pick: skipped_after_failures x7",
+  "progress": 0.6666666666666666,
+  "sim_t": 79.1,
+  "playback_speed": 3,
+  "frames": 864,
+  "video_s": 28.8,
+  "effort_cost": 23920.9,
+  "calls": 19,
+  "steps": [
+   [
+    "move_base",
+    null,
+    "done"
+   ],
+   [
+    "pick",
+    "item0",
+    "done"
+   ],
+   [
+    "move_base",
+    null,
+    "done"
+   ],
+   [
+    "place",
+    "bay2",
+    "done"
+   ],
+   [
+    "move_base",
+    null,
+    "done"
+   ],
+   [
+    "pick",
+    "item1",
+    "done"
+   ],
+   [
+    "move_base",
+    null,
+    "done"
+   ],
+   [
+    "place",
+    "bay0",
+    "done"
+   ],
+   [
+    "move_base",
+    null,
+    "done"
+   ],
+   [
+    "pick",
+    "item2",
+    "grasp_failed"
+   ],
+   [
+    "pick",
+    "item2",
+    "grasp_failed"
+   ],
+   [
+    "pick",
+    "item2",
+    "grasp_failed"
+   ],
+   [
+    "pick",
+    "item2",
+    "skipped_after_failures"
+   ],
+   [
+    "pick",
+    "item2",
+    "skipped_after_failures"
+   ],
+   [
+    "pick",
+    "item2",
+    "skipped_after_failures"
+   ],
+   [
+    "pick",
+    "item2",
+    "skipped_after_failures"
+   ],
+   [
+    "pick",
+    "item2",
+    "skipped_after_failures"
+   ],
+   [
+    "pick",
+    "item2",
+    "skipped_after_failures"
+   ],
+   [
+    "pick",
+    "item2",
+    "skipped_after_failures"
+   ]
+  ],
+  "env_version": "envs-r6",
+  "matrix_cell": {
+   "n": 5,
+   "success": 0,
+   "progress": 0.67,
+   "errors": 0,
+   "violations": 0,
+   "wall_mean": 14.4,
+   "sim_mean": 106.4
+  },
+  "path": "results/v2/videos_site/shelf_restock__tidybot__s22.mp4",
+  "integrity_violations": 0,
+  "wall_s": 45.1,
+  "dressed": true
+ }
+}

@@ -1,0 +1,111 @@
+{
+ "family": "small_parts_pick",
+ "robot": "aloha",
+ "seed": 22,
+ "split": "test",
+ "success": false,
+ "failure_reason": "pick: grasp_failed x8",
+ "progress": 0.25,
+ "sim_t": 57.7,
+ "playback_speed": 3,
+ "frames": 650,
+ "video_s": 21.7,
+ "effort_cost": 36561.2,
+ "calls": 16,
+ "steps": [
+  [
+   "pick",
+   "part01",
+   "dropped"
+  ],
+  [
+   "pick",
+   "part01",
+   "grasp_failed"
+  ],
+  [
+   "pick",
+   "part01",
+   "grasp_failed"
+  ],
+  [
+   "pick",
+   "part02",
+   "grasp_failed"
+  ],
+  [
+   "pick",
+   "part02",
+   "grasp_failed"
+  ],
+  [
+   "pick",
+   "part02",
+   "dropped"
+  ],
+  [
+   "pick",
+   "part03",
+   "grasp_failed"
+  ],
+  [
+   "pick",
+   "part03",
+   "done"
+  ],
+  [
+   "place",
+   "tote",
+   "done"
+  ],
+  [
+   "pick",
+   "part00",
+   "grasp_failed"
+  ],
+  [
+   "pick",
+   "part00",
+   "grasp_failed"
+  ],
+  [
+   "pick",
+   "part00",
+   "grasp_failed"
+  ],
+  [
+   "pick",
+   "part01",
+   "skipped_after_failures"
+  ],
+  [
+   "pick",
+   "part01",
+   "skipped_after_failures"
+  ],
+  [
+   "pick",
+   "part01",
+   "skipped_after_failures"
+  ],
+  [
+   "pick",
+   "part01",
+   "skipped_after_failures"
+  ]
+ ],
+ "env_version": "envs-r6",
+ "matrix_cell": {
+  "n": 5,
+  "success": 0,
+  "progress": 0.68,
+  "errors": 0,
+  "violations": 0,
+  "wall_mean": 5.6,
+  "sim_mean": 29.0
+ },
+ "path": "results/v2/videos_site/small_parts_pick__aloha__s22.mp4",
+ "integrity_violations": 0,
+ "wall_s": 33.1,
+ "dressed": true
+}

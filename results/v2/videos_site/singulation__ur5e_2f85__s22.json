@@ -1,0 +1,96 @@
+{
+ "family": "singulation",
+ "robot": "ur5e_2f85",
+ "seed": 22,
+ "split": "test",
+ "success": false,
+ "failure_reason": "policy finished",
+ "progress": 1.0,
+ "sim_t": 32.4,
+ "playback_speed": 2,
+ "frames": 563,
+ "video_s": 18.8,
+ "effort_cost": 198602.7,
+ "calls": 13,
+ "steps": [
+  [
+   "push",
+   "obj3",
+   "done"
+  ],
+  [
+   "push",
+   "obj6",
+   "done"
+  ],
+  [
+   "push",
+   "obj3",
+   "done"
+  ],
+  [
+   "push",
+   "obj2",
+   "done"
+  ],
+  [
+   "push",
+   "obj3",
+   "done"
+  ],
+  [
+   "push",
+   "obj5",
+   "done"
+  ],
+  [
+   "push",
+   "obj3",
+   "done"
+  ],
+  [
+   "push",
+   "obj1",
+   "done"
+  ],
+  [
+   "push",
+   "obj3",
+   "done"
+  ],
+  [
+   "push",
+   "obj1",
+   "done"
+  ],
+  [
+   "push",
+   "obj0",
+   "done"
+  ],
+  [
+   "push",
+   "obj6",
+   "done"
+  ],
+  [
+   "push",
+   "obj0",
+   "done"
+  ]
+ ],
+ "env_version": "envs-r6",
+ "matrix_cell": {
+  "n": 5,
+  "success": 5,
+  "progress": 1.0,
+  "errors": 0,
+  "violations": 0,
+  "wall_mean": 5.5,
+  "sim_mean": 19.6
+ },
+ "path": "results/v2/videos_site/singulation__ur5e_2f85__s22.mp4",
+ "integrity_violations": 0,
+ "wall_s": 28.1,
+ "dressed": true
+}

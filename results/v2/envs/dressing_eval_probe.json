@@ -1,0 +1,20 @@
+{
+ "tote_transfer": {
+  "n": 12,
+  "robot": "probe",
+  "success_bare": 0.3333333333333333,
+  "success_site": 0.3333333333333333,
+  "progress_bare": 0.75,
+  "progress_site": 0.75,
+  "paired_flips": 0,
+  "violations_site": 0,
+  "collisions_bare": 0.3333333333333333,
+  "collisions_site": 0.3333333333333333,
+  "us_per_step_bare": 87.8,
+  "us_per_step_site": 91.5,
+  "overhead_pct": 4.3,
+  "ngeom_bare": 34,
+  "ngeom_site": 517,
+  "errors": []
+ }
+}

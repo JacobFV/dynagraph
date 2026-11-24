@@ -138,9 +138,19 @@ def rule(env, call, src):
     return replace(call, params=p) if call.skill != "handover" else call
 
 
+DRESS = os.environ.get("DR_DRESS", "") == "1"       # envs-r6: run the check in the dressed site
+
+
+def _params(fam):
+    p = split_params(fam, "train")
+    if DRESS:
+        p["dressing"] = "site"
+    return p
+
+
 def episode(fam, seed, src, budget_scale=1.0):
     env = make_env(fam)
-    env.reset(TaskSpec(fam, family_class(fam).category, seed, "probe", "dr", split_params(fam, "train")))
+    env.reset(TaskSpec(fam, family_class(fam).category, seed, "probe", "dr", _params(fam)))
     out = None
     for _ in range(200):
         c = env.scripted()
@@ -174,7 +184,7 @@ def compute_priors(fams, n=30):
         vals = {}
         for s in range(900000, 900000 + n):
             env = make_env(fam)
-            env.reset(TaskSpec(fam, family_class(fam).category, s, "probe", "train", split_params(fam, "train")))
+            env.reset(TaskSpec(fam, family_class(fam).category, s, "probe", "train", _params(fam)))
             for e, info in env.scene.entities.items():
                 for k, v in info.hidden.items():
                     if isinstance(v, (int, float)) and not isinstance(v, bool):
@@ -213,7 +223,8 @@ def main():
         parts = pool.starmap(compute_priors, [([f],) for f in fams])
     for pp in parts:
         PRIORS.update(pp)
-    json.dump(PRIORS, open(PRIOR_PATH, "w"), indent=1)
+    if not DRESS:
+        json.dump(PRIORS, open(PRIOR_PATH, "w"), indent=1)
     jobs = [(f, 500000 + s, src) for f in fams for s in range(n) for src in ("true", "prior", "scripted")]
     with Pool(procs) as pool:
         rows = pool.map(_job, jobs, chunksize=1)
@@ -233,9 +244,10 @@ def main():
         t = table[-1]
         print(f"{f:18s} oracle {t['oracle']:.2f} prior {t['prior']:.2f} scripted {t['scripted']:.2f} "
               f"gap {gap:+.2f} [{lo:+.2f}, {hi:+.2f}] dmg {t['damaged_oracle']:.2f}/{t['damaged_prior']:.2f} err {t['errors']}")
-    json.dump(dict(table=table, rows=rows, priors=PRIORS, wall_s=time.time() - t0, robot="probe"),
-              open("results/v2/envs/decision_relevance.json" if len(fams) == len(FAMILIES)
-                   else f"results/v2/envs/decision_relevance_{'_'.join(fams)[:60]}.json", "w"), indent=1, default=str)
+    tag = "_site" if DRESS else ""
+    json.dump(dict(table=table, rows=rows, priors=PRIORS, wall_s=time.time() - t0, robot="probe", dressed=DRESS),
+              open(f"results/v2/envs/decision_relevance{tag}.json" if len(fams) == len(FAMILIES)
+                   else f"results/v2/envs/decision_relevance{tag}_{'_'.join(fams)[:60]}.json", "w"), indent=1, default=str)
     print("wall", round(time.time() - t0), "s")
 
 

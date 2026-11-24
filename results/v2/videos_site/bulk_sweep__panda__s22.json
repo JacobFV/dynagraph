@@ -1,0 +1,91 @@
+{
+ "family": "bulk_sweep",
+ "robot": "panda",
+ "seed": 22,
+ "split": "test",
+ "success": false,
+ "failure_reason": "not completed",
+ "progress": 0.4857142857142857,
+ "sim_t": 362.7,
+ "playback_speed": 3,
+ "frames": 3700,
+ "video_s": 123.3,
+ "effort_cost": 2656.8,
+ "calls": 12,
+ "steps": [
+  [
+   "sweep",
+   "target",
+   "done"
+  ],
+  [
+   "sweep",
+   "target",
+   "done"
+  ],
+  [
+   "sweep",
+   "target",
+   "done"
+  ],
+  [
+   "sweep",
+   "target",
+   "done"
+  ],
+  [
+   "sweep",
+   "target",
+   "done"
+  ],
+  [
+   "sweep",
+   "target",
+   "done"
+  ],
+  [
+   "sweep",
+   "target",
+   "done"
+  ],
+  [
+   "sweep",
+   "target",
+   "done"
+  ],
+  [
+   "sweep",
+   "target",
+   "done"
+  ],
+  [
+   "sweep",
+   "target",
+   "done"
+  ],
+  [
+   "sweep",
+   "target",
+   "done"
+  ],
+  [
+   "sweep",
+   "target",
+   "done"
+  ]
+ ],
+ "env_version": "envs-r6",
+ "matrix_cell": {
+  "n": 5,
+  "success": 2,
+  "progress": 0.83,
+  "errors": 0,
+  "violations": 0,
+  "wall_mean": 160.0,
+  "sim_mean": 346.9
+ },
+ "path": "results/v2/videos_site/bulk_sweep__panda__s22.mp4",
+ "integrity_violations": 0,
+ "wall_s": 307.1,
+ "dressed": true
+}

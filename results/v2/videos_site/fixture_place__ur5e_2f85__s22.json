@@ -1,0 +1,41 @@
+{
+ "family": "fixture_place",
+ "robot": "ur5e_2f85",
+ "seed": 22,
+ "split": "test",
+ "success": true,
+ "failure_reason": "",
+ "progress": 1.0,
+ "sim_t": 11.5,
+ "playback_speed": 1,
+ "frames": 418,
+ "video_s": 13.9,
+ "effort_cost": 1729.5,
+ "calls": 2,
+ "steps": [
+  [
+   "pick",
+   "fixture",
+   "done"
+  ],
+  [
+   "place",
+   "mark",
+   "done"
+  ]
+ ],
+ "env_version": "envs-r6",
+ "matrix_cell": {
+  "n": 5,
+  "success": 5,
+  "progress": 1.0,
+  "errors": 0,
+  "violations": 0,
+  "wall_mean": 3.6,
+  "sim_mean": 11.6
+ },
+ "path": "results/v2/videos_site/fixture_place__ur5e_2f85__s22.mp4",
+ "integrity_violations": 0,
+ "wall_s": 18.1,
+ "dressed": true
+}

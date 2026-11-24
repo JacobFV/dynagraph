@@ -458,16 +458,22 @@ class ToteTransfer(StationEnv):
     def build(self, scene, rng, params):
         # staggered two-tier flow rack (lower tier in front), cart on the robot side
         tiers = [(0.15, 0.45), (0.45, 0.85)]       # (y, z of shelf top)
-        for y, z in tiers:
-            scene.static_box((0.0, y, z - 0.015), (0.5, 0.15, 0.015), rgba=(0.7, 0.55, 0.2, 1))
+        for ti, (y, z) in enumerate(tiers):
+            scene.static_box((0.0, y, z - 0.015), (0.5, 0.15, 0.015), rgba=(0.7, 0.55, 0.2, 1), name=f"tier{ti}")
             for sx in (-1, 1):
                 scene.static_box((sx * 0.5, y, z / 2), (0.02, 0.02, z / 2), rgba=DARK)
-        cz = 0.6
-        scene.static_box((0.0, -0.45, cz - 0.02), (0.45, 0.2, 0.02), rgba=(0.5, 0.52, 0.55, 1))
+        # envs-r6 humanoid cell (default for G1 robots): the cart stands at the humanoid's right at 0.75 m and the
+        # humanoid 0.35 m in front of the rack's lower tier (in the default cell the G1 stood inside the cart)
+        robot_name = getattr(getattr(self, "task", None), "robot", "") or ""
+        self.humanoid_cell = bool(params.get("humanoid_cell", robot_name.startswith("g1")))
+        ccx, ccy, chx, chy = (0.7, -0.25, 0.2, 0.33) if self.humanoid_cell else (0.0, -0.45, 0.45, 0.2)
+        cz = 0.75 if self.humanoid_cell else 0.6
+        scene.static_box((ccx, ccy, cz - 0.02), (chx, chy, 0.02), rgba=(0.5, 0.52, 0.55, 1), name="tote_cart")
         for sx in (-1, 1):
             for sy in (-1, 1):
-                scene.static_box((sx * 0.4, -0.45 + sy * 0.15, (cz - 0.04) / 2), (0.02, 0.02, (cz - 0.04) / 2), rgba=DARK)
-        scene.region("cart", (0.0, -0.45, cz + 0.07), (0.45, 0.2, 0.08), support_z=cz)
+                scene.static_box((ccx + sx * (chx - 0.05), ccy + sy * (chy - 0.05), (cz - 0.04) / 2),
+                                 (0.02, 0.02, (cz - 0.04) / 2), rgba=DARK)
+        scene.region("cart", (ccx, ccy, cz + 0.07), (chx, chy, 0.08), support_z=cz)
         self.surface_z = cz
         n = int(params.get("n_totes", rng.integers(2, 4)))
         hx, hy, hz, t = 0.15, 0.1, 0.06, 0.008
@@ -487,10 +493,13 @@ class ToteTransfer(StationEnv):
                                      mass_split=ms, extra_hidden=dict(content_mass=content,
                                                                        crush_n=fragility(rng, 0.5, 60, 140, params)))
             info.shape = "tote"
-        self.cart_slots = [(-0.22, 0.0), (0.22, 0.0), (0.0, 0.0)]
+        self.cart_slots = ([(0.0, -0.22), (0.0, 0.0), (0.0, 0.22)] if self.humanoid_cell
+                           else [(-0.22, 0.0), (0.22, 0.0), (0.0, 0.0)])
         self.safe_z = 0.85 + 2 * hz + 0.12 + 0.05
         standard_mounts(scene, (0.0, -0.1), 0.0, (0.5, 0.35), gantry_h=1.75)
         scene.mounts["arm"] = [((0.0, -0.12, 0.7), math.pi / 2)]     # pedestal between the cart and the rack
+        if self.humanoid_cell:
+            scene.mounts["humanoid"] = [((0.0, -0.32, 0.0), math.pi / 2)]   # 0.32 m in front of the lower tier
         scene.camera = dict(pos=(0.0, -0.6, 2.2), lookat=(0.0, 0.0, 0.6), view_pos=(1.5, -1.6, 1.7),
                             view_lookat=(0.0, 0.0, 0.6))
         self.budget = int(params.get("budget", 3 * n))
@@ -530,6 +539,8 @@ class ToteTransfer(StationEnv):
 
     def _pick_call(self, e, rng=None, **kw):
         p = dict(grip_force=40.0, lift_speed=0.25, depth=0.5, approach_speed=0.5, lift_height=0.15)
+        if getattr(self, "humanoid_cell", False):
+            p["two_palm"] = 1          # ROBOTS: G1 lifts a tote between both palms (run_skill pick, two_palm=1)
         if rng is not None:
             p.update(grip_force=float(rng.uniform(10, 120)), lift_speed=float(rng.uniform(0.05, 0.6)),
                      depth=float(rng.uniform(0.2, 0.7)))
