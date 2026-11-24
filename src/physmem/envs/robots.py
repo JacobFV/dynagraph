@@ -444,6 +444,9 @@ class EmbodimentSkills:
         est = self._est(env, call.target)
         if est is None:
             return SkillResult(False, "not_observed", EffortMeter(), 0.0)
+        if p.get("two_palm") and self.r.spec.kind == "humanoid":   # ENVS r6: G1 two-palm tote transfer (envs/g1_cell.py)
+            from .g1_cell import two_palm_transfer
+            return two_palm_transfer(env, call, ctx, est)
         pos = np.array(est.pos)
         yaw = math.atan2(2 * est.quat[0] * est.quat[3], 1 - 2 * est.quat[3] ** 2)
         c, s = math.cos(yaw), math.sin(yaw)

@@ -307,6 +307,17 @@ in order, each with its own `data/v2_envs_large/<tranche>/manifest.json` (+ `man
     probe (3087), UR5e (1472), Panda (1472), ur5e_suction (580), fr3_suction (198), z1 (213), so100 (146) pairs (2x
     weight on the decision-relevant families); ALOHA / G1 floating / G1 fixed / TidyBot capped at 100 / 64 / 100 /
     100; real-arm bulk_sweep capped at 93 in total. QUEUED right after tranche3_r4; ETA ~3-3.5 h after it starts.
+  - **tranche8_r6_site: RUNNING** (started 2026-11-24 05:48Z; `plan/tranche8_r6_site.json` from
+    `scripts/envs_plan_large.py --r6 --scale 1.2`, 9875 episodes, envs-r6 from the frozen copy `~/dynagraph_r6` (envs
+    sources sha256 `08692ebe...0cfc`), `dressing="site"` on every task, 8 processes, 7.5 h cap with SIGTERM flush;
+    est. ~5 h). All executable pairs (ROBOTS' runs + earlier tranche pairs + g1_dex3_fixed tote_transfer G1 cell +
+    tidybot shelf_restock with move_base; tidybot conveyor_sort dropped, g1_dex3 floating skipped): probe 3075,
+    ur5e_2f85 1457, panda 1457, ur5e_suction 883, tidybot 840, aloha 536, g1_dex3_fixed 303, fr3_suction 298, z1 228,
+    so100 143; gen3_2f85 655 (heldout_robot only). Splits: train 5167, val 738, test 738, heldout_family 1099
+    (tote_transfer, connector_insert, **drawer_open = G5 hold-out**), heldout_layout 739, heldout_objects 739,
+    heldout_robot 655. Decision-relevant families (r6 table) 2x weight. Records carry `integrity` and
+    `probe_then_act`. Log `~/dynagraph/logs/envs_large_tranche8_r6_site.log`; FINAL line auto-appended to
+    `large_status.md` by the watcher.
   - tranche6_r5: QUEUED after tranche5_r4 (`plan/tranche6_r5.json`, 2612 episodes, envs-r5 from the frozen copy
     `~/dynagraph_r5`, envs sources sha256 `c423ade2...4b86`, flush-on-stop generator): depalletize (new F/T
     mass-probing policy: probe 150, ur5e_suction 120, fr3_suction 80), tote_transfer (probe 100, ur5e 60, panda 60;
@@ -574,9 +585,134 @@ shelf_restock TidyBot aisle, kitting_pocket ur5e), copied to `~/Downloads/dynagr
 (new: dressing keeps task randomisation + determinism + no drops/violations + visual-only geoms non-occluding;
 collision-real props near the station).
 
-### Requests to ROBOTS (from ENVS, round 6)
-* G1 tote lift in the new tote_transfer humanoid cell: the env sends `pick` with `two_palm=1` (your documented G1 tote
-  lift); `envs/robots.py` does not forward it to `run_skill`, so every pick returns `unreachable`.
+### envs-r6 (frozen `~/dynagraph_r6`): blow-up audit, fragility evidence, redesigns, G1 tote cell, dressed tranche
+The dressing-only commit (9226af7) never fed a tranche; the frozen envs-r6 = that commit + everything below.
+
+**1. Simulator blow-ups (MODEL: 3-13 % of real-robot episodes dropped by `v2_train.sanitize`).** Audit
+(`scripts/envs_blowup_scan.py` = physical limits on the stored events; MODEL's own criteria = `v2_train convert` +
+`SANITY_LIMITS` on the converted arrays):
+- **Cause 1 (the bulk of MODEL's drops; not physics): zero-length steps.** Calls rejected at once (`unreachable`,
+  `skipped_after_failures`, `not_observed`, `too_wide`) had t_start == t_end, so the adapter's segment window was
+  empty and `np.gradient` over a constant time axis gave NaN EE velocities (`seg` cols 9-11). 17 % of tranche6_r5
+  episodes had one (fr3_suction depalletize 98 %, panda/ur5e bin_clearing / small_parts_pick 83-96 %, machine_tending
+  79 %, tidybot shelf_restock 59 %). **Fix:** every call takes >= `StationEnv.MIN_CALL_S` = 0.25 s of sim time (robot
+  holding: a planning cycle), `duration_s` included. MODEL: a guard for `t1 - t0 < 1e-6` in `build_segment` would
+  still be wise for older tranches.
+- **Cause 2: conveyor_sort parts queued far upstream** (|x| up to ~8 m on the long belt plate; 20-33 % of conveyor
+  episodes on every robot, `pos > 5 m`). Physically fine, but no camera sees 8 m up a belt. **Fix:** tracker field of
+  view (`track_radius` = 1.5 m around the station) for conveyor_sort.
+- **Cause 3: tidybot x conveyor_sort** - the TidyBot's stowed arm sits 7 mm inside the belt bed from reset (7 kN
+  permanent contact, `max_robot_contact_n` 1e6; 100 % of its episodes). A base 0.6 m back still hits the bin stands
+  and every pick is unreachable -> **pair dropped** from r6 tranches.
+- **Cause 4 (rare, 0.5-2 %): real solver events** - bulk_sweep probe sweeps at 2 mm blade height (BADQACC), a part
+  ejected 5 m in a bin_clearing pick, z1 door_open F/T up to 6e4 N (r4; not reproducible on r5+ code).
+  **Flag:** `metrics["unstable"]` (bool) + `metrics["unstable_reasons"]` (`badqacc` | `ejection` = a free part faster
+  than 6 m/s | `nonfinite`), episode `integrity` dict in every record (`unstable`, `reasons`, `ft_saturated`,
+  `sim_instabilities`); an unstable episode is `fatal` (ends after that call) and **all sensors go silent at the
+  detection**, so no absurd value reaches the stream. The wrist F/T saturates at +-1500 N / +-120 N m like a real
+  sensor (`sensors.FT_RANGE`; count in `metrics.ft_saturated`). A scene that blows up while settling is re-drawn.
+- **Same 210 tasks (35 robot x family pairs incl. every family MODEL named), before -> after:**
+
+| criterion | envs-r5 (frozen) | envs-r6 |
+|---|---|---|
+| MODEL `sanitize` (converted arrays), episodes dropped | 110 / 210 (52 %; 27 of 35 pairs, `seg` NaN) | 6 / 210 (2.9 %: tidybot conveyor only - dropped pair) |
+| physical scan (non-finite, >5 m, F/T > 2 kN, BADQACC) | 1 / 210 (conveyor > 5 m) | 0 / 210 |
+| `integrity.unstable` | (no flag) | 0 / 210 |
+
+  Stored tranches, physical scan: tranche1 2.2 %, tranche2_r3 1.6 %, tranche3 2.5 %, tranche5_r4 1.0 %, tranche6_r5
+  2.0 % - almost all conveyor_sort (> 5 m queue) + tidybot conveyor; per-pair table in `results/v2/envs/blowups_*.json`.
+
+**2. Fragility evidence (actor-legal, correlated, noisy).** Every free object has a hidden contact stiffness
+`hidden["stiffness"]` [N/m]: fragile parts 400 N/m per N of crush limit (x lognormal 0.08), robust parts 80-200 kN/m.
+Two `Prop.STIFFNESS` SENSOR streams:
+- `vision_material` (one-shot at reset, every object): lognormal sigma 0.5, and with p = 0.2 a material confusion
+  (fragile <-> robust) - a cheap, unreliable prior;
+- `tactile_squeeze` (the first time the pads close on a part with >= 2 N, re-armed after 0.3 s without contact):
+  lognormal sigma 0.15 - a light squeeze identifies the crush limit within ~15 %, before a firm grasp crushes it.
+- Actor-side helpers: `env.est_stiffness(e)`, `env.est_crush(e, margin)` (k / 400 if k < 65 kN/m else inf).
+  Labels: `hidden[e]["stiffness"]` next to `crush_n` (MODEL: map `stiffness` -> STIFFNESS, N/m). `metrics.damaged`
+  stays a per-step cumulative counter.
+- **Probe-then-act scripted variant** (`StationEnv.probe_then_act`, policy `scripted_probe`): the first grasp of a
+  part is a 4 N squeeze (a light part may come up on it), later grasps cap the grip at 0.7 x the estimated crush
+  limit. In generation, 50 % of `mixed` episodes run it (`record["probe_then_act"]`, steps `policy_source`
+  `scripted_probe` / `perturbed_scripted_probe`).
+- Probe gripper fix (it hid every grip decision): r5 fingers closed at F / 250 m/s, so a 5 N grasp took 2 s and
+  missed moving parts; r6 closes velocity-servoed at 0.12 m/s with the force capped at the commanded grip force.
+
+**3. G1 tote cell.** ROBOTS' `g1_tote_carry` is lift-hold-put-BACK; a transfer needs a one-way carry, so
+`envs/g1_cell.py::two_palm_transfer` reuses its controller calls (palm frames, force squeeze along the palm normals,
+blended trajectories, fall check) with approach -> squeeze -> lift -> carry `carry_dy` -> lower -> release. New
+humanoid cell (G1 robots): the humanoid at the origin facing +x (ROBOTS' tote-test geometry), one tote (0.3-3 kg
+contents) straddling a pick table and a cart deck at 0.62 m; success = tote centre over the cart deck. The palms
+carry ~10 cm per transfer (reach), so the scripted policy needs two transfers. g1_dex3_fixed: 8/8 bare, dressed OK,
+0 falls / collisions, ~4 s wall per episode. `envs/robots.py` change: 3 lines in `sk_pick` (see ROBOTS section).
+
+**4. Redesigns for the zero-gap families.**
+- **singulation:** painted parts - sliding friction work on the bench (mu m g x slide path, J) above `scuff_j` =
+  0.5 J scuffs (damages) a part, and a 9 s/object cycle limit. Heavy, sticky parts must be picked, light/slippery
+  ones pushed (`base._scuff_body` monitor; the pusher's extra normal load is deliberately not counted, so only mass x
+  friction decides). Gap 0.00 -> +0.40.
+- **conveyor_sort:** mass (heavy x3-6), grip friction (oily) and fragility (30 %, 15-45 N) now decide the grip, now
+  that the probe closes fast enough to catch parts. Gap 0.00 -> +0.40; probe-then-act +0.60 over scripted.
+- **pouch_transfer:** gap +0.05 -> +0.10 (CI crosses 0), but the crush limit decides the grip: probe-then-act lifts
+  scripted 0.05 -> 0.50.
+- **peg_insert:** NOT fixed (-0.05): the probe has no in-hand offset, so the prior's median search radius works at
+  every clearance. Next: an in-hand grasp offset on the probe (real grippers leave 1-3 mm), so tight holes need the
+  search and loose ones pay for it.
+
+**Decision relevance r6 vs r5** (`scripts/envs_decision_relevance.py all 20 4`, probe, 20 seeds, bare; r5 column =
+the latest r4/r5 run per family; r6 rule also has a 5 N grip floor and a 0.7 x crush cap):
+
+| family | r5 gap | r6 oracle / prior | r6 gap [95 % CI] | r6 scripted -> probe-then-act |
+|---|---|---|---|---|
+| depalletize | +0.62 | 1.00 / 0.35 | **+0.65** [+0.45, +0.85] | 1.00 -> 1.00 |
+| singulation | 0.00 | 0.45 / 0.05 | **+0.40** [+0.15, +0.65] | 0.20 -> 0.20 |
+| conveyor_sort | 0.00 | 0.45 / 0.05 | **+0.40** [+0.15, +0.65] | 0.00 -> **0.60** |
+| bin_clearing | +0.35 | 0.35 / 0.05 | **+0.30** [+0.10, +0.50] | 0.15 -> **0.35** |
+| drawer_open (G5 hold-out) | +0.30 | 1.00 / 0.70 | **+0.30** [+0.10, +0.50] | 1.00 -> 1.00 |
+| door_open | +0.25 | 1.00 / 0.70 | **+0.30** [+0.10, +0.50] | 1.00 -> 1.00 |
+| machine_tending | +0.20 | 0.85 / 0.60 | **+0.25** [+0.10, +0.45] | 0.10 -> 0.10 |
+| tote_transfer | +0.19 | 0.40 / 0.20 | **+0.20** [+0.05, +0.40] | 0.30 -> 0.40 |
+| shelf_restock | - | 0.30 / 0.10 | **+0.20** [+0.05, +0.40] | 0.25 -> 0.35 |
+| tool_return | +0.20 | 0.75 / 0.60 | +0.15 [0.00, +0.30] | 0.95 -> 1.00 |
+| fixture_place | +0.15 | 0.95 / 0.80 | +0.15 [0.00, +0.30] | 0.75 -> 0.85 |
+| connector_insert | +0.50 | 0.55 / 0.40 | +0.15 [0.00, +0.30] | 0.50 -> 0.50 |
+| pouch_transfer | +0.05 | 0.55 / 0.45 | +0.10 [-0.10, +0.30] | 0.05 -> **0.50** |
+| twist_lock | +0.15 | 0.80 / 0.70 | +0.10 [0.00, +0.25] | 0.70 -> 0.70 |
+| kitting_pocket | +0.31 | 0.10 / 0.05 | +0.05 [0.00, +0.15] | 0.20 -> 0.30 |
+| small_parts_pick | 0.00 | 0.15 / 0.10 | +0.05 [0.00, +0.15] | 0.10 -> 0.10 |
+| small_peg_insert | 0.00 | 0.60 / 0.55 | +0.05 [0.00, +0.15] | 0.65 -> 0.55 |
+| peg_insert | +0.10 | 0.90 / 0.95 | -0.05 [-0.15, 0.00] | 0.80 -> 0.90 |
+| bulk_sweep | +0.30 | 0.45 / 0.60 | -0.15 [-0.40, +0.10] | 0.45 -> 0.45 |
+
+Regressions to look at: connector_insert (+0.50 -> +0.15), kitting_pocket (+0.31 -> +0.05) and bulk_sweep (+0.30 ->
+-0.15). The fast-closing probe gripper makes the PRIOR rule's low forces work, and the rule changed (5 N floor). The
+fragility signal pays off most where the scripted heuristic crushes parts (conveyor +0.60, pouch +0.45, bin +0.20).
+
+**5. G5 hold-out family: drawer_open** (`splits.HELDOUT_FAMILIES["g5"]`): r6 gap +0.30 [+0.10, +0.50], executable
+on 9 robots incl. gen3 and g1_dex3_fixed, and its nearest neighbour (door_open, the same handle-pull physics) stays in
+training. r6 tranches hold only heldout_family / heldout_layout / heldout_objects drawer episodes. **Older tranches
+(r2-r5) contain drawer_open train/val episodes: exclude them for G5.**
+
+### Request to ENVS from MODEL-V2 (round 3, 2026-11-24): an actor-legal fragility signal
+**ENVS r6 answer:** done (option 2 + a tactile squeeze reading), see envs-r6 section 2 above.
+The hidden `crush_n` is drawn independently of every observable (`scene.fragility(rng, p, lo, hi)`), so a part's crush
+limit is NOT identifiable from actor-legal evidence before it is damaged (exception: pouches, crush = 4 + Young/2500,
+which tracks compliance). MODEL-V2 can still pick the minimal safe grip from mass / grip-friction estimates under the
+family's fragility prior, but cannot tell a fragile part from a sturdy one. Requested (any one is enough):
+1. a **squeeze-test** probe skill (e.g. `pick` with `probe=1`: close to a small force F0 and ramp to F1 < lo) whose
+   wrist F/T + gripper-width / tactile trace shows a part-dependent **yield signature** (e.g. a compliance increase /
+   force plateau starting at ~0.7-0.8 x crush_n for fragile parts, none for unbreakable ones);
+2. or make fragility correlate with an observable (material / SHAPE category, wall thickness, colour) and say so in
+   `hidden_doc`;
+3. and in either case keep `metrics.damaged` as a per-step counter (MODEL-V2 uses its increase as the damage event).
+MODEL-V2 labels unbreakable parts as crush_n = 500 N (instead of inf) for training.
+
+### Requests to ROBOTS (from ENVS, round 6) - RESOLVED by ENVS in envs-r6 (see "G1 tote cell" below)
+* G1 tote lift in the tote_transfer humanoid cell: `envs/robots.py` did not forward `two_palm=1`, so every pick was
+  `unreachable`. ENVS made the minimal adapter change (3 lines in `RobotSkills.sk_pick`, marked "ENVS r6") routing
+  `two_palm` picks of humanoids to `envs/g1_cell.py::two_palm_transfer`. ROBOTS: please keep the routing (or replace it
+  with a one-way carry in `humanoid.py` and tell us).
 
 ### Requests to ROBOTS (from ENVS, round 4)
 1. **Pad contact settings:** please adopt the ENVS pad-pair settings for the real grippers' explicit pad<->object

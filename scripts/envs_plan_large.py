@@ -83,8 +83,12 @@ def main():
     ap.add_argument("--out", default="data/v2_envs_large/plan")
     ap.add_argument("--tranche4", action="store_true")
     ap.add_argument("--r4", action="store_true")
+    ap.add_argument("--r6", action="store_true")
+    ap.add_argument("--scale", type=float, default=1.0)
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
+    if a.r6:
+        return plan_r6(a.out, a.scale)
     if a.r4:
         return plan_r4(a.out)
     if a.tranche4:
@@ -184,6 +188,59 @@ def plan_r4(out):
     for name, tl in (("tranche3_heldout_robot_r4", t3), ("tranche5_r4", t5)):
         json.dump(tl, open(os.path.join(out, f"{name}.json"), "w"))
         print(name, len(tl), dict(collections.Counter(t["robot"] for t in tl)))
+
+
+R6_EXTRA = {"tidybot": ["shelf_restock"], "g1_dex3_fixed": ["tote_transfer"], "probe": ["shelf_restock"],
+            "ur5e_2f85": ["tote_transfer", "conveyor_sort", "singulation"], "panda": ["tote_transfer", "conveyor_sort",
+                                                                                     "singulation"]}
+# r6 decision-relevant families (envs_decision_relevance r6 table, gap CI above 0): 2x weight
+R6_RELEVANT = {"depalletize", "bin_clearing", "singulation", "conveyor_sort", "drawer_open", "door_open",
+               "machine_tending", "tote_transfer", "shelf_restock", "tool_return", "fixture_place", "connector_insert",
+               "pouch_transfer"}     # pouch: probe-then-act gain +0.45 (fragility evidence decides the grip)
+R6_BASE = {"probe": 80, "ur5e_2f85": 42, "panda": 42, "tidybot": 26, "aloha": 18, "ur5e_suction": 40,
+           "fr3_suction": 30, "z1": 24, "so100": 20, "g1_dex3_fixed": 22}
+R6_SKIP = {"g1_dex3"}       # floating-base G1: minutes per episode (ENVS.md), not in the r6 tranche
+# r6 blow-up audit: tidybot conveyor_sort = the stowed arm sits inside the belt bed from reset (7 kN permanent
+# contact, 100 % of episodes blown; a mount 0.6 m back still collides with the bin stands, every pick unreachable)
+R6_SKIP_PAIRS = {("tidybot", "conveyor_sort")}
+
+
+def plan_r6(out, scale=1.0):
+    """envs-r6 dressed tranche (dressing='site' on every task): all executable pairs (ROBOTS' runs + earlier
+    tranche pairs + r6 additions g1_dex3_fixed tote_transfer cell / tidybot shelf_restock move_base), gen3 held out
+    (heldout_robot split only), the G5 hold-out family (splits.HELDOUT_FAMILIES['g5']) only in held-out splits."""
+    keep, _ = executable_pairs()
+    pairs = {r: set(f) for r, f in keep.items() if r not in R6_SKIP}
+    pairs["probe"] = set(FAMILIES)
+    for src in (T4_PAIRS, R6_EXTRA):
+        for r, fams in src.items():
+            pairs.setdefault(r, set()).update(fams)
+    t8, t8h = [], []
+    for rob, fams in sorted(pairs.items()):
+        for fam in sorted(fams):
+            if fam not in FAMILIES or (rob, fam) in R6_SKIP_PAIRS:
+                continue
+            if rob == HELDOUT_ROBOT:
+                t8h += tasks_for(rob, fam, max(4, int(32 * scale * EXPENSIVE.get(fam, 1.0))), base_seed=800000)
+                continue
+            if rob not in R6_BASE:
+                continue
+            n = R6_BASE[rob] * (2 if fam in R6_RELEVANT else 1)
+            if rob == "g1_dex3_fixed" and fam == "tote_transfer":
+                n = 80
+            if rob != "probe":
+                n = int(n * EXPENSIVE.get(fam, 1.0))
+            t8 += tasks_for(rob, fam, max(int(n * scale), 4), base_seed=800000)
+    allt = t8 + t8h
+    for t in allt:
+        t["params"]["dressing"] = "site"
+    # deterministic shuffle: a partial run (time limit) is still balanced over robots x families x splits
+    import hashlib
+    allt.sort(key=lambda t: hashlib.sha256(f"{t['robot']}|{t['family']}|{t['split']}|{t['seed']}".encode()).hexdigest())
+    json.dump(allt, open(os.path.join(out, "tranche8_r6_site.json"), "w"))
+    print("tranche8_r6_site", len(allt), dict(collections.Counter(t["robot"] for t in allt)))
+    print("splits", dict(collections.Counter(t["split"] for t in allt)))
+    print("families", dict(collections.Counter(t["family"] for t in allt)))
 
 
 if __name__ == "__main__":

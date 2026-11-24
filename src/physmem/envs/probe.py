@@ -60,6 +60,7 @@ class ProbeRobot:
     """tool: 'parallel' | 'suction' | 'blade'. max_open = max half opening of the parallel gripper (m)."""
 
     LIM = np.array([150.0, 150.0, 250.0, 15.0])   # x y z [N], yaw [Nm]
+    CLOSE_V = 0.12     # r6: finger closing speed [m/s] per finger (velocity servo, force-capped at the grip force)
     KP = np.array([4000.0, 4000.0, 6000.0, 60.0])
     KD = np.array([250.0, 250.0, 300.0, 3.0])
 
@@ -113,9 +114,11 @@ class ProbeRobot:
         if self.tool == "parallel":
             for side, sgn in (("l", 1), ("r", -1)):
                 f = hand.add_body(name=f"probe_f{side}", pos=[0, 0, self.finger_half])
-                # gearbox-like damping: free closing speed ~ F / 250 m/s (<= 0.4 m/s), no tunnelling through walls
+                # r6: light damping + a velocity-servoed close (CLOSE_V, force-capped at the commanded grip force; see
+                # step): closing speed no longer scales with the grip force (r5: F / 250 m/s -> a 5 N grasp took 2 s
+                # to close and missed every moving part); the speed cap still prevents tunnelling through walls
                 f.add_joint(name=f"probe_jf{side}", type=J.mjJNT_SLIDE, axis=[0, sgn, 0], range=[0.0, self.max_open],
-                            limited=True, damping=250.0, armature=0.05)
+                            limited=True, damping=40.0, armature=0.05)
                 g = f.add_geom(type=G.mjGEOM_BOX, size=[0.012, 0.005, self.finger_half], pos=[0, sgn * 0.005, 0],
                                rgba=[0.2, 0.2, 0.22, 1], name=f"probe_pad{side}",
                                friction=[self.pad_mu, 0.01, 0.0001], condim=4, solref=[self.pad_solref, 1])
@@ -346,9 +349,18 @@ class ProbeRobot:
         if self.fing is not None:
             mode, val = self.grip_cmd
             if mode == "force":
-                gf = -np.clip(val, 0, self.grip_max)
-                u = np.array([gf, gf])
+                F = float(np.clip(val, 0, self.grip_max))
+                dqf = d.qvel[self.fing["vadr"]]
+                # velocity PI (damping feed-forward + low P gain, stable at the 1-2 ms step); on contact the
+                # integrator winds the squeeze up to the commanded F within ~60 ms (anti-windup clamp at F)
+                err = -self.CLOSE_V - dqf
+                gi = getattr(self, "_gi", None)
+                gi = np.zeros(2) if gi is None or len(gi) != len(err) else gi
+                gi = np.clip(gi + 6000.0 * err * dt, -F - 10.0, 10.0)
+                self._gi = gi
+                u = np.clip(-40.0 * self.CLOSE_V + 30.0 * err + gi, -F, F)
             else:
+                self._gi = None
                 qf = d.qpos[self.fing["qadr"]]
                 dqf = d.qvel[self.fing["vadr"]]
                 u = np.clip(3000.0 * (val / 2 - qf), -self.grip_max, self.grip_max)

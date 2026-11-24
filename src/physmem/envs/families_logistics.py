@@ -263,6 +263,8 @@ class ConveyorSort(StationEnv):
     hidden_doc = ("belt speed 0.03-0.12 m/s (estimable from tracking), part mass incl. heavy x3-6, part<->gripper "
                   "friction (oily parts), part<->belt friction: intercept timing / lead, grip force")
 
+    track_radius = 1.5      # r6: tracker field of view around the station (queued parts upstream are not seen)
+
     def build(self, scene, rng, params):
         top = 0.80
         self.surface_z = top
@@ -456,18 +458,36 @@ class ToteTransfer(StationEnv):
                   "friction 0.2-0.6: grip capacity 2*mu_g*F vs m(g+a) -> grip force / lift speed")
 
     def build(self, scene, rng, params):
+        robot_name = getattr(getattr(self, "task", None), "robot", "") or ""
+        self.humanoid_cell = bool(params.get("humanoid_cell", robot_name.startswith("g1")))
+        if self.humanoid_cell:
+            return self._build_humanoid_cell(scene, rng, params)
         # staggered two-tier flow rack (lower tier in front), cart on the robot side
         tiers = [(0.15, 0.45), (0.45, 0.85)]       # (y, z of shelf top)
         for ti, (y, z) in enumerate(tiers):
             scene.static_box((0.0, y, z - 0.015), (0.5, 0.15, 0.015), rgba=(0.7, 0.55, 0.2, 1), name=f"tier{ti}")
             for sx in (-1, 1):
                 scene.static_box((sx * 0.5, y, z / 2), (0.02, 0.02, z / 2), rgba=DARK)
-        # envs-r6 humanoid cell (default for G1 robots): the cart stands at the humanoid's right at 0.75 m and the
-        # humanoid 0.35 m in front of the rack's lower tier (in the default cell the G1 stood inside the cart)
-        robot_name = getattr(getattr(self, "task", None), "robot", "") or ""
-        self.humanoid_cell = bool(params.get("humanoid_cell", robot_name.startswith("g1")))
-        ccx, ccy, chx, chy = (0.7, -0.25, 0.2, 0.33) if self.humanoid_cell else (0.0, -0.45, 0.45, 0.2)
-        cz = 0.75 if self.humanoid_cell else 0.6
+        ccx, ccy, chx, chy = (0.0, -0.45, 0.45, 0.2)
+        cz = 0.6
+        self._cart(scene, ccx, ccy, chx, chy, cz)
+        n = int(params.get("n_totes", rng.integers(2, 4)))
+        hx, hy, hz = 0.15, 0.1, 0.06
+        slots = [(tiers[0], -0.2), (tiers[0], 0.2), (tiers[1], -0.2), (tiers[1], 0.2)]
+        order = rng.permutation(len(slots))[:n]
+        for k, si in enumerate(order):
+            (y, z), x = slots[si]
+            self._tote(scene, rng, params, k, (x + rng.uniform(-0.02, 0.02), y + rng.uniform(-0.02, 0.02), z + hz + 0.002),
+                       rng.uniform(-0.05, 0.05), np.exp(rng.uniform(np.log(0.3), np.log(9.0))))
+        self.cart_slots = [(-0.22, 0.0), (0.22, 0.0), (0.0, 0.0)]
+        self.safe_z = 0.85 + 2 * hz + 0.12 + 0.05
+        standard_mounts(scene, (0.0, -0.1), 0.0, (0.5, 0.35), gantry_h=1.75)
+        scene.mounts["arm"] = [((0.0, -0.12, 0.7), math.pi / 2)]     # pedestal between the cart and the rack
+        scene.camera = dict(pos=(0.0, -0.6, 2.2), lookat=(0.0, 0.0, 0.6), view_pos=(1.5, -1.6, 1.7),
+                            view_lookat=(0.0, 0.0, 0.6))
+        self.budget = int(params.get("budget", 3 * n))
+
+    def _cart(self, scene, ccx, ccy, chx, chy, cz):
         scene.static_box((ccx, ccy, cz - 0.02), (chx, chy, 0.02), rgba=(0.5, 0.52, 0.55, 1), name="tote_cart")
         for sx in (-1, 1):
             for sy in (-1, 1):
@@ -475,34 +495,51 @@ class ToteTransfer(StationEnv):
                                  (0.02, 0.02, (cz - 0.04) / 2), rgba=DARK)
         scene.region("cart", (ccx, ccy, cz + 0.07), (chx, chy, 0.08), support_z=cz)
         self.surface_z = cz
-        n = int(params.get("n_totes", rng.integers(2, 4)))
+
+    def _tote(self, scene, rng, params, k, pos, yaw, content):
         hx, hy, hz, t = 0.15, 0.1, 0.06, 0.008
-        slots = [(tiers[0], -0.2), (tiers[0], 0.2), (tiers[1], -0.2), (tiers[1], 0.2)]
-        order = rng.permutation(len(slots))[:n]
-        for k, si in enumerate(order):
-            (y, z), x = slots[si]
-            content = float(params.get("content_mass", np.exp(rng.uniform(np.log(0.3), np.log(9.0)))))
-            boxes = [((0, 0, -hz + t / 2), (hx, hy, t / 2)),
-                     ((hx - t / 2, 0, 0), (t / 2, hy, hz)), ((-hx + t / 2, 0, 0), (t / 2, hy, hz)),
-                     ((0, hy - t / 2, 0), (hx - t, t / 2, hz)), ((0, -hy + t / 2, 0), (hx - t, t / 2, hz))]
-            ms = [0.4 + content, 0.15, 0.15, 0.15, 0.15]
-            _, info = scene.compound(f"tote{k}", boxes, (x + rng.uniform(-0.02, 0.02), y + rng.uniform(-0.02, 0.02),
-                                                         z + hz + 0.002),
-                                     yaw=rng.uniform(-0.05, 0.05), mu=float(rng.uniform(0.2, 0.6)),
-                                     mu_grip=float(rng.uniform(0.4, 0.9)), timeconst=0.01, kind="tote", rgba=BLUE_TOTE,
-                                     mass_split=ms, extra_hidden=dict(content_mass=content,
-                                                                       crush_n=fragility(rng, 0.5, 60, 140, params)))
-            info.shape = "tote"
-        self.cart_slots = ([(0.0, -0.22), (0.0, 0.0), (0.0, 0.22)] if self.humanoid_cell
-                           else [(-0.22, 0.0), (0.22, 0.0), (0.0, 0.0)])
-        self.safe_z = 0.85 + 2 * hz + 0.12 + 0.05
-        standard_mounts(scene, (0.0, -0.1), 0.0, (0.5, 0.35), gantry_h=1.75)
-        scene.mounts["arm"] = [((0.0, -0.12, 0.7), math.pi / 2)]     # pedestal between the cart and the rack
-        if self.humanoid_cell:
-            scene.mounts["humanoid"] = [((0.0, -0.32, 0.0), math.pi / 2)]   # 0.32 m in front of the lower tier
-        scene.camera = dict(pos=(0.0, -0.6, 2.2), lookat=(0.0, 0.0, 0.6), view_pos=(1.5, -1.6, 1.7),
-                            view_lookat=(0.0, 0.0, 0.6))
-        self.budget = int(params.get("budget", 3 * n))
+        content = float(params.get("content_mass", content))
+        boxes = [((0, 0, -hz + t / 2), (hx, hy, t / 2)),
+                 ((hx - t / 2, 0, 0), (t / 2, hy, hz)), ((-hx + t / 2, 0, 0), (t / 2, hy, hz)),
+                 ((0, hy - t / 2, 0), (hx - t, t / 2, hz)), ((0, -hy + t / 2, 0), (hx - t, t / 2, hz))]
+        ms = [0.4 + content, 0.15, 0.15, 0.15, 0.15]
+        _, info = scene.compound(f"tote{k}", boxes, pos, yaw=yaw, mu=float(rng.uniform(0.2, 0.6)),
+                                 mu_grip=float(rng.uniform(0.4, 0.9)), timeconst=0.01, kind="tote", rgba=BLUE_TOTE,
+                                 mass_split=ms, extra_hidden=dict(content_mass=content,
+                                                                   crush_n=fragility(rng, 0.5, 60, 140, params)))
+        info.shape = "tote"
+
+    # envs-r6 G1 cell (default for G1 robots; ROBOTS' tote-test geometry): the humanoid stands at the origin facing
+    # +x; ONE tote on a waist-high pick table in front-right, the cart deck at the same height in front-left, 5 cm
+    # apart. The G1 moves the tote with ONE two-palm transfer `pick` (two_palm=1, carry_dy): squeeze both palms,
+    # lift, carry sideways, put down, release (envs/g1_cell.py). Hidden content mass (0.3-3 kg, G1 payload) and
+    # palm friction decide the squeeze; heavy + slippery totes slide out of a light squeeze.
+    G1_TOP = 0.62
+
+    def _build_humanoid_cell(self, scene, rng, params):
+        top = self.G1_TOP
+        # pick table y in [-0.255, -0.005], cart deck y in [0.005, 0.255]: the tote starts straddling the joint
+        # (two adjacent decks, as at a conveyor transfer) and must end with its centre over the cart deck
+        scene.static_box((0.47, -0.13, top - 0.015), (0.3, 0.125, 0.015), rgba=(0.7, 0.55, 0.2, 1), name="tier0")
+        for sx in (-1, 1):
+            for sy in (-1, 1):
+                scene.static_box((0.47 + sx * 0.27, -0.13 + sy * 0.1, (top - 0.03) / 2), (0.02, 0.02, (top - 0.03) / 2),
+                                 rgba=DARK)
+        self._cart(scene, 0.47, 0.13, 0.3, 0.125, top)
+        self.scene.regions["cart"]["center"] = (0.47, 0.15, top + 0.07)     # tote centre over the cart deck,
+        self.scene.regions["cart"]["half"] = (0.3, 0.11, 0.08)              # y in [0.04, 0.26]
+        hz = 0.06
+        self._tote(scene, rng, params, 0, (0.31 + rng.uniform(-0.01, 0.01), -0.08 + rng.uniform(-0.01, 0.01),
+                                           top + hz + 0.002), rng.uniform(-0.03, 0.03),
+                   np.exp(rng.uniform(np.log(0.3), np.log(3.0))))
+        self.cart_slots = [(-0.16, 0.0)]
+        self.safe_z = top + 2 * hz + 0.15
+        standard_mounts(scene, (0.4, 0.0), top, (0.4, 0.35), gantry_h=1.75)
+        scene.mounts["humanoid"] = [((-0.03, 0.0, 0.0), 0.0)]      # robots.py steps humanoids +0.03 along the heading
+        scene.mounts["arm"] = [((0.3, -0.55, top), math.pi / 2)]
+        scene.camera = dict(pos=(1.3, 0.0, 1.7), lookat=(0.35, 0.0, top), view_pos=(1.6, -1.4, 1.6),
+                            view_lookat=(0.3, 0.0, top))
+        self.budget = int(params.get("budget", 3))
 
     def totes(self):
         return self.objects("tote")
@@ -531,6 +568,13 @@ class ToteTransfer(StationEnv):
             mem.add(held)
         self._placed_mem = mem
         out = []
+        if getattr(self, "humanoid_cell", False):
+            cart = self.scene.regions["cart"]
+            for e in self.totes():
+                est = self.est_pose(e)
+                if est is not None and not self.in_region_est(e, cart, margin=-0.01):
+                    out.append((est[0][1], e))
+            return [e for _, e in sorted(out)]
         for e in self.totes():
             est = self.est_pose(e)
             if est is not None and est[0][1] > -0.1 and not (e in mem and self.est_age(e) > 0.5):
@@ -538,12 +582,27 @@ class ToteTransfer(StationEnv):
         return [e for _, e in sorted(out)]
 
     def _pick_call(self, e, rng=None, **kw):
-        p = dict(grip_force=40.0, lift_speed=0.25, depth=0.5, approach_speed=0.5, lift_height=0.15)
         if getattr(self, "humanoid_cell", False):
-            p["two_palm"] = 1          # ROBOTS: G1 lifts a tote between both palms (run_skill pick, two_palm=1)
+            return self._transfer_call(e, rng, **kw)
+        p = dict(grip_force=40.0, lift_speed=0.25, depth=0.5, approach_speed=0.5, lift_height=0.15)
         if rng is not None:
             p.update(grip_force=float(rng.uniform(10, 120)), lift_speed=float(rng.uniform(0.05, 0.6)),
                      depth=float(rng.uniform(0.2, 0.7)))
+        p.update(kw)
+        return SkillCall("pick", p, target=e)
+
+    def _transfer_call(self, e, rng=None, **kw):
+        """G1 cell: one two-palm transfer onto the cart (carry_dy from the tote ESTIMATE to the cart region)."""
+        est = self.est_pose(e)
+        reg = self.scene.regions["cart"]
+        dy = float(reg["center"][1] - est[0][1]) if est is not None else 0.33
+        p = dict(two_palm=1, squeeze_n=30.0, lift_height=0.08, carry_dy=dy, carry_s=2.0)
+        if rng is not None:
+            p.update(squeeze_n=float(rng.uniform(10, 60)), lift_height=float(rng.uniform(0.04, 0.12)),
+                     carry_s=float(rng.uniform(1.0, 3.5)), carry_dy=dy + float(rng.normal(0, 0.02)))
+        if "grip_force" in kw:
+            kw["squeeze_n"] = kw.pop("grip_force")
+        kw.pop("lift_speed", None), kw.pop("depth", None)
         p.update(kw)
         return SkillCall("pick", p, target=e)
 
@@ -570,6 +629,8 @@ class ToteTransfer(StationEnv):
         cand = [e for e in rem if self.fail_count.get(e, 0) < 3] or rem
         e = cand[0]
         k = self.fail_count.get(e, 0)
+        if getattr(self, "humanoid_cell", False):
+            return self._transfer_call(e, squeeze_n=(30.0, 45.0, 60.0)[min(k, 2)])
         return self._pick_call(e, grip_force=(80.0, 140.0, 150.0)[min(k, 2)], lift_speed=(0.15, 0.06, 0.04)[min(k, 2)],
                                depth=(0.5, 0.5, 0.3)[min(k, 2)])
 

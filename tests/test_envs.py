@@ -395,3 +395,103 @@ def test_dressing_props_are_collision_real_near_the_station():
     assert env.dress_stats["collision_geoms"] > 20                                     # crates, racking, conveyor
     ev = env.reset(task("depalletize", 1, dressing="site"))
     assert all(e.provenance in (Provenance.SENSOR, Provenance.DERIVED) for e in ev)
+
+
+# ------------------------------------------------------------------ envs-r6: blow-ups, fragility evidence, redesigns
+def test_rejected_call_still_takes_min_time_and_streams_proprio():
+    """r6: a call rejected at once (here: target never observed) costs MIN_CALL_S of sim time with the robot holding,
+    so the step's sensor window is never empty (zero-length steps gave NaN segment features downstream)."""
+    from physmem.envs.base import StationEnv
+    env = make_env("bin_clearing")
+    env.reset(task("bin_clearing", 5))
+    t0 = env.t
+    out = env.execute(SkillCall("pick", dict(grip_force=10.0), target="no_such_part"))
+    assert env.t - t0 >= StationEnv.MIN_CALL_S - 1e-9
+    assert out.result.duration_s >= StationEnv.MIN_CALL_S - 1e-6
+    w = [e for e in out.events if e.property_type == XProp.WRENCH and t0 <= e.measured_at <= env.t]
+    assert len(w) >= 4
+
+
+def test_blowup_monitor_flags_ejection_and_silences_sensors():
+    env = make_env("bin_clearing")
+    env.reset(task("bin_clearing", 6))
+    e = env.parts()[0]
+    env.d.qvel[env.dadr[e]:env.dadr[e] + 3] = (0.0, 0.0, 30.0)     # a solver ejection
+    env._last_q = None
+    out = env.execute(SkillCall("reach", dict(x=0.0, y=-0.3, z=float(env.safe_z), speed=0.5), target="tote"))
+    assert "ejection" in env.unstable_reasons and out.metrics["unstable"] and out.done
+    assert not [ev for ev in out.events if ev.measured_at > env.last_t0 + 0.05]   # silent after the flag
+
+
+def test_ft_reading_saturates_at_sensor_range():
+    from physmem.envs.sensors import FT_RANGE
+    env = make_env("peg_insert")
+    env.reset(task("peg_insert", 1))
+    env.robot.tare = np.full(6, -1e5)          # absurd wrench -> clipped reading, counted
+    env.idle(0.2)
+    w = [e for e in env.events_all if e.property_type == XProp.WRENCH][-1]
+    assert np.all(np.abs(w.value) <= FT_RANGE + 1e-6) and env.metrics_acc["ft_saturated"] > 0
+
+
+def test_fragility_evidence_is_actor_legal_and_correlated():
+    """r6: every free object gets a noisy vision stiffness prior at reset and a sharper tactile reading when the
+    pads first squeeze it; the reading tracks the hidden crush limit (stiffness = 400 N/m per N for fragile parts)."""
+    from physmem.envs.base import STIFF_FRAGILE
+    env = make_env("bin_clearing")
+    env.reset(task("bin_clearing", 500003))
+    vis = [e for e in env.events_all if e.property_type == XProp.STIFFNESS]
+    assert {e.entity_id for e in vis} == set(env.parts())
+    assert all(e.provenance == Provenance.SENSOR and e.source_id == "vision_material" for e in vis)
+    for _ in range(14):
+        c = env.scripted()
+        if c is None:
+            break
+        if env.execute(c).done:
+            break
+    tac = [e for e in env.events_all if e.property_type == XProp.STIFFNESS and e.source_id == "tactile_squeeze"]
+    assert tac
+    for e in tac:
+        h = env.scene.entities[e.entity_id].hidden
+        assert abs(math.log(e.value[0] / h["stiffness"])) < 0.6
+        if np.isfinite(h["crush_n"]):
+            assert e.value[0] < 1.3 * STIFF_FRAGILE
+    assert all("stiffness" in env.labels()["hidden"][p] for p in env.parts())
+
+
+def test_probe_then_act_squeezes_lightly_first_then_caps_force():
+    env = make_env("bin_clearing")
+    env.reset(task("bin_clearing", 500000))
+    c = env.probe_then_act(env.scripted())
+    assert c.params["grip_force"] <= env.PROBE_F + 1e-9
+    env.execute(c)
+    k, src = env.est_stiffness(c.target)
+    assert src == "tactile_squeeze"
+    c2 = env.probe_then_act(SkillCall("pick", dict(grip_force=90.0), target=c.target))
+    crush = env.est_crush(c.target, margin=1.2)
+    assert c2.params["grip_force"] == pytest.approx(min(90.0, 0.7 * crush) if np.isfinite(crush) else 90.0)
+
+
+def test_singulation_scuff_monitor_damages_dragged_heavy_sticky_parts():
+    env = make_env("singulation")
+    env.reset(task("singulation", 2, scuff_j=0.05))
+    e = env.objects()[0]
+    h = env.scene.entities[e].hidden
+    assert h["scuff_j"] == pytest.approx(0.05)
+    v = 0.3
+    for _ in range(40):              # slide the part across the bench at 0.3 m/s (as a push would)
+        env.d.qvel[env.dadr[e]] = v
+        env._last_q = None
+        env.run(0.01)
+    w = env._scuff_w.get(env.body_id[e], 0.0)
+    assert w > 0
+    assert (e in env.damaged) == (w > 0.05)
+
+
+def test_g1_tote_cell_geometry_and_transfer_call():
+    from physmem.envs.families_logistics import ToteTransfer
+    env = make_env("tote_transfer")
+    env.reset(task("tote_transfer", 4, split="heldout_family", humanoid_cell=True))
+    assert env.humanoid_cell and len(env.totes()) == 1
+    c = env.scripted()
+    assert c.skill == "pick" and c.params["two_palm"] == 1 and c.params["carry_dy"] > 0.1
+    assert env.scene.mounts["humanoid"][0][1] == 0.0 and isinstance(env, ToteTransfer)

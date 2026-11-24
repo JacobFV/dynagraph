@@ -19,7 +19,10 @@ import hashlib
 from ..v2.api import TaskSpec
 
 SPLITS = ("train", "val", "test", "heldout_layout", "heldout_objects", "heldout_family", "heldout_robot")
-HELDOUT_FAMILIES = {"bulk": "tote_transfer", "fine": "connector_insert"}
+# envs-r6: drawer_open is held out for G5 (zero-shot family transfer; oracle-vs-prior gap +0.30 [+0.10, +0.50] in
+# the r6 decision-relevance table; door_open - the closest family - stays in training). Older tranches (r2-r5)
+# DO contain drawer_open train/val episodes: exclude them when evaluating G5.
+HELDOUT_FAMILIES = {"bulk": "tote_transfer", "fine": "connector_insert", "g5": "drawer_open"}
 BENCH_FAMILIES = {"bin_clearing", "singulation", "bulk_sweep", "peg_insert", "connector_insert", "tool_return",
                   "fixture_place", "kitting_pocket", "drawer_open", "door_open", "twist_lock", "machine_tending",
                   "small_parts_pick", "small_peg_insert"}

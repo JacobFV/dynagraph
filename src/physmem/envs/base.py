@@ -25,6 +25,11 @@ from .props import XProp
 MOBILE_ROBOTS = {"tidybot"}
 
 
+STIFF_PER_N = 400.0          # r6: fragile part contact stiffness [N/m] per N of crush limit (stiffness ~ 400 * crush_n)
+STIFF_FRAGILE = 6.5e4        # readings below this say 'fragile' (fragile max 56 kN/m, robust >= 80 kN/m)
+TACTILE_LOG_SIGMA = 0.15     # tactile squeeze reading noise (lognormal)
+
+
 def seed_of(task: TaskSpec, salt="") -> int:
     h = hashlib.sha256(f"{task.family}|{task.seed}|{task.split}|{salt}".encode()).digest()
     return int.from_bytes(h[:8], "little")
@@ -55,7 +60,7 @@ class StationEnv:
         for attempt in range(4):
             ev = self._reset_once(task, attempt)
             # a scene whose settle dropped an object or went numerically unstable is re-drawn deterministically
-            if self.metrics_acc["drops"] == 0 and self.metrics_acc["sim_instabilities"] == 0:
+            if self.metrics_acc["drops"] == 0 and self.metrics_acc["sim_instabilities"] == 0 and not self._settle_bad:
                 break
         self.reset_attempts = attempt + 1
         return ev
@@ -106,7 +111,9 @@ class StationEnv:
         self.n_calls = 0
         self.fail_count = {}
         self.metrics_acc = dict(collisions=0, integrity_violations=0, drops=0, max_robot_contact_n=0.0,
-                                sim_instabilities=0, damaged=0)
+                                sim_instabilities=0, damaged=0, ejections=0, ft_saturated=0)
+        self.unstable_reasons = []
+        self._settle_bad = False
         self._coll_pairs = set()
         self._drops_before, self._coll_before = 0, 0
         self.view = None
@@ -148,6 +155,15 @@ class StationEnv:
         self.last_held_before = self.held
         self.last_t0 = self.t
         res: SkillResult = self.skills.run(self, call)
+        # r6: every call takes at least MIN_CALL_S of sim time (a rejected / infeasible call still costs a planning
+        # cycle with the robot holding); zero-length steps produced empty sensor windows (NaN segment features)
+        el = self.t - self.last_t0
+        if el < self.MIN_CALL_S - 1e-9:
+            self.run(self.MIN_CALL_S - el)
+            try:
+                res.duration_s = max(float(res.duration_s), self.t - self.last_t0)
+            except Exception:
+                pass
         self.last_call, self.last_result = call, res
         if not res.ok and call.target is not None:
             self.fail_count[call.target] = self.fail_count.get(call.target, 0) + 1
@@ -155,7 +171,7 @@ class StationEnv:
         self.events_all.extend(ev)
         succ = self.solved()
         prog = self.progress()
-        fatal = self.fatal() or self.metrics_acc["sim_instabilities"] > 0
+        fatal = self.fatal() or self.metrics_acc["sim_instabilities"] > 0 or self.unstable
         done = succ or fatal or self.n_calls >= self.budget
         st = res.status
         flags = dict(slip=st in ("slipped", "handle_slipped", "contact_lost"), jam=st == "jammed",
@@ -165,7 +181,8 @@ class StationEnv:
         self._drops_before, self._coll_before = self.metrics_acc["drops"], self.metrics_acc["collisions"]
         metrics = dict(progress=prog, progress_delta=prog - before, n_calls=self.n_calls, t=self.t, **flags,
                        **{k: v for k, v in self.metrics_acc.items()}, effort_cost=res.effort.cost(),
-                       fatal=fatal, **self.metrics_extra())
+                       fatal=fatal, unstable=self.unstable, unstable_reasons=list(self.unstable_reasons),
+                       **self.metrics_extra())
         return StepOut(events=ev, result=res, done=done, success=succ, metrics=metrics, labels=self.labels())
 
     def candidate_skills(self, belief, n: int, rng) -> list:
@@ -278,10 +295,31 @@ class StationEnv:
                               if np.isfinite(info.hidden.get("crush_n", np.inf)) and self.body_id.get(eid, -1) >= 0}
         self.damaged = set()
         self._sq_ema = {}
+        # r6 fragility evidence: every free object carries a contact stiffness (N/m, hidden 'stiffness') that is
+        # CORRELATED with its crush limit (fragile: STIFF_PER_N * crush_n; robust: 80-200 kN/m). It is observable
+        # only through noisy actor-legal readings (sensors.vision_material at reset; a tactile squeeze reading the
+        # first time the pads close on the part, see _contact_monitor). Separate rng: scene draws are unchanged.
+        srng = np.random.default_rng(seed_of(self.task, "stiffness"))
+        self._stiff_body, self._touching = {}, {}
+        for eid, info in self.scene.entities.items():
+            if info.etype != EntityType.OBJECT or not info.movable:
+                continue
+            if "stiffness" not in info.hidden:
+                c = info.hidden.get("crush_n", np.inf)
+                info.hidden["stiffness"] = (float(STIFF_PER_N * c * srng.lognormal(0.0, 0.08)) if np.isfinite(c)
+                                            else float(srng.uniform(8e4, 2e5)))
+            if self.body_id.get(eid, -1) >= 0:
+                self._stiff_body[self.body_id[eid]] = eid
         self._dent_body = {self.body_id[eid]: (eid, float(info.hidden["dent_n"]))
                            for eid, info in self.scene.entities.items()
                            if np.isfinite(info.hidden.get("dent_n", np.inf)) and self.body_id.get(eid, -1) >= 0}
         self._dent_ema = {}
+        self._scuff_body = {self.body_id[eid]: (eid, float(info.hidden["scuff_j"]),
+                                                float(info.hidden.get("mu", 0.5)) * float(info.hidden.get("mass", 0.1)) * 9.81)
+                            for eid, info in self.scene.entities.items()
+                            if np.isfinite(info.hidden.get("scuff_j", np.inf)) and self.body_id.get(eid, -1) >= 0
+                            and eid in self.dadr}
+        self._scuff_w = {}
         self._flex_ema = {}
         # squeeze is measured on the gripper PADS only (palm bumps / pushes do not crush a part)
         pads = set(getattr(self.robot, "pad_ids", set()))
@@ -349,6 +387,16 @@ class StationEnv:
             self._n_badqacc = nw
             self.metrics_acc["sim_instabilities"] += 1
             self._prev_full_q = None
+            self._mark_unstable("badqacc")
+        if self._step_i % 5 == 0 and len(self._obj_d):
+            # r6 blow-up monitor: a free part moving faster than EJECT_V (a 1 m drop reaches 4.4 m/s) or a
+            # non-finite state is a solver blow-up (contact ejection), not physics the model should learn
+            v = d.qvel[self._obj_d].reshape(-1, 6)
+            if not np.isfinite(v).all() or not np.isfinite(d.qpos[self._obj_q]).all():
+                self._mark_unstable("nonfinite")
+            elif float(np.max(np.einsum("ij,ij->i", v[:, :3], v[:, :3]))) > self.EJECT_V ** 2:
+                self.metrics_acc["ejections"] += 1
+                self._mark_unstable("ejection")
         self._integrity_post()
         if len(self._obj_q):
             self._last_q = d.qpos[self._obj_q].copy()
@@ -356,9 +404,92 @@ class StationEnv:
         self._step_i += 1
         if self._step_i % 5 == 0:
             self._contact_monitor()
-        if not self._settling:
-            self.sensors.tick(self.t)
+        if not self._settling and not self.unstable_reasons:
+            self.sensors.tick(self.t)      # sensors go silent after a blow-up: no absurd values reach the stream
         return stop is not None and self._step_i % 5 == 0 and stop()
+
+    EJECT_V = 6.0
+
+    def _tactile_squeeze(self, padf):
+        """r6: a pad-closure onto a part (>= TOUCH_N total pad normal force, i.e. the light-squeeze phase of any grasp)
+        yields ONE tactile contact-stiffness reading (Prop.STIFFNESS, N/m, lognormal noise sigma 0.15) per touch."""
+        if self._settling or self.unstable_reasons:
+            return
+        tch = self._touching
+        for ob, f in padf.items():
+            if f >= 0.5 and ob in tch:
+                tch[ob] = self.t
+        for ob in list(tch):
+            if self.t - tch[ob] > 0.3:           # re-armed after 0.3 s without pad contact (a new grasp)
+                del tch[ob]
+        for ob, f in padf.items():
+            if f >= self.TOUCH_N and ob not in tch:
+                tch[ob] = self.t
+                eid = self._stiff_body[ob]
+                k = float(self.scene.entities[eid].hidden["stiffness"])
+                s = self.sensors
+                km = k * math.exp(s.rng.normal(0.0, TACTILE_LOG_SIGMA))
+                s.ev(eid, XProp.STIFFNESS, (km,), ((TACTILE_LOG_SIGMA * km) ** 2,), self.t, 0.03, "tactile_squeeze")
+
+    TOUCH_N = 2.0
+    PROBE_F = 4.0       # N: light-squeeze probe grasp (below every family's minimum crush limit, 6 N)
+
+    def probe_then_act(self, call):
+        """r6 fragility-aware scripted variant (actor-legal): the FIRST grasp of a part is a light squeeze
+        (PROBE_F; a light part may simply come up), which yields a tactile stiffness reading; every later grasp of it
+        caps the grip force at 0.7 x the crush limit estimated from that reading (est_crush, 1.2 margin). Parts the
+        vision prior calls clearly robust skip the probe after a first failure."""
+        if (call is None or call.skill != "pick" or "grip_force" not in call.params
+                or call.target not in self.scene.entities or call.params.get("two_palm")):
+            return call
+        k, src = self.est_stiffness(call.target)
+        p = dict(call.params)
+        if src != "tactile_squeeze":
+            if not (k is not None and k >= 1.5 * STIFF_FRAGILE and self.fail_count.get(call.target, 0) > 0):
+                p["grip_force"] = min(float(p["grip_force"]), self.PROBE_F)
+                return replace(call, params=p)
+        crush = self.est_crush(call.target, margin=1.2)
+        if crush is not None and np.isfinite(crush):
+            p["grip_force"] = float(min(float(p["grip_force"]), 0.7 * crush))
+        return replace(call, params=p)
+
+    def est_stiffness(self, eid):
+        """actor-legal: (stiffness N/m, source) from the latest tactile squeeze reading, else the vision material
+        prior, else (None, None)."""
+        if self.view is None:
+            return None, None
+        best = None
+        for e in self.view.buf.get((eid, int(XProp.STIFFNESS)), ()):
+            if e.available_at <= self.t + 1e-9:
+                rank = 1 if e.source_id == "tactile_squeeze" else 0
+                if best is None or (rank, e.measured_at) > best[0]:
+                    best = ((rank, e.measured_at), e)
+        if best is None:
+            return None, None
+        return float(best[1].value[0]), best[1].source_id
+
+    def est_crush(self, eid, margin=1.0):
+        """actor-legal crush-limit estimate (N per pad) from the stiffness evidence: k / STIFF_PER_N when the
+        reading says 'fragile' (k < STIFF_FRAGILE), inf when it says robust, None without evidence. `margin`
+        divides the estimate (e.g. 1.25 for a conservative bound under the reading noise)."""
+        k, src = self.est_stiffness(eid)
+        if k is None:
+            return None
+        if k >= STIFF_FRAGILE:
+            return float("inf")
+        return k / STIFF_PER_N / margin
+    MIN_CALL_S = 0.25
+
+    def _mark_unstable(self, why):
+        if self._settling:
+            self._settle_bad = True
+            return
+        if why not in self.unstable_reasons:
+            self.unstable_reasons.append(why)
+
+    @property
+    def unstable(self) -> bool:
+        return bool(getattr(self, "unstable_reasons", None))
 
     def _contact_monitor(self):
         m, d = self.m, self.d
@@ -368,13 +499,16 @@ class StationEnv:
         rob = (self._robot_geom_arr[g[:, 0]] & (g[:, 0] >= 0)) | (self._robot_geom_arr[g[:, 1]] & (g[:, 1] >= 0))
         f6 = np.zeros(6)
         squeeze = {}
+        padf = {}
         for i in np.nonzero(rob)[0]:
             mujoco.mj_contactForce(m, d, int(i), f6)
             fn = abs(f6[0])
-            if self._fragile_body and (self._pad_arr[g[i, 0]] or self._pad_arr[g[i, 1]]):
+            if self._pad_arr[g[i, 0]] or self._pad_arr[g[i, 1]]:
                 ob = int(m.geom_bodyid[g[i, 1] if self._robot_geom_arr[g[i, 0]] else g[i, 0]])
                 if ob in self._fragile_body:
                     squeeze[ob] = squeeze.get(ob, 0.0) + fn
+                if ob in self._stiff_body:
+                    padf[ob] = padf.get(ob, 0.0) + fn
             if fn > self.metrics_acc["max_robot_contact_n"]:
                 self.metrics_acc["max_robot_contact_n"] = float(fn)
             key = (int(g[i, 0]), int(g[i, 1]))
@@ -384,6 +518,7 @@ class StationEnv:
                     self.metrics_acc["collisions"] += 1
             else:
                 self._coll_pairs.discard(key)
+        self._tactile_squeeze(padf)
         # fragile parts: total robot contact normal force / 2 (= per-pad squeeze for a two-pad pinch) above the
         # part's hidden crush limit damages it (counted once; success requires no damaged part)
         # sustained squeeze (EMA over ~30 ms of 10 ms samples): closing impacts do not count, holding force does
@@ -419,6 +554,31 @@ class StationEnv:
                 if self._dent_ema[ob] > lim and eid not in self.damaged:
                     self.damaged.add(eid)
                     self.metrics_acc["damaged"] += 1
+        # r6: surface-finish scuffing: sliding friction work against STATIC fixtures (|f_t| * |v_slide| * dt, J) above
+        # the part's hidden scuff_j damages it - dragging a heavy, high-friction part across the bench marks it, so
+        # mass x friction decides push (cheap) vs pick (cycle time) in singulation
+        if self._scuff_body:
+            gb = m.geom_bodyid
+            b0, b1 = gb[g[:, 0]], gb[g[:, 1]]
+            fixed = ((b0 == 0) & (g[:, 1] >= 0)) | ((b1 == 0) & (g[:, 0] >= 0))
+            dt5 = 5 * m.opt.timestep
+            seen = set()
+            for i in np.nonzero(fixed)[0]:
+                ob = int(b1[i] if b0[i] == 0 else b0[i])
+                if ob in self._scuff_body and ob not in seen:
+                    seen.add(ob)
+                    eid, lim, mumg = self._scuff_body[ob]
+                    v = d.qvel[self.dadr[eid]:self.dadr[eid] + 2]
+                    sp = float(math.hypot(v[0], v[1]))
+                    if sp < 1e-3:
+                        continue
+                    # friction work at the part's own weight (mu m g x slide path): the pusher's extra normal load
+                    # is not counted, so the damage depends on mass x friction only, as the hidden_doc says
+                    w = self._scuff_w.get(ob, 0.0) + mumg * sp * dt5
+                    self._scuff_w[ob] = w
+                    if w > lim and eid not in self.damaged:
+                        self.damaged.add(eid)
+                        self.metrics_acc["damaged"] += 1
         # r5: soft flex parts (pouch): pad squeeze on flex vertices above the hidden crush limit damages it
         if self._flex_crush and d.ncon:
             fx = d.contact.flex
@@ -461,7 +621,7 @@ class StationEnv:
                     "_coll_pairs", "_last_q", "_prev_full_q", "_prev_v", "_step_i", "_n_badqacc", "_drops_before",
                     "_coll_before", "last_call", "last_result", "last_held_before", "_believe", "_sorted",
                     "_seated_belief", "flagged", "_ow_attempts", "_looks", "_sq_ema", "_dent_ema", "_flex_ema", "last_t0",
-                    "_placed_mem", "_mass_ev", "_pick_xy")
+                    "_placed_mem", "_mass_ev", "_pick_xy", "unstable_reasons", "_touching", "_scuff_w")
 
     def snapshot(self):
         """Full evaluator-side state: MuJoCo integration state + env bookkeeping + sensor/actor caches + robot
@@ -538,6 +698,8 @@ class StationEnv:
                     m.dof_damping[dof] = float(ov["damping"])
             if "crush_n" in ov and bid >= 0:
                 self._fragile_body[bid] = (eid, float(ov["crush_n"]))
+                if "stiffness" not in ov and np.isfinite(float(ov["crush_n"])):
+                    info.hidden["stiffness"] = STIFF_PER_N * float(ov["crush_n"])
             info.hidden.update({k: float(v) for k, v in ov.items()})
 
     def resimulate(self, snap, overrides, call):

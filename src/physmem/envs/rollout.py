@@ -35,12 +35,17 @@ def perturb(call, rng, frac=0.3):
     return replace(call, params=p)
 
 
-def choose(env, rng, mode):
-    """policy mixture: 'scripted' (pure baseline), 'mixed' (0.4 scripted / 0.4 random feasible candidate / 0.2
-    perturbed scripted), 'explore' (random candidates). Returns (call, policy_source) or (None, None)."""
+def choose(env, rng, mode, probe=False):
+    """policy mixture: 'scripted' (pure baseline), 'scripted_probe' (r6 fragility-aware probe-then-act scripted
+    variant, StationEnv.probe_then_act), 'mixed' (0.4 scripted / 0.4 random feasible candidate / 0.2 perturbed
+    scripted; with probe=True the scripted calls are probe-then-act), 'explore' (random candidates).
+    Returns (call, policy_source) or (None, None)."""
     if mode == "scripted":
         c = env.scripted()
         return c, "scripted"
+    if mode == "scripted_probe":
+        c = env.scripted()
+        return (env.probe_then_act(c) if c is not None else None), "scripted_probe"
     u = rng.random() if mode == "mixed" else 0.5
     if u >= 0.4 and u < 0.8 or mode == "explore":
         cands = env.candidate_skills(None, 8, rng)
@@ -50,9 +55,12 @@ def choose(env, rng, mode):
     if c is None:
         cands = env.candidate_skills(None, 8, rng)
         return (cands[int(rng.integers(len(cands)))], "random_candidate") if cands else (None, None)
+    tag = ""
+    if probe:
+        c, tag = env.probe_then_act(c), "_probe"
     if u >= 0.8:
-        return perturb(c, rng), "perturbed_scripted"
-    return c, "scripted"
+        return perturb(c, rng), "perturbed_scripted" + tag
+    return c, "scripted" + tag
 
 
 def run_episode(task, keep_events=True):
@@ -66,9 +74,13 @@ def run_episode(task, keep_events=True):
     out = None
     err = None
     aborted = False
+    # r6: half of the mixed episodes run the probe-then-act scripted variant (light first squeeze -> tactile
+    # stiffness -> crush-bounded grip); drawn from its own stream so the policy draws below are unchanged
+    probe = mode == "mixed" and np.random.default_rng(int.from_bytes(hashlib.sha256(
+        f"probe|{task.family}|{task.seed}|{task.robot}|{task.split}".encode()).digest()[:8], "little")).random() < 0.5
     try:
         while True:
-            call, src = choose(env, prng, mode)
+            call, src = choose(env, prng, mode, probe)
             if call is None:
                 break
             t_start = env.t
@@ -87,7 +99,11 @@ def run_episode(task, keep_events=True):
         err = repr(e)[:500]
     success = bool(env.solved()) if err is None else False
     from physmem.envs.io import events_to_array
-    rec = dict(task=asdict(task), episode_id=env.episode_id, policy=mode,
+    rec = dict(task=asdict(task), episode_id=env.episode_id, policy=mode, probe_then_act=bool(probe),
+               integrity=dict(unstable=bool(getattr(env, "unstable", False)),
+                              reasons=list(getattr(env, "unstable_reasons", [])),
+                              ft_saturated=int(env.metrics_acc.get("ft_saturated", 0)),
+                              sim_instabilities=int(env.metrics_acc.get("sim_instabilities", 0))),
                events=events_to_array(env.events_all) if keep_events else None,
                n_events=len(env.events_all), steps=steps, success=success, sim_t=env.t, wall_s=time.time() - t0,
                final_metrics=(out.metrics if out else {}), error=err, goal=env.goal(),

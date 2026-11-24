@@ -34,6 +34,10 @@ def quat_yaw(q):
     return math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z))
 
 
+VISION_LOG_SIGMA, VISION_CONFUSE_P = 0.5, 0.2        # r6 vision material prior
+FT_RANGE = np.array([1500.0, 1500.0, 1500.0, 120.0, 120.0, 120.0])    # N, N*m (r6)
+
+
 class SensorSuite:
     def __init__(self, env, rng, bulk=False, fine=False):
         self.env = env
@@ -90,6 +94,17 @@ class SensorSuite:
             oh = np.zeros(len(SHAPES))
             oh[SHAPES.index(info.shape) if info.shape in SHAPES else 0] = 1
             self.ev(eid, XProp.SHAPE, oh, [0.0] * len(SHAPES), t, 0.0, "tracker")
+        # r6: vision material classifier -> coarse contact-stiffness prior per free object (Prop.STIFFNESS, N/m):
+        # lognormal sigma 0.5 around the true value, and with p=0.2 a material confusion (reading drawn from the
+        # other class: fragile <-> robust). Free at reset; the tactile squeeze reading (env) is far sharper.
+        for eid, info in env.scene.entities.items():
+            k = info.hidden.get("stiffness")
+            if k is None or info.etype != EntityType.OBJECT or not info.movable:
+                continue
+            if self.rng.random() < VISION_CONFUSE_P:
+                k = float(self.rng.uniform(8e4, 2e5)) if k < 6.5e4 else 400.0 * float(self.rng.uniform(15, 60))
+            km = float(k) * math.exp(self.rng.normal(0.0, VISION_LOG_SIGMA))
+            self.ev(eid, Prop.STIFFNESS, (km,), ((VISION_LOG_SIGMA * km) ** 2,), t, 0.0, "vision_material")
         for eid, info in env.scene.entities.items():      # articulated links: first joint reading always arrives
             if info.etype == EntityType.LINK:
                 q = float(env.d.qpos[env.m.jnt_qposadr[env.m.joint(info.meta["joint"]).id]])
@@ -135,6 +150,9 @@ class SensorSuite:
                             c["latency"] + abs(rng.normal(0, c["jitter"])))
                 continue
             p, quat = env.true_pose(eid)
+            R = getattr(env, "track_radius", None)
+            if R is not None and math.hypot(p[0] - env.station_center[0], p[1] - env.station_center[1]) > R:
+                continue        # r6: outside the tracker camera's field of view (e.g. parts queued far upstream)
             if c["trigger_m"] > 0:
                 last = self._last_rep.get(eid)
                 if last is not None and np.linalg.norm(p - last[0]) < c["trigger_m"] and t - last[1] < c["keyframe_s"]:
@@ -170,6 +188,10 @@ class SensorSuite:
         self.ev("robot/hand", XProp.EE_POSE, (*tcp, *quat_from_yaw(yaw)), [1e-8] * 7, t, 0.002, "encoders",
                 Provenance.DERIVED)
         w = r.wrench() + rng.normal(0, c["ft_sigma"], 6) * np.array([1, 1, 1, 0.05, 0.05, 0.05])
+        # r6: a real wrist F/T has a finite range; readings beyond it saturate (counted in metrics ft_saturated)
+        if not np.isfinite(w).all() or (np.abs(w) > FT_RANGE).any():
+            env.metrics_acc["ft_saturated"] = env.metrics_acc.get("ft_saturated", 0) + 1
+            w = np.clip(np.nan_to_num(w, nan=0.0), -FT_RANGE, FT_RANGE)
         self.ev("robot/hand", XProp.WRENCH, w, [c["ft_sigma"] ** 2] * 3 + [(0.05 * c["ft_sigma"]) ** 2] * 3, t, 0.004,
                 "wrist_ft")
         gw = r.grip_width()

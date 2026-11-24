@@ -165,11 +165,13 @@ class Singulation(StationEnv):
     station = "push_table"
     tool = "parallel"
     gap_req = 0.03
+    SCUFF_J = 0.5
+    CYCLE_S = 9.0         # r6: default cycle-time limit per object (a push ~3 s, a probe pick + place ~11 s)
     success_doc = ("every object has >= 3 cm clearance to every other object, stays on the work area, none damaged, "
-                   "within the cycle-time limit (7 s per object)")
-    hidden_doc = ("object<->bench friction (0.15-0.9) x mass (log-U 0.1-3 kg) vs a hidden crush limit 4-14 N per pad: a "
-                  "push needs ~mu m g of pad force (crushes heavy sticky parts) -> push light/slippery parts, pick the "
-                  "heavy sticky ones (pick + place costs cycle time); push travel after release still depends on mu")
+                   "unscuffed, within the cycle-time limit (9 s per object)")
+    hidden_doc = ("object<->bench friction (0.15-0.9) x mass (log-U 0.1-3 kg). r6: painted finish - sliding friction work "
+                  "on the bench (mu m g x slide path) above 0.5 J scuffs a part, so heavy sticky parts must be PICKED "
+                  "(pick + place costs cycle time), light / slippery ones pushed; push travel after release depends on mu")
 
     def build(self, scene, rng, params):
         top = bench_station(scene)
@@ -197,8 +199,10 @@ class Singulation(StationEnv):
             # r5 finding: the probe's position-controlled pusher loads parts with 80-130 N whatever mu*m*g is
             # (it shoves the cluster), so a crush limit cannot encode push-vs-pick yet -> opt-in via params only
             crush = float(params["crush_n"]) if "crush_n" in params else float("inf")
+            # r6: painted-finish parts: sliding friction work on the bench above scuff_j (J) marks them (base monitor)
             scene.part(f"obj{i}", shape, (hx, hy, hz), (x, y, top + hz + 0.002), yaw=rng.uniform(-0.2, 0.2),
-                       mass=mass, mu=mu, mu_grip=0.8, restitution=0.05, extra_hidden=dict(crush_n=crush))
+                       mass=mass, mu=mu, mu_grip=0.8, restitution=0.05,
+                       extra_hidden=dict(crush_n=crush, scuff_j=float(params.get("scuff_j", self.SCUFF_J))))
             k += 1
         # envs-r4: bounded work area (fixture plate, marked): pushing a part off it fails the episode, so how far a
         # push carries (speed vs hidden friction) matters, not only that parts separate
@@ -209,7 +213,7 @@ class Singulation(StationEnv):
         scene.marker((0.0, 0.02), wh, top, rgba=(0.2, 0.6, 0.9, 0.35))
         self.budget = int(params.get("budget", 3 * n))
         # r5: cycle-time limit (pushes ~3 s, a pick + place ~11 s with the probe): picking everything does not fit
-        self.cycle_limit = float(params.get("cycle_limit", 1e9))
+        self.cycle_limit = float(params.get("cycle_limit", self.CYCLE_S * n))
 
     def _gaps(self):
         m, d = self.m, self.d

@@ -534,6 +534,18 @@ def site_tote_transfer(env, D, rng):
     s = env.scene
     up, bm = D.mat("upright", UPRIGHT, spec=0.4), D.mat("beam", BEAM, spec=0.3)
     dk = D.mat("deck", GALV, spec=0.5)
+    if getattr(env, "humanoid_cell", False):
+        # r6 G1 cell: pick table = galvanised deck, cart = a roller-conveyor section leading away (+x), racking behind
+        _restyle(s, "tier0", dk)
+        _hide(s, "tote_cart")
+        reg = s.regions["cart"]
+        (ccx, ccy, _), (chx, chy, _), cz = reg["center"], reg["half"], reg["support_z"]
+        D.roller_conveyor(ccx - chx, ccy, ccx + chx, ccy, top=cz, width=2 * chy, solid=False, flat_top=False)
+        D.roller_conveyor(ccx + chx + 0.02, ccy, ccx + chx + 1.6, ccy, top=cz, width=2 * chy)
+        for x0 in (-3.2, 1.0):
+            if D.free(*D.fp(x0 + 1.1, 1.35, 1.15, 0.54, 0.0)):
+                D.rack_bay(x0 + 1.1, 1.35, 0.0, bay=2.2)
+        return [(-3.5, -0.95, 3.5, -0.95, 0.9)]
     for nm in ("tier0", "tier1"):
         _restyle(s, nm, dk)
     for (y, z) in ((0.15, 0.45), (0.45, 0.85)):
