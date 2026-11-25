@@ -114,7 +114,7 @@ def build_family_arrays(episodes, emb_of_robot, rng=None):
             rows["seg"].append(seg_tensor(it.segment).astype(np.float16))
             rows["call"].append(S.named_call_vector(it.skill, it.params))
             rows["an"].append(S.analytic_features(it.segment if it.segment.shape[0] == S.SEG_T
-                                                  else S.resample_segment(it.segment)))
+                                                  else S.resample_segment(it.segment), getattr(it, "tactile_k", None)))
             rows["tend"].append(it.t_end)
             rows["on_t"].append(it.target_is_query)
             # per-episode local target index by first appearance (equality only; no id semantics)
@@ -148,6 +148,13 @@ def build_family_arrays(episodes, emb_of_robot, rng=None):
     return out
 
 
+def upgrade_an_width(an: np.ndarray) -> np.ndarray:
+    """legacy analytic-feature arrays (14, before the r7 tactile features) -> current width (zeros = no reading)."""
+    if an.shape[-1] < S.N_AN:
+        an = np.concatenate([an, np.zeros(an.shape[:-1] + (S.N_AN - an.shape[-1],), an.dtype)], -1)
+    return an
+
+
 def upgrade_call_width(call: np.ndarray) -> np.ndarray:
     """legacy named-call arrays (10-skill one-hot, before move_base) -> current width (zero move_base column)."""
     legacy = S.N_SKILLS_LEGACY + 2 * S.N_PARAM
@@ -167,7 +174,7 @@ class FamilyStore:
         dv = device
         self.seg = torch.as_tensor(arrays["seg"], device=dv)                       # fp16 (n,T,C)
         self.call = torch.as_tensor(upgrade_call_width(arrays["call"]), device=dv)
-        self.an = torch.as_tensor(arrays["an"], device=dv)
+        self.an = torch.as_tensor(upgrade_an_width(arrays["an"]), device=dv)
         self.tend = torch.as_tensor(arrays["tend"], device=dv, dtype=torch.float32)
         self.on_t = torch.as_tensor(arrays["on_t"], device=dv)
         self.tgt = torch.as_tensor(arrays["tgt"] if "tgt" in arrays else np.zeros(self.n, np.int64), device=dv,
@@ -230,7 +237,7 @@ def single_batch(history, frame: S.EntityFrame, emb: np.ndarray, calls: np.ndarr
     for i, it in enumerate(hist):
         xr = it.segment if it.segment.shape[0] == S.SEG_T else S.resample_segment(it.segment)
         seg[i] = xr / S.CH_SCALE
-        an[i] = S.analytic_features(xr)
+        an[i] = S.analytic_features(xr, getattr(it, "tactile_k", None))
         call[i] = S.named_call_vector(it.skill, it.params)
         m[i] = True
         age[i] = max(now - it.t_end, 0.0)
@@ -263,7 +270,8 @@ def arrays_hash(arrays: dict) -> str:
 
 def concat_arrays(parts: list) -> dict:
     """concatenate build_family_arrays outputs (same family): re-index episodes / ep_start, pad entities."""
-    parts = [dict(p, call=upgrade_call_width(p["call"])) for p in parts if p is not None and len(p["k"])]
+    parts = [dict(p, call=upgrade_call_width(p["call"]), an=upgrade_an_width(p["an"]))
+             for p in parts if p is not None and len(p["k"])]
     nmax = max(p["ent"].shape[1] for p in parts)
     out, row0, ep0 = {}, 0, 0
     acc = {k: [] for k in parts[0]}

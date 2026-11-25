@@ -744,3 +744,129 @@ site-dressed). `results/v2/videos_paired/pouch_transfer__ur5e_2f85__s2900001.mp4
 FAIL (damaged part), effort 1,780; right = gated residual anchored on probe-then-act: SUCCESS, effort 608) + 4 stills
 (20 / 45 / 70 / 95 % of the clip) in `results/v2/videos_paired/stills/` and `~/Downloads/dynagraph_gallery/paired/`.
 An earlier render of the plain-anchored residual for the same task (also success) is kept in `_superseded_plain_anchor/`.
+
+## 11. Round 4 (r7, 2026-11-25): memory-conditioned probing on LOTS of parts
+
+### 11a. Design
+- **Lot protocol** (`models/v2/lot.py`, evaluation protocol on bin_clearing, 3 parts per bin; evaluator-side setup via
+  ENVS `env.set_hidden`): all parts of an episode come from ONE lot sharing a density factor (log-U 0.5-2.0 on each
+  part's own mass), grip friction (0.2-0.9) and crush limit (fragile w.p. 0.6, 8-30 N per pad, else unbreakable with
+  stiffness 80-200 kN/m); the matching contact stiffness drives the ENVS vision (re-emitted after the override) and
+  tactile readings. The actor only knows "these parts are one lot": the typed memory fuses all their interactions under
+  the opaque target id 'lot'. Fragile lots are drawn FEASIBLE for the heaviest part at the slowest lift
+  (2 mu 0.7 crush >= 1.15 m_max (g + 0.7)), so a policy that knows the lot can always succeed; the grip window
+  [m (g + a)/(2 mu), 0.7 crush] is often narrow and needs a slower lift -> crush x friction x mass interact (lead item 2):
+  fixed 40 N crushes fragile lots, probe-then-act's 0.7 x crush cap slips heavy / slippery parts at its lift speed.
+- **Probing costs**: the ENVS budget is 4 calls per part; a probe is an extra light (4 N) grasp.
+- **Memory-conditioned probing** (`LotPlanner`): for each pick, SKIP candidates = the scripted call with grip
+  {3..40 N} x lift speed {0.2, 0.1, 0.05} scored by a 3-seed model ensemble on P(damage) + P(slip) + P(drop) + a time
+  cost; PROBE (ENVS probe-then-act's light squeeze) only if the part is unprobed and the upper bound
+  mean + kappa * sd (ensemble disagreement + lot-posterior spread) of the best skip's risk exceeds tau (tuned on VAL).
+  Variants: typed (lot memory), typed_nolot (lot fusion off: memory ablation), generic (generic-memory ensemble),
+  oracle (true lot latents; labelled). Baselines: never-probe (plain scripted), always-probe (probe-then-act).
+- **Model (schema physmem-v2-model-4)**: the ENVS r6 tactile squeeze reading taken during an interaction is an
+  actor-legal per-interaction analytic feature (so the sysID can turn it into a crush estimate that the lot fusion
+  carries to the next part). Training data: r2-r6 tranches + tranche8_r6_site re-converted with the feature + the two
+  round-3 on-policy rounds (`data/v2_r7_final`, drawer_open train/val excluded, Gen3 held out); typed / generic x 3
+  seeds (`v2_robots_r7_*`).
+
+### 11b. Issues found while building the protocol (fixed)
+- An ABSOLUTE lot mass (e.g. 0.24 kg for parts of 0.08-0.73 kg) ejects parts (`ejection`, `badqacc`) -> lot density
+  factor on each part's own mass; x0.5 and x2.0 are stable (0/4 unstable each).
+- Some overrides destabilise the scene right after reset (instability at t = 0.66 s) and the episode then never
+  terminates -> a 0.3 s settle check after the override redraws the lot deterministically (same lot for every policy;
+  attempts recorded), and every episode has a wall-clock guard (`EPISODE_TIMEOUT`; a hung episode is a recorded failure
+  with `timeout = 1`). After the fix: 3-8 s per episode (ur5e, 3 parts).
+- Paired-video label strip: rewritten as three short lines (robot / task / seed / split; policy; time / effort /
+  skill + outcome) so nothing clips at the half-panel edge (`paired_videos.StripRecorder`).
+
+### 11c. Pre-registration (written 2026-11-25 ~04:20Z, BEFORE any model policy was run on lots)
+- VAL baselines, ur5e, 20 lots, 3 parts, budget 12 calls: never-probe (plain scripted) success 0.00, damage 0.50,
+  progress 0.48; always-probe (probe-then-act) success 0.05, damage 0.00, progress 0.25 (3.2 probes per lot, budget
+  exhausted). Episode success is near 0 for both, so a success-only comparison would be uninformative.
+- **Primary metric: good parts per lot** = fraction of the lot's parts that end in the tote AND undamaged
+  (evaluator-side, `harness._good_parts_fraction`). Secondary: episode success (ENVS predicate), damage rate, probes per
+  lot, sim time, effort.
+- Comparisons: Δ good-parts of each policy vs (a) always-probe PTA and (b) the generic-memory planner, paired over the
+  same seeded lots, 95% bootstrap CI over lots; n = 30 lots per cell; cells: bin_clearing lots on ur5e_2f85, panda
+  (in-distribution) and gen3_2f85 (held-out robot, `heldout_robot` split), plus the probe gantry. tau chosen on VAL
+  lots (ur5e) from {0.05, 0.15, 0.30}, then frozen. Paired videos only for cells with a significant typed win over PTA.
+
+### 11d. Pre-registered results (bin_clearing lots, 3 parts, n = 30 paired lots per robot, tau = 0.15 from VAL)
+Full tables: `results/v2/closed_loop/robot_table_r7.md` / `.json` (raw episodes `v2_r7_lot_<robot>.json`). Primary =
+good parts per lot (in tote and undamaged). Δ = paired mean [95% bootstrap CI]; **bold** = CI above 0.
+
+| robot (split) | never-probe | always-probe PTA | generic | typed, lot OFF | typed lot memory | oracle | typed − PTA | typed − generic | typed − never-probe |
+|---|---|---|---|---|---|---|---|---|---|
+| ur5e (test) | 0.28 | 0.34 | 0.16 | 0.41 | 0.39 | 0.37 | +0.04 [−0.03,+0.13] | **+0.23 [+0.12,+0.34]** | **+0.11 [+0.01,+0.21]** |
+| panda (test) | 0.09 | 0.08 | 0.07 | 0.11 | 0.13 | 0.10 | +0.06 [−0.01,+0.12] | **+0.07 [+0.01,+0.12]** | **+0.04 [+0.01,+0.09]** |
+| gen3 (held-out robot) | 0.11 | 0.18 | 0.10 | 0.20 | 0.24 | 0.26 | +0.07 [−0.03,+0.18] | **+0.14 [+0.06,+0.26]** | **+0.13 [+0.03,+0.23]** |
+| probe gantry (test) | 0.54 | 0.87 | 0.48 | 0.84 | 0.82 | 0.84 | −0.04 [−0.11,+0.01] | **+0.34 [+0.24,+0.46]** | **+0.28 [+0.12,+0.43]** |
+
+Damage rate (lots with >= 1 crushed part): never-probe 0.40 / 0.23 / 0.43 / 0.43 (ur5e/panda/gen3/probe), PTA 0.07 / 0.13 /
+0.03 / 0.13, typed 0.17 / 0.00 / 0.07 / 0.13. Probes per lot: PTA 3.4 / 5.8 / 3.2 / 3.1; typed 0 / 0 / 0 / 3.0.
+No episode timeouts.
+
+Verdicts (honest):
+- **vs the generic model: met** on all four robots incl. held-out Gen3 (+0.07 .. +0.34 good parts per lot).
+- **vs never-probe: met** on all four (+0.04 .. +0.28).
+- **vs always-probe PTA: NOT met.** Point estimates +0.04 .. +0.07 on the three arms, −0.04 on the probe gantry; no CI
+  excludes 0. Typed matches PTA's good parts while using no probes on the arms (PTA spends 3-6 calls per lot), but its
+  damage is higher than PTA's on ur5e (0.17 vs 0.07, n.s.).
+- **The pre-registered probing rule did not do memory-conditioned probing.** With tau = 0.15 the risk-UCB rule never
+  probed on the arms and always probed on the gantry: the decision tracked the embodiment's calibrated risk level, not
+  what memory held about the lot. The memory ablation (lot memory OFF) is within noise of typed on good parts on all
+  four robots (−0.02 .. +0.04; damage −0.13 [−0.27, −0.03] on gen3 is the only significant lot-memory effect). So the
+  pre-registered gains over generic and never-probe come from the typed model's grip / lift-speed choice per call, not
+  from carrying the lot across parts.
+- Diagnosis (`scripts/v2/diag_lot.py`): after ONE probe the typed lot posterior is already sharp (crush z-sd 2.6 -> 0.26,
+  posterior 21 N for a true 27 N lot) and carries to the next parts (sd 0.28 before they are touched) — the memory
+  works — but the risk head does not translate a 21 N crush posterior into a grip limit (it chose 28 N on a 22 N lot
+  and crushed it), and the UCB of the predicted slip risk stays above tau, so every part is re-probed.
+
+### 11e. EXPLORATORY v2 (designed AFTER seeing 11d; evaluated on a FRESH lot set, seeds +800000, n = 30)
+`LotPlanner(crush_gate=True)` uses the typed crush posterior directly: probe a part only while the lot's crush posterior
+is uncertain (z-sd > 1) and the part is unprobed; grips are capped at 0.7 x the posterior 10th percentile when the
+lot is believed fragile; risk ranking among the remaining (grip, lift) candidates as before. The generic model has no
+posterior, so its rule is unchanged. Table: `results/v2/closed_loop/robot_table_r7v2.md` (`v2_r7v2_lot_<robot>.json`).
+
+| robot | PTA good / probes | typed v2 good / probes | typed v2 − PTA good | typed v2 − PTA probes | v2 lot memory ON − OFF: probes | ON − OFF: good |
+|---|---|---|---|---|---|---|
+| ur5e (test) | 0.22 / 3.2 | 0.24 / 1.7 | +0.02 [−0.06,+0.12] | **−1.50 [−2.40,−0.67]** | **−1.97 [−2.80,−1.20]** | **+0.08 [+0.02,+0.14]** |
+| panda (test) | 0.07 / 5.7 | 0.08 / 5.4 | +0.01 [+0.00,+0.03] | n.s. | **−1.50 [−2.23,−0.83]** | +0.00 [−0.03,+0.03] |
+| probe gantry (test) | 0.77 / 3.5 | 0.77 / 1.2 | −0.00 [−0.07,+0.07] | **−2.27 [−2.90,−1.77]** | **−2.07 [−2.60,−1.70]** | +0.02 [−0.03,+0.08] |
+| gen3 (held-out) | 0.17 / 2.5 | 0.18 / 1.3 | +0.01 [−0.08,+0.10] | **−1.23 [−1.73,−0.70]** | **−1.97 [−2.77,−1.23]** | +0.01 [−0.06,+0.09] |
+
+Gen3 v2 cell: 14 of 180 episodes hit the wall-clock guard (2-4 per policy; MuJoCo instabilities on the held-out
+arm that the 0.3 s settle check did not catch). They count as 0 good parts. Tasks 15-29 of this cell ran with a 60 s
+guard instead of 300 s (normal episodes take 3-8 s) after a hung episode was found (see 11f). typed v2 vs generic on
+Gen3: **+0.08 [+0.01,+0.14]**.
+
+- This is the memory-conditioned probing the round asked for: with the lot memory ON the planner probes about once per
+  lot (first part) and then skips; with it OFF (same rule, per-part memory) it probes every part. Same good parts as
+  always-probe PTA with 1.2-2.3 fewer probe calls per lot on ur5e, held-out Gen3 and the gantry, damage −0.13 [−0.30, 0.00] vs PTA
+  on the gantry (n.s.). On ur5e, lot memory also adds +0.08 good parts over the no-lot ablation.
+- Still **no significant good-parts win over PTA**: with a budget of 4 calls per part the probes PTA spends rarely
+  bind. The memory advantage shows up as fewer probe calls and less sim time (gantry median 38 s vs 43 s), not as more
+  good parts. A tighter budget or more parts per lot would turn the saved probe calls into parts; that is
+  untested here and would need a new pre-registration.
+- Panda: probes stay high (5.4 per lot) because Panda's light probe grasps often fail to return a tactile reading, so
+  the part never counts as probed and the posterior stays wide; all policies are near the floor (≤ 0.11 good parts)
+  on Panda lots.
+- Exploratory status: the rule was designed after seeing 11d on different lots; tau and the gate thresholds were not
+  retuned on the fresh set.
+
+### 11f. Videos and artefacts
+- One paired, same-seed video, for the significant cost win (probe gantry, lot seed 2800011, test; both policies
+  succeed, PTA 3 probes vs typed v2 1 probe, sim time 46 s vs 38 s): `results/v2/videos_paired/bin_clearing__probe__s2800011.mp4`
+  (+ `.json`), stills at 20/45/70/95% in `results/v2/videos_paired/stills/` and `~/Downloads/dynagraph_gallery/paired/`.
+  The label strip now has three lines with the probe count; the first line no longer clips. No video for good parts
+  vs PTA, since no cell has a significant win there.
+- Code: `models/v2/lot.py` (lot protocol, LotPlanner incl. crush gate), `harness._good_parts_fraction`, episode
+  wall-clock guard (`EPISODE_TIMEOUT`; the timeout exception derives from BaseException because env code catches
+  Exception, which had let one held-out Gen3 v2 lot spin on an unstable reset), `scripts/v2/{lot_eval, r7_train.sh,
+  r7_final.sh, r7v2_final.sh, r7_table, diag_lot, find_slow, time_lot}.py|sh`; tests: 28 pass, 1 skip
+  (`test_r7_lot_sampler_feasible_and_tactile_feature`).
+- Models: `results/v2/checkpoints/v2_robots_r7_{typed,generic}_s{0,1,2}.pt` (schema physmem-v2-model-4; tactile
+  feature). Test crush-latent correlation after 0-3 interactions: bin_clearing 0.59 -> 0.62, tool_return 0.62 -> 0.73,
+  pouch_transfer −0.26 -> 0.51.

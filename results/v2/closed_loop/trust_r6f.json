@@ -1,0 +1,69 @@
+{
+ "rule": "deviate from scripted only if VAL success AUC >= 0.8 (v2_robots_r6f_typed_s0)",
+ "families": {
+  "bin_clearing": {
+   "val_auc": 0.919,
+   "trusted": true
+  },
+  "bulk_sweep": {
+   "val_auc": 0.55,
+   "trusted": false
+  },
+  "conveyor_sort": {
+   "val_auc": 0.937,
+   "trusted": true
+  },
+  "depalletize": {
+   "val_auc": 0.864,
+   "trusted": true
+  },
+  "door_open": {
+   "val_auc": 0.871,
+   "trusted": true
+  },
+  "fixture_place": {
+   "val_auc": 0.955,
+   "trusted": true
+  },
+  "kitting_pocket": {
+   "val_auc": 0.795,
+   "trusted": false
+  },
+  "machine_tending": {
+   "val_auc": 0.911,
+   "trusted": true
+  },
+  "peg_insert": {
+   "val_auc": 0.947,
+   "trusted": true
+  },
+  "pouch_transfer": {
+   "val_auc": 0.961,
+   "trusted": true
+  },
+  "shelf_restock": {
+   "val_auc": 0.917,
+   "trusted": true
+  },
+  "singulation": {
+   "val_auc": 0.597,
+   "trusted": false
+  },
+  "small_parts_pick": {
+   "val_auc": 0.976,
+   "trusted": true
+  },
+  "small_peg_insert": {
+   "val_auc": 0.947,
+   "trusted": true
+  },
+  "tool_return": {
+   "val_auc": 0.916,
+   "trusted": true
+  },
+  "twist_lock": {
+   "val_auc": 0.689,
+   "trusted": false
+  }
+ }
+}

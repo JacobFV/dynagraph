@@ -62,6 +62,15 @@ class EventIndex:
                 self.d.setdefault((e.entity_id, int(e.property_type), e.source_id), []).append(
                     (e.measured_at, e.available_at, np.asarray(e.value, float)))
 
+    def reading_in(self, eids, prop, src, t0, t1):
+        """latest reading of `src` measured in [t0, t1] on any of `eids` (r7: tactile squeeze during a grasp)."""
+        best = None
+        for e in eids:
+            for r in self.d.get((e, int(prop), src), []):
+                if t0 - 1e-9 <= r[0] <= t1 + 0.05 and (best is None or r[0] > best[0]):
+                    best = r
+        return float(best[2][0]) if best is not None else float("nan")
+
     def latest_src(self, eid, prop, src, now):
         rows = [r for r in self.d.get((eid, int(prop), src), []) if r[1] <= now]
         return max(rows, key=lambda r: r[0])[2] if rows else None
@@ -272,6 +281,13 @@ class EnvAdapter:
         p0 = self.target_pos(call.target)
         return replace(call, params=rel_params(call.params, p0)).vector()
 
+    def _tid(self, tids, target):
+        """opaque target id used for memory fusion (equality only). Lot protocol: every part of the lot -> 'lot'."""
+        lot = getattr(self, "lot_ids", None)
+        if lot and len(tids) == 1 and tids[0] in lot:
+            return "lot"
+        return tids[0] if len(tids) == 1 else f"pile:{target}"
+
     def oracle_latents(self, target):
         """EVALUATOR-ONLY (labelled oracle planner): true latents of the target from env labels."""
         return map_labels(self.env.labels(), self.target_ids(target))
@@ -318,7 +334,8 @@ class EnvAdapter:
                               effort_cost=out.result.effort.cost(), effort=out.result.effort.as_dict(), t_end=t1,
                               outcome_cont=cont, outcome_cont_mask=np.ones(S.N_CONT, bool), outcome_events=evs,
                               outcome_events_mask=emask, labels={},
-                              target_id=tids[0] if len(tids) == 1 else f"pile:{target}")
+                              target_id=self._tid(tids, target),
+                              tactile_k=self.idx.reading_in(tids, STIFF_PROP, "tactile_squeeze", t0, t1))
         out.result.log["interaction"] = inter
         out.result.log["latents"] = dict(self.lat)     # evaluator-only copy (harness/training), never actor input
         self.k += 1
@@ -482,7 +499,9 @@ def convert_episode(ep: dict):
                               segment=seg, effort_cost=_num(eff.get("cost", 0.0)), effort=dict(eff),
                               t_end=_num(st["t_end"]), outcome_cont=cont, outcome_cont_mask=np.ones(S.N_CONT, bool),
                               outcome_events=evs, outcome_events_mask=emask,
-                              labels=map_labels(st.get("labels", {}), tids), target_id=tid)
+                              labels=map_labels(st.get("labels", {}), tids), target_id=tid,
+                              tactile_k=ad.idx.reading_in(tids, STIFF_PROP, "tactile_squeeze", _num(st["t_start"]),
+                                                          _num(st["t_end"])))
         steps.append(dict(frame=frame, inter=inter))
         # actor-side held-object bookkeeping (own commands + own result status)
         if call.skill == "pick" and st.get("ok", False) and not evs[2]:

@@ -70,7 +70,7 @@ def decide_env_ranked(planner: CEMPlanner, ad, hist, emb, rng, n_cand=16, n_pert
         groups.setdefault((c.skill, c.target), []).append(c)
     for (skill, target), cs in groups.items():
         p0 = ad.target_pos(target)
-        qt = (lambda t: t[0] if len(t) == 1 else f"pile:{target}")(ad.target_ids(target))
+        qt = ad._tid(ad.target_ids(target), target)
         true_z, true_m = S.labels_to_z(ad.oracle_latents(target)) if planner.mode == "oracle" else (None, None)
         ctx, mem = planner._prepare(hist, ad.frame(target), emb, qt)
         zin, Z = planner._latent_inputs(mem, true_z, true_m)
@@ -165,7 +165,7 @@ class ResidualPlanner:
         for (skill, target) in {(c.skill, c.target) for c in pool}:
             idx = [i for i, c in enumerate(pool) if c.skill == skill and c.target == target]
             p0 = ad.target_pos(target)
-            qt = (lambda t: t[0] if len(t) == 1 else f"pile:{target}")(ad.target_ids(target))
+            qt = ad._tid(ad.target_ids(target), target)
             frame = ad.frame(target)
             calls = np.stack([S.named_call_vector(skill, rel_params(pool[i].params, p0)) for i in idx])
             for m, pl in enumerate(self.planners):
@@ -212,7 +212,7 @@ def decide_env(planner: CEMPlanner, ad, hist, emb, rng, n_cand=32):
         bounds = {k: (float(lo), float(hi) if hi > lo else float(lo) + 1e-6) for k, lo, hi in zip(keys, vals.min(0), vals.max(0))}
         true_z, true_m = S.labels_to_z(ad.oracle_latents(target)) if planner.mode == "oracle" else (None, None)
         d = planner.decide(hist, ad.frame(target), emb, skill, bounds, rng, probe_params=None, true_z=true_z,
-                           true_mask=true_m, init_params=rel, query_target=(lambda t: t[0] if len(t) == 1 else f"pile:{target}")(ad.target_ids(target)))
+                           true_mask=true_m, init_params=rel, query_target=ad._tid(ad.target_ids(target), target))
         if best is None or d.info["score"] < best[0]:
             best = (d.info["score"], api.SkillCall(skill, d.params, target=target), cs[0], d)
     return best
@@ -282,7 +282,31 @@ def _damaged(out):
         return bool(out.metrics.get("damaged"))
 
 
+class _EpisodeTimeout(BaseException):     # BaseException: env code catches Exception
+    pass
+
+
 def run_env_episode(ad, task, policy, planner=None, rng_seed=0, max_steps=None, record=None, explore=0.0):
+    """wall-clock guard (env EPISODE_TIMEOUT seconds): a hung episode is a recorded failure with timeout=1."""
+    import os as _os, signal as _signal
+    lim = int(_os.environ.get("EPISODE_TIMEOUT", "0") or 0)
+    if lim <= 0:
+        return _run_env_episode(ad, task, policy, planner, rng_seed, max_steps, record, explore)
+    def _alarm(signum, frame):
+        raise _EpisodeTimeout()
+    old = _signal.signal(_signal.SIGALRM, _alarm)
+    _signal.alarm(lim)
+    try:
+        return _run_env_episode(ad, task, policy, planner, rng_seed, max_steps, record, explore)
+    except _EpisodeTimeout:
+        return dict(success=False, steps=0, effort=0.0, risk_events=0, duration=0.0, probes=0, latent_err=[],
+                    damage=0, timeout=1)
+    finally:
+        _signal.alarm(0)
+        _signal.signal(_signal.SIGALRM, old)
+
+
+def _run_env_episode(ad, task, policy, planner=None, rng_seed=0, max_steps=None, record=None, explore=0.0):
     """closed loop on an ENVS station through the adapter (policies: heuristic = env.scripted(), random, planner)."""
     ad.reset(task)
     rng = np.random.default_rng(rng_seed)
@@ -295,10 +319,22 @@ def run_env_episode(ad, task, policy, planner=None, rng_seed=0, max_steps=None, 
         if policy in ("heuristic", "heuristic_probe"):
             call = ad.env.scripted()
             if call is not None and policy == "heuristic_probe":
+                c0 = call
                 call = ad.env.probe_then_act(call)     # r6 fragility-aware probe-then-act scripted variant (actor-legal)
+                if (call is not None and call.skill == "pick" and "grip_force" in call.params
+                        and float(call.params["grip_force"]) <= 4.0 + 1e-6 < float(c0.params["grip_force"])):
+                    rec["probes"] += 1
             if call is None:
                 break
             out = ad.execute(call, relative=False)
+        elif getattr(planner, "search", "cem") == "lot":
+            call, info = planner.decide(ad, hist, emb, rng)
+            if call is None:
+                break
+            frame0 = ad.frame(call.target)
+            out = ad.execute(call, relative=False)
+            rec["probes"] += int(info.get("kind") == "probe")
+            rec["skips"] = rec.get("skips", 0) + int(info.get("kind") == "skip")
         elif policy == "random":
             cs = ad.candidate_skills(None, 8, rng)
             if not cs:
@@ -346,9 +382,25 @@ def run_env_episode(ad, task, policy, planner=None, rng_seed=0, max_steps=None, 
         rec["damage"] = int(rec.get("damage", 0) or (len(ev) > 6 and ev[6] > 0) or _damaged(out))
         if out.success:
             rec["success"] = True
+        rec["sim_t"] = float(out.metrics.get("t", 0.0) or 0.0)
+        rec["progress"] = float(out.metrics.get("progress", 0.0) or 0.0)
         if out.done:
             break
+    rec["good_frac"] = _good_parts_fraction(ad)
     return rec
+
+
+def _good_parts_fraction(ad):
+    """EVALUATOR metric (round 4 primary, pre-registered before any model evaluation): fraction of the lot's parts that
+    end inside the target region (tote) and are NOT damaged."""
+    env = ad.env
+    try:
+        ids = sorted(getattr(ad, "lot_ids", None) or env.parts())
+        reg = env.scene.regions["tote"]
+        dmg = getattr(env, "damaged", set())
+        return float(sum(1 for e in ids if env.in_region_true(e, reg) and e not in dmg) / max(len(ids), 1))
+    except Exception:
+        return float("nan")
 
 
 def paired_eval(env_factory: Callable, tasks, policies: dict, seed=0, offset=0):

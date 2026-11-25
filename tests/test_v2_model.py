@@ -394,4 +394,22 @@ def test_round3_table_and_video_cell_picker(tmp_path):
     out = subprocess.run([sys.executable, os.path.join(repo, "scripts/v2/pick_video_cells.py"),
                           "results/v2/closed_loop/robot_table5_r6f.json", "4"], cwd=root, check=True, env=env,
                          capture_output=True, text=True).stdout.split()
-    assert out == ["ur5e_2f85:conveyor_sort:2900000:test:0"]       # task 0: heuristic fails, planner succeeds
+    assert out == ["ur5e_2f85:conveyor_sort:2900000:test:0:residual_gated"]       # task 0: heuristic fails, planner succeeds
+
+
+def test_r7_lot_sampler_feasible_and_tactile_feature():
+    """round 4: fragile lots are feasible for the heaviest part at the slowest lift; same rng -> same lot (paired);
+    the tactile reading enters the analytic features only when present."""
+    from physmem.models.v2.lot import sample_lot
+    masses = [0.08, 0.35, 0.7]
+    for s in range(200):
+        lot = sample_lot(np.random.default_rng(s), masses)
+        if lot["fragile"]:
+            assert 2 * lot["mu_grip"] * 0.7 * lot["crush_n"] >= 1.15 * max(masses) * lot["mass_factor"] * (9.81 + 0.7) - 1e-9
+        assert 0.5 - 1e-9 <= lot["mass_factor"] <= 2.0 + 1e-9
+    assert sample_lot(np.random.default_rng(7), masses) == sample_lot(np.random.default_rng(7), masses)
+    x = np.zeros((S.SEG_T, S.N_CH), np.float32)
+    x[:, S.CH["t"]] = np.linspace(0, 1, S.SEG_T)
+    f0, f1 = S.analytic_features(x), S.analytic_features(x, 8000.0)
+    assert f0[S.AN_NAMES.index("has_tactile")] == 0 and f1[S.AN_NAMES.index("has_tactile")] == 1
+    assert f1[S.AN_NAMES.index("log_tactile_k")] < 0          # 8 kN/m (fragile) is below the 20 kN/m reference

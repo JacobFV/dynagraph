@@ -15,7 +15,8 @@ from typing import Optional
 
 import numpy as np
 
-V2_MODEL_SCHEMA = "physmem-v2-model-3"   # r5: + crush latent, damage event, 3 margins; r6: + stiffness evidence tokens
+V2_MODEL_SCHEMA = "physmem-v2-model-4"   # r7: + tactile stiffness reading as a per-interaction analytic feature
+_SCHEMA3 = "physmem-v2-model-3"   # r5: + crush latent, damage event, 3 margins; r6: + stiffness evidence tokens
 G = 9.81
 
 # ----------------------------------------------------------------- latent vocabulary (typed slots)
@@ -220,11 +221,13 @@ def resample_segment(x: np.ndarray, T: int = SEG_T) -> np.ndarray:
 
 # ----------------------------------------------------------------- analytic (actor-legal) per-segment features
 AN_NAMES = ["log_mean_fpar", "log_fz_static", "ls_mass", "ls_bias", "slide_mu", "log_f_over_v", "flat_x", "flat_y",
-            "log_peak_f", "grip_slip", "obj_moved", "log_duration", "release_v", "log_slide"]
+            "log_peak_f", "grip_slip", "obj_moved", "log_duration", "release_v", "log_slide",
+            "log_tactile_k", "has_tactile"]      # r7: ENVS r6 tactile_squeeze reading taken DURING this interaction
 N_AN = len(AN_NAMES)
+N_AN_LEGACY = 14
 
 
-def analytic_features(x: np.ndarray) -> np.ndarray:
+def analytic_features(x: np.ndarray, tactile_k: Optional[float] = None) -> np.ndarray:
     """Physically-motivated summary features from ONE resampled segment (T, N_CH) of actor-legal channels.
       - mean force along the motion direction while in contact (~ mu m g + m a for pushes)
       - static vertical load during hold (~ m g for lifts)
@@ -272,6 +275,9 @@ def analytic_features(x: np.ndarray) -> np.ndarray:
         f[13] = np.log(dsl + 1e-3)
         if dsl > 2e-3 and vrel > 0.03:
             f[4] = np.clip(vrel ** 2 / (2 * G * dsl), 0, 3)
+    if tactile_k is not None and np.isfinite(tactile_k) and tactile_k > 0:   # actor-legal SENSOR reading (N/m)
+        f[14] = (np.log(tactile_k) - STIFF_REF) / 2.0
+        f[15] = 1.0
     return f
 
 
@@ -295,6 +301,7 @@ class Interaction:
     outcome_events: Optional[np.ndarray] = None  # (N_EVENTS,) {0,1}
     outcome_events_mask: Optional[np.ndarray] = None
     labels: dict = field(default_factory=dict)  # EVALUATOR-ONLY latent truths {LATENT name: SI}
+    tactile_k: float = float("nan")  # r7: tactile_squeeze stiffness reading of the target during this interaction
     target_id: str = ""             # opaque target entity id; the model only uses EQUALITY with the query target
 
 

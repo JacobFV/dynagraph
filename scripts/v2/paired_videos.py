@@ -16,24 +16,78 @@ from physmem.v2_train import load_model
 OUT = "results/v2/videos_paired"
 
 
+class StripRecorder(EV.Recorder):
+    """round 4 fix: the base strip packs robot/task/seed/split/policy into ONE line that clipped at the half-panel edge.
+    Three short lines instead: (1) robot / task / seed / split, (2) policy, (3) time / effort / skill; outcome on the
+    right of line 3; fonts sized for a 1280-px half panel."""
+    policy_label = ""
+
+    def frame(self, final=False):
+        env = self.env
+        self.main.update_scene(env.d, self.cam)
+        img = EV.Image.fromarray(self.main.render())
+        try:
+            tcp = np.asarray(env.robot.tcp()[0], float)
+            ic = EV.mujoco.MjvCamera()
+            ic.lookat[:] = tcp - np.array([0, 0, 0.05])
+            ic.distance, ic.azimuth, ic.elevation = 0.5, self.cam.azimuth + 25, -40
+            self.inset.update_scene(env.d, ic)
+            img.paste(EV.Image.fromarray(self.inset.render()), (EV.W - 372, 12))
+        except Exception:
+            pass
+        canvas = EV.Image.new("RGB", (EV.W, EV.H), (18, 20, 24))
+        canvas.paste(img, (0, 0))
+        d = EV.ImageDraw.Draw(canvas)
+        i = self.info
+        y0 = EV.H - EV.STRIP + 4
+        f1, f2 = EV._font(19, True), EV._font(17)
+        d.text((12, y0), f"{i['robot']}  ·  {i['family']}  ·  seed {i['seed']} ({i['split']})  ·  site-dressed", font=f1,
+               fill=(235, 235, 235))
+        d.text((12, y0 + 27), f"policy: {self.policy_label}", font=f1, fill=(120, 190, 255))
+        d.text((12, y0 + 55), f"sim t {env.t:5.1f} s · {self.speed}x · effort {self.effort:,.0f} · {self.skill}"[:78],
+               font=f2, fill=(200, 200, 200))
+        st = self.status
+        col = (90, 220, 110) if st.startswith("SUCCESS") else ((240, 90, 80) if st.startswith("FAIL") else (230, 200, 90))
+        d.text((EV.W - 330, y0 + 50), st, font=EV._font(24, True), fill=col)
+        self.proc.stdin.write(canvas.tobytes())
+        self.n_frames += 1
+
+
 def run(tag, trust, robot, fam, seed, policy, split="test", idx=0, variant="residual_gated"):
     env = make_env(fam)
-    task = api.TaskSpec(fam, "", int(seed), robot, split, params={"dressing": "site"})
-    ad = EnvAdapter(env)
+    lot = variant.startswith("lot")
+    task = api.TaskSpec(fam, "", int(seed), robot, split,
+                        params={"dressing": "site", **({"n_parts": 3} if lot else {})})
+    if lot:
+        from physmem.models.v2.lot import LotEnvAdapter
+        ad = LotEnvAdapter(env)
+    else:
+        ad = EnvAdapter(env)
     ad.reset(task)
     os.makedirs(OUT, exist_ok=True)
     path = os.path.join(OUT, f"_{fam}__{robot}__s{seed}__{policy}.mp4")
     label = ("scripted heuristic" if policy == "heuristic" else
+             "always-probe scripted (probe-then-act)" if policy == "heuristic_probe" else
+             ("MODEL-V2 typed lot memory, crush-gated probing (v2)" if variant == "lot_v2"
+              else "MODEL-V2 typed lot memory: memory-conditioned probing") if lot else
              ("MODEL-V2 residual planner, gated, anchored on probe-then-act" if variant == "residual_gated_probe"
               else "MODEL-V2 residual planner, gated (plain scripted anchor)"))
-    info = dict(robot=robot, family=fam, seed=seed, split=f"test; policy: {label}; same seed")
-    rec = EV.Recorder(env, path, info, EV.SPEED.get(fam, 2))
+    info = dict(robot=robot, family=fam, seed=seed, split=split)
+    rec = StripRecorder(env, path, info, EV.SPEED.get(fam, 2))
+    rec.policy_label = label + "  (same seed, paired)"
     orig = env.post_physics
     def post(stop=None):
         r = orig(stop); rec.tick(); return r
     env.post_physics = post
     planner = None
-    if policy != "heuristic":
+    if lot and policy == "residual":
+        from physmem.models.v2.lot import LotPlanner
+        cfg = PlannerConfig(n_z=16, voi=False)
+        C = "results/v2/checkpoints"
+        planner = LotPlanner([CEMPlanner(load_model(f"{C}/v2_robots_{tag}_typed_s{s}.pt")[0], "typed", cfg)
+                              for s in (0, 1, 2)], tau=float(os.environ.get("TAU", "0.15")),
+                             crush_gate=variant == "lot_v2")
+    elif policy not in ("heuristic", "heuristic_probe"):
         cfg = PlannerConfig(pop=96, iters=3, n_z=16, voi=False, c_prog=2.0, lam_effort=0.03)
         C = "results/v2/checkpoints"
         pls = [CEMPlanner(load_model(f"{C}/v2_robots_{tag}_typed_s{s}.pt")[0], "typed", cfg) for s in (0, 1, 2)]
@@ -42,15 +96,20 @@ def run(tag, trust, robot, fam, seed, policy, split="test", idx=0, variant="resi
         planner.anchor_probe = variant == "residual_gated_probe"
     emb = S.embodiment_vector(ad.embodiment_spec())
     rng = np.random.default_rng(int(idx))      # identical to the table episode (harness rng_seed = task index)
-    hist, effort, damaged = [], 0.0, False
+    hist, effort, damaged, probes = [], 0.0, False, 0
     for k in range(getattr(env, "budget", 20)):
-        if policy == "heuristic":
+        if policy in ("heuristic", "heuristic_probe"):
             c = env.scripted()
+            if c is not None and policy == "heuristic_probe":
+                c = env.probe_then_act(c)
         else:
             c, _ = planner.decide(ad, hist, emb, rng)
         if c is None:
             break
-        rec.skill = f"{c.skill} {c.target or ''}".strip() + (f"  grip {c.params['grip_force']:.0f} N" if "grip_force" in c.params else "")
+        is_probe = lot and c.skill == "pick" and float(c.params.get("grip_force", 99)) <= 4.0
+        probes += int(is_probe)
+        rec.skill = (f"{c.skill} {c.target or ''}".strip() + (f"  grip {c.params['grip_force']:.0f} N" if "grip_force" in c.params else "")
+                     + ("  [PROBE]" if is_probe else "") + (f"  probes {probes}" if lot else ""))
         out = ad.execute(c, relative=False)
         hist.append(out.result.log["interaction"])
         effort += out.result.effort.cost(); rec.effort = effort
@@ -61,7 +120,7 @@ def run(tag, trust, robot, fam, seed, policy, split="test", idx=0, variant="resi
     rec.status = ("SUCCESS" if ok else ("FAIL (damaged part)" if damaged else "FAIL")) + ("" if ok or damaged else "")
     rec.skill = "-"
     rec.close()
-    return dict(path=path, success=ok, damaged=bool(damaged), effort=effort, policy=label, video_s=rec.n_frames / EV.FPS)
+    return dict(path=path, success=ok, damaged=bool(damaged), effort=effort, probes=probes, policy=label, video_s=rec.n_frames / EV.FPS)
 
 
 def main():
@@ -74,7 +133,8 @@ def main():
     index = []
     for cell in args:
         robot, fam, seed, split, idx, variant = (cell.split(":") + ["test", "0", "residual_gated"])[:6]
-        L = run(tag, trust, robot, fam, seed, "heuristic", split, int(idx))
+        L = run(tag, trust, robot, fam, seed, "heuristic_probe" if variant.startswith("lot") else "heuristic", split,
+                int(idx), variant)
         R = run(tag, trust, robot, fam, seed, "residual", split, int(idx), variant)
         out = os.path.join(OUT, f"{fam}__{robot}__s{seed}.mp4")
         subprocess.run([EV.FFMPEG, "-y", "-loglevel", "error", "-i", L["path"], "-i", R["path"], "-filter_complex",
@@ -82,8 +142,9 @@ def main():
                         "[a][b]hstack=inputs=2,scale=2560:720[v]", "-map", "[v]", "-t", f"{max(L['video_s'], R['video_s']):.2f}", "-c:v", "libx264",
                         "-crf", "22", "-pix_fmt", "yuv420p", "-movflags", "+faststart", out], check=True)
         meta = dict(robot=robot, family=fam, seed=int(seed), split=split, task_index=int(idx), left=L, right=R,
-                    dressing="site", path=out, note="same seed, same scene; left = plain scripted heuristic, right = "
-                    "MODEL-V2 gated residual planner (3-seed typed-memory ensemble)")
+                    dressing="site", path=out, note=(f"same seed, same lot; left = {L['policy']}, right = {R['policy']} (3-seed typed-memory ensemble)"
+                          if variant.startswith("lot") else "same seed, same scene; left = plain scripted heuristic, right = "
+                          "MODEL-V2 gated residual planner (3-seed typed-memory ensemble)"))
         json.dump(meta, open(out[:-4] + ".json", "w"), indent=1)
         index.append(meta)
         print(json.dumps(meta), flush=True)
