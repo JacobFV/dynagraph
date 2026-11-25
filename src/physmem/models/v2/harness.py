@@ -128,9 +128,11 @@ class ResidualPlanner:
             sc = ad.env.probe_then_act(sc)          # anchor on the probe-then-act scripted variant
         if sc is not None and self.trust is not None and not self.trust.get(ad.task.family, False):
             return sc, dict(deviated=False, gated=True)
-        pool = list(ad.candidate_skills(None, self.n_cand, rng))
         if sc is None:
-            return pool[0] if pool else None, {}
+            # the residual is defined relative to the scripted policy: when it stops / gives up, so does the residual
+            # (round 3 fix: falling back to a random env candidate made "gated == scripted" false in 40% of episodes)
+            return None, {}
+        pool = list(ad.candidate_skills(None, self.n_cand, rng))
         def scaled(**f):
             return api.SkillCall(sc.skill, {k: (v * f[k] if k in f and isinstance(v, (int, float)) and not isinstance(v, bool)
                                                 else v) for k, v in sc.params.items()}, target=sc.target, effector=sc.effector)

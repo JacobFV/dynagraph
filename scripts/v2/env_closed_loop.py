@@ -56,7 +56,17 @@ for fam in fams:
     # incremental: run in chunks of 5 paired tasks and write a partial json after each chunk
     res = {name: [] for name in pols}
     os.makedirs("results/v2/closed_loop", exist_ok=True)
-    for c0 in range(0, len(tasks), 5):
+    start = 0
+    pp = f"results/v2/closed_loop/{run}.partial.json"
+    if os.path.exists(pp):            # resume an interrupted cell (chunk seeds are deterministic -> identical episodes)
+        try:
+            old = json.load(open(pp))[fam]
+            if set(old["episodes"]) == set(pols) and old["done_tasks"] % 5 == 0:
+                res, start = old["episodes"], int(old["done_tasks"])
+                print(f"resuming {run} from task {start}", flush=True)
+        except Exception as e:
+            print(f"partial unreadable, restarting cell: {e}", flush=True)
+    for c0 in range(start, len(tasks), 5):
         part = H.paired_eval(lambda: EnvAdapter(make_env(fam)), tasks[c0:c0 + 5], pols, offset=c0)
         for k_ in res:
             res[k_].extend(part[k_])

@@ -24,7 +24,7 @@ for d, robot, fam, g in cands:
     idx = next((i for i, (h, p) in enumerate(zip(ep["heuristic"], ep[pol])) if not h["success"] and p["success"]), 0)
     split = "heldout_robot" if robot == "gen3_2f85" else "test"
     seed = {"test": 2_000_000, "heldout_robot": 2_000_000}.get(split, 2_000_000) + 900_000 + idx
-    out.append(f"{robot}:{fam}:{seed}:{split}:{idx}")
+    out.append(f"{robot}:{fam}:{seed}:{split}:{idx}:{g}")
     if len(out) >= K:
         break
 print(" ".join(out))

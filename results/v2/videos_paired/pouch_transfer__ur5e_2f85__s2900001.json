@@ -1,0 +1,26 @@
+{
+ "robot": "ur5e_2f85",
+ "family": "pouch_transfer",
+ "seed": 2900001,
+ "split": "test",
+ "task_index": 1,
+ "left": {
+  "path": "results/v2/videos_paired/_pouch_transfer__ur5e_2f85__s2900001__heuristic.mp4",
+  "success": false,
+  "damaged": true,
+  "effort": 1779.678499089265,
+  "policy": "scripted heuristic",
+  "video_s": 8.2
+ },
+ "right": {
+  "path": "results/v2/videos_paired/_pouch_transfer__ur5e_2f85__s2900001__residual.mp4",
+  "success": true,
+  "damaged": false,
+  "effort": 607.5773490312639,
+  "policy": "MODEL-V2 residual planner, gated, anchored on probe-then-act",
+  "video_s": 8.0
+ },
+ "dressing": "site",
+ "path": "results/v2/videos_paired/pouch_transfer__ur5e_2f85__s2900001.mp4",
+ "note": "same seed, same scene; left = plain scripted heuristic, right = MODEL-V2 gated residual planner (3-seed typed-memory ensemble)"
+}

@@ -683,3 +683,64 @@ damage (ur5e bin_clearing 0.13 vs 0.60) and the residual does not beat it.
 param, including `place` dx / dy = the outfeed slot coordinates (~0.3 m -> ~4.5 cm off-slot). FIX: jitter never
 scales positional params, offsets or angles (`harness.NO_SCALE_KEYS` + the adapter's position-key rule). Check on 10
 paired probe depalletize episodes: residual_gated 0.70 = heuristic 0.70 (was -0.23), deviating on 51% of steps.
+
+### 10f. Final r6 models (`v2_robots_r6f_*`; data `data/v2_r6_final` = tranches 1, 2, 5, 6 + tranche8_r6_site +
+on-policy rounds 1-2, drawer_open train/val excluded, Gen3 held out; 105 train episodes dropped at load)
+Crush-limit recovery (corr of the typed `crush` slot with the evaluator label, test, after 0 / 1 / 2 / 3 interactions)
+now that the r6 vision + tactile stiffness readings are in the data: tool_return 0.61 / 0.70 / 0.71 / 0.73,
+bin_clearing 0.58 / 0.60 / 0.61 / 0.62, fixture_place 0.52 / 0.58 / 0.58 / 0.56, pouch -0.27 / 0.35 / 0.51 / 0.54,
+twist_lock 0.11 / 0.13 / 0.38 / 0.43, conveyor_sort 0.28 / 0.32 / 0.30 / 0.31, door_open ~0.1 (r2-r5-only models:
+~0 everywhere except pouch). G5 held-out family drawer_open: success AUC 0.72 (oracle slots 0.66).
+
+### 10g. Bug found in the first final-table cells (fixed, table restarted 2026-11-24 ~19:45Z)
+`ResidualPlanner.decide` fell back to a random env candidate when the scripted policy returned None (gave up /
+finished), so the residual kept acting where the scripted policy stops: in an untrusted family (where the gated
+residual must equal the scripted policy) 12 / 30 ur5e singulation episodes differed from the heuristic (more steps,
+up to 10x effort). FIX: the residual stops when the scripted policy stops. The 15 cell files produced before the fix
+(incl. the first positive cell, ur5e pouch_transfer residual_gated_probe +0.30 [+0.13,+0.47] vs plain heuristic,
+damage 0.63 -> 0.07) are kept under `results/v2/closed_loop/_invalid_r6f_residual_giveup/` and NOT used; the whole
+final table is re-run with the fix (typed / generic / oracle columns too, for one consistent code version).
+
+### 10h. HEADLINE round 3 — final real-robot table (r6f models, envs-r6 site-dressed scenes, n = 30 paired tasks per
+cell; typed / generic / oracle pooled over 3 training seeds = 90 paired episodes; residual = 3-seed ensemble, n = 30)
+Full table: `results/v2/closed_loop/robot_table5_r6f.{md,json}` (Δ success vs plain heuristic [95% paired CI], Δ vs the
+probe-then-act heuristic (PTA) [CI], damage rate, effort ratio, per-seed success). Significant cells (CI excludes 0):
+
+| robot | family | heuristic succ / dmg | PTA succ / dmg | significant results |
+|---|---|---|---|---|
+| ur5e | pouch_transfer | 0.13 / 0.63 | 0.47 / 0.07 | **residual_gated_probe +0.30 [+0.13,+0.47]**, damage 0.07, effort x0.72 (vs PTA -0.03, tie); residual_gated damage 0.37 (succ +0.07 ns) |
+| panda | fixture_place | 0.67 / 0.03 | 0.40 / 0.03 | typed **+0.09**, generic **+0.10**, oracle **+0.09** (n=90); vs PTA +0.36; residual_gated +0.10 (ns, n=30) |
+| panda | tool_return | 0.27 / 0.47 | 0.40 / 0.43 | typed **+0.09**, generic **+0.09**, oracle **+0.07** (n=90); residual_gated_probe +0.13 (ns) |
+| ur5e | bin_clearing | 0.03 / 0.60 | 0.10 / 0.13 | typed **+0.07**, generic **+0.07**; damage 0.60 -> 0.42-0.44 (single models) |
+| panda | conveyor_sort | 0.13 / 0.53 | 0.00 / 0.43 | vs PTA: residual_gated **+0.13**, typed / oracle +0.08, generic +0.04 (PTA weak here); vs plain: generic -0.09, residual_gated_probe -0.13 |
+| ur5e | door_open | 0.53 / 0.47 | same | typed -0.10, generic -0.14 (losses); residual_gated +0.00 |
+| ur5e / panda | drawer_open (G5 family) | 0.93 / 0.47 | same | typed -0.27 / -0.11, oracle -0.28 / -0.13, generic -0.09 (ur5e) (losses); residual_gated +0.00 |
+| ur5e / panda / probe | singulation (untrusted) | 0.20 | same | typed -0.13 / -0.19, oracle -0.10 / -0.19, generic -0.19 (panda) (losses); residual_gated = heuristic by construction |
+| probe | depalletize | 0.63 / 0.00 | same | typed -0.31, generic -0.63, oracle -0.40 (losses); **residual_gated -0.07 (ns; round 2: -0.23)** |
+| gen3 (held-out robot) | door_open | 0.87 / 0.13 | same | typed -0.07, generic -0.22, oracle -0.07 (losses); residual_gated +0.00 |
+| probe | conveyor_sort | 0.27 / 0.60 | 0.57 / 0.17 | vs PTA all model policies lose (-0.13 .. -0.33); residual_gated_probe damage 0.60 -> 0.20, succ +0.17 (ns) vs plain |
+
+**Verdicts.**
+- **G3 vs the plain (fixed-force) heuristic: partially met.** One significant residual win (ur5e pouch, +0.30, damage
+  0.63 -> 0.07, 0.72x effort) and significant single-model wins on panda fixture_place / tool_return and ur5e
+  bin_clearing (+0.07..+0.10). The plain-anchored gated residual is **never significantly worse** than the heuristic in
+  any of the 33 cells; the single-model planners (typed / generic / oracle alike) lose significantly on door, drawer,
+  singulation and depalletize.
+- **vs the probe-then-act heuristic: not met.** The residual anchored on it ties it (pouch -0.03, conveyor -0.13 on
+  probe); significant gains over PTA occur only where PTA itself is weak (panda fixture +0.36, panda conveyor +0.13).
+  The large damage reductions come mostly from the probe-then-act mechanism, not from the learned model on top.
+- **Damage**: residual_gated_probe cuts damage vs plain in pouch (0.63 -> 0.07 ur5e, 0.57 -> 0.23 panda), tote
+  (0.70 -> 0.30), probe conveyor (0.60 -> 0.20); single-model planners cut it in bin_clearing (0.60 -> 0.44) and
+  singulation (0.77 -> 0.34 generic) — the latter while losing success.
+- **Typed vs generic memory**: no consistent difference (both win on the same cells); typed ~= oracle again.
+- **G5**: held-out robot (Gen3): residual_gated within [-0.07, +0.03] of the heuristic in all 6 cells (none significant;
+  tool_return -0.07 [-0.27,+0.10], vs PTA -0.20); single models lose on door_open. Held-out family (drawer_open): single models lose (-0.09..-0.28); residual_gated ties.
+- **Crush identifiability (r6 evidence)**: crush slot corr 0.3-0.73 after 0-3 interactions (10f).
+
+**Paired video** (pre-registered rule: cells where a residual variant is significantly better than the plain
+heuristic, best first; seed = the first paired task where the heuristic fails and the planner succeeds, same planner
+rng as in the table): only ONE cell qualifies — ur5e pouch_transfer (task index 1, seed 2900001, test split,
+site-dressed). `results/v2/videos_paired/pouch_transfer__ur5e_2f85__s2900001.mp4` (2560x720, left = scripted heuristic:
+FAIL (damaged part), effort 1,780; right = gated residual anchored on probe-then-act: SUCCESS, effort 608) + 4 stills
+(20 / 45 / 70 / 95 % of the clip) in `results/v2/videos_paired/stills/` and `~/Downloads/dynagraph_gallery/paired/`.
+An earlier render of the plain-anchored residual for the same task (also success) is kept in `_superseded_plain_anchor/`.

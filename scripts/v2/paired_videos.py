@@ -16,14 +16,16 @@ from physmem.v2_train import load_model
 OUT = "results/v2/videos_paired"
 
 
-def run(tag, trust, robot, fam, seed, policy, split="test", idx=0):
+def run(tag, trust, robot, fam, seed, policy, split="test", idx=0, variant="residual_gated"):
     env = make_env(fam)
     task = api.TaskSpec(fam, "", int(seed), robot, split, params={"dressing": "site"})
     ad = EnvAdapter(env)
     ad.reset(task)
     os.makedirs(OUT, exist_ok=True)
     path = os.path.join(OUT, f"_{fam}__{robot}__s{seed}__{policy}.mp4")
-    label = "scripted heuristic" if policy == "heuristic" else "MODEL-V2 residual planner (typed memory, gated)"
+    label = ("scripted heuristic" if policy == "heuristic" else
+             ("MODEL-V2 residual planner, gated, anchored on probe-then-act" if variant == "residual_gated_probe"
+              else "MODEL-V2 residual planner, gated (plain scripted anchor)"))
     info = dict(robot=robot, family=fam, seed=seed, split=f"test; policy: {label}; same seed")
     rec = EV.Recorder(env, path, info, EV.SPEED.get(fam, 2))
     orig = env.post_physics
@@ -37,6 +39,7 @@ def run(tag, trust, robot, fam, seed, policy, split="test", idx=0):
         pls = [CEMPlanner(load_model(f"{C}/v2_robots_{tag}_typed_s{s}.pt")[0], "typed", cfg) for s in (0, 1, 2)]
         tr = {f: v["trusted"] for f, v in json.load(open(trust))["families"].items()}
         planner = H.ResidualPlanner(pls, trust=tr)
+        planner.anchor_probe = variant == "residual_gated_probe"
     emb = S.embodiment_vector(ad.embodiment_spec())
     rng = np.random.default_rng(int(idx))      # identical to the table episode (harness rng_seed = task index)
     hist, effort, damaged = [], 0.0, False
@@ -70,9 +73,9 @@ def main():
             stills = int(a.split("=")[1])
     index = []
     for cell in args:
-        robot, fam, seed, split, idx = (cell.split(":") + ["test", "0"])[:5]
+        robot, fam, seed, split, idx, variant = (cell.split(":") + ["test", "0", "residual_gated"])[:6]
         L = run(tag, trust, robot, fam, seed, "heuristic", split, int(idx))
-        R = run(tag, trust, robot, fam, seed, "residual", split, int(idx))
+        R = run(tag, trust, robot, fam, seed, "residual", split, int(idx), variant)
         out = os.path.join(OUT, f"{fam}__{robot}__s{seed}.mp4")
         subprocess.run([EV.FFMPEG, "-y", "-loglevel", "error", "-i", L["path"], "-i", R["path"], "-filter_complex",
                         "[0:v]tpad=stop_mode=clone:stop_duration=600[a];[1:v]tpad=stop_mode=clone:stop_duration=600[b];"
@@ -87,9 +90,11 @@ def main():
         if stills:
             gal = os.path.expanduser("~/dynagraph_gallery_paired")      # copied to ~/Downloads/dynagraph_gallery/paired locally
             os.makedirs(os.path.join(OUT, "stills"), exist_ok=True)
-            t = 0.7 * max(L["video_s"], R["video_s"])
-            png = os.path.join(OUT, "stills", f"{fam}__{robot}__s{seed}.png")
-            subprocess.run([EV.FFMPEG, "-y", "-loglevel", "error", "-ss", f"{t:.2f}", "-i", out, "-frames:v", "1", png], check=True)
+            for q in ((0.2, 0.45, 0.7, 0.95) if stills >= 4 else (0.7,)):
+                t = q * max(L["video_s"], R["video_s"])
+                png = os.path.join(OUT, "stills", f"{fam}__{robot}__s{seed}__t{int(q * 100):02d}.png")
+                subprocess.run([EV.FFMPEG, "-y", "-loglevel", "error", "-ss", f"{t:.2f}", "-i", out, "-frames:v", "1", png],
+                               check=True)
     json.dump(index, open(os.path.join(OUT, "index.json"), "w"), indent=1)
 
 
