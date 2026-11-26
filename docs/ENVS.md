@@ -631,6 +631,13 @@ ceilings and of its tight_insert 'transit collisions':
 The r6 Gen3 held-out results (MODEL's G5 / heldout_robot numbers from r6 and r7 tranches) were measured on the bugged
 model and understate Gen3.
 
+**r7 / r7.1 data (FINAL):** `data/v2_envs_large/tranche9_r7` = envs-r7, 4543 episodes (probe / UR5e / Panda x 11
+families, site-dressed, bin_clearing 1/3 deep_bin; half of the mixed episodes probe-then-act, force-ramp on
+tight_insert), 2.14 GB, 0 errors, 0 integrity violations, manifest sha256 60ed53aa...25d2. `tranche9_r7_1_gen3` =
+envs-r7.1, the 440 Gen3 held-out episodes regenerated on the fixed model, 0.22 GB, manifest sha256 d1af27c0...a0. The
+Gen3 shards first generated on r7 are in `_superseded_r7_gen3/` - do not use. IL demos: MODEL records them from the
+frozen hooks (`env.demo_call`), `data/v2_il_r7`.
+
 ### envs-r7 (FROZEN 2026-11-26 08:02Z, `~/dynagraph_r7`; sources sha256 8166269b...9b28): skill-layer ceiling audit + fixes, fine-motor families
 Why: MODEL round 5 showed the ORACLE planner reaching ~0.27 good parts / lot on UR5e (Panda 0.05, Gen3 ~0.2): the
 scripted skills / controllers were the ceiling. r7 measures that ceiling per (robot x family) and fixes the skill layer.
