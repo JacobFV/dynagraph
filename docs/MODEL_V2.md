@@ -870,3 +870,66 @@ Gen3: **+0.08 [+0.01,+0.14]**.
 - Models: `results/v2/checkpoints/v2_robots_r7_{typed,generic}_s{0,1,2}.pt` (schema physmem-v2-model-4; tactile
   feature). Test crush-latent correlation after 0-3 interactions: bin_clearing 0.59 -> 0.62, tool_return 0.62 -> 0.73,
   pouch_transfer −0.26 -> 0.51.
+
+## 12. Round 5 (r8): do squeezes saved by lot memory become extra good parts?
+
+### 12a. Pre-registration
+Status: frozen 2026-11-26 ~00:40Z, before any model was run in this regime (VAL or test). The selection rule below was written before the VAL baselines finished.
+
+**Question.** In round 4 (11e) the crush-gated typed planner (r7v2) probed about once per lot instead of once per part,
+with the same good parts as always-probe PTA. The ENVS budget (4 calls per part) almost never ran out, so the saved
+calls had no use. Round 5 asks whether those calls turn into extra good parts when the budget does run out.
+
+**Regime (tighter, shared budget).** bin_clearing lots exactly as in 11a (one lot per bin: shared mass factor, grip
+friction, crush/stiffness; settle check; vision re-emitted), but **5 parts per lot** and a **single shared call budget
+for the whole lot** = round(b x 5) skill calls. Probes, picks, places and failed grasps all draw from it. A part needs
+at least 2 calls (pick + place); PTA needs 3 for each part its light probe does not lift. Budget-per-part b is chosen
+on VAL from {2.4, 3.0, 4.0} by the rule below, then frozen.
+
+**Budget-selection rule (fixed before the VAL numbers were seen; baselines only, no model run on VAL).** VAL split,
+seeds +900000, 20 lots per robot on ur5e_2f85 and the probe gantry, never-probe and PTA only; per b, PTA's good parts
+pooled over the two robots = G(b). Pick the SMALLEST b with
+(i) G(b) <= 0.85 x G(4.0)  (PTA is budget-bound: the budget costs it >= 15% of its good parts), and
+(ii) G(b) >= 0.5 x G(4.0)  (not hopeless).
+If no b satisfies both, take the b with G(b) closest to 0.7 x G(4.0).
+
+**VAL baselines used (20 lots per robot, 5 parts, VAL split, seeds +900000; good parts per lot, timeouts = 0):**
+
+| b (calls/part) | budget | ur5e never-probe | ur5e PTA (probes, timeouts) | gantry never-probe | gantry PTA (probes) | pooled PTA G(b) | G(b) / G(4.0) |
+|---|---|---|---|---|---|---|---|
+| 2.4 | 12 | 0.13 | 0.16 (3.3, 3) | 0.63 | 0.73 (4.7) | 0.445 | 0.86 |
+| 3.0 | 15 | 0.13 | 0.15 (3.6, 3) | 0.65 | 0.83 (4.8) | 0.490 | 0.94 |
+| 4.0 | 20 | 0.13 | 0.15 (3.8, 3) | 0.65 | 0.89 (5.0) | 0.520 | 1.00 |
+
+No candidate met both conditions: 2.4 gives 0.86, just above the 0.85 bound. Under the fallback rule the closest to
+0.7 x G(4.0) = 0.364 is **b = 2.4 -> 12 shared calls per 5-part lot (frozen)**.
+
+What this means for power, stated before testing: the budget binds only on the probe gantry (PTA 0.89 -> 0.73,
+5 probes per lot). On ur5e, PTA ends its episodes early by failing (about 8 of 12 calls used) and is not
+budget-bound, so a saved probe has little room to become a part there. The test can only show the effect where the
+budget binds; ur5e, panda and gen3 are still reported as pre-registered.
+(Code: `scripts/v2/lot_eval.py` BUDGET_PER_PART / NPARTS, launcher `scripts/v2/r8_final.sh` with BPP=2.4;
+VAL launcher `scripts/v2/r8_val.sh`, VAL results `results/v2_val_r8/` on gb10.)
+
+**Policies (all on the same seeded lots).** always-probe PTA (`heuristic_probe`); never-probe (`heuristic`);
+**typed r7v2** (`typed_v2`: crush-gated LotPlanner, 11e, unchanged code); memory OFF (`typed_nolot_v2`: same rule,
+per-part memory); generic (`generic`: generic-memory ensemble, risk-UCB rule); oracle (`oracle_v2(labelled)`, labelled,
+not a comparison). Models are the round-4 checkpoints `v2_robots_r7_{typed,generic}_s{0,1,2}` (no retraining).
+tau = 0.15 (from r7 VAL; the crush gate uses sigma_probe = 1.0 and the 0.7 x 10th-percentile cap, as in 11e).
+
+**Primary endpoint.** Good parts per lot (fraction of the 5 parts in the tote and undamaged; a timed-out episode
+counts as 0), **typed r7v2 − PTA**, paired over lots, 95% bootstrap CI (4000 resamples, seed 0), per robot.
+A robot counts as a **win** if the CI lower bound is > 0. No pooling across robots and no multiple-comparison
+correction. All four robots are reported.
+
+**Secondary.** typed r7v2 − memory OFF and typed r7v2 − generic (good parts, same CI). Also probes per lot, damage
+rate, episode success, median sim time and effort ratio. Mechanism check: the win should come with fewer probe calls
+than PTA, and memory OFF should probe more than typed.
+
+**Cells.** n = 30 paired lots per robot, FRESH test seeds (test base + 900000 + i; never used in rounds 3-4):
+ur5e_2f85 (test), panda (test), probe gantry (test), **gen3_2f85 (heldout_robot split; still held out from training
+and from every selection step)**. Episode wall-clock guard 60 s. Runs resume from partial json.
+
+**Outputs.** `results/v2/closed_loop/v2_r8_lot_<robot>.json`, table `results/v2/closed_loop/robot_table_r8.md` /
+`.json` (`scripts/v2/r7_table.py <out> v2_r8_lot_`). Paired same-seed videos only for robots with a significant
+good-parts win over PTA.
