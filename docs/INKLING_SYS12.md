@@ -71,3 +71,32 @@ ca14dae0fa396d3ba6a819949e284c23d742de74185355c4dd5e391d24f52f7e  src/physmem/mo
 ```
 (sha256 of the files on gb10-direct at registration; the System I checkpoint is added to section c when its
 training finishes, before the first test episode.)
+
+## a1. Erratum to section a (written 2026-11-26, after registration, BEFORE any test-split episode)
+
+**What happened.** At registration the shared remote tree `~/dynagraph` on gb10-direct held uncommitted
+**envs-r7-dev** code (changed grasp / grip skills, 6 cm bins, `ENV_VERSION = "envs-r7-dev"`), synced in from the
+shared local tree. Section a's hashes were taken from that remote tree. Checked against git HEAD and the frozen
+`~/dynagraph_r6`:
+- `src/physmem/models/v2/harness.py` — the hash in section a (`6914fb07…21de`) is the **contaminated** envs-r7-dev
+  version. The correct (git HEAD / envs-r6, the version MODEL-V2's r7/r8 tables ran with) hash is
+  `827545b3a4c819c48ff15ec0331eb17c390b68c48fe87f208a87016f611a09dc`.
+- Section a listed no envs/ or skills/ files, but the episodes would have imported them from that tree. The other six
+  hashed files (closed_loop.py, sys12.py, inkling_quant.py, system1.py, lot.py, sys12_train.py) are not env code and
+  are unchanged; lot.py equals git HEAD.
+- The 2-task VAL smoke runs mentioned in section a ran on envs-r7-dev. They were debug-only and remain unused.
+
+**Correction (protocol otherwise unchanged).** Every closed-loop cell runs from a frozen tree `~/dynagraph_sys12` =
+`git archive` of HEAD (commit 3364798; its envs/, skills/, embodiments/ are byte-identical to `~/dynagraph_r6`, 30/30
+files) + the sys12 overlay (the six registered files with their registered hashes) + `results/`, `ckpt/`, `data/`
+symlinked; source files read-only. Each cell is launched through `scripts/sys12/cl_guard.py` (sha256
+`b810e8ea…1174`), which aborts unless physmem is imported from the frozen tree, `physmem.envs.ENV_VERSION ==
+"envs-r6"`, every envs/ / skills/ / embodiments/ file matches `~/dynagraph_r6` (combined sha256 of the sorted per-file
+hash list: `30cb4b7fdad50b7850ee53150416492d629828fb155c5f0ce77a217bd3a076c1`, identical for both trees), and the
+registered files keep their registered hashes. It writes `results/sys12/closed_loop/provenance_s12r1_<cell>.json`.
+The System I checkpoint hash is written to `results/sys12/closed_loop/s1_ckpt_sha256.txt` before the first cell.
+
+**Training is unaffected.** System I training reads tensorized npz data (`data/v2_r7_final`, generated earlier on
+envs-r6) and imports only models/v2/{model,physics,spec,tensorize}.py, v2_train.py, planner.py, models/inkling.py and
+the sys12 files. All of these are byte-identical to git HEAD on the remote tree (checked file by file). The gated arm
+started in `~/dynagraph`; the remaining arms and every evaluation run from the frozen tree.
