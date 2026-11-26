@@ -602,6 +602,121 @@ shelf_restock TidyBot aisle, kitting_pocket ur5e), copied to `~/Downloads/dynagr
 (new: dressing keeps task randomisation + determinism + no drops/violations + visual-only geoms non-occluding;
 collision-real props near the station).
 
+### envs-r7 (IN PROGRESS, dev tree `~/dynagraph_dev7`): skill-layer ceiling audit + fixes, fine-motor families
+Why: MODEL round 5 showed the ORACLE planner reaching ~0.27 good parts / lot on UR5e (Panda 0.05, Gen3 ~0.2): the
+scripted skills / controllers were the ceiling. r7 measures that ceiling per (robot x family) and fixes the skill layer.
+
+**Ceiling audit** (`scripts/envs_ceiling.py`, resumable; rows `results/v2/envs/ceiling_<tag>_rows.jsonl`, table
+`ceiling_<tag>.json/.md`): the scripted policy with `nominal` (fixed engineer) parameters vs `oracle` parameters
+(`envs/oracle.py::rule`, TRUE hidden physics) and a small grid (`oracle_slow` speeds x0.5, `oracle_firm` grip x1.3),
+site-dressed, failure taxonomy per episode (grasp_miss, slip, crush_or_damage, ik_fail, collision, jam, perception,
+sim_instability, sim_timeout_or_error, budget, place_miss_or_predicate). Tag `r6` = the frozen envs-r6 code.
+
+**Audit BEFORE (envs-r6 frozen code, 10 cm bins, 6 seeds, site-dressed; `results/v2/envs/ceiling_r6.{json,md}`).**
+Success (mean progress); oracle failure causes. No (arm x family) reached 0.90 with oracle parameters except UR5e /
+probe fixture_place; the dominant failures are grasp misses (fingers landing on walls / neighbours / the target,
+false 'closed on nothing' on small and soft parts), slips (no grip regulation while carrying) and crush:
+
+| family | UR5e nominal / oracle | Panda nominal / oracle | Gen3 nominal / oracle | probe nominal / oracle | main oracle failures (arms) |
+|---|---|---|---|---|---|
+| bin_clearing | 0.00 / 0.17 | 0.00 / 0.00 | 0.00 / 0.17 | 0.17 / 0.33 | grasp_miss, slip |
+| pouch_transfer | 0.17 / 0.33 | 0.33 / 0.33 | 0.17 / 0.33 | 0.00 / 0.33 | slip, grasp_miss |
+| fixture_place | 0.83 / 1.00 | 1.00 / 0.83 | 0.33 / 0.50 | 0.83 / 1.00 | crush, slip (Gen3) |
+| tool_return | 0.67 / 0.67 | 0.17 / 0.33 | 0.50 / 0.50 | 1.00 / 1.00 | slip, crush, grasp_miss |
+| depalletize | 0.00 / 0.17 | 0.00 / 0.50 | 0.00 / 0.00 | 1.00 / 1.00 | grasp_miss (parallel jaws on cartons) |
+| conveyor_sort | 0.17 / 0.17 | 0.17 / 0.00 | 0.00 / 0.00 | 0.33 / 0.67 | crush, grasp_miss, ik_fail |
+
+**Skill-layer fixes (real arms; `skills/primitives.py`, `envs/robots.py`, `embodiments/{core,robots}.py`):**
+- collision-aware grasp selection: closing yaws (narrow axis, wide axis if it fits, 8 yaws for round parts) x vertical
+  and tilted approaches (outward + 8 compass directions); each IK-reachable candidate is scored on a scratch MjData by
+  the exact distance of the pre-shaped gripper to CAD-known static fixtures (bin / tote walls) and of its pads to the
+  other parts' ESTIMATED footprints; candidates whose pads would land on the target itself are last resorts;
+- in-skill regrasp: if the guarded descent trips > 1.5 cm above the grasp point, back up and try the next-ranked
+  candidate (`regrasp`, default 2) instead of failing the call;
+- gripper force calibration: 2F-85 pad force was commanded + 3 N (linkage spring; `GripperCfg.pad_offset`), Panda
+  pad force 0.69 x commanded (`pad_per_drive` 0.68 -> 0.47); measured squeeze now within +-1 N;
+- slip-reactive grip while carrying (pad slip sensing): +30 % squeeze per slip event up to `grip_max` (`slip_gain`,
+  `slip_v` params); force-limited grip: the measured pad force is kept under `grip_max` (a part wedged against a
+  neighbour was squeezed 1.5x the commanded force);
+- a hand squeezing on nothing relaxes to 10 % drive (the Panda fingers were pushed through their joint limits and
+  stayed jammed shut after a full-force close);
+- bin_clearing scripted: most-accessible part first (per layer), place on the tote's free spot;
+- oracle rule (`envs/oracle.py`, was in scripts/envs_decision_relevance.py): grip 2.5x the static hold force (10 N
+  floor), `grip_max` = 0.85 x crush, slow lift / carry for marginally holdable parts.
+- **Station-geometry change that makes the task EASIER (labelled as such):** bin_clearing source-bin walls 10 -> 6 cm,
+  tote walls 9 -> 7 cm (r7 default; parts are <= 6 cm tall). With 10 cm walls no collision-free grasp existed for the
+  Panda hand / 2F-85 body away from the bin centre. The r6 geometry stays available as the named station variant
+  `params["station_variant"] = "deep_bin"` and is reported next to the default in the audit and the r7 eval.
+
+**bin_clearing, oracle vs nominal parameters (10 seeds, site-dressed, r7 dev, default 6 cm bin):**
+
+| robot | r6 oracle (6 seeds) | r7 oracle | r7 nominal | r7 oracle failures | r7 nominal failures |
+|---|---|---|---|---|---|
+| ur5e_2f85 | 0.17 | 0.80 | 0.20 | slip 2 | crush 6, grasp_miss 2 |
+| panda | 0.00 | 0.50 | 0.00 | grasp_miss 4, slip 1 | crush 8, grasp_miss 2 |
+| gen3_2f85 | 0.17 | 0.70 | 0.00 | slip 2, grasp_miss 1 | crush 10 |
+
+Decision relevance holds: nominal parameters crush the fragile parts (40 N fixed grip), the oracle bounds the grip by
+the crush limit.
+
+**TASK CHANGES (labelled):**
+- bin_clearing walls 10 -> 6 cm / tote 9 -> 7 cm (see above; makes the task easier; `deep_bin` keeps the r6 geometry).
+- tight_insert dent limit is CORRELATED with the snap force: dent_n ~ U(max(6, 1.8 x snap_n + 2), 20) N on the 50 % of
+  pegs that can dent (snap_n = 1.5 + 6.5e-4 k (0.5 + mu), 2.9-11.6 N). Without it ~53 % of dentable pegs (26 % of all
+  pegs) could not be seated at ANY press force without denting; that is the fraction of pegs whose dent limit the
+  constraint changes relative to an independent U(6, 20) draw.
+- tight_insert hidden range widened BEFORE the freeze (no model has been evaluated on it): snap-fit lip stiffness
+  3-12 kN/m -> 3-16 kN/m (snap force ~3-12 -> ~3-16 N). Why: with the narrower range a fixed 8 N press passed the lips
+  in most episodes, so the hidden lip physics rarely changed the best press force. 25 kN/m was tried and rejected (the
+  lip ejected the peg). The ranges are frozen with envs-r7.
+- dent monitor (peg_insert, small_peg_insert, tight_insert): counts the AXIAL (world-vertical) part of the contact
+  force between the part and static fixtures; r5-r6 summed every contact normal, so the side-wall normals of a peg
+  sliding in a tight hole counted as 'ramming' (a correct 12 N press past the snap lips 'dented' a 19.6 N-rated peg
+  through 33 N of wall normals). Makes dents rarer than in r6.
+- fastener_pick: washers are clutter only (never ordered) - a flat 1-1.6 mm washer cannot be pinched by a parallel
+  gripper; a magnet / suction tool variant may come later.
+
+**Insertion seating check (r7, `envs/robots.py::sk_insert`).** The insert skill measures depth from the TCP height,
+which reads 'jammed' when the peg slid up in the grasp under the press. The adapter then cross-checks with the SAME
+actor-legal tracker every policy sees (no sim state): `env.est_pose_avg(peg, 0.3 s)` = mean of the POSE3 packets of
+the overhead tracker camera in the last 0.3 s (fine stations: per-episode position sigma 0.5-1.5 mm, latency 30-90 ms,
+dropout 0-8 %, line-of-sight occlusion by mj_ray - a peg hidden by the hand / socket emits nothing, then no override),
+the one-shot SIZE estimate (sigma 1 mm) and the CAD hole region. Seated if (hole mouth - estimated peg bottom) >=
+0.8 x hole depth - 1 mm. A stale / occluded estimate shows the peg higher, so the check can only fail towards 'jammed'.
+
+**tight_insert: nominal vs force-ramp vs oracle** (`ceiling_fm7`, 10 seeds, site-dressed; success; median sim-s of the
+successes nominal / force-ramp / oracle). Force-ramp = press at 4 N, +2 N per stall, ceiling 14 N, no hidden knowledge:
+
+| robot | nominal (8 N) | force-ramp | oracle | oracle failures | median success sim-s |
+|---|---|---|---|---|---|
+| ur5e_2f85 | 0.80 | 0.90 | 0.70 | grasp_miss 1, place_miss 1, damage 1 | 18.3 / 20.0 / 18.0 |
+| panda | 0.30 | 0.70 | 0.60 | damage 4 (rim ramming during the spiral search) | 17.1 / 19.1 / 14.7 |
+| gen3_2f85 | 0.30 | 0.40 | 0.10 | collision, jam, not_found | ~32 |
+
+Honest read: the reactive force-ramp script already captures most of the hidden lip / dent physics (force-ramp >=
+oracle on success); what knowledge of the hidden physics still buys is cycle time (Panda: oracle 4.4 s faster) and fewer
+stalls - the target for lot memory. Panda oracle dents: the position-tracked spiral rams the peg edge into the rim /
+chamfer (22 N on a 19.5 N peg while the search press is 4 N). A laterally compliant spiral (`search_k` param, N/m) avoids
+it but at 600 N/m the search stopped tracking and success collapsed (UR5e force-ramp 0.9 -> 0.1), so the default stays
+the r6 spiral and `search_k` is an exposed gain. **Gen3 limitation:** its 2F-85 hides the held peg from the overhead
+tracker (no in-hand offset correction, no tracker seating check) and the transit to the hole collides with the fixture
+(1 collision per episode; the peg ends ~8 cm off the hole) - no collision-free transit planner in the skill layer yet.
+
+**Ceilings accepted at the r7 freeze (lead):** fixture_place, bin_clearing (after the fixes), tight_insert with
+force-ramp; pouch_transfer gripper-limited (soft pouches need >= the damage force with a parallel pinch); fastener_pick
+limited (~0.5 per isolated small-part pick with the 2F-85 / Panda flat pads); the other families as audited.
+
+**Low-level hooks for MODEL's imitation baseline (agreed format il-v0):** `env.control_state(eff)` (mode, mode_id,
+f_target, stiffness, axis), `env.set_control(eff, mode, f_target, stiffness)`, `env.time_budget()` (sim-s cap,
+filled at the freeze), `env.demo_call(call)` (= oracle-parameter scripted call), `env.render_wrist(64, 64)` (camera on
+the effector looking along the approach axis).
+
+**Fine-motor families (new, `envs/families_fine_motor.py`):** `tight_insert` (square peg, 0.1-0.5 mm diametral
+clearance, chamfer 0 / 0.2-0.6 mm, friction 0.2-0.8, dent limit 6-20 N on 50 %, tracker error on the hole) and
+`fastener_pick` (M3-M6 screws, washers, nylon connector blocks spilled in a 2 cm tray; ordered items into kit
+pockets). Reactive insertion params exposed on `insert`: `down_force, search_force, search_r, pitch, search_speed,
+drop, lateral_k, approach_speed, guard, wiggle (rad), wiggle_hz, retries, jam_n, press_speed`.
+
 ### envs-r6 (frozen `~/dynagraph_r6`): blow-up audit, fragility evidence, redesigns, G1 tote cell, dressed tranche
 The dressing-only commit (9226af7) never fed a tranche; the frozen envs-r6 = that commit + everything below.
 

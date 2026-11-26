@@ -45,10 +45,16 @@ class BinClearing(StationEnv):
         shapes = tuple(params.get("shapes", ("box", "cylinder", "capsule", "sphere", "mesh")))
         sx, sy = -0.2 + rng.uniform(-0.03, 0.03), 0.05 + rng.uniform(-0.03, 0.03)
         bin_half = (0.17, 0.12)
-        floor_z = scene.open_box((sx, sy, top), bin_half, 0.10, prefix="srcbin")
+        # r7: 6 cm bin walls (r6: 10 cm). A 10 cm bin left no collision-free grasp for the Panda hand / 2F-85 body on
+        # parts that are not in the bin centre (oracle-parameter Panda success 0.17); parts are <= 6 cm tall
+        # station variant "deep_bin" = the r6 geometry (10 cm bin / 9 cm tote walls), reported next to the default
+        deep = params.get("station_variant") == "deep_bin"
+        wall_h = float(params.get("bin_wall_h", 0.10 if deep else 0.06))
+        floor_z = scene.open_box((sx, sy, top), bin_half, wall_h, prefix="srcbin")
         tx, ty = 0.24 + rng.uniform(-0.02, 0.02), 0.05 + rng.uniform(-0.03, 0.03)
         tote_half = (0.14, 0.11)
-        tfloor = scene.open_box((tx, ty, top), tote_half, 0.09, rgba=(0.6, 0.2, 0.15, 1), prefix="tote")
+        tfloor = scene.open_box((tx, ty, top), tote_half, float(params.get("tote_wall_h", 0.09 if deep else 0.07)), rgba=(0.6, 0.2, 0.15, 1),
+                                prefix="tote")
         scene.region("source_bin", (sx, sy, floor_z + 0.06), (bin_half[0], bin_half[1], 0.08), support_z=floor_z)
         scene.region("tote", (tx, ty, tfloor + 0.05), (tote_half[0], tote_half[1], 0.07), support_z=tfloor)
         k = 0
@@ -98,7 +104,22 @@ class BinClearing(StationEnv):
             if self.in_region_est(e, reg, margin=0.03) or (not self.in_region_est(e, self.scene.regions["tote"], 0.01)
                                                            and est[0][2] < self.surface_z + 0.3):
                 out.append((est[0][2], e))
-        return [e for _, e in sorted(out, reverse=True)]
+        # r7: top layer first (2 cm bands), then the most ACCESSIBLE part (farthest from the bin walls and from the
+        # other parts' estimated footprints): clutter shrinks as the free parts leave (actor-legal estimates)
+        P = {e: np.asarray(self.est_pose(e)[0][:2], float) for _, e in out}
+        cx, cy = reg["center"][0], reg["center"][1]
+        hx, hy = reg["half"][0], reg["half"][1]
+
+        def access(e):
+            p0 = P[e]
+            h = self.est_size(e)
+            r0 = float(np.hypot(h[0], h[1])) if h is not None else 0.03
+            wall = min(hx - abs(p0[0] - cx), hy - abs(p0[1] - cy)) - r0
+            nb = min([float(np.linalg.norm(p0 - P[o])) - r0 - (float(np.hypot(*self.est_size(o)[:2]))
+                                                                if self.est_size(o) is not None else 0.03)
+                      for o in P if o != e] or [0.1])
+            return min(wall, 0.06) + min(nb, 0.06)
+        return [e for _, _, e in sorted(((round(z / 0.02), access(e), e) for z, e in out), reverse=True)]
 
     def _place_call(self, rng=None):
         p = dict(dx=0.0, dy=0.0, release_h=0.03, speed=0.4)
@@ -106,7 +127,20 @@ class BinClearing(StationEnv):
             p.update(dx=float(rng.uniform(-0.08, 0.08)), dy=float(rng.uniform(-0.06, 0.06)),
                      release_h=float(rng.uniform(0.01, 0.08)), speed=float(rng.uniform(0.2, 0.8)))
         else:
-            p.update(dx=float(self.rng.uniform(-0.07, 0.07)), dy=float(self.rng.uniform(-0.05, 0.05)))
+            # r7: the free spot of the tote (farthest from the parts already in it, tracker estimates): releasing
+            # onto a part pressed it with the fingertips (fragile parts damaged at the place)
+            reg = self.scene.regions["tote"]
+            cx, cy = reg["center"][0], reg["center"][1]
+            pts = [np.asarray(self.est_pose(e)[0][:2], float) for e in self.parts() if e != self.held
+                   and self.est_pose(e) is not None and self.in_region_est(e, reg, margin=0.02)]
+            best, bd = (0.0, 0.0), -1.0
+            for x in np.linspace(-0.07, 0.07, 7):
+                for y in np.linspace(-0.05, 0.05, 5):
+                    dd = min([float(np.hypot(cx + x - q[0], cy + y - q[1])) for q in pts] or [1.0])
+                    dd -= 0.002 * float(np.hypot(x, y))     # prefer the middle on ties
+                    if dd > bd:
+                        best, bd = (float(x), float(y)), dd
+            p.update(dx=best[0], dy=best[1])
         return SkillCall("place", p, target="tote")
 
     def candidates(self, n, rng):

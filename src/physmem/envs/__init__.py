@@ -17,7 +17,7 @@ import importlib
 # envs-r5 (dev): peg spiral time cost + dent limit, pouch squeeze limit, singulation pick option + cycle limit,
 # shelf_restock (mobile aisle with move_base), generator flushes buffers on SIGTERM.
 # envs-r6: site dressing (params["dressing"] = "site", envs/dressing.py) after the TalOS warehouse.
-ENV_VERSION = "envs-r6"
+ENV_VERSION = "envs-r7"
 
 _REG = {
     "bin_clearing": ("families_bulk", "BinClearing"),
@@ -39,6 +39,8 @@ _REG = {
     "small_parts_pick": ("families_extra", "SmallPartsPick"),
     "small_peg_insert": ("families_extra", "SmallPegInsert"),
     "shelf_restock": ("families_extra", "ShelfRestock"),
+    "tight_insert": ("families_fine_motor", "TightInsert"),         # envs-r7 fine motor
+    "fastener_pick": ("families_fine_motor", "FastenerPick"),       # envs-r7 fine motor
 }
 
 FAMILIES = tuple(_REG)

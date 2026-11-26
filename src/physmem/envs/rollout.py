@@ -57,7 +57,10 @@ def choose(env, rng, mode, probe=False):
         return (cands[int(rng.integers(len(cands)))], "random_candidate") if cands else (None, None)
     tag = ""
     if probe:
-        c, tag = env.probe_then_act(c), "_probe"
+        if hasattr(env, "force_ramp"):          # r7 tight_insert: the press-until-click variant
+            c, tag = env.force_ramp(c), "_ramp"
+        else:
+            c, tag = env.probe_then_act(c), "_probe"
     if u >= 0.8:
         return perturb(c, rng), "perturbed_scripted" + tag
     return c, "scripted" + tag

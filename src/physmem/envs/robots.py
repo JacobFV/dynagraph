@@ -226,11 +226,71 @@ class EmbodimentRobot:
         self._gi += 1
         if self._gi % 5:
             return
+        if self._gi % 10 == 0:
+            # r7: a hand squeezing on nothing (fully closed, no pad contact) relaxes to 10 % drive: at full drive the
+            # Panda's fingers were pushed through their joint limits (closure 1.2) and stayed jammed shut
+            for k, e in self.emb.eff.items():
+                if e["cfg"].gripper.kind == "suction" or not len(e["gacts"]):
+                    continue
+                c, n = self.emb.gripper_state(self.m, self.d, k)
+                if c > 0.97 and n == 0 and self.ctrl.st[k].get("grip", 0.0) > 0.5:
+                    e["gforce"] = np.minimum(np.asarray(e["gforce"], float), 0.1 * np.asarray(self.gforce0[k], float))
+        gm = getattr(self, "_gmax", None)
+        if gm is not None and self._gi % 10 == 0:
+            # r7 force-limited grip (fingertip force sensing): the pad normal force can exceed the open-loop drive
+            # setting (part wedged against a neighbour / the linkage) - scale the drive down to keep the measured
+            # per-side squeeze under the caller's ceiling `grip_max`
+            k, fmax = gm
+            meas = self.pad_force(k)
+            e = self.emb.eff[k]
+            if meas > 0.95 * fmax and e["gforce"] is not None:
+                e["gforce"] = np.maximum(np.asarray(e["gforce"], float) * (0.9 * fmax / meas), 0.05 *
+                                         np.asarray(self.gforce0[k], float))
+                self.grip_k[k] = 1.0
+        sl = getattr(self, "_slip", None)
+        if sl is not None:
+            k = sl["eff"]
+            _, n = self.emb.gripper_state(self.m, self.d, k)
+            if n == 0 or self.grip_cmd[0] == "open":
+                self._slip = None          # released / lost
+            elif sl["gain"] > 1.0:
+                v_o = self.d.qvel[sl["dadr"]:sl["dadr"] + 3]
+                v_t = np.asarray(self.emb.tcp_vel(self.m, self.d, k)[0], float)
+                if float(np.linalg.norm(v_o - v_t)) > sl["thr"]:
+                    sl["n"] += 1
+                    if sl["n"] >= 2 and sl["F"] < sl["fmax"]:
+                        sl["F"] = min(sl["F"] * sl["gain"], sl["fmax"])
+                        self.emb.set_grip_force(k, sl["F"])
+                        self.grip_k[k] = 1.0
+                        sl["n"] = 0
+                        self.slip_events = getattr(self, "slip_events", 0) + 1
+                else:
+                    sl["n"] = 0
         for k, e in self.emb.eff.items():
             if self.grip_k[k] >= 1.0:
                 continue
             _, n = self.emb.gripper_state(self.m, self.d, k)
             e["gforce"] = self.gforce0[k] * (self.grip_k[k] if n > 0 else 1.0)
+
+    def pad_force(self, k):
+        """measured per-side pad squeeze (N): total normal force on the pad geoms from non-robot geoms / 2."""
+        m, d = self.m, self.d
+        e = self.emb.eff[k]
+        if not d.ncon or not e["pad"]:
+            return 0.0
+        pg = getattr(self, "_padg", {}).get(k)
+        if pg is None:
+            pg = np.array([g for g in e["ft_geoms"] if m.geom_bodyid[g] in e["pad"]], int)
+            self._padg = dict(getattr(self, "_padg", {}), **{k: pg})
+        g1, g2 = d.contact.geom1[:d.ncon], d.contact.geom2[:d.ncon]
+        own = self.emb.geoms
+        sel = np.where((np.isin(g1, pg) & ~np.isin(g2, own)) | (np.isin(g2, pg) & ~np.isin(g1, own)))[0]
+        f6 = np.zeros(6)
+        tot = 0.0
+        for i in sel:
+            mujoco.mj_contactForce(m, d, int(i), f6)
+            tot += abs(f6[0])
+        return tot / 2.0
 
     def step(self, dt):
         self.t += dt
@@ -244,6 +304,13 @@ class EmbodimentRobot:
         mujoco.mju_quat2Mat(R, q)
         R = R.reshape(3, 3)
         return p, math.atan2(-R[0, 1], R[1, 1])       # probe convention: hand y (closing) = (-sin yaw, cos yaw)
+
+    def tcp_frame(self, eff=None):
+        """(TCP position, 3x3 rotation; column 2 = approach axis) - for the r7 wrist camera."""
+        p, q = self.emb.tcp_pose(self.d, eff or self.eff)
+        R = np.zeros(9)
+        mujoco.mju_quat2Mat(R, q)
+        return np.asarray(p, float), R.reshape(3, 3)
 
     def joint_names(self):
         out = []
@@ -316,14 +383,67 @@ class EmbodimentSkills:
         r.grip_k[eff] = 1.0
         r.grip_cmd = ("force", float(got if got > 0 else grip_force))
 
+    def _static_boxes(self, env):
+        """CAD-known static fixtures (world-body boxes, e.g. bin / tote walls, socket blocks): (centre xy, R2 (2x2),
+        half xy, z_bottom, z_top). Cached per compiled model. Actor-legal (station CAD)."""
+        m, d = env.m, env.d
+        key = id(m)
+        if getattr(self, "_sb_key", None) == key:
+            return self._sb
+        out = []
+        for g in range(m.ngeom):
+            if m.geom_bodyid[g] != 0 or m.geom_type[g] != mujoco.mjtGeom.mjGEOM_BOX or m.geom_contype[g] == 0 \
+                    and m.geom_conaffinity[g] == 0:
+                continue
+            h = m.geom_size[g]
+            if h[0] > 0.8 or h[1] > 0.8:          # floor-like / bench slabs: not a finger obstacle
+                continue
+            R = d.geom_xmat[g].reshape(3, 3)
+            c = d.geom_xpos[g]
+            out.append((c[:2].copy(), R[:2, :2].copy(), h[:2].copy(), float(c[2] - h[2]), float(c[2] + h[2])))
+        self._sb, self._sb_key = out, key
+        return out
+
+    def _neighbours(self, env, target, est, radius=0.2):
+        """other parts' ESTIMATED footprints near the target: [(x, y, r)] (tracker poses + size estimates)."""
+        out = []
+        p0 = np.asarray(est.pos[:2], float)
+        for eid in env.scene.entities:
+            if eid == target or eid not in env.scene.grip_pairs_objects:
+                continue
+            e2 = env.est_pose(eid)
+            if e2 is None:
+                continue
+            h2 = env.est_size(eid)
+            try:
+                r2 = float(np.hypot(h2[0], h2[1]))
+            except Exception:
+                continue
+            if np.linalg.norm(np.asarray(e2[0][:2]) - p0) < radius:
+                out.append((float(e2[0][0]), float(e2[0][1]), r2))
+        return out
+
     def _clutter_yaw(self, env, target, est, gcfg):
-        """0 or pi/2 (closing across the narrow or the wide side): the one whose finger landing spots are farther from
-        the other parts' ESTIMATED footprints (tracker poses + size estimates; actor-legal). 0 if not cluttered."""
+        """r7 collision-aware grasp yaw (actor-legal): among closing directions (narrow / wide axis of a box; 8 yaws for
+        round parts) pick the one whose two finger footprints (at the pre-shape opening) stay farthest from (a) the
+        other parts' ESTIMATED footprints and (b) CAD-known static fixtures (bin / tote walls) that rise above the
+        grasp height. Returns the yaw offset relative to the narrow-axis closing direction. r6 only looked at other
+        parts, so a part lying against a bin wall got a finger on the wall top: the guarded descent tripped ~9 cm
+        above the part (UR5e bin_clearing 'grasp_failed' x14 per episode)."""
         R = est.R
-        hx, hy = est.half_size[0], est.half_size[1]
+        hx, hy, hz = est.half_size
         yaw_o = math.atan2(R[1, 0], R[0, 0])
-        narrow = (yaw_o, 2 * hx) if hx <= hy else (yaw_o + math.pi / 2, 2 * hy)
-        wide = (narrow[0] + math.pi / 2, 2 * max(hx, hy))
+        narrow = yaw_o if hx <= hy else yaw_o + math.pi / 2
+        w_n, w_w = 2 * min(hx, hy), 2 * max(hx, hy)
+        info = env.scene.entities.get(target)
+        shape = getattr(info, "shape", "box")
+        round_ = shape in ("sphere", "cylinder") or abs(hx - hy) < 0.003
+        if round_:
+            cands = [(narrow + k * math.pi / 8, w_n) for k in range(8)]
+        else:
+            cands = [(narrow, w_n), (narrow + math.pi / 2, w_w)]
+        p0 = np.asarray(est.pos[:2], float)
+        z_grasp = float(est.pos[2])
         others = []
         for eid in env.scene.entities:
             if eid == target or eid not in env.scene.grip_pairs_objects:
@@ -336,19 +456,37 @@ class EmbodimentSkills:
                 r2 = float(np.hypot(h2[0], h2[1]))
             except Exception:
                 continue
-            if np.linalg.norm(np.asarray(e2[0][:2]) - np.asarray(est.pos[:2])) < 0.15:
+            if np.linalg.norm(np.asarray(e2[0][:2]) - p0) < 0.2:
                 others.append((np.asarray(e2[0][:2], float), r2))
-        if not others:
-            return 0.0
+        walls = [b for b in self._static_boxes(env) if b[4] > z_grasp - hz + 0.004 and b[3] < z_grasp + 0.12
+                 and np.linalg.norm(b[0] - p0) < 0.6]
+        fh = 0.012          # finger half-thickness (along the closing axis) / half-width (across)
+        margin = 0.03 if gcfg.jaw_dir == 0 else 0.015      # pre-shape opening beyond the part (pick: open_margin)
+
+        def box_dist(pt, b):
+            c, R2, h = b[0], b[1], b[2]
+            l = R2.T @ (pt - c)
+            dx, dy = max(abs(l[0]) - h[0], 0.0), max(abs(l[1]) - h[1], 0.0)
+            return math.hypot(dx, dy)
 
         def clearance(yc, w):
             if w > 0.9 * gcfg.max_width:
                 return -1.0
             u = np.array([math.cos(yc), math.sin(yc)])
-            spots = [np.asarray(est.pos[:2]) + sgn * (w / 2 + 0.012) * u for sgn in (-1, 1)]
-            return min(float(np.linalg.norm(sp - c)) - r for sp in spots for c, r in others)
-        c0, c1 = clearance(*narrow), clearance(*wide)
-        return math.pi / 2 if c1 > c0 + 0.004 else 0.0
+            spots = [p0 + sgn * (w / 2 + margin / 2 + fh) * u for sgn in (-1, 1)]
+            best = 1.0
+            for sp in spots:
+                for c, r in others:
+                    best = min(best, float(np.linalg.norm(sp - c)) - r - fh)
+                for b in walls:
+                    best = min(best, box_dist(sp, b) - fh)
+            return best
+        scored = [(clearance(yc, w), -i, yc) for i, (yc, w) in enumerate(cands)]
+        c0 = scored[0][0]
+        best = max(scored)
+        if best[0] <= c0 + 0.004:
+            return 0.0
+        return float(_wrap(best[2] - narrow))
 
     def _base_approach(self, env, call, ctx):
         """mobile manipulator: before a skill, drive the holonomic base sideways (along the bench) so the arm base is in
@@ -494,10 +632,20 @@ class EmbodimentSkills:
             est.half_size = ((hx, t / 2, hzt) if long_x else (t / 2, hy, hzt))
             wall_pinch = True
         hz = est.half_size[2]
-        dyaw_n = self._clutter_yaw(env, call.target, est, gcfg) if (gcfg.kind == "parallel" and not wall_pinch) else 0.0
+        # r7: the grasp yaw is chosen inside the pick primitive (collision-aware vs CAD fixtures + the neighbours'
+        # estimated footprints passed as 'avoid'); _clutter_yaw stays for reference
+        dyaw_n = 0.0
+        avoid = self._neighbours(env, call.target, est) if gcfg.kind == "parallel" else []
         q = dict(speed=p.get("approach_speed", 0.3), lift=p.get("lift_height", 0.10),
                  lift_speed=p.get("lift_speed", 0.2), yaw=p.get("dyaw", 0.0) + dyaw_n,
                  **({"max_acc": float(p["max_acc"])} if "max_acc" in p else {}))
+        if avoid:
+            q["avoid"] = avoid
+        if info is not None and info.meta.get("flex"):
+            q["closed_miss"] = 1.05          # r7: a squeezed pouch closes the fingers fully: judge the grasp by contacts
+        for k_ in ("regrasp", "trip_miss", "open_margin", "closed_miss", "wide", "clear", "guard"):
+            if k_ in p:
+                q[k_] = p[k_]
         if moving:
             q.update(vel=(float(v[0]), float(v[1]), 0.0), age=float(env.est_age(call.target)), pre=0.05,
                      speed=max(0.4, p.get("approach_speed", 0.4)))
@@ -518,6 +666,7 @@ class EmbodimentSkills:
         elif k == 2 and not wall_pinch:
             q["depth"] = float(min(2 * hz, q.get("depth", hz) + 0.01))
         self._set_grip_force(eff, p.get("grip_force", 40.0))
+        self.r._gmax = (eff, float(p["grip_max"])) if ("grip_max" in p and gcfg.kind != "suction") else None
         if self.r.emb.eff[eff]["cfg"].gripper.kind == "suction":
             self.r.emb.eff[eff]["suction_level"] = float(np.clip(p.get("suction", 1.0), 0.0, 1.0))
             self.r.suction_cmd = self.r.emb.eff[eff]["suction_level"]
@@ -529,6 +678,14 @@ class EmbodimentSkills:
             env.held = call.target
             _, tyaw = self.r.tcp(eff)
             env._held_off = (float(held["offset"]), float(_wrap(yaw - tyaw)))
+            # r7 slip-reactive grip while carrying (pad shear / incipient-slip sensing): raise the squeeze by
+            # `slip_gain` per detected slip event up to `grip_max` (the caller's crush-safe ceiling; default = the
+            # drive limit). slip_gain = 1 disables it.
+            if gcfg.kind != "suction" and env.dadr.get(call.target) is not None:
+                fmax = float(p.get("grip_max", self.r.emb.max_grip_force(eff)))
+                self.r._slip = dict(eff=eff, dadr=int(env.dadr[call.target]), F=float(p.get("grip_force", 40.0)),
+                                    fmax=fmax, gain=float(p.get("slip_gain", 1.3)), thr=float(p.get("slip_v", 0.01)),
+                                    n=0)
         else:
             self.r.grip_cmd = ("open", 0.0)
         return res
@@ -615,9 +772,26 @@ class EmbodimentSkills:
             yaw_q = dict(yaw=tyaw + dyw + math.pi / 2)
         # a real two-finger grasp leaves 1-3 mm of in-hand offset along the finger axis (the probe's is ~0): the spiral
         # must cover it, so the search radius is at least 4 mm (ROBOTS insert gate: 4 mm)
-        q = dict(depth=0.9 * reg.get("depth", 0.02), force=max(p.get("down_force", 6.0), 6.0),
-                 search_r=max(p.get("search_r", 0.002), 0.004), release=p.get("release", True), **yaw_q)
+        q = dict(depth=0.9 * reg.get("depth", 0.02), force=max(p.get("down_force", 6.0), p.get("min_force", 6.0)),
+                 search_r=max(p.get("search_r", 0.002), p.get("search_r_min", 0.004)), release=p.get("release", True),
+                 **yaw_q)
+        # r7 reactive-insertion gains / thresholds, exposed as SkillCall params (model / baselines choose them)
+        for k_env, k_sk in (("pitch", "pitch"), ("search_speed", "speed"), ("search_force", "search_force"),
+                            ("drop", "drop"), ("lateral_k", "lateral_k"), ("approach_speed", "approach_speed"),
+                            ("guard", "guard"), ("wiggle", "wiggle"), ("wiggle_hz", "wiggle_hz"),
+                            ("retries", "retries"), ("jam_n", "jam_n"), ("press_speed", "press_speed"),
+                            ("ramp_step", "ramp_step"), ("ramp_max", "ramp_max"), ("search_k", "search_k")):
+            if k_env in p:
+                q[k_sk] = float(p[k_env])
+        held_e = env.held
         res = run_skill(ctx, SkillCall("insert", q, target=call.target, effector=eff), est)
+        if not res.ok and held_e is not None and "depth" in reg:
+            # r7: the skill measures the insertion depth from the TCP, which over-reads 'jammed' when the part slid up
+            # in the grasp under the press; cross-check with the tracker (actor-legal): seated -> done
+            o = env.est_pose_avg(held_e, window=0.3)
+            hz = float(env.est_size(held_e)[2])
+            if o is not None and (reg["support_z"] - (o[0][2] - hz)) >= 0.8 * float(reg["depth"]) - 0.001:
+                res = SkillResult(True, "done", res.effort, res.duration_s, dict(res.log, tracker_seated=True))
         if p.get("release", True) and (res.ok or True):
             if not res.ok:        # ROBOTS insert keeps holding on failure: let go like the probe does
                 ctx.ctrl.set_gripper(eff, 0.0)

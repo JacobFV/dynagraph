@@ -17,7 +17,7 @@ RY90 = (0.7071068, 0, 0.7071068, 0)     # TCP z = body x
 def _f2(name, joints, body, home, pre='g/'):
     return EffectorCfg(name=name, joints=joints, site_body=pre + 'base', tcp_pos=(0, 0, 0.145), closing=(0, 1, 0),
                        home=home, gripper=GripperCfg(kind='parallel', actuators=(pre + 'fingers_actuator',),
-                                                     closed=(0.8,), opened=(0.0,), force=(5.0,), kd_ratio=0.0, max_width=0.085, tip=0.018, link_h=0.033, pad_per_drive=9.07, grip_n=100.0, pad_friction=1.2,
+                                                     closed=(0.8,), opened=(0.0,), force=(5.0,), kd_ratio=0.0, max_width=0.085, tip=0.018, link_h=0.033, pad_per_drive=9.07, pad_offset=3.0, grip_n=100.0, pad_friction=1.2,
                                                      pad_bodies=tuple(pre + b for b in ('right_pad', 'left_pad', 'right_silicone_pad', 'left_silicone_pad', 'right_follower', 'left_follower'))))
 
 
@@ -27,7 +27,7 @@ ROBOTS = {
         name='panda', kind='arm', xml='menagerie_extra/franka_emika_panda/panda.xml',
         effectors=(EffectorCfg(name='hand', joints=tuple(f'joint{i}' for i in range(1, 8)), site_body='hand',
                                tcp_pos=(0, 0, 0.1034), home=(0, -0.1104, 0, -2.273, 0, 2.1626, -0.7854),
-                               gripper=GripperCfg(kind='parallel', actuators=('actuator8',), closed=(0.0,), opened=(0.04,), max_width=0.08, tip=0.009, pad_per_drive=0.68, grip_n=70.0, pad_friction=1.2,
+                               gripper=GripperCfg(kind='parallel', actuators=('actuator8',), closed=(0.0,), opened=(0.04,), max_width=0.08, tip=0.009, pad_per_drive=0.47, grip_n=70.0, pad_friction=1.2,
                                                   force=(70.0,), kd_ratio=0.0, pad_bodies=('left_finger', 'right_finger'))),),
         torque_override={'actuator8': (-280.0, 280.0)},
         reach_m=0.855, payload_kg=3.0, max_ee_speed=1.0, max_ee_force=70.0,

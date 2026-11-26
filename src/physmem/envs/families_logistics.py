@@ -658,7 +658,8 @@ class PouchTransfer(StationEnv):
         mu = float(rng.uniform(0.3, 0.9))
         size = (0.07, 0.12, 0.04)
         cx, cy = -0.18 + rng.uniform(-0.03, 0.03), rng.uniform(-0.04, 0.04)
-        scene.flex_pouch("pouch", (cx - size[0] / 2, cy - size[1] / 2, top + 0.006), size, count=(3, 4, 2), mass=mass,
+        cnt = tuple(params.get("flex_count", (3, 4, 2)))
+        scene.flex_pouch("pouch", (cx - size[0] / 2, cy - size[1] / 2, top + 0.006), size, count=cnt, mass=mass,
                          young=young, mu=mu)
         tx, ty = 0.2, 0.05
         tfloor = scene.open_box((tx, ty, top), (0.14, 0.11), 0.08, rgba=(0.6, 0.2, 0.15, 1), prefix="tote")

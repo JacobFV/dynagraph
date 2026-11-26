@@ -192,6 +192,87 @@ class StationEnv:
         cands = self.candidates(n, rng)
         return [replace(c, candidate_id=c.candidate_id or f"c{i}") for i, c in enumerate(cands[:n])]
 
+    # ================================================================== r7 low-level hooks (imitation / demos)
+    MODE_IDS = {"track": 0, "guarded": 1, "impedance": 2, "force": 3}
+
+    def control_state(self, eff=None) -> dict:
+        """live controller mode of a real-arm effector: mode, mode_id, f_target (3, N, world; force mode),
+        stiffness (3, N/m; impedance / compliant force mode), axis (3). The probe gantry reports track."""
+        ctrl = getattr(self.robot, "ctrl", None)
+        if ctrl is None or not hasattr(ctrl, "st"):
+            return dict(mode="track", mode_id=0, f_target=np.zeros(3), stiffness=np.zeros(3), axis=np.zeros(3))
+        eff = eff or getattr(self.robot, "eff", None) or next(iter(ctrl.st))
+        st = ctrl.st[eff]
+        kw = st.get("kw", {}) or {}
+        axis = np.asarray(kw.get("axis", (0.0, 0.0, 0.0)), float)
+        f = float(kw.get("force", 0.0)) if st["mode"] == "force" else 0.0
+        k = float(kw.get("stiffness", 0.0)) if st["mode"] in ("impedance", "force") else 0.0
+        return dict(mode=st["mode"], mode_id=self.MODE_IDS.get(st["mode"], 0), f_target=axis * f,
+                    stiffness=np.full(3, k), axis=axis)
+
+    def set_control(self, eff, mode, f_target=(0.0, 0.0, 0.0), stiffness=None):
+        """set the controller mode for low-level policies (force target along its own direction)."""
+        ctrl = self.robot.ctrl
+        f = np.asarray(f_target, float)
+        kw = {}
+        if mode == "force":
+            n = float(np.linalg.norm(f))
+            kw.update(axis=tuple(f / n) if n > 1e-9 else (0.0, 0.0, -1.0), force=n, approach_speed=0.02,
+                      compliant=stiffness is not None)
+        if stiffness is not None:
+            kw["stiffness"] = float(np.mean(np.atleast_1d(stiffness)))
+        ctrl.set_mode(mode, eff, **kw)
+
+    # r7 freeze: 1.5 x the median sim duration of SUCCESSFUL scripted episodes (oracle / force-ramp / nominal params) in
+    # the ceiling audits (results/v2/envs/ceiling_{r6,dev5,fm7}_rows.jsonl), floor 20 s; family x robot, then family
+    TIME_BUDGET_S = {
+        "bin_clearing/gen3_2f85": 101.1, "bin_clearing/panda": 114.4, "bin_clearing/probe": 91.5,
+        "bin_clearing/ur5e_2f85": 140.5, "conveyor_sort/probe": 98.4, "conveyor_sort/ur5e_2f85": 89.5,
+        "depalletize/panda": 20.0, "depalletize/probe": 146.2, "fixture_place/gen3_2f85": 20.0, "fixture_place/panda": 20.0,
+        "fixture_place/probe": 20.0, "fixture_place/ur5e_2f85": 20.0, "pouch_transfer/gen3_2f85": 20.0,
+        "pouch_transfer/panda": 20.0, "pouch_transfer/probe": 23.4, "pouch_transfer/ur5e_2f85": 20.0,
+        "tool_return/gen3_2f85": 48.1, "tool_return/panda": 64.8, "tool_return/probe": 26.4, "tool_return/ur5e_2f85": 34.4,
+        "tight_insert/ur5e_2f85": 30.0, "tight_insert/panda": 28.0, "tight_insert/gen3_2f85": 48.0,
+        "bin_clearing": 115.0, "conveyor_sort": 95.0, "depalletize": 146.0, "fixture_place": 20.0, "pouch_transfer": 20.0,
+        "tool_return": 45.0, "tight_insert": 35.0, "fastener_pick": 90.0,
+    }
+
+    def time_budget(self) -> float:
+        """sim-time cap (s) for low-level policies on this family x robot (r7)."""
+        key = f"{self.family}/{self.task.robot}"
+        return float(self.TIME_BUDGET_S.get(key, self.TIME_BUDGET_S.get(self.family, 12.0 * self.budget)))
+
+    def demo_call(self, call):
+        """the r7 demonstration policy: the scripted call with ORACLE parameters (envs.oracle.rule, true latents)."""
+        from .oracle import rule
+        return rule(self, call, "true") if call is not None else None
+
+    def render_wrist(self, width=64, height=64) -> np.ndarray:
+        """low-res RGB from a camera on the effector, looking along the approach axis (TCP z)."""
+        r = self.robot
+        try:
+            p, R = r.tcp_frame() if hasattr(r, "tcp_frame") else (None, None)
+        except Exception:
+            p, R = None, None
+        if p is None:
+            tcp, yaw = r.tcp()
+            p = np.asarray(tcp, float)
+            z = np.array([0.0, 0.0, -1.0])
+        else:
+            z = np.asarray(R)[:, 2]
+        key = (width, height)
+        if getattr(self, "_wr_key", None) != key:
+            self._wrist_renderer = mujoco.Renderer(self.m, height, width)
+            self._wr_key = key
+        cam = mujoco.MjvCamera()
+        cam.lookat[:] = p + 0.12 * z
+        cam.distance = 0.14
+        # camera forward = z: azimuth / elevation of z; the eye sits 2 cm behind the TCP along -z
+        cam.azimuth = math.degrees(math.atan2(z[1], z[0]))
+        cam.elevation = float(np.clip(math.degrees(math.asin(np.clip(z[2], -1, 1))), -89.5, 89.5))
+        self._wrist_renderer.update_scene(self.d, cam)
+        return self._wrist_renderer.render()
+
     def render(self, camera: str = "overview", width=640, height=480) -> np.ndarray:
         if self.renderer is None or self.renderer.width != width:
             self.renderer = mujoco.Renderer(self.m, height, width)
@@ -544,7 +625,11 @@ class StationEnv:
                 ob = int(gb[g[i, 1]] if gb[g[i, 0]] == 0 else gb[g[i, 0]])
                 if ob in self._dent_body:
                     mujoco.mj_contactForce(m, d, int(i), f6)
-                    push[ob] = push.get(ob, 0.0) + abs(f6[0])
+                    # r7: AXIAL load only (world-vertical component of the contact force): ramming the part onto a rim /
+                    # the hole bottom dents it; side-wall normals of a peg sliding in a tight hole do not (r5-r6 summed
+                    # all normals, so a well-aligned press past a snap-fit latch dented pegs far below their rating)
+                    fw = d.contact.frame[i].reshape(3, 3).T @ f6[:3]
+                    push[ob] = push.get(ob, 0.0) + abs(float(fw[2]))
             for ob in list(self._dent_ema):
                 if ob not in push:
                     self._dent_ema[ob] *= 0.7

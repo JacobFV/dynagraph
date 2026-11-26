@@ -47,6 +47,7 @@ class GripperCfg:
     tip: float = 0.012                # fingertip extent beyond the TCP along the approach, CLOSED (m, scripts/robots_tips.py)
     link_h: float = 0.055             # height above the TCP where the gripper widens (linkage / palm) (m)
     pad_per_drive: float = 1.0        # pad normal force per side (N) per unit drive effort, measured (scripts/robots_grip_calib.py)
+    pad_offset: float = 0.0           # r7: extra pad force at any drive effort (linkage spring), N; subtracted when commanding
     grip_n: float = 0.0               # nominal squeeze per side (N); 0 = use `force`. make(name, grip_force=N) overrides
     pad_friction: float = 0.0         # sliding friction of the pad geoms (0 = keep the model's)
     jaw_dir: int = 0                  # 0: symmetric fingers; +-1: single moving jaw on the +-TCP-y side of a fixed jaw
@@ -523,8 +524,8 @@ class MjEmbodiment:
         if gr.kind == 'suction':
             return 0.0
         lim = np.array([self.act_hi[a] * self.act_gear[a] for a in e['gacts']])
-        e['gforce'] = np.minimum(float(newtons) / gr.pad_per_drive, lim)
-        return float(e['gforce'][0] * gr.pad_per_drive)
+        e['gforce'] = np.minimum(max(float(newtons) - gr.pad_offset, 1.0) / gr.pad_per_drive, lim)
+        return float(e['gforce'][0] * gr.pad_per_drive + gr.pad_offset)
 
     def max_grip_force(self, eff):
         e = self.eff[eff]

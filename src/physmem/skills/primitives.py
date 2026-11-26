@@ -16,6 +16,8 @@ from physmem.embodiments.trajectory import BlendedTrajectory, make_traj, quat_er
 from physmem.skills.base import ObjectEstimate, SkillContext, SkillRun
 
 W_MAX = 1.5  # rad/s nominal peak angular rate for reorientation
+import os as _os
+_DBG = int(_os.environ.get('PHYSMEM_SKILL_DEBUG', '0') or 0)
 
 
 def _eff(ctx, call):
@@ -158,6 +160,92 @@ def _reachable(ctx, eff, pos, q, tol=0.01):
     return False
 
 
+def _wait_fingers(ctx, eff, t_min=0.1, t_max=1.5):
+    """step until the fingers stop moving (encoder), bounded: the pre-shape opening is reached (slow hands: Panda)."""
+    t_end = ctx.data.time + t_max
+    ctx.wait(t_min)
+    prev = ctx.emb.gripper_state(ctx.model, ctx.data, eff)[0]
+    while ctx.data.time < t_end:
+        ctx.step(25)
+        c = ctx.emb.gripper_state(ctx.model, ctx.data, eff)[0]
+        if abs(c - prev) < 2e-3:
+            break
+        prev = c
+
+
+def _static_obstacles(ctx, est):
+    """CAD-known static geoms near the target that rise above its support (walls, fixtures): finger obstacles."""
+    import mujoco
+    m, d = ctx.model, ctx.data
+    key = id(m)
+    cache = getattr(ctx, '_static_cache', None)
+    if cache is None or cache[0] != key:
+        gs = [g for g in range(m.ngeom) if m.geom_bodyid[g] == 0 and (m.geom_contype[g] or m.geom_conaffinity[g])
+              and m.geom_type[g] != mujoco.mjtGeom.mjGEOM_PLANE]
+        ctx._static_cache = cache = (key, gs)
+    p0 = np.asarray(est.p, float)
+    z_sup = est.bottom_z() + 0.004
+    out = []
+    for g in cache[1]:
+        c = d.geom_xpos[g]
+        if np.linalg.norm(c[:2] - p0[:2]) - m.geom_rbound[g] > 0.25:
+            continue
+        top_z = c[2] + (m.geom_size[g][2] if m.geom_type[g] == mujoco.mjtGeom.mjGEOM_BOX else m.geom_rbound[g])
+        if top_z <= z_sup:
+            continue            # the support surface itself
+        out.append(g)
+    return out
+
+
+def _pad_target_margin(ctx, eff, est):
+    """scratch (after _reachable): signed horizontal distance of each finger pad geom centre outside the target's
+    ESTIMATED footprint (box in its yaw frame), minimum over pads; < 0 = a finger would land on the part."""
+    m, sd = ctx.model, ctx._ikd
+    e = ctx.emb.eff[eff]
+    R = est.R
+    yaw = math.atan2(R[1, 0], R[0, 0])
+    c, s_ = math.cos(yaw), math.sin(yaw)
+    hx, hy = est.h[0], est.h[1]
+    out = 1.0
+    for g in e['ft_geoms']:
+        if m.geom_bodyid[g] not in e['pad']:
+            continue
+        d = sd.geom_xpos[g][:2] - est.p[:2]
+        lx, ly = c * d[0] + s_ * d[1], -s_ * d[0] + c * d[1]
+        rb = float(min(m.geom_size[g][:2])) if m.geom_type[g] == 6 else float(m.geom_rbound[g]) * 0.5
+        val = max(abs(lx) - hx, abs(ly) - hy) - rb
+        if _DBG > 2:
+            print(f"        pad {m.geom(g).name} local ({lx:.4f}, {ly:.4f}) half ({hx:.4f}, {hy:.4f}) rb {rb:.4f} -> {val:.4f}"
+                  f" z {sd.geom_xpos[g][2]:.3f}")
+        out = min(out, val)
+    return out
+
+
+def _grasp_clearance(ctx, eff, statics, avoid, cap=0.05):
+    """after a successful _reachable (scratch ctx._ikd holds the arm solution, gripper as currently pre-shaped):
+    min distance gripper geoms <-> static obstacles, and pads <-> estimated neighbour footprints (x, y, r)."""
+    import mujoco
+    m, sd = ctx.model, ctx._ikd
+    e = ctx.emb.eff[eff]
+    mujoco.mj_kinematics(m, sd)
+    best = cap
+    ft = np.asarray(e['ft_geoms'], int)
+    ft = ft[sd.geom_xpos[ft, 2] < sd.site_xpos[e['site']][2] + 0.12]      # fingers / palm, not the forearm
+    fromto = np.zeros(6)
+    for g in statics:
+        for f in ft:
+            dist = mujoco.mj_geomDistance(m, sd, int(f), int(g), best, fromto)
+            if dist < best:
+                best = dist
+    if avoid and e['pad']:
+        pads = [g for g in ft if m.geom_bodyid[g] in e['pad']]
+        for g in pads:
+            for (x, y, r) in avoid:
+                dd = float(np.hypot(sd.geom_xpos[g][0] - x, sd.geom_xpos[g][1] - y)) - 0.75 * r - 0.006
+                best = min(best, dd)
+    return float(best)
+
+
 # ============================================================================ reach
 def reach(ctx: SkillContext, call, est: ObjectEstimate = None):
     eff, p = _eff(ctx, call), call.params
@@ -202,23 +290,74 @@ def pick(ctx: SkillContext, call, est: ObjectEstimate):
             # default: keep the linkage/palm above a flat top; an explicit depth (e.g. a shank below a head) is honoured
             depth = p['depth'] if 'depth' in p else min(float(np.clip(hz, 0.015, 0.035)), gc.link_h - 0.004)
             gz = max(bottom + gc.tip + p.get('clear', 0.003), top - depth)
-            y0 = _near_yaw(ctx, eff, cy)
             base_xy = np.asarray(getattr(ctx.emb, 'mount_pose', (np.zeros(3),))[0], float)[:2]
             rad = est.p[:2] - base_xy
             rad = np.array([*(rad / (np.linalg.norm(rad) + 1e-9)), 0.0])
-            tilts = (0.0, 0.35, 0.7)     # vertical first; tilted (outward) approaches only if out of reach / limits
-            cands = [(yq, tl) for tl in tilts for yq in (y0, y0 + math.pi)]
-            for yq, tl in cands:     # nearer yaw first; the other yaw / a tilted approach only if out of reach
-                q = down_quat(yq)
-                if tl:  # tilt the approach outward (TCP z toward -z cos + radial sin), for low-dof arms
-                    from physmem.embodiments.trajectory import quat_from_rotvec, quat_mul
-                    q = quat_mul(quat_from_rotvec(np.cross([0, 0, 1.0], rad) * tl), q)
-                g = np.array([est.p[0], est.p[1], gz])
-                if gc.jaw_dir:  # single moving jaw: put the fixed jaw's face at the object's side
-                    g[:2] -= gc.jaw_dir * (width / 2 + p.get('jaw_margin', 0.008)) * np.array([math.cos(yq), math.sin(yq)])
-                pre = g + np.array([0, 0, top - gz + p.get('pre', _clear(ctx))])
-                if _reachable(ctx, eff, g, q) and _reachable(ctx, eff, pre, q):
+            # r7 collision-aware grasp selection: closing yaws (narrow axis; the wide axis if it fits; 8 yaws for
+            # round parts) x {vertical, tilted}. Each reachable candidate is scored by the clearance of the gripper
+            # (pre-shaped, at the IK solution) to CAD-known static fixtures (exact mj_geomDistance on a scratch
+            # MjData) and of its pads to the other parts' ESTIMATED footprints (params 'avoid'); the best wins.
+            wide_ok = 2 * max(hx, hy) < 0.9 * gc.max_width
+            round_ = abs(hx - hy) < 0.003
+            yaws = [(cy, width)]
+            if round_:
+                yaws += [(cy + k * math.pi / 8, width) for k in range(1, 8)]
+            elif wide_ok and int(p.get('wide', 1)):
+                yaws.append((cy + math.pi / 2, 2 * max(hx, hy)))
+            om = p.get('open_margin', 0.015 if gc.jaw_dir else 0.03)
+            gpre_of = lambda w_: float(np.clip(1.0 - (w_ + om) / gc.max_width, 0.0, 0.6))
+            statics = _static_obstacles(ctx, est)
+            avoid = [tuple(a) for a in p.get('avoid', ())]
+            best, ranked = None, []
+            # vertical first; then tilted approaches (outward from the base, then the 8 compass directions: tilting
+            # the palm away from a bin wall), only while no collision-free candidate was found
+            dirs8 = [np.array([math.cos(a), math.sin(a), 0.0]) for a in np.arange(8) * math.pi / 4]
+            tilt_set = [(0.0, rad)] + [(tl, dv) for tl in (0.35, 0.6) for dv in [rad] + dirs8]
+            shaped = None
+            for ti, (tl, dv) in enumerate(tilt_set):
+                for yc, wc in yaws:
+                    if shaped != gpre_of(wc):      # score with the fingers pre-shaped as they will descend
+                        shaped = gpre_of(wc)
+                        ctx.ctrl.set_gripper(eff, shaped)
+                        _wait_fingers(ctx, eff)
+                    y0 = _near_yaw(ctx, eff, yc)
+                    for yq in (y0, y0 + math.pi):
+                        q_ = down_quat(yq)
+                        if tl:  # tilt the approach (TCP z toward -z cos + dv sin), for low-dof arms / near walls
+                            from physmem.embodiments.trajectory import quat_from_rotvec, quat_mul
+                            q_ = quat_mul(quat_from_rotvec(np.cross([0, 0, 1.0], dv) * tl), q_)
+                        g_ = np.array([est.p[0], est.p[1], gz])
+                        if gc.jaw_dir:  # single moving jaw: put the fixed jaw's face at the object's side
+                            g_[:2] -= gc.jaw_dir * (wc / 2 + p.get('jaw_margin', 0.008)) * np.array([math.cos(yq), math.sin(yq)])
+                        pre_ = g_ + np.array([0, 0, top - gz + p.get('pre', _clear(ctx))])
+                        if not (_reachable(ctx, eff, pre_, q_) and _reachable(ctx, eff, g_, q_)):
+                            continue
+                        pm = _pad_target_margin(ctx, eff, est)
+                        if _DBG > 1:
+                            print(f"      live closure {ctx.emb.gripper_state(ctx.model, ctx.data, eff)[0]:.3f} shaped {shaped:.3f} gforce {ctx.emb.eff[eff]['gforce']} grip {ctx.ctrl.st[eff].get('grip')} ctrl {ctx.data.ctrl[ctx.emb.act_ids[ctx.emb.eff[eff]['gacts']]]}")
+                        sc = _grasp_clearance(ctx, eff, statics, avoid) - 0.004 * ti / len(tilt_set)
+                        if pm < 0.002:          # a finger would land on the part itself: only as a last resort
+                            sc -= 0.1
+                        if _DBG > 1:
+                            print(f"      cand tilt {tl:.2f} yaw {yq:.2f} w {wc:.3f} padmargin {pm:.4f} score {sc:.4f}")
+                        ranked.append((sc, -len(ranked), q_, g_, pre_, wc, yq))
+                        if best is None or sc > best[0] + 0.002:
+                            best = (sc, q_, g_, pre_, wc, yq)
+                        if sc > 0.02:
+                            break
+                    if best is not None and best[0] > 0.02:
+                        break
+                if best is not None and (best[0] > 0.005 or (ti == 0 and not statics and not avoid)):
                     break
+            if _DBG:
+                print(f"    [pick] statics {len(statics)} avoid {len(avoid)} yaws {len(yaws)} best "
+                      f"{None if best is None else (round(best[0], 4), round(best[5], 2))}", flush=True)
+            if best is not None:
+                _, q, g, pre, width, _ = best
+            else:
+                q = down_quat(_near_yaw(ctx, eff, cy))
+                g = np.array([est.p[0], est.p[1], gz])
+                pre = g + np.array([0, 0, top - gz + p.get('pre', _clear(ctx))])
             approach = np.array([0, 0, -1.0])
         else:  # side grasp: approach horizontally along the closing-orthogonal axis, fingers across the narrow side
             app = np.array([math.cos(cy + math.pi / 2), math.sin(cy + math.pi / 2), 0.0])
@@ -232,28 +371,67 @@ def pick(ctx: SkillContext, call, est: ObjectEstimate):
             approach = app
         if not _reachable(ctx, eff, g, q) or not _reachable(ctx, eff, pre, q):
             return r.result(False, 'unreachable', target=g.tolist(), ik=getattr(ctx, '_ik_last', None))
-        hover = pre + np.array([0, 0, 0.02])
-        # pre-shape: open only as far as needed (a wide-swinging jaw would hit the part or the table)
-        g_pre = float(np.clip(1.0 - (width + p.get('open_margin', 0.015 if gc.jaw_dir else 0.03)) / gc.max_width, 0.0, 0.6))
-        st = _move(ctx, eff, [hover, pre], v, q, gripper=g_pre)
-        if st not in ('done',):
-            return r.result(False, st, phase='approach')
-        ctx.ctrl.set_mode('guarded', eff, threshold=_guard_n(ctx, p), axis=tuple(approach))
-        st = _move(ctx, eff, [g], p.get('approach_speed', 0.08), q)
-        tripped = ctx.ctrl.tripped(eff)
-        tcp_now = _tcp(ctx, eff)[0]
-        miss = float(np.linalg.norm(tcp_now - g))
-        ctx.ctrl.set_mode('track', eff)
-        _close(ctx, eff, p.get('squeeze', 1.0))
+        # r7: the descent is retried with the next-ranked collision-aware candidate when the guard trips well above
+        # the grasp point (a finger landed on a neighbour / a wall): up to `regrasp` extra tries inside the skill
+        alts = sorted([c_ for c_ in (ranked if not side else []) if c_[2] is not q], key=lambda c_: (-c_[0], -c_[1]))
+        tries = 1 + int(p.get('regrasp', 2))
+        for attempt in range(tries):
+            hover = pre + np.array([0, 0, 0.02])
+            # pre-shape: open only as far as needed (a wide-swinging jaw would hit the part or the table)
+            g_pre = float(np.clip(1.0 - (width + p.get('open_margin', 0.015 if gc.jaw_dir else 0.03)) / gc.max_width,
+                                  0.0, 0.6))
+            st = _move(ctx, eff, [hover, pre], v, q, gripper=g_pre)
+            if st not in ('done',):
+                return r.result(False, st, phase='approach')
+            ctx.ctrl.set_mode('guarded', eff, threshold=_guard_n(ctx, p), axis=tuple(approach))
+            st = _move(ctx, eff, [g], p.get('approach_speed', 0.08), q)
+            tripped = ctx.ctrl.tripped(eff)
+            tcp_now = _tcp(ctx, eff)[0]
+            miss = float(np.linalg.norm(tcp_now - g))
+            ctx.ctrl.set_mode('track', eff)
+            if _DBG and tripped:
+                m_, d_ = ctx.model, ctx.data
+                fg = set(ctx.emb.eff[eff]['ft_geoms'])
+                hits = sorted({(m_.geom(int(c_.geom1)).name if c_.geom1 >= 0 else 'flex',
+                                m_.geom(int(c_.geom2)).name if c_.geom2 >= 0 else 'flex')
+                               for c_ in d_.contact[:d_.ncon] if c_.geom1 in fg or c_.geom2 in fg})
+                print(f"    [pick] trip at miss {miss:.4f}: {hits[:5]}", flush=True)
+            if not (tripped and miss > p.get('trip_miss', 0.015)) or attempt == tries - 1 or not alts:
+                break
+            _move(ctx, eff, [pre], v, q)          # back up, next candidate
+            _, _, q, g, pre, width, _ = alts.pop(0)
+            r.log['regrasps'] = r.log.get('regrasps', 0) + 1
+        # r7 floor-following pinch for small / flat parts (fasteners): linkage fingers (2F-85) rise ~1 cm along their
+        # arc while closing, so they close ABOVE a 3-6 mm part; keep a light downward force during the close so the
+        # fingertips slide along the support surface (params floor_pinch, floor_force)
+        small = (top - bottom) < p.get('floor_pinch_h', 0.012)
+        if int(p.get('floor_pinch', 1 if small and not side else 0)):
+            ctx.ctrl.set_mode('force', eff, axis=(0, 0, -1), force=float(p.get('floor_force', 0.8)), approach_speed=0.01,
+                              compliant=True, stiffness=600.0)
+            here = _tcp(ctx, eff)[0]
+            ctx.ctrl.command(BlendedTrajectory(effector=eff, waypoints=[(np.array([here[0], here[1], bottom]), q)],
+                                               durations=[0.4]), preempt=True)
+            ctx.run(max_t=0.3, effector=eff)
+            _close(ctx, eff, p.get('squeeze', 1.0))
+            ctx.ctrl.set_mode('track', eff)
+            here = _tcp(ctx, eff)[0]
+            ctx.ctrl.command(BlendedTrajectory(effector=eff, waypoints=[(here, q)], durations=[0.1]), preempt=True)
+            ctx.run(max_t=0.15, effector=eff)
+        else:
+            _close(ctx, eff, p.get('squeeze', 1.0))
         c, n = ctx.emb.gripper_state(ctx.model, ctx.data, eff)
-        if c > 0.93 or n == 0:
+        # r7: 'closed on nothing' threshold from the expected closure for this width (a 3 mm screw closes the 2F-85
+        # to ~0.97 and was rejected at the r6 fixed 0.93); deformables (closed_miss ~1) rely on pad contacts only
+        c_exp = 1.0 - width / max(gc.max_width, 1e-6)
+        c_miss = float(p.get('closed_miss', max(0.93, c_exp + 0.03)))
+        if c > c_miss or n == 0:
             _move(ctx, eff, [pre], v, q, gripper=0.0)
             return r.result(False, 'grasp_failed', closure=c, contacts=n, tripped=tripped, miss=miss)
         lift = p.get('lift', _clear(ctx, 0.10))
         top_pt = _tcp(ctx, eff)[0] + np.array([0, 0, lift])
         st = _move(ctx, eff, [top_pt], min(v, p.get('lift_speed', 0.2)), q)
         c2, n2 = ctx.emb.gripper_state(ctx.model, ctx.data, eff)
-        held = n2 > 0 and c2 < 0.95
+        held = n2 > 0 and c2 < max(0.95, c_miss + 0.02)
         if held:
             tz = _tcp(ctx, eff)[0][2]
             Rg = quat2mat(q)
@@ -674,8 +852,12 @@ def insert(ctx: SkillContext, call, est: ObjectEstimate):
         if not inserted and not partial:
             # spiral search under a constant downward force; stop as soon as the peg drops into the hole
             searched = True
+            # r7: optional laterally COMPLIANT spiral (param search_k, N/m): fewer rim-ramming dents, but at 600 N/m the
+            # spiral no longer tracked and the search success collapsed (UR5e force-ramp 0.9 -> 0.1) - so the default
+            # stays the position-tracked r6 spiral (search_k = 0)
+            sk = float(p.get('search_k', 0.0))
             ctx.ctrl.set_mode('force', eff, axis=(0, 0, -1), force=p.get('search_force', min(4.0, Fn)), approach_speed=0.01,
-                              bias=tuple(F0), compliant=False)
+                              bias=tuple(F0), compliant=sk > 0, **({'stiffness': sk} if sk > 0 else {}))
             pitch, rmax = p.get('pitch', 0.0008), p.get('search_r', 0.004)
             turns = rmax / pitch
             th = np.linspace(0, 2 * math.pi * turns, int(turns * 16) + 2)[1:]
@@ -693,14 +875,46 @@ def insert(ctx: SkillContext, call, est: ObjectEstimate):
             found = st == 'until'
         if found and not inserted:
             searched = searched or partial
-            # press home compliantly: lateral impedance, constant downward force
-            here = _tcp(ctx, eff)[0]
-            ctx.ctrl.set_mode('force', eff, axis=(0, 0, -1), force=Fn, approach_speed=0.02, bias=tuple(F0), compliant=True,
-                              stiffness=p.get('lateral_k', 300.0))
-            ctx.ctrl.command(BlendedTrajectory(effector=eff, waypoints=[(np.array([here[0], here[1], goal_z]), q)],
-                                               durations=[max(0.5, depth / 0.02)]), preempt=True)
-            ctx.run(until=lambda c: _tcp(c, eff)[0][2] <= goal_z + 0.001, max_t=depth / 0.01 + 2.0, effector=eff)
-            ctx.wait(0.2)
+            # press home compliantly: lateral impedance, constant downward force; r7: optional yaw wiggle (amplitude
+            # `wiggle` rad at `wiggle_hz`) against tight-fit jamming, and F/T jam recovery: if the press stalls with a
+            # large reaction (> jam_n) the peg is lifted 1 mm and re-pressed (up to `retries` times)
+            wig, whz = float(p.get('wiggle', 0.0)), float(p.get('wiggle_hz', 2.0))
+            n_ramp = int(math.ceil(max(0.0, p.get('ramp_max', Fn) - Fn) / p['ramp_step'])) if p.get('ramp_step', 0.0) > 0 else 0
+            for attempt in range(1 + int(p.get('retries', 1)) + n_ramp):
+                here = _tcp(ctx, eff)[0]
+                ctx.ctrl.set_mode('force', eff, axis=(0, 0, -1), force=Fn, approach_speed=0.02, bias=tuple(F0),
+                                  compliant=True, stiffness=p.get('lateral_k', 300.0))
+                T = max(0.5, depth / p.get('press_speed', 0.02))
+                if wig > 0:
+                    n = max(2, int(T * whz * 2))
+                    y_now = _yaw_of_closing(q)
+                    wps = [(np.array([here[0], here[1], here[2] + (goal_z - here[2]) * (i + 1) / n]),
+                            down_quat(y_now + (wig if i % 2 == 0 else -wig) * (0.0 if i == n - 1 else 1.0)))
+                           for i in range(n)]
+                    tr = BlendedTrajectory(effector=eff, waypoints=wps, durations=[T / n] * n)
+                else:
+                    tr = BlendedTrajectory(effector=eff, waypoints=[(np.array([here[0], here[1], goal_z]), q)], durations=[T])
+                ctx.ctrl.command(tr, preempt=True)
+                st_p = ctx.run(until=lambda c: _tcp(c, eff)[0][2] <= goal_z + 0.001, max_t=T + 2.0, effector=eff)
+                ctx.wait(0.2)
+                if _tcp(ctx, eff)[0][2] <= goal_z + 0.002:
+                    break
+                # r7 force ramp (params ramp_step / ramp_max): a stall is answered by pressing harder, in place, up to
+                # the ceiling - the engineer's 'press until it clicks' without knowing the latch force
+                if p.get('ramp_step', 0.0) > 0 and Fn < p.get('ramp_max', Fn):
+                    Fn = float(min(Fn + p['ramp_step'], p['ramp_max']))
+                    r.log['ramp_force'] = Fn
+                    continue
+                if attempt >= int(p.get('retries', 1)):
+                    break
+                Fj, _, _ = ctx.emb.wrist_ft(ctx.model, ctx.data, eff)
+                if float(np.linalg.norm((Fj - F0)[:2])) < p.get('jam_n', 3.0):
+                    break           # not jammed (bottomed out / blocked): no point re-pressing
+                r.log['jam_retries'] = r.log.get('jam_retries', 0) + 1
+                up = _tcp(ctx, eff)[0] + np.array([0, 0, 0.001])
+                ctx.ctrl.set_mode('track', eff)
+                ctx.ctrl.command(BlendedTrajectory(effector=eff, waypoints=[(up, q)], durations=[0.2]), preempt=True)
+                ctx.run(max_t=0.4, effector=eff)
         z_end = _tcp(ctx, eff)[0][2]
         ins_depth = float(entry[2] + off - z_end)
         ok = ins_depth >= depth - 0.003

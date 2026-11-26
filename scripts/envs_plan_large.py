@@ -84,11 +84,14 @@ def main():
     ap.add_argument("--tranche4", action="store_true")
     ap.add_argument("--r4", action="store_true")
     ap.add_argument("--r6", action="store_true")
+    ap.add_argument("--r7", action="store_true")
     ap.add_argument("--scale", type=float, default=1.0)
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
     if a.r6:
         return plan_r6(a.out, a.scale)
+    if a.r7:
+        return plan_r7(a.out, a.scale)
     if a.r4:
         return plan_r4(a.out)
     if a.tranche4:
@@ -241,6 +244,34 @@ def plan_r6(out, scale=1.0):
     print("tranche8_r6_site", len(allt), dict(collections.Counter(t["robot"] for t in allt)))
     print("splits", dict(collections.Counter(t["split"] for t in allt)))
     print("families", dict(collections.Counter(t["family"] for t in allt)))
+
+
+R7_FAMS = ["bin_clearing", "tight_insert", "fastener_pick", "fixture_place", "tool_return", "pouch_transfer",
+           "depalletize", "conveyor_sort", "peg_insert", "small_parts_pick", "kitting_pocket"]
+R7_BASE = {"probe": 110, "ur5e_2f85": 150, "panda": 150}
+R7_HELDOUT_N = 40
+
+
+def plan_r7(out, scale=1.0):
+    """envs-r7 tranche for the new / fixed skills: probe + UR5e + Panda on the r7 skill-layer families (site-dressed;
+    bin_clearing 1/3 in the `deep_bin` station variant), Gen3 held out (heldout_robot split only)."""
+    import hashlib
+    t = []
+    for rob, n in R7_BASE.items():
+        for fam in R7_FAMS:
+            tl = tasks_for(rob, fam, max(4, int(n * scale)), base_seed=3_500_000)
+            for i, x in enumerate(tl):
+                if fam == "bin_clearing" and i % 3 == 2:
+                    x["params"]["station_variant"] = "deep_bin"
+            t += tl
+    for fam in R7_FAMS:
+        t += tasks_for(HELDOUT_ROBOT, fam, max(4, int(R7_HELDOUT_N * scale)), base_seed=3_500_000)
+    for x in t:
+        x["params"]["dressing"] = "site"
+    t.sort(key=lambda x: hashlib.sha256(f"{x['robot']}|{x['family']}|{x['split']}|{x['seed']}".encode()).hexdigest())
+    json.dump(t, open(os.path.join(out, "tranche9_r7.json"), "w"))
+    print("tranche9_r7", len(t), dict(collections.Counter(x["robot"] for x in t)))
+    print("splits", dict(collections.Counter(x["split"] for x in t)))
 
 
 if __name__ == "__main__":

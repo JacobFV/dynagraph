@@ -495,3 +495,57 @@ def test_g1_tote_cell_geometry_and_transfer_call():
     c = env.scripted()
     assert c.skill == "pick" and c.params["two_palm"] == 1 and c.params["carry_dy"] > 0.1
     assert env.scene.mounts["humanoid"][0][1] == 0.0 and isinstance(env, ToteTransfer)
+
+
+# ------------------------------------------------------------------ envs-r7: skill layer, hooks, fine motor
+def test_r7_low_level_hooks_on_a_real_arm():
+    env = make_env("fixture_place")
+    env.reset(TaskSpec("fixture_place", "fine", 3, "ur5e_2f85", "train", {}))
+    cs = env.control_state()
+    assert cs["mode"] in env.MODE_IDS and cs["f_target"].shape == (3,)
+    env.set_control(env.robot.eff, "force", (0.0, 0.0, -5.0), stiffness=300.0)
+    cs = env.control_state()
+    assert cs["mode"] == "force" and cs["f_target"][2] == pytest.approx(-5.0) and cs["mode_id"] == 3
+    env.set_control(env.robot.eff, "track")
+    assert env.time_budget() > 0
+    c = env.scripted()
+    d = env.demo_call(c)
+    assert d.skill == c.skill and d.target == c.target
+    img = env.render_wrist(64, 64)
+    assert img.shape == (64, 64, 3) and img.dtype == np.uint8
+
+
+@pytest.mark.parametrize("fam", ["tight_insert", "fastener_pick"])
+def test_r7_fine_motor_families_reset_and_scripted(fam):
+    env = make_env(fam)
+    env.reset(task(fam, 11, split="train"))
+    if fam == "tight_insert":
+        h = env.hidden_task
+        assert 0.0001 <= h["clearance"] <= 0.0005
+        c = env.scripted()
+        assert c.skill == "pick"
+    else:
+        assert 2 <= len(env.items_order) <= 3 and len(env.items()) >= 6
+        kinds = {env.scene.entities[e].kind for e in env.items()}
+        assert kinds <= {"screw", "washer", "connector_block"}
+        c = env.scripted()
+        assert c.skill == "pick" and c.target in env.items_order
+
+
+def test_r7_force_limited_grip_keeps_pad_force_under_grip_max():
+    """real arm: with grip_max the measured pad squeeze stays under the ceiling even at a high commanded force."""
+    env = make_env("bin_clearing")
+    env.reset(TaskSpec("bin_clearing", "bulk", 1700101, "ur5e_2f85", "test", {"n_parts": 1, "crush_n": 1e6}))
+    e = env.parts()[0]
+    b = env.body_id[e]
+    peak = [0.0]
+    orig = env._contact_monitor
+
+    def mon():
+        orig()
+        peak[0] = max(peak[0], env._sq_ema.get(b, 0.0) / 2)
+    env._contact_monitor = mon
+    env.execute(SkillCall("pick", dict(grip_force=60.0, grip_max=25.0, lift_speed=0.2, depth=0.5, slip_gain=1.0),
+                          target=e))
+    env.idle(0.5)
+    assert env._sq_ema.get(b, 0.0) / 2 < 25.0 * 1.15
