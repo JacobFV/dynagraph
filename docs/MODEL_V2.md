@@ -933,3 +933,41 @@ and from every selection step)**. Episode wall-clock guard 60 s. Runs resume fro
 **Outputs.** `results/v2/closed_loop/v2_r8_lot_<robot>.json`, table `results/v2/closed_loop/robot_table_r8.md` /
 `.json` (`scripts/v2/r7_table.py <out> v2_r8_lot_`). Paired same-seed videos only for robots with a significant
 good-parts win over PTA.
+
+### 12b. Results (pre-registered test, run 2026-11-26 00:05-02:05Z after commit c4fd7d7)
+5-part lots, 12 shared calls per lot, n = 30 paired lots per robot, tau = 0.15. Full table:
+`results/v2/closed_loop/robot_table_r8.md` / `.json` (raw `v2_r8_lot_<robot>.json`). Good parts per lot; Δ = paired
+mean [95% bootstrap CI]; **bold** = CI above 0.
+
+| robot (split) | PTA | typed r7v2 | **typed − PTA (primary)** | typed − memory OFF | typed − generic | probes/lot PTA -> typed | success PTA -> typed | damage PTA -> typed | timeouts PTA / typed |
+|---|---|---|---|---|---|---|---|---|---|
+| probe gantry (test) | 0.72 | 0.81 | **+0.09 [+0.03,+0.16] WIN** | **+0.17 [+0.11,+0.23]** | **+0.39 [+0.29,+0.50]** | 4.9 -> 1.1 | 0.13 -> 0.40 | 0.27 -> 0.30 | 0 / 0 |
+| ur5e (test) | 0.22 | 0.21 | −0.01 [−0.07,+0.07] | +0.02 [−0.07,+0.11] | **+0.13 [+0.05,+0.21]** | 3.7 -> 1.0 | 0.00 -> 0.03 | 0.13 -> 0.07 | 7 / 6 |
+| panda (test) | 0.05 | 0.05 | +0.01 [−0.03,+0.05] | −0.01 [−0.04,+0.03] | **+0.05 [+0.02,+0.09]** | 5.3 -> 3.3 | 0 -> 0 | 0.13 -> 0.13 | 2 / 0 |
+| gen3 (held-out robot) | 0.15 | 0.17 | +0.01 [−0.03,+0.05] | +0.02 [−0.03,+0.07] | **+0.14 [+0.06,+0.24]** | 3.3 -> 1.3 | 0 -> 0 | 0.23 -> 0.13 | 1 / 2 |
+
+Labelled oracle (v2 rule, true lot): gantry 0.85 (+0.13 vs PTA), ur5e 0.24, panda 0.11, gen3 0.19.
+
+Verdicts (as pre-registered):
+- **Primary: a win on 1 of 4 robots, the probe gantry**: +0.09 [+0.03, +0.16] good parts per lot (about 0.45 extra good
+  parts per 5-part lot). The mechanism matches the hypothesis. The typed planner probes 1.1 times per lot against
+  PTA's 4.9 (−3.80 [−4.13, −3.47]). PTA uses up the 12 calls before the bin is empty (in 15 of 30 lots typed ends with
+  more good parts, all with PTA at 12/12 calls). Episode success goes from 0.13 to 0.40. Damage is unchanged
+  (+0.03, n.s.). With lot memory OFF the same rule probes every part (4.9) and does worse than PTA
+  (−0.07 [−0.14, −0.02]). Lot memory ON vs OFF: **+0.17 [+0.11, +0.23]**. So on the gantry the extra parts come from
+  the lot memory.
+- **ur5e, panda, gen3 (held out): no win vs PTA** (−0.01 .. +0.01; CIs include 0), even though typed saves 2.0-2.7
+  probes per lot there too (all significant). As VAL predicted (12a), PTA on these arms is not budget-bound. It fails
+  picks and places for reasons other than budget, with good parts at 0.05-0.22 and timeouts from sim instabilities
+  (ur5e 3-7 per policy). Saved calls have nothing to turn into. Memory ON vs OFF: n.s. on all three.
+- **Secondary, vs generic: met on all four robots** (+0.05 .. +0.39), including held-out Gen3 (+0.14 [+0.06, +0.24]).
+- Paired video (gantry only, the one significant good-parts win): lot seed 2900003, PTA 5 probes, budget exhausted,
+  3/5 parts, FAIL vs typed 1 probe, 5/5, SUCCESS: `results/v2/videos_paired/bin_clearing__probe__s2900003.mp4`
+  (+ `.json`); stills at 20/45/70/95% in `results/v2/videos_paired/stills/` and `~/Downloads/dynagraph_gallery/paired/`.
+
+**Erratum to 12a (found after the run, does not change any number).** 12a says the test seeds (test base + 900000 + i)
+were "never used in rounds 3-4". That is wrong. The round-3 cell table (`scripts/v2/env_closed_loop.py`) used the
+same seed numbers, including bin_clearing on these robots, but with a different protocol: no lot override, 3-6 parts,
+ENVS budget. Those episodes were evaluation only. No model was trained or tuned on them (on-policy rollouts use the
+train split, and tau and the VAL budget choice used VAL seeds), so this is not train/test leakage. The lots and
+part counts here differ from round 3.

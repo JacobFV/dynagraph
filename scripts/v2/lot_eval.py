@@ -35,9 +35,12 @@ if "generic" in only:
     pols["generic"] = ("planner", LotPlanner(Gm, tau=tau, name="generic"))
 pols = {k: v for k, v in pols.items() if k in only}
 NP = int(os.environ.get("NPARTS", "3"))     # parts per lot (bin_clearing n_parts); budget = 4 x parts (ENVS)
+# round 5 (12a): shared lot budget = round(BUDGET_PER_PART x parts) skill calls (probes included); unset = ENVS 4 x parts
+BPP = float(os.environ.get("BUDGET_PER_PART", "0") or 0)
+BUDGET = int(round(BPP * NP)) if BPP > 0 else 0
 SEED_OFF = int(os.environ.get("SEED_OFF", "700000"))   # 700000 = pre-registered set; 800000 = fresh set for v2 (11e)
 tasks = [api.TaskSpec(fam, "", SEED_BASE.get(split, 2_000_000) + SEED_OFF + i, robot, split,
-                      params={"dressing": "site", "n_parts": NP}) for i in range(n)]
+                      params={"dressing": "site", "n_parts": NP, **({"budget": BUDGET} if BUDGET else {})}) for i in range(n)]
 out_dir = os.environ.get("OUT_DIR", "results/v2/closed_loop")
 os.makedirs(out_dir, exist_ok=True)
 pp = f"{out_dir}/{run}.partial.json"
@@ -52,9 +55,10 @@ for c0 in range(start, n, 5):
     for k in res:
         res[k].extend(part[k])
     json.dump({fam: dict(episodes=res, done_tasks=len(res["heuristic"]) if "heuristic" in res else c0 + 5, tau=tau,
-                         robot=robot, split=split)}, open(pp, "w"), default=float)
+                         robot=robot, split=split, n_parts=NP, budget=BUDGET or 4 * NP)}, open(pp, "w"), default=float)
 summ = H.summarize(res, ref="heuristic")
-json.dump({fam: dict(summary=summ, episodes=res, tau=tau, robot=robot, split=split)}, open(f"{out_dir}/{run}.json", "w"),
+json.dump({fam: dict(summary=summ, episodes=res, tau=tau, robot=robot, split=split, n_parts=NP,
+                    budget=BUDGET or 4 * NP)}, open(f"{out_dir}/{run}.json", "w"),
           default=float)
 print(f"== {fam} {robot} {split} ({time.time() - t0:.0f}s)")
 for k, eps in res.items():

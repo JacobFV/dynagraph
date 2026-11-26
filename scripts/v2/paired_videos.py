@@ -53,11 +53,18 @@ class StripRecorder(EV.Recorder):
         self.n_frames += 1
 
 
+def _lot_params():
+    """lot cells: n_parts (NPARTS, default 3) and the shared budget (BUDGET_PER_PART x parts; round 5 / 12a)."""
+    n = int(os.environ.get("NPARTS", "3"))
+    bpp = float(os.environ.get("BUDGET_PER_PART", "0") or 0)
+    return dict(n_parts=n, **({"budget": int(round(bpp * n))} if bpp > 0 else {}))
+
+
 def run(tag, trust, robot, fam, seed, policy, split="test", idx=0, variant="residual_gated"):
     env = make_env(fam)
     lot = variant.startswith("lot")
     task = api.TaskSpec(fam, "", int(seed), robot, split,
-                        params={"dressing": "site", **({"n_parts": 3} if lot else {})})
+                        params={"dressing": "site", **(_lot_params() if lot else {})})
     if lot:
         from physmem.models.v2.lot import LotEnvAdapter
         ad = LotEnvAdapter(env)

@@ -1,0 +1,28 @@
+{
+ "robot": "probe",
+ "family": "bin_clearing",
+ "seed": 2900003,
+ "split": "test",
+ "task_index": 3,
+ "left": {
+  "path": "results/v2/videos_paired/_bin_clearing__probe__s2900003__heuristic_probe.mp4",
+  "success": false,
+  "damaged": false,
+  "effort": 2579.9785077520382,
+  "probes": 5,
+  "policy": "always-probe scripted (probe-then-act)",
+  "video_s": 19.733333333333334
+ },
+ "right": {
+  "path": "results/v2/videos_paired/_bin_clearing__probe__s2900003__residual.mp4",
+  "success": true,
+  "damaged": false,
+  "effort": 1823.0592005459562,
+  "probes": 1,
+  "policy": "MODEL-V2 typed lot memory, crush-gated probing (v2)",
+  "video_s": 16.8
+ },
+ "dressing": "site",
+ "path": "results/v2/videos_paired/bin_clearing__probe__s2900003.mp4",
+ "note": "same seed, same lot; left = always-probe scripted (probe-then-act), right = MODEL-V2 typed lot memory, crush-gated probing (v2) (3-seed typed-memory ensemble)"
+}
