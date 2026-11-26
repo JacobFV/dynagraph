@@ -615,6 +615,22 @@ kept; panda, aloha, z1, so100, fr3_suction, tidybot, g1_dex3, g1_dex3_fixed clea
 are byte-identical between r7 and r7.1, so their r7 audit rows, tranche rows and MODEL's r7 demos carry over. Only the
 Gen3 audit rows and the Gen3 held-out tranche episodes are regenerated on r7.1.
 
+**Gen3 ceiling on r7.1** (`results/v2/envs/ceiling_r7_1.{md,json}`; oracle success r7 -> r7.1, 6 seeds, tight_insert
+10; the UR5e / Panda / probe rows of `ceiling_r7` carry over unchanged): the self-contact WAS a large part of Gen3's low
+ceilings and of its tight_insert 'transit collisions':
+
+| family | nominal | PTA / force-ramp | oracle r7 -> r7.1 |
+|---|---|---|---|
+| tight_insert | 0.30 -> 0.90 | force-ramp 0.40 -> **1.00** | 0.10 -> 0.80 |
+| bin_clearing | 0.00 -> 0.00 | PTA 0.00 -> 0.17 | 0.67 -> **0.83** |
+| bin_clearing @deep_bin | 0.00 | 0.00 | 0.33 -> 0.33 |
+| fastener_pick | 0.00 -> 0.50 | PTA 0.17 -> 0.50 | 0.00 -> 0.67 |
+| fixture_place | 0.33 | 0.50 | 0.67 -> 0.67 |
+| tool_return / pouch / conveyor / depalletize | ~unchanged | | 0.00 / 0.17 / 0.00 / 0.00 |
+
+The r6 Gen3 held-out results (MODEL's G5 / heldout_robot numbers from r6 and r7 tranches) were measured on the bugged
+model and understate Gen3.
+
 ### envs-r7 (FROZEN 2026-11-26 08:02Z, `~/dynagraph_r7`; sources sha256 8166269b...9b28): skill-layer ceiling audit + fixes, fine-motor families
 Why: MODEL round 5 showed the ORACLE planner reaching ~0.27 good parts / lot on UR5e (Panda 0.05, Gen3 ~0.2): the
 scripted skills / controllers were the ceiling. r7 measures that ceiling per (robot x family) and fixes the skill layer.
@@ -711,7 +727,7 @@ oracle on success); what knowledge of the hidden physics still buys is cycle tim
 stalls - the target for lot memory. Panda oracle dents: the position-tracked spiral rams the peg edge into the rim /
 chamfer (22 N on a 19.5 N peg while the search press is 4 N). A laterally compliant spiral (`search_k` param, N/m) avoids
 it but at 600 N/m the search stopped tracking and success collapsed (UR5e force-ramp 0.9 -> 0.1), so the default stays
-the r6 spiral and `search_k` is an exposed gain. **Gen3 limitation:** its 2F-85 hides the held peg from the overhead
+the r6 spiral and `search_k` is an exposed gain. **Gen3 limitation (r7; largely resolved in r7.1 - the 'collisions' were the base/shoulder self-contact):** its 2F-85 hides the held peg from the overhead
 tracker (no in-hand offset correction, no tracker seating check) and the transit to the hole collides with the fixture
 (1 collision per episode; the peg ends ~8 cm off the hole) - no collision-free transit planner in the skill layer yet.
 
