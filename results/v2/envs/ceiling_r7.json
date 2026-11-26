@@ -1,0 +1,3342 @@
+{
+ "tag": "r7",
+ "note": "envs-r7 after-fix ceiling audit (frozen ~/dynagraph_r7, site-dressed); 'before' = envs-r6 frozen code, 10 cm bins",
+ "after": {
+  "tag": "r7",
+  "table": [
+   {
+    "robot": "gen3_2f85",
+    "family": "bin_clearing",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.9444444444444443,
+    "damaged": 1.0,
+    "calls": 11.0,
+    "wall_s": 10.86401093006134,
+    "tactile_per_pick": 0.875,
+    "causes": {
+     "crush_or_damage": 6
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "bin_clearing",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.6666666666666666,
+    "progress": 0.9027777777777777,
+    "damaged": 0.0,
+    "calls": 10.666666666666666,
+    "wall_s": 13.20310084025065,
+    "tactile_per_pick": 0.7,
+    "causes": {
+     "success": 4,
+     "slip": 1,
+     "grasp_miss": 1
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "bin_clearing",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.6138888888888889,
+    "damaged": 0.0,
+    "calls": 16.5,
+    "wall_s": 25.736172676086426,
+    "tactile_per_pick": 1.0526315789473684,
+    "causes": {
+     "grasp_miss": 6
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "bin_clearing@deep_bin",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.7583333333333333,
+    "damaged": 1.0,
+    "calls": 12.666666666666666,
+    "wall_s": 10.667068282763163,
+    "tactile_per_pick": 0.5909090909090909,
+    "causes": {
+     "crush_or_damage": 6
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "bin_clearing@deep_bin",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.7722222222222221,
+    "damaged": 0.16666666666666666,
+    "calls": 11.5,
+    "wall_s": 11.373550136884054,
+    "tactile_per_pick": 0.7,
+    "causes": {
+     "success": 2,
+     "slip": 1,
+     "crush_or_damage": 1,
+     "grasp_miss": 1,
+     "collision": 1
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "bin_clearing@deep_bin",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.5583333333333333,
+    "damaged": 0.8333333333333334,
+    "calls": 16.666666666666668,
+    "wall_s": 22.22020407517751,
+    "tactile_per_pick": 0.7901234567901234,
+    "causes": {
+     "crush_or_damage": 5,
+     "grasp_miss": 1
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "conveyor_sort",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.39999999999999997,
+    "damaged": 0.6666666666666666,
+    "calls": 18.666666666666668,
+    "wall_s": 11.872594833374023,
+    "tactile_per_pick": 0.6153846153846154,
+    "causes": {
+     "grasp_miss": 1,
+     "ik_fail": 1,
+     "crush_or_damage": 4
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "conveyor_sort",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.20000000000000004,
+    "damaged": 0.16666666666666666,
+    "calls": 16.833333333333332,
+    "wall_s": 10.726516087849935,
+    "tactile_per_pick": 0.671875,
+    "causes": {
+     "grasp_miss": 4,
+     "ik_fail": 1,
+     "crush_or_damage": 1
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "conveyor_sort",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.3,
+    "damaged": 0.16666666666666666,
+    "calls": 18.0,
+    "wall_s": 12.248939355214437,
+    "tactile_per_pick": 0.6029411764705882,
+    "causes": {
+     "grasp_miss": 2,
+     "ik_fail": 2,
+     "crush_or_damage": 1,
+     "sim_instability": 1
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "depalletize",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.0,
+    "damaged": 0.0,
+    "calls": 14.0,
+    "wall_s": 0.9426281452178955,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "grasp_miss": 6
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "depalletize",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.5625,
+    "damaged": 0.0,
+    "calls": 14.0,
+    "wall_s": 1.1057290236155193,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "grasp_miss": 6
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "depalletize",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.0,
+    "damaged": 0.0,
+    "calls": 14.0,
+    "wall_s": 0.6483270724614462,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "grasp_miss": 6
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "fastener_pick",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.27777777777777773,
+    "damaged": 0.0,
+    "calls": 12.0,
+    "wall_s": 19.973798672358196,
+    "tactile_per_pick": 0.27941176470588236,
+    "causes": {
+     "slip": 2,
+     "grasp_miss": 4
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "fastener_pick",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.3611111111111111,
+    "damaged": 0.0,
+    "calls": 12.0,
+    "wall_s": 18.073287844657898,
+    "tactile_per_pick": 0.3283582089552239,
+    "causes": {
+     "slip": 1,
+     "grasp_miss": 5
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "fastener_pick",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.5,
+    "damaged": 0.0,
+    "calls": 11.333333333333334,
+    "wall_s": 21.70636757214864,
+    "tactile_per_pick": 0.2786885245901639,
+    "causes": {
+     "success": 1,
+     "grasp_miss": 5
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "fixture_place",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.6647490479927682,
+    "damaged": 0.5,
+    "calls": 6.0,
+    "wall_s": 6.030630350112915,
+    "tactile_per_pick": 0.5714285714285714,
+    "causes": {
+     "crush_or_damage": 3,
+     "success": 2,
+     "slip": 1
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "fixture_place",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.6666666666666666,
+    "progress": 0.6666666666666666,
+    "damaged": 0.0,
+    "calls": 4.5,
+    "wall_s": 4.870526353518168,
+    "tactile_per_pick": 0.5,
+    "causes": {
+     "slip": 2,
+     "success": 4
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "fixture_place",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.5,
+    "progress": 0.6666666666666666,
+    "damaged": 0.16666666666666666,
+    "calls": 5.666666666666667,
+    "wall_s": 5.338779489199321,
+    "tactile_per_pick": 0.6153846153846154,
+    "causes": {
+     "slip": 2,
+     "success": 3,
+     "crush_or_damage": 1
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "pouch_transfer",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.16666666666666666,
+    "damaged": 0.0,
+    "calls": 5.333333333333333,
+    "wall_s": 9.264398415883383,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "success": 1,
+     "slip": 5
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "pouch_transfer",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.16666666666666666,
+    "damaged": 0.3333333333333333,
+    "calls": 5.333333333333333,
+    "wall_s": 7.944163203239441,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "success": 1,
+     "slip": 3,
+     "crush_or_damage": 2
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "pouch_transfer",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.0,
+    "damaged": 0.16666666666666666,
+    "calls": 6.0,
+    "wall_s": 9.635990222295126,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "slip": 5,
+     "crush_or_damage": 1
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "tight_insert",
+    "policy": "force_ramp",
+    "n": 10,
+    "success": 0.4,
+    "progress": 0.7,
+    "damaged": 0.1,
+    "calls": 3.2,
+    "wall_s": 11.569002795219422,
+    "tactile_per_pick": 0.9411764705882353,
+    "causes": {
+     "success": 4,
+     "collision": 4,
+     "crush_or_damage": 1,
+     "jam": 1
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "tight_insert",
+    "policy": "nominal",
+    "n": 10,
+    "success": 0.3,
+    "progress": 0.649267676091435,
+    "damaged": 0.1,
+    "calls": 3.8,
+    "wall_s": 11.731817650794984,
+    "tactile_per_pick": 0.95,
+    "causes": {
+     "jam": 3,
+     "collision": 3,
+     "success": 3,
+     "crush_or_damage": 1
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "tight_insert",
+    "policy": "oracle",
+    "n": 10,
+    "success": 0.1,
+    "progress": 0.619580837015987,
+    "damaged": 0.2,
+    "calls": 4.0,
+    "wall_s": 11.932002091407776,
+    "tactile_per_pick": 0.9523809523809523,
+    "causes": {
+     "jam": 4,
+     "collision": 3,
+     "success": 1,
+     "crush_or_damage": 2
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "tool_return",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.3333333333333333,
+    "damaged": 0.16666666666666666,
+    "calls": 6.333333333333333,
+    "wall_s": 37.37940708796183,
+    "tactile_per_pick": 0.7307692307692307,
+    "causes": {
+     "success": 1,
+     "grasp_miss": 4,
+     "crush_or_damage": 1
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "tool_return",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.0,
+    "progress": 3.744185418498426e-06,
+    "damaged": 0.0,
+    "calls": 8.0,
+    "wall_s": 53.64438124497732,
+    "tactile_per_pick": 0.7575757575757576,
+    "causes": {
+     "slip": 1,
+     "grasp_miss": 5
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "tool_return",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.0,
+    "damaged": 0.16666666666666666,
+    "calls": 8.0,
+    "wall_s": 30.78794864813487,
+    "tactile_per_pick": 0.42857142857142855,
+    "causes": {
+     "grasp_miss": 4,
+     "crush_or_damage": 1,
+     "slip": 1
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "bin_clearing",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.7722222222222221,
+    "damaged": 0.8333333333333334,
+    "calls": 17.666666666666668,
+    "wall_s": 45.545526226361595,
+    "tactile_per_pick": 0.7534246575342466,
+    "causes": {
+     "grasp_miss": 1,
+     "crush_or_damage": 5
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "bin_clearing",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.7472222222222223,
+    "damaged": 0.0,
+    "calls": 16.666666666666668,
+    "wall_s": 47.74962564309438,
+    "tactile_per_pick": 0.7837837837837838,
+    "causes": {
+     "grasp_miss": 3,
+     "success": 2,
+     "slip": 1
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "bin_clearing",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.638888888888889,
+    "damaged": 0.16666666666666666,
+    "calls": 16.666666666666668,
+    "wall_s": 45.06050272782644,
+    "tactile_per_pick": 1.1139240506329113,
+    "causes": {
+     "grasp_miss": 2,
+     "success": 2,
+     "slip": 1,
+     "crush_or_damage": 1
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "bin_clearing@deep_bin",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.55,
+    "damaged": 0.6666666666666666,
+    "calls": 18.666666666666668,
+    "wall_s": 50.7812287012736,
+    "tactile_per_pick": 0.5238095238095238,
+    "causes": {
+     "grasp_miss": 2,
+     "crush_or_damage": 4
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "bin_clearing@deep_bin",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.4444444444444444,
+    "damaged": 0.0,
+    "calls": 19.333333333333332,
+    "wall_s": 76.94483828544617,
+    "tactile_per_pick": 0.6354166666666666,
+    "causes": {
+     "grasp_miss": 6
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "bin_clearing@deep_bin",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.35000000000000003,
+    "damaged": 0.16666666666666666,
+    "calls": 19.333333333333332,
+    "wall_s": 79.34800763924916,
+    "tactile_per_pick": 0.5816326530612245,
+    "causes": {
+     "grasp_miss": 5,
+     "crush_or_damage": 1
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "conveyor_sort",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.5138888888888888,
+    "damaged": 0.6666666666666666,
+    "calls": 11.166666666666666,
+    "wall_s": 8.195800185203552,
+    "tactile_per_pick": 1.121212121212121,
+    "causes": {
+     "crush_or_damage": 4,
+     "place_miss_or_predicate": 1,
+     "grasp_miss": 1
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "conveyor_sort",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.3666666666666667,
+    "damaged": 0.5,
+    "calls": 15.833333333333334,
+    "wall_s": 11.73112658659617,
+    "tactile_per_pick": 0.5645161290322581,
+    "causes": {
+     "crush_or_damage": 3,
+     "ik_fail": 1,
+     "grasp_miss": 2
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "conveyor_sort",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.39166666666666666,
+    "damaged": 0.6666666666666666,
+    "calls": 16.666666666666668,
+    "wall_s": 12.535569270451864,
+    "tactile_per_pick": 0.4925373134328358,
+    "causes": {
+     "crush_or_damage": 4,
+     "ik_fail": 1,
+     "grasp_miss": 1
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "depalletize",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.0,
+    "damaged": 0.0,
+    "calls": 14.0,
+    "wall_s": 0.8365324338277181,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "grasp_miss": 6
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "depalletize",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.5,
+    "progress": 0.75,
+    "damaged": 0.0,
+    "calls": 10.0,
+    "wall_s": 1.202678640683492,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "success": 3,
+     "grasp_miss": 3
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "depalletize",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.0,
+    "damaged": 0.0,
+    "calls": 14.0,
+    "wall_s": 0.6798733870188395,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "grasp_miss": 6
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "fastener_pick",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.2222222222222222,
+    "damaged": 0.0,
+    "calls": 9.5,
+    "wall_s": 32.70081146558126,
+    "tactile_per_pick": 0.5185185185185185,
+    "causes": {
+     "sim_instability": 1,
+     "grasp_miss": 5
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "fastener_pick",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.2222222222222222,
+    "damaged": 0.0,
+    "calls": 9.666666666666666,
+    "wall_s": 35.621492783228554,
+    "tactile_per_pick": 0.5454545454545454,
+    "causes": {
+     "sim_instability": 1,
+     "grasp_miss": 5
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "fastener_pick",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.47222222222222215,
+    "damaged": 0.0,
+    "calls": 9.666666666666666,
+    "wall_s": 30.76600670814514,
+    "tactile_per_pick": 0.37254901960784315,
+    "causes": {
+     "grasp_miss": 5,
+     "success": 1
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "fixture_place",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.6666666666666666,
+    "progress": 1.0,
+    "damaged": 0.3333333333333333,
+    "calls": 2.6666666666666665,
+    "wall_s": 5.399273713429769,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 4,
+     "crush_or_damage": 2
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "fixture_place",
+    "policy": "oracle",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 2.0,
+    "wall_s": 3.7176961104075112,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "fixture_place",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.6666666666666666,
+    "progress": 0.9279201235529039,
+    "damaged": 0.0,
+    "calls": 4.666666666666667,
+    "wall_s": 7.97609555721283,
+    "tactile_per_pick": 1.2222222222222223,
+    "causes": {
+     "success": 4,
+     "ik_fail": 1,
+     "slip": 1
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "pouch_transfer",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.3333333333333333,
+    "damaged": 0.6666666666666666,
+    "calls": 4.666666666666667,
+    "wall_s": 9.27704687913259,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "crush_or_damage": 4,
+     "success": 2
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "pouch_transfer",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.3333333333333333,
+    "damaged": 0.3333333333333333,
+    "calls": 4.666666666666667,
+    "wall_s": 7.972483674685161,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "success": 2,
+     "slip": 1,
+     "grasp_miss": 1,
+     "crush_or_damage": 2
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "pouch_transfer",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.3333333333333333,
+    "damaged": 0.3333333333333333,
+    "calls": 4.666666666666667,
+    "wall_s": 8.181585987408956,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "slip": 1,
+     "success": 2,
+     "crush_or_damage": 2,
+     "grasp_miss": 1
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "tight_insert",
+    "policy": "force_ramp",
+    "n": 10,
+    "success": 0.7,
+    "progress": 1.0,
+    "damaged": 0.3,
+    "calls": 2.6,
+    "wall_s": 11.440715622901916,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 7,
+     "crush_or_damage": 3
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "tight_insert",
+    "policy": "nominal",
+    "n": 10,
+    "success": 0.3,
+    "progress": 0.6717271878174629,
+    "damaged": 0.5,
+    "calls": 4.2,
+    "wall_s": 14.3692551612854,
+    "tactile_per_pick": 0.9130434782608695,
+    "causes": {
+     "success": 3,
+     "jam": 2,
+     "crush_or_damage": 5
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "tight_insert",
+    "policy": "oracle",
+    "n": 10,
+    "success": 0.6,
+    "progress": 0.9,
+    "damaged": 0.4,
+    "calls": 3.2,
+    "wall_s": 9.662989473342895,
+    "tactile_per_pick": 0.9411764705882353,
+    "causes": {
+     "success": 6,
+     "crush_or_damage": 4
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "tool_return",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.5,
+    "damaged": 0.6666666666666666,
+    "calls": 6.0,
+    "wall_s": 21.428035418192547,
+    "tactile_per_pick": 0.6071428571428571,
+    "causes": {
+     "crush_or_damage": 4,
+     "grasp_miss": 1,
+     "success": 1
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "tool_return",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.3333333333333333,
+    "damaged": 0.6666666666666666,
+    "calls": 6.333333333333333,
+    "wall_s": 26.035011887550354,
+    "tactile_per_pick": 0.8484848484848485,
+    "causes": {
+     "crush_or_damage": 4,
+     "grasp_miss": 1,
+     "success": 1
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "tool_return",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.3333333333333333,
+    "damaged": 0.5,
+    "calls": 6.0,
+    "wall_s": 26.2433975537618,
+    "tactile_per_pick": 0.6206896551724138,
+    "causes": {
+     "crush_or_damage": 3,
+     "grasp_miss": 2,
+     "success": 1
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "bin_clearing",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 1.0,
+    "damaged": 0.8333333333333334,
+    "calls": 11.833333333333334,
+    "wall_s": 2.569986899693807,
+    "tactile_per_pick": 1.25,
+    "causes": {
+     "crush_or_damage": 5,
+     "success": 1
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "bin_clearing",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.6666666666666666,
+    "progress": 0.9583333333333334,
+    "damaged": 0.16666666666666666,
+    "calls": 12.333333333333334,
+    "wall_s": 3.4705710411071777,
+    "tactile_per_pick": 1.0232558139534884,
+    "causes": {
+     "crush_or_damage": 1,
+     "success": 4,
+     "slip": 1
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "bin_clearing",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.5,
+    "progress": 0.9249999999999999,
+    "damaged": 0.16666666666666666,
+    "calls": 14.833333333333334,
+    "wall_s": 4.007167220115662,
+    "tactile_per_pick": 1.0166666666666666,
+    "causes": {
+     "crush_or_damage": 1,
+     "slip": 2,
+     "success": 3
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "bin_clearing@deep_bin",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 1.0,
+    "damaged": 0.8333333333333334,
+    "calls": 11.5,
+    "wall_s": 2.1537578105926514,
+    "tactile_per_pick": 1.1666666666666667,
+    "causes": {
+     "crush_or_damage": 5,
+     "success": 1
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "bin_clearing@deep_bin",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.6666666666666666,
+    "progress": 0.9583333333333334,
+    "damaged": 0.16666666666666666,
+    "calls": 11.5,
+    "wall_s": 2.7118623654047647,
+    "tactile_per_pick": 1.1282051282051282,
+    "causes": {
+     "crush_or_damage": 1,
+     "success": 4,
+     "slip": 1
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "bin_clearing@deep_bin",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.8694444444444445,
+    "damaged": 0.16666666666666666,
+    "calls": 15.666666666666666,
+    "wall_s": 3.6620593070983887,
+    "tactile_per_pick": 0.984375,
+    "causes": {
+     "crush_or_damage": 1,
+     "slip": 3,
+     "success": 2
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "conveyor_sort",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.861111111111111,
+    "damaged": 0.6666666666666666,
+    "calls": 13.166666666666666,
+    "wall_s": 2.874079942703247,
+    "tactile_per_pick": 1.0344827586206897,
+    "causes": {
+     "crush_or_damage": 4,
+     "success": 2
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "conveyor_sort",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.5,
+    "progress": 0.7527777777777778,
+    "damaged": 0.0,
+    "calls": 13.166666666666666,
+    "wall_s": 2.787941813468933,
+    "tactile_per_pick": 1.0357142857142858,
+    "causes": {
+     "success": 3,
+     "grasp_miss": 2,
+     "place_miss_or_predicate": 1
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "conveyor_sort",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.5,
+    "progress": 0.7861111111111111,
+    "damaged": 0.0,
+    "calls": 13.666666666666666,
+    "wall_s": 2.93730890750885,
+    "tactile_per_pick": 1.0857142857142856,
+    "causes": {
+     "success": 3,
+     "slip": 2,
+     "grasp_miss": 1
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "depalletize",
+    "policy": "nominal",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 9.5,
+    "wall_s": 4.636014342308044,
+    "tactile_per_pick": 1.0357142857142858,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "depalletize",
+    "policy": "oracle",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 9.0,
+    "wall_s": 4.352300365765889,
+    "tactile_per_pick": 1.0384615384615385,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "depalletize",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 9.5,
+    "wall_s": 4.638167381286621,
+    "tactile_per_pick": 1.0357142857142858,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "fastener_pick",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.4444444444444444,
+    "damaged": 0.0,
+    "calls": 10.333333333333334,
+    "wall_s": 8.904497583707174,
+    "tactile_per_pick": 0.35714285714285715,
+    "causes": {
+     "slip": 3,
+     "success": 1,
+     "grasp_miss": 2
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "fastener_pick",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.4444444444444444,
+    "damaged": 0.0,
+    "calls": 10.166666666666666,
+    "wall_s": 8.970635215441385,
+    "tactile_per_pick": 0.3090909090909091,
+    "causes": {
+     "slip": 4,
+     "success": 1,
+     "grasp_miss": 1
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "fastener_pick",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.3611111111111111,
+    "damaged": 0.0,
+    "calls": 10.666666666666666,
+    "wall_s": 9.13424281279246,
+    "tactile_per_pick": 0.1694915254237288,
+    "causes": {
+     "slip": 5,
+     "grasp_miss": 1
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "fixture_place",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.8333333333333334,
+    "progress": 1.0,
+    "damaged": 0.16666666666666666,
+    "calls": 2.0,
+    "wall_s": 1.2772810061772664,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 5,
+     "crush_or_damage": 1
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "fixture_place",
+    "policy": "oracle",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 2.0,
+    "wall_s": 1.203912576039632,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "fixture_place",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 2.8333333333333335,
+    "wall_s": 1.4581215381622314,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "pouch_transfer",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.0,
+    "progress": 1.0,
+    "damaged": 1.0,
+    "calls": 3.1666666666666665,
+    "wall_s": 3.1837783257166543,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "crush_or_damage": 6
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "pouch_transfer",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.3333333333333333,
+    "damaged": 0.0,
+    "calls": 5.0,
+    "wall_s": 5.834210554758708,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "slip": 4,
+     "success": 2
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "pouch_transfer",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.16666666666666666,
+    "damaged": 0.3333333333333333,
+    "calls": 5.5,
+    "wall_s": 5.322645346323649,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "crush_or_damage": 2,
+     "slip": 3,
+     "success": 1
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "tool_return",
+    "policy": "nominal",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 2.3333333333333335,
+    "wall_s": 1.5486200253168743,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "tool_return",
+    "policy": "oracle",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 2.5,
+    "wall_s": 1.5451183319091797,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "tool_return",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 3.3333333333333335,
+    "wall_s": 1.7183949947357178,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "bin_clearing",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.9444444444444443,
+    "damaged": 0.6666666666666666,
+    "calls": 13.0,
+    "wall_s": 12.447731534639994,
+    "tactile_per_pick": 1.0476190476190477,
+    "causes": {
+     "grasp_miss": 1,
+     "crush_or_damage": 4,
+     "success": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "bin_clearing",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.8333333333333334,
+    "progress": 0.9166666666666666,
+    "damaged": 0.0,
+    "calls": 11.0,
+    "wall_s": 16.661776026089985,
+    "tactile_per_pick": 1.0526315789473684,
+    "causes": {
+     "success": 5,
+     "slip": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "bin_clearing",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.8222222222222223,
+    "damaged": 0.16666666666666666,
+    "calls": 17.5,
+    "wall_s": 27.848861575126648,
+    "tactile_per_pick": 1.0253164556962024,
+    "causes": {
+     "grasp_miss": 2,
+     "success": 1,
+     "slip": 2,
+     "crush_or_damage": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "bin_clearing@deep_bin",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.875,
+    "damaged": 0.8333333333333334,
+    "calls": 14.333333333333334,
+    "wall_s": 16.861124356587727,
+    "tactile_per_pick": 0.8235294117647058,
+    "causes": {
+     "grasp_miss": 1,
+     "crush_or_damage": 5
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "bin_clearing@deep_bin",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.6666666666666666,
+    "progress": 0.9027777777777777,
+    "damaged": 0.0,
+    "calls": 13.0,
+    "wall_s": 24.111233075459797,
+    "tactile_per_pick": 0.8,
+    "causes": {
+     "slip": 2,
+     "success": 4
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "bin_clearing@deep_bin",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.7722222222222223,
+    "damaged": 0.5,
+    "calls": 17.833333333333332,
+    "wall_s": 48.95016002655029,
+    "tactile_per_pick": 1.0632911392405062,
+    "causes": {
+     "grasp_miss": 2,
+     "success": 1,
+     "crush_or_damage": 3
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "conveyor_sort",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.6749999999999999,
+    "damaged": 0.8333333333333334,
+    "calls": 14.0,
+    "wall_s": 8.981963475545248,
+    "tactile_per_pick": 0.9318181818181818,
+    "causes": {
+     "crush_or_damage": 5,
+     "collision": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "conveyor_sort",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.5055555555555555,
+    "damaged": 0.6666666666666666,
+    "calls": 14.5,
+    "wall_s": 9.787476062774658,
+    "tactile_per_pick": 0.8235294117647058,
+    "causes": {
+     "crush_or_damage": 4,
+     "ik_fail": 1,
+     "collision": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "conveyor_sort",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.35833333333333334,
+    "damaged": 0.6666666666666666,
+    "calls": 12.666666666666666,
+    "wall_s": 8.5958753824234,
+    "tactile_per_pick": 0.8936170212765957,
+    "causes": {
+     "crush_or_damage": 4,
+     "grasp_miss": 2
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "depalletize",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.0,
+    "damaged": 0.0,
+    "calls": 14.0,
+    "wall_s": 0.8861546516418457,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "grasp_miss": 6
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "depalletize",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.3541666666666667,
+    "damaged": 0.0,
+    "calls": 12.666666666666666,
+    "wall_s": 0.9803081353505453,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "grasp_miss": 5,
+     "success": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "depalletize",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.0,
+    "damaged": 0.0,
+    "calls": 14.0,
+    "wall_s": 0.8063265085220337,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "grasp_miss": 6
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "fastener_pick",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.4444444444444444,
+    "damaged": 0.0,
+    "calls": 9.666666666666666,
+    "wall_s": 23.39003376166026,
+    "tactile_per_pick": 0.46153846153846156,
+    "causes": {
+     "grasp_miss": 5,
+     "success": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "fastener_pick",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.5277777777777778,
+    "damaged": 0.0,
+    "calls": 9.666666666666666,
+    "wall_s": 22.053641041119892,
+    "tactile_per_pick": 0.4117647058823529,
+    "causes": {
+     "grasp_miss": 5,
+     "success": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "fastener_pick",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.4444444444444444,
+    "damaged": 0.0,
+    "calls": 10.666666666666666,
+    "wall_s": 28.33480413754781,
+    "tactile_per_pick": 0.4642857142857143,
+    "causes": {
+     "grasp_miss": 6
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "fixture_place",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.8333333333333334,
+    "progress": 1.0,
+    "damaged": 0.16666666666666666,
+    "calls": 2.0,
+    "wall_s": 3.871446172396342,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 5,
+     "crush_or_damage": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "fixture_place",
+    "policy": "oracle",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 2.0,
+    "wall_s": 3.323994517326355,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "fixture_place",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 2.3333333333333335,
+    "wall_s": 3.99906055132548,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "pouch_transfer",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.3333333333333333,
+    "damaged": 0.6666666666666666,
+    "calls": 4.666666666666667,
+    "wall_s": 6.023772398630778,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "crush_or_damage": 4,
+     "success": 2
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "pouch_transfer",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.3333333333333333,
+    "damaged": 0.5,
+    "calls": 4.666666666666667,
+    "wall_s": 7.037323156992595,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "slip": 1,
+     "success": 2,
+     "crush_or_damage": 3
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "pouch_transfer",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.0,
+    "damaged": 0.5,
+    "calls": 6.0,
+    "wall_s": 10.552950541178385,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "slip": 3,
+     "crush_or_damage": 3
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "tight_insert",
+    "policy": "force_ramp",
+    "n": 10,
+    "success": 0.9,
+    "progress": 1.0,
+    "damaged": 0.1,
+    "calls": 2.3,
+    "wall_s": 6.628978586196899,
+    "tactile_per_pick": 1.0833333333333333,
+    "causes": {
+     "success": 9,
+     "crush_or_damage": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "tight_insert",
+    "policy": "nominal",
+    "n": 10,
+    "success": 0.8,
+    "progress": 0.9,
+    "damaged": 0.1,
+    "calls": 2.6,
+    "wall_s": 6.956626534461975,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 8,
+     "crush_or_damage": 1,
+     "jam": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "tight_insert",
+    "policy": "oracle",
+    "n": 10,
+    "success": 0.7,
+    "progress": 1.0,
+    "damaged": 0.1,
+    "calls": 2.8,
+    "wall_s": 7.498749947547912,
+    "tactile_per_pick": 1.1333333333333333,
+    "causes": {
+     "success": 7,
+     "crush_or_damage": 1,
+     "place_miss_or_predicate": 1,
+     "grasp_miss": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "tool_return",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.16667197240189746,
+    "damaged": 0.6666666666666666,
+    "calls": 7.0,
+    "wall_s": 40.313740293184914,
+    "tactile_per_pick": 0.7931034482758621,
+    "causes": {
+     "crush_or_damage": 4,
+     "jam": 1,
+     "grasp_miss": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "tool_return",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.5,
+    "progress": 0.6666666666666666,
+    "damaged": 0.3333333333333333,
+    "calls": 6.0,
+    "wall_s": 36.30441721280416,
+    "tactile_per_pick": 1.0416666666666667,
+    "causes": {
+     "crush_or_damage": 2,
+     "success": 3,
+     "slip": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "tool_return",
+    "policy": "probe_then_act",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.3333333333333333,
+    "damaged": 0.6666666666666666,
+    "calls": 6.666666666666667,
+    "wall_s": 27.36656578381856,
+    "tactile_per_pick": 0.6764705882352942,
+    "causes": {
+     "crush_or_damage": 4,
+     "grasp_miss": 1,
+     "success": 1
+    }
+   }
+  ],
+  "best_oracle": {
+   "gen3_2f85/bin_clearing": "oracle",
+   "gen3_2f85/bin_clearing@deep_bin": "oracle",
+   "gen3_2f85/conveyor_sort": "oracle",
+   "gen3_2f85/depalletize": "oracle",
+   "gen3_2f85/fastener_pick": "probe_then_act",
+   "gen3_2f85/fixture_place": "oracle",
+   "gen3_2f85/pouch_transfer": "oracle",
+   "gen3_2f85/tight_insert": "force_ramp",
+   "gen3_2f85/tool_return": "oracle",
+   "panda/bin_clearing": "oracle",
+   "panda/bin_clearing@deep_bin": "oracle",
+   "panda/conveyor_sort": "oracle",
+   "panda/depalletize": "oracle",
+   "panda/fastener_pick": "probe_then_act",
+   "panda/fixture_place": "oracle",
+   "panda/pouch_transfer": "oracle",
+   "panda/tight_insert": "force_ramp",
+   "panda/tool_return": "oracle",
+   "probe/bin_clearing": "oracle",
+   "probe/bin_clearing@deep_bin": "oracle",
+   "probe/conveyor_sort": "oracle",
+   "probe/depalletize": "oracle",
+   "probe/fastener_pick": "oracle",
+   "probe/fixture_place": "oracle",
+   "probe/pouch_transfer": "oracle",
+   "probe/tool_return": "oracle",
+   "ur5e_2f85/bin_clearing": "oracle",
+   "ur5e_2f85/bin_clearing@deep_bin": "oracle",
+   "ur5e_2f85/conveyor_sort": "oracle",
+   "ur5e_2f85/depalletize": "oracle",
+   "ur5e_2f85/fastener_pick": "oracle",
+   "ur5e_2f85/fixture_place": "oracle",
+   "ur5e_2f85/pouch_transfer": "oracle",
+   "ur5e_2f85/tight_insert": "force_ramp",
+   "ur5e_2f85/tool_return": "oracle"
+  }
+ },
+ "before_r6": {
+  "tag": "r6",
+  "table": [
+   {
+    "robot": "gen3_2f85",
+    "family": "bin_clearing",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.6222222222222222,
+    "damaged": 0.8333333333333334,
+    "calls": 14.833333333333334,
+    "wall_s": 6.668358564376831,
+    "tactile_per_pick": 0.4090909090909091,
+    "causes": {
+     "crush_or_damage": 5,
+     "grasp_miss": 1
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "bin_clearing",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.45,
+    "damaged": 0.16666666666666666,
+    "calls": 15.666666666666666,
+    "wall_s": 6.722913503646851,
+    "tactile_per_pick": 0.48717948717948717,
+    "causes": {
+     "grasp_miss": 4,
+     "success": 1,
+     "crush_or_damage": 1
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "bin_clearing",
+    "policy": "oracle_firm",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.5111111111111112,
+    "damaged": 0.16666666666666666,
+    "calls": 15.666666666666666,
+    "wall_s": 6.1517627239227295,
+    "tactile_per_pick": 0.38461538461538464,
+    "causes": {
+     "grasp_miss": 4,
+     "success": 1,
+     "crush_or_damage": 1
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "bin_clearing",
+    "policy": "oracle_slow",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.48888888888888893,
+    "damaged": 0.16666666666666666,
+    "calls": 15.666666666666666,
+    "wall_s": 8.45814073085785,
+    "tactile_per_pick": 0.44871794871794873,
+    "causes": {
+     "grasp_miss": 4,
+     "success": 1,
+     "crush_or_damage": 1
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "conveyor_sort",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.5000000000000001,
+    "damaged": 0.6666666666666666,
+    "calls": 17.666666666666668,
+    "wall_s": 10.44295072555542,
+    "tactile_per_pick": 0.75,
+    "causes": {
+     "grasp_miss": 1,
+     "ik_fail": 1,
+     "crush_or_damage": 4
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "conveyor_sort",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.3,
+    "damaged": 0.3333333333333333,
+    "calls": 17.666666666666668,
+    "wall_s": 12.263601104418436,
+    "tactile_per_pick": 0.6944444444444444,
+    "causes": {
+     "grasp_miss": 2,
+     "ik_fail": 2,
+     "crush_or_damage": 2
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "conveyor_sort",
+    "policy": "oracle_firm",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.26666666666666666,
+    "damaged": 0.16666666666666666,
+    "calls": 18.5,
+    "wall_s": 12.140072703361511,
+    "tactile_per_pick": 0.6438356164383562,
+    "causes": {
+     "grasp_miss": 3,
+     "ik_fail": 2,
+     "crush_or_damage": 1
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "conveyor_sort",
+    "policy": "oracle_slow",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.20000000000000004,
+    "damaged": 0.3333333333333333,
+    "calls": 16.166666666666668,
+    "wall_s": 13.807277083396912,
+    "tactile_per_pick": 0.5,
+    "causes": {
+     "grasp_miss": 2,
+     "ik_fail": 2,
+     "crush_or_damage": 2
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "depalletize",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.0,
+    "damaged": 0.0,
+    "calls": 14.0,
+    "wall_s": 0.6848507324854533,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "grasp_miss": 6
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "depalletize",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.5625,
+    "damaged": 0.0,
+    "calls": 14.0,
+    "wall_s": 0.9108411073684692,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "grasp_miss": 6
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "depalletize",
+    "policy": "oracle_firm",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.5625,
+    "damaged": 0.0,
+    "calls": 14.0,
+    "wall_s": 1.0081733862559001,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "grasp_miss": 6
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "depalletize",
+    "policy": "oracle_slow",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.5625,
+    "damaged": 0.0,
+    "calls": 14.0,
+    "wall_s": 1.0393939018249512,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "grasp_miss": 6
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "fixture_place",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.8302565693047311,
+    "damaged": 0.5,
+    "calls": 4.833333333333333,
+    "wall_s": 4.440539797147115,
+    "tactile_per_pick": 0.65,
+    "causes": {
+     "crush_or_damage": 3,
+     "success": 2,
+     "slip": 1
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "fixture_place",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.5,
+    "progress": 0.8292571912923236,
+    "damaged": 0.3333333333333333,
+    "calls": 5.0,
+    "wall_s": 4.545145750045776,
+    "tactile_per_pick": 0.5652173913043478,
+    "causes": {
+     "crush_or_damage": 2,
+     "slip": 1,
+     "success": 3
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "fixture_place",
+    "policy": "oracle_firm",
+    "n": 6,
+    "success": 0.5,
+    "progress": 0.9617878718725749,
+    "damaged": 0.3333333333333333,
+    "calls": 5.0,
+    "wall_s": 4.609386404355367,
+    "tactile_per_pick": 0.6363636363636364,
+    "causes": {
+     "crush_or_damage": 2,
+     "slip": 1,
+     "success": 3
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "fixture_place",
+    "policy": "oracle_slow",
+    "n": 6,
+    "success": 0.5,
+    "progress": 0.7564400997226217,
+    "damaged": 0.3333333333333333,
+    "calls": 5.5,
+    "wall_s": 7.267382979393005,
+    "tactile_per_pick": 0.6521739130434783,
+    "causes": {
+     "crush_or_damage": 2,
+     "success": 3,
+     "grasp_miss": 1
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "pouch_transfer",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.3333333333333333,
+    "damaged": 0.16666666666666666,
+    "calls": 4.666666666666667,
+    "wall_s": 6.300424059232076,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "success": 1,
+     "slip": 4,
+     "crush_or_damage": 1
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "pouch_transfer",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.3333333333333333,
+    "damaged": 0.0,
+    "calls": 4.666666666666667,
+    "wall_s": 5.8347764412562055,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "success": 2,
+     "slip": 4
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "pouch_transfer",
+    "policy": "oracle_firm",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.3333333333333333,
+    "damaged": 0.16666666666666666,
+    "calls": 4.666666666666667,
+    "wall_s": 5.206242918968201,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "success": 2,
+     "slip": 3,
+     "crush_or_damage": 1
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "pouch_transfer",
+    "policy": "oracle_slow",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.16666666666666666,
+    "damaged": 0.0,
+    "calls": 5.333333333333333,
+    "wall_s": 7.44350266456604,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "success": 1,
+     "slip": 5
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "tool_return",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.5,
+    "progress": 0.5,
+    "damaged": 0.0,
+    "calls": 6.5,
+    "wall_s": 12.720104853312174,
+    "tactile_per_pick": 0.5714285714285714,
+    "causes": {
+     "grasp_miss": 2,
+     "success": 3,
+     "slip": 1
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "tool_return",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.5,
+    "progress": 0.5,
+    "damaged": 0.0,
+    "calls": 5.5,
+    "wall_s": 12.648997823397318,
+    "tactile_per_pick": 0.7619047619047619,
+    "causes": {
+     "grasp_miss": 1,
+     "slip": 2,
+     "success": 3
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "tool_return",
+    "policy": "oracle_firm",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.4366645187095428,
+    "damaged": 0.0,
+    "calls": 6.833333333333333,
+    "wall_s": 12.239574511845907,
+    "tactile_per_pick": 0.6333333333333333,
+    "causes": {
+     "slip": 4,
+     "success": 2
+    }
+   },
+   {
+    "robot": "gen3_2f85",
+    "family": "tool_return",
+    "policy": "oracle_slow",
+    "n": 6,
+    "success": 0.5,
+    "progress": 0.5,
+    "damaged": 0.0,
+    "calls": 6.333333333333333,
+    "wall_s": 13.544387102127075,
+    "tactile_per_pick": 0.6428571428571429,
+    "causes": {
+     "slip": 2,
+     "success": 3,
+     "grasp_miss": 1
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "bin_clearing",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.3194444444444444,
+    "damaged": 0.3333333333333333,
+    "calls": 19.333333333333332,
+    "wall_s": 5.964073856671651,
+    "tactile_per_pick": 0.21904761904761905,
+    "causes": {
+     "crush_or_damage": 2,
+     "grasp_miss": 4
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "bin_clearing",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.28888888888888886,
+    "damaged": 0.0,
+    "calls": 19.333333333333332,
+    "wall_s": 7.185303648312886,
+    "tactile_per_pick": 0.27358490566037735,
+    "causes": {
+     "grasp_miss": 6
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "bin_clearing",
+    "policy": "oracle_firm",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.21944444444444444,
+    "damaged": 0.0,
+    "calls": 19.333333333333332,
+    "wall_s": 6.330917994181315,
+    "tactile_per_pick": 0.21100917431192662,
+    "causes": {
+     "grasp_miss": 6
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "bin_clearing",
+    "policy": "oracle_slow",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.1722222222222222,
+    "damaged": 0.0,
+    "calls": 19.333333333333332,
+    "wall_s": 7.226646661758423,
+    "tactile_per_pick": 0.18181818181818182,
+    "causes": {
+     "grasp_miss": 6
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "conveyor_sort",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.6222222222222222,
+    "damaged": 0.6666666666666666,
+    "calls": 11.833333333333334,
+    "wall_s": 6.758119503657023,
+    "tactile_per_pick": 1.0625,
+    "causes": {
+     "crush_or_damage": 4,
+     "success": 1,
+     "grasp_miss": 1
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "conveyor_sort",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.2916666666666667,
+    "damaged": 0.3333333333333333,
+    "calls": 16.5,
+    "wall_s": 11.718180894851685,
+    "tactile_per_pick": 0.4925373134328358,
+    "causes": {
+     "crush_or_damage": 2,
+     "ik_fail": 1,
+     "grasp_miss": 3
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "conveyor_sort",
+    "policy": "oracle_firm",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.39166666666666666,
+    "damaged": 0.5,
+    "calls": 17.666666666666668,
+    "wall_s": 13.749706546465555,
+    "tactile_per_pick": 0.44,
+    "causes": {
+     "crush_or_damage": 3,
+     "ik_fail": 2,
+     "grasp_miss": 1
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "conveyor_sort",
+    "policy": "oracle_slow",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.21666666666666667,
+    "damaged": 0.16666666666666666,
+    "calls": 9.333333333333334,
+    "wall_s": 7.9896171887715655,
+    "tactile_per_pick": 0.6216216216216216,
+    "causes": {
+     "grasp_miss": 4,
+     "crush_or_damage": 1,
+     "ik_fail": 1
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "depalletize",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.0,
+    "damaged": 0.0,
+    "calls": 14.0,
+    "wall_s": 0.5802634159723917,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "grasp_miss": 6
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "depalletize",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.5,
+    "progress": 0.75,
+    "damaged": 0.0,
+    "calls": 10.0,
+    "wall_s": 0.8681166569391886,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "success": 3,
+     "grasp_miss": 3
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "depalletize",
+    "policy": "oracle_firm",
+    "n": 6,
+    "success": 0.5,
+    "progress": 0.75,
+    "damaged": 0.0,
+    "calls": 10.0,
+    "wall_s": 0.9503933588663737,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "success": 3,
+     "grasp_miss": 3
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "depalletize",
+    "policy": "oracle_slow",
+    "n": 6,
+    "success": 0.5,
+    "progress": 0.75,
+    "damaged": 0.0,
+    "calls": 10.0,
+    "wall_s": 0.9278830687204996,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "success": 3,
+     "grasp_miss": 3
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "fixture_place",
+    "policy": "nominal",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 2.0,
+    "wall_s": 2.7885156869888306,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "fixture_place",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.8333333333333334,
+    "progress": 1.0,
+    "damaged": 0.16666666666666666,
+    "calls": 2.3333333333333335,
+    "wall_s": 2.7282708883285522,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "crush_or_damage": 1,
+     "success": 5
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "fixture_place",
+    "policy": "oracle_firm",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 2.0,
+    "wall_s": 2.7982994318008423,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "fixture_place",
+    "policy": "oracle_slow",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 2.5,
+    "wall_s": 4.9305421113967896,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "pouch_transfer",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.3333333333333333,
+    "damaged": 0.6666666666666666,
+    "calls": 4.666666666666667,
+    "wall_s": 6.511560360590617,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "crush_or_damage": 4,
+     "success": 2
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "pouch_transfer",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.3333333333333333,
+    "damaged": 0.16666666666666666,
+    "calls": 4.666666666666667,
+    "wall_s": 4.504856824874878,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "crush_or_damage": 1,
+     "success": 2,
+     "grasp_miss": 2,
+     "slip": 1
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "pouch_transfer",
+    "policy": "oracle_firm",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.3333333333333333,
+    "damaged": 0.3333333333333333,
+    "calls": 4.666666666666667,
+    "wall_s": 5.177794933319092,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "slip": 2,
+     "success": 2,
+     "crush_or_damage": 2
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "pouch_transfer",
+    "policy": "oracle_slow",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.3333333333333333,
+    "damaged": 0.6666666666666666,
+    "calls": 4.666666666666667,
+    "wall_s": 5.127425988515218,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "crush_or_damage": 4,
+     "success": 2
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "tool_return",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.3333333333333333,
+    "damaged": 0.6666666666666666,
+    "calls": 7.0,
+    "wall_s": 12.105719606081644,
+    "tactile_per_pick": 0.7241379310344828,
+    "causes": {
+     "crush_or_damage": 4,
+     "grasp_miss": 1,
+     "success": 1
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "tool_return",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.5,
+    "damaged": 0.5,
+    "calls": 6.166666666666667,
+    "wall_s": 11.071698824564615,
+    "tactile_per_pick": 0.9565217391304348,
+    "causes": {
+     "crush_or_damage": 3,
+     "jam": 1,
+     "success": 2
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "tool_return",
+    "policy": "oracle_firm",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.16666666666666666,
+    "damaged": 0.5,
+    "calls": 7.0,
+    "wall_s": 12.093249042828878,
+    "tactile_per_pick": 0.6,
+    "causes": {
+     "crush_or_damage": 3,
+     "grasp_miss": 2,
+     "success": 1
+    }
+   },
+   {
+    "robot": "panda",
+    "family": "tool_return",
+    "policy": "oracle_slow",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.5,
+    "damaged": 0.5,
+    "calls": 6.333333333333333,
+    "wall_s": 11.88681936264038,
+    "tactile_per_pick": 0.7307692307692307,
+    "causes": {
+     "crush_or_damage": 3,
+     "success": 2,
+     "slip": 1
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "bin_clearing",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.9722222222222223,
+    "damaged": 0.8333333333333334,
+    "calls": 13.333333333333334,
+    "wall_s": 2.756998896598816,
+    "tactile_per_pick": 1.1363636363636365,
+    "causes": {
+     "crush_or_damage": 5,
+     "success": 1
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "bin_clearing",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.9305555555555557,
+    "damaged": 0.5,
+    "calls": 13.666666666666666,
+    "wall_s": 2.9044503768285117,
+    "tactile_per_pick": 1.196078431372549,
+    "causes": {
+     "crush_or_damage": 3,
+     "success": 2,
+     "slip": 1
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "bin_clearing",
+    "policy": "oracle_firm",
+    "n": 6,
+    "success": 0.6666666666666666,
+    "progress": 1.0,
+    "damaged": 0.3333333333333333,
+    "calls": 11.833333333333334,
+    "wall_s": 2.4759066502253213,
+    "tactile_per_pick": 1.4473684210526316,
+    "causes": {
+     "crush_or_damage": 2,
+     "success": 4
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "bin_clearing",
+    "policy": "oracle_slow",
+    "n": 6,
+    "success": 0.6666666666666666,
+    "progress": 0.9583333333333334,
+    "damaged": 0.16666666666666666,
+    "calls": 11.833333333333334,
+    "wall_s": 3.509318153063456,
+    "tactile_per_pick": 1.5121951219512195,
+    "causes": {
+     "crush_or_damage": 1,
+     "success": 4,
+     "slip": 1
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "conveyor_sort",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.861111111111111,
+    "damaged": 0.6666666666666666,
+    "calls": 13.166666666666666,
+    "wall_s": 2.5800673564275107,
+    "tactile_per_pick": 1.0344827586206897,
+    "causes": {
+     "crush_or_damage": 4,
+     "success": 2
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "conveyor_sort",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.6666666666666666,
+    "progress": 0.8194444444444443,
+    "damaged": 0.0,
+    "calls": 13.333333333333334,
+    "wall_s": 2.4958415826161704,
+    "tactile_per_pick": 0.9,
+    "causes": {
+     "success": 4,
+     "grasp_miss": 2
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "conveyor_sort",
+    "policy": "oracle_firm",
+    "n": 6,
+    "success": 0.5,
+    "progress": 0.7861111111111111,
+    "damaged": 0.0,
+    "calls": 13.5,
+    "wall_s": 2.840666095415751,
+    "tactile_per_pick": 0.9310344827586207,
+    "causes": {
+     "success": 3,
+     "grasp_miss": 2,
+     "place_miss_or_predicate": 1
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "conveyor_sort",
+    "policy": "oracle_slow",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.16666666666666666,
+    "damaged": 0.0,
+    "calls": 6.166666666666667,
+    "wall_s": 2.6224371194839478,
+    "tactile_per_pick": 0.391304347826087,
+    "causes": {
+     "place_miss_or_predicate": 2,
+     "grasp_miss": 4
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "depalletize",
+    "policy": "nominal",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 9.5,
+    "wall_s": 4.105602542559306,
+    "tactile_per_pick": 1.0357142857142858,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "depalletize",
+    "policy": "oracle",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 9.0,
+    "wall_s": 3.6947904427846274,
+    "tactile_per_pick": 1.0384615384615385,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "depalletize",
+    "policy": "oracle_firm",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 9.0,
+    "wall_s": 3.7348097562789917,
+    "tactile_per_pick": 1.0384615384615385,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "depalletize",
+    "policy": "oracle_slow",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 9.0,
+    "wall_s": 5.437532345453898,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "fixture_place",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.8333333333333334,
+    "progress": 1.0,
+    "damaged": 0.16666666666666666,
+    "calls": 2.0,
+    "wall_s": 0.9780743916829427,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 5,
+     "crush_or_damage": 1
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "fixture_place",
+    "policy": "oracle",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 2.0,
+    "wall_s": 0.8378159602483114,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "fixture_place",
+    "policy": "oracle_firm",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 2.0,
+    "wall_s": 0.9267338911692301,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "fixture_place",
+    "policy": "oracle_slow",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 2.0,
+    "wall_s": 1.4455915689468384,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "pouch_transfer",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.0,
+    "progress": 1.0,
+    "damaged": 1.0,
+    "calls": 3.1666666666666665,
+    "wall_s": 2.623684803644816,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "crush_or_damage": 6
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "pouch_transfer",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.3333333333333333,
+    "damaged": 0.0,
+    "calls": 5.0,
+    "wall_s": 4.444661776224772,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "slip": 4,
+     "success": 2
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "pouch_transfer",
+    "policy": "oracle_firm",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.6666666666666666,
+    "damaged": 0.8333333333333334,
+    "calls": 4.833333333333333,
+    "wall_s": 4.525419632593791,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "crush_or_damage": 5,
+     "slip": 1
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "pouch_transfer",
+    "policy": "oracle_slow",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.16666666666666666,
+    "damaged": 0.5,
+    "calls": 5.666666666666667,
+    "wall_s": 6.661062717437744,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "slip": 3,
+     "crush_or_damage": 3
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "tool_return",
+    "policy": "nominal",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 2.3333333333333335,
+    "wall_s": 1.3555834293365479,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "tool_return",
+    "policy": "oracle",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 3.0,
+    "wall_s": 1.645474910736084,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "tool_return",
+    "policy": "oracle_firm",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 2.5,
+    "wall_s": 1.5309474070866902,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "probe",
+    "family": "tool_return",
+    "policy": "oracle_slow",
+    "n": 6,
+    "success": 0.8333333333333334,
+    "progress": 0.8333358013488629,
+    "damaged": 0.0,
+    "calls": 3.5,
+    "wall_s": 2.8534533977508545,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 5,
+     "jam": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "bin_clearing",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.7027777777777778,
+    "damaged": 1.0,
+    "calls": 18.166666666666668,
+    "wall_s": 8.565548857053122,
+    "tactile_per_pick": 0.5238095238095238,
+    "causes": {
+     "crush_or_damage": 6
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "bin_clearing",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.48333333333333334,
+    "damaged": 0.0,
+    "calls": 17.833333333333332,
+    "wall_s": 7.8030769030253095,
+    "tactile_per_pick": 0.43956043956043955,
+    "causes": {
+     "grasp_miss": 4,
+     "success": 1,
+     "slip": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "bin_clearing",
+    "policy": "oracle_firm",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.6027777777777777,
+    "damaged": 0.16666666666666666,
+    "calls": 19.333333333333332,
+    "wall_s": 6.9501064618428545,
+    "tactile_per_pick": 0.5416666666666666,
+    "causes": {
+     "grasp_miss": 3,
+     "slip": 2,
+     "crush_or_damage": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "bin_clearing",
+    "policy": "oracle_slow",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.31111111111111106,
+    "damaged": 0.16666666666666666,
+    "calls": 17.833333333333332,
+    "wall_s": 9.229965209960938,
+    "tactile_per_pick": 0.5054945054945055,
+    "causes": {
+     "grasp_miss": 3,
+     "success": 1,
+     "slip": 1,
+     "crush_or_damage": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "conveyor_sort",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.7194444444444444,
+    "damaged": 0.6666666666666666,
+    "calls": 13.166666666666666,
+    "wall_s": 7.7040523290634155,
+    "tactile_per_pick": 0.8571428571428571,
+    "causes": {
+     "crush_or_damage": 4,
+     "success": 1,
+     "collision": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "conveyor_sort",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.35000000000000003,
+    "damaged": 0.6666666666666666,
+    "calls": 13.166666666666666,
+    "wall_s": 7.703725814819336,
+    "tactile_per_pick": 0.7916666666666666,
+    "causes": {
+     "crush_or_damage": 4,
+     "grasp_miss": 1,
+     "success": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "conveyor_sort",
+    "policy": "oracle_firm",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.5055555555555555,
+    "damaged": 0.5,
+    "calls": 15.166666666666666,
+    "wall_s": 9.09728487332662,
+    "tactile_per_pick": 0.8,
+    "causes": {
+     "crush_or_damage": 3,
+     "grasp_miss": 1,
+     "ik_fail": 1,
+     "success": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "conveyor_sort",
+    "policy": "oracle_slow",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.32222222222222224,
+    "damaged": 0.3333333333333333,
+    "calls": 9.333333333333334,
+    "wall_s": 6.740546464920044,
+    "tactile_per_pick": 1.0285714285714285,
+    "causes": {
+     "crush_or_damage": 2,
+     "grasp_miss": 4
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "depalletize",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.0,
+    "progress": 0.0,
+    "damaged": 0.0,
+    "calls": 14.0,
+    "wall_s": 0.7178829511006674,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "grasp_miss": 6
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "depalletize",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.3541666666666667,
+    "damaged": 0.0,
+    "calls": 12.666666666666666,
+    "wall_s": 0.760052482287089,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "grasp_miss": 5,
+     "success": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "depalletize",
+    "policy": "oracle_firm",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.3541666666666667,
+    "damaged": 0.0,
+    "calls": 12.666666666666666,
+    "wall_s": 0.9437077840169271,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "grasp_miss": 5,
+     "success": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "depalletize",
+    "policy": "oracle_slow",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.3541666666666667,
+    "damaged": 0.0,
+    "calls": 12.666666666666666,
+    "wall_s": 0.6786545912424723,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "grasp_miss": 5,
+     "success": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "fixture_place",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.8333333333333334,
+    "progress": 1.0,
+    "damaged": 0.16666666666666666,
+    "calls": 2.0,
+    "wall_s": 2.6796353658040366,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 5,
+     "crush_or_damage": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "fixture_place",
+    "policy": "oracle",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 2.0,
+    "wall_s": 2.4705358743667603,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "fixture_place",
+    "policy": "oracle_firm",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 2.0,
+    "wall_s": 2.4753549496332803,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "fixture_place",
+    "policy": "oracle_slow",
+    "n": 6,
+    "success": 1.0,
+    "progress": 1.0,
+    "damaged": 0.0,
+    "calls": 2.0,
+    "wall_s": 3.783982435862223,
+    "tactile_per_pick": 1.0,
+    "causes": {
+     "success": 6
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "pouch_transfer",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.3333333333333333,
+    "damaged": 0.8333333333333334,
+    "calls": 4.666666666666667,
+    "wall_s": 6.062755862871806,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "crush_or_damage": 5,
+     "success": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "pouch_transfer",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.3333333333333333,
+    "damaged": 0.16666666666666666,
+    "calls": 4.666666666666667,
+    "wall_s": 6.0916634400685625,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "slip": 1,
+     "success": 2,
+     "grasp_miss": 2,
+     "crush_or_damage": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "pouch_transfer",
+    "policy": "oracle_firm",
+    "n": 6,
+    "success": 0.16666666666666666,
+    "progress": 0.3333333333333333,
+    "damaged": 0.5,
+    "calls": 4.666666666666667,
+    "wall_s": 5.367037812868754,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "slip": 2,
+     "success": 1,
+     "crush_or_damage": 3
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "pouch_transfer",
+    "policy": "oracle_slow",
+    "n": 6,
+    "success": 0.3333333333333333,
+    "progress": 0.3333333333333333,
+    "damaged": 0.0,
+    "calls": 4.666666666666667,
+    "wall_s": 6.7939161856969195,
+    "tactile_per_pick": 0.0,
+    "causes": {
+     "slip": 1,
+     "success": 2,
+     "grasp_miss": 3
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "tool_return",
+    "policy": "nominal",
+    "n": 6,
+    "success": 0.6666666666666666,
+    "progress": 0.6666666666666666,
+    "damaged": 0.16666666666666666,
+    "calls": 4.666666666666667,
+    "wall_s": 10.54050620396932,
+    "tactile_per_pick": 0.6842105263157895,
+    "causes": {
+     "crush_or_damage": 1,
+     "success": 4,
+     "grasp_miss": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "tool_return",
+    "policy": "oracle",
+    "n": 6,
+    "success": 0.6666666666666666,
+    "progress": 0.6666726776408142,
+    "damaged": 0.16666666666666666,
+    "calls": 4.666666666666667,
+    "wall_s": 11.825599273045858,
+    "tactile_per_pick": 0.8235294117647058,
+    "causes": {
+     "grasp_miss": 1,
+     "success": 4,
+     "crush_or_damage": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "tool_return",
+    "policy": "oracle_firm",
+    "n": 6,
+    "success": 0.6666666666666666,
+    "progress": 0.6666666666666666,
+    "damaged": 0.16666666666666666,
+    "calls": 4.666666666666667,
+    "wall_s": 9.953989068667093,
+    "tactile_per_pick": 0.6842105263157895,
+    "causes": {
+     "crush_or_damage": 1,
+     "success": 4,
+     "slip": 1
+    }
+   },
+   {
+    "robot": "ur5e_2f85",
+    "family": "tool_return",
+    "policy": "oracle_slow",
+    "n": 6,
+    "success": 0.6666666666666666,
+    "progress": 0.6666666666666666,
+    "damaged": 0.3333333333333333,
+    "calls": 4.666666666666667,
+    "wall_s": 12.216698805491129,
+    "tactile_per_pick": 0.8823529411764706,
+    "causes": {
+     "crush_or_damage": 2,
+     "success": 4
+    }
+   }
+  ],
+  "best_oracle": {
+   "gen3_2f85/bin_clearing": "oracle",
+   "gen3_2f85/conveyor_sort": "oracle",
+   "gen3_2f85/depalletize": "oracle",
+   "gen3_2f85/fixture_place": "oracle",
+   "gen3_2f85/pouch_transfer": "oracle",
+   "gen3_2f85/tool_return": "oracle",
+   "panda/bin_clearing": "oracle",
+   "panda/conveyor_sort": "oracle",
+   "panda/depalletize": "oracle",
+   "panda/fixture_place": "oracle_firm",
+   "panda/pouch_transfer": "oracle",
+   "panda/tool_return": "oracle",
+   "probe/bin_clearing": "oracle_firm",
+   "probe/conveyor_sort": "oracle",
+   "probe/depalletize": "oracle",
+   "probe/fixture_place": "oracle",
+   "probe/pouch_transfer": "oracle",
+   "probe/tool_return": "oracle",
+   "ur5e_2f85/bin_clearing": "oracle",
+   "ur5e_2f85/conveyor_sort": "oracle",
+   "ur5e_2f85/depalletize": "oracle",
+   "ur5e_2f85/fixture_place": "oracle",
+   "ur5e_2f85/pouch_transfer": "oracle",
+   "ur5e_2f85/tool_return": "oracle"
+  }
+ }
+}

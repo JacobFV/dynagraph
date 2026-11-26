@@ -41,6 +41,9 @@ def _yaw_quat(y):
     return np.array([math.cos(y / 2), 0.0, 0.0, math.sin(y / 2)])
 
 
+SELF_EXCLUDES = {"gen3_2f85": (("base_link", "shoulder_link"),)}     # envs-r7.1 (see RobotAdapter.build)
+
+
 def make_robot_adapter(env, name):
     r = EmbodimentRobot(name)
     return r, EmbodimentSkills(r)
@@ -103,6 +106,11 @@ class EmbodimentRobot:
         self.emb.build(s, mount_pose=(tuple(pos), tuple(_yaw_quat(yaw))))
         # explicit object<->pad friction pairs (hidden mu_grip), as in ProbeRobot.build
         P = self.emb.prefix
+        # envs-r7.1: adjacent-link self-contacts that MuJoCo's parent filter misses (the parent is welded to the world,
+        # so the filter compares against the world body). Audit (all robots, reset + a scripted episode): only Gen3 -
+        # base_link vs shoulder_link, 12 mm penetration, a constant ~1.8 MN contact from reset in every r6 / r7 episode
+        for b1, b2 in SELF_EXCLUDES.get(self.name, ()):
+            s.add_exclude(bodyname1=P + b1, bodyname2=P + b2)
         pad_geoms, pad_bodies = [], []
         for e in self.emb.cfg.effectors:
             for bn in e.gripper.pad_bodies:

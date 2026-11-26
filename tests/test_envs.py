@@ -549,3 +549,18 @@ def test_r7_force_limited_grip_keeps_pad_force_under_grip_max():
                           target=e))
     env.idle(0.5)
     assert env._sq_ema.get(b, 0.0) / 2 < 25.0 * 1.15
+
+
+def test_r71_no_adjacent_link_self_contact_on_gen3():
+    """envs-r7.1: Gen3 base_link vs shoulder_link (parent welded to the world, so MuJoCo's parent filter misses it) is
+    excluded; r6 / r7 carried a constant ~1.8 MN contact from reset."""
+    env = make_env("fixture_place")
+    env.reset(TaskSpec("fixture_place", "fine", 3000001, "gen3_2f85", "heldout_robot", {}))
+    env.run(0.05)
+    m, d = env.m, env.d
+    rb = {int(m.geom_bodyid[g]) for g in env.robot.robot_geoms}
+    for i in range(d.ncon):
+        c = d.contact[i]
+        if c.geom1 >= 0 and c.geom2 >= 0:
+            assert not (int(m.geom_bodyid[c.geom1]) in rb and int(m.geom_bodyid[c.geom2]) in rb)
+    assert env.metrics_acc["max_robot_contact_n"] < 1000.0

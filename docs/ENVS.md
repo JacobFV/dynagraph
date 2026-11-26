@@ -602,7 +602,20 @@ shelf_restock TidyBot aisle, kitting_pocket ur5e), copied to `~/Downloads/dynagr
 (new: dressing keeps task randomisation + determinism + no drops/violations + visual-only geoms non-occluding;
 collision-real props near the station).
 
-### envs-r7 (IN PROGRESS, dev tree `~/dynagraph_dev7`): skill-layer ceiling audit + fixes, fine-motor families
+### envs-r7.1 (robot-model fix only; frozen `~/dynagraph_r7_1`)
+MODEL found a persistent Gen3 self-contact: r0/base_link vs r0/shoulder_link (adjacent links, 12 mm penetration,
+contype/conaffinity 1/1) - a constant ~1.8 MN contact from ~0.16 s after reset in EVERY Gen3 episode of envs-r6 and
+envs-r7 (max_robot_contact_n identical in all of them, one 'collision' counted per episode). Cause: base_link is
+welded to the world, so MuJoCo's parent filter (which compares weld bodies) treats shoulder_link's parent as the world
+and does not exclude the pair. Fix: an explicit contact exclude for that pair (`envs/robots.py::SELF_EXCLUDES`).
+Self-contact audit (reset + a scripted episode, every robot): only Gen3 had an adjacent-link contact; UR5e /
+ur5e_suction show small real non-adjacent contacts while folding (gripper / cup vs upper_arm, 9-34 N) - physical,
+kept; panda, aloha, z1, so100, fr3_suction, tidybot, g1_dex3, g1_dex3_fixed clean. Verified: the compiled models
+(body / geom / contact / exclude / pair / actuator / damping arrays) and post-reset states of ur5e_2f85, panda and probe
+are byte-identical between r7 and r7.1, so their r7 audit rows, tranche rows and MODEL's r7 demos carry over. Only the
+Gen3 audit rows and the Gen3 held-out tranche episodes are regenerated on r7.1.
+
+### envs-r7 (FROZEN 2026-11-26 08:02Z, `~/dynagraph_r7`; sources sha256 8166269b...9b28): skill-layer ceiling audit + fixes, fine-motor families
 Why: MODEL round 5 showed the ORACLE planner reaching ~0.27 good parts / lot on UR5e (Panda 0.05, Gen3 ~0.2): the
 scripted skills / controllers were the ceiling. r7 measures that ceiling per (robot x family) and fixes the skill layer.
 
@@ -701,6 +714,28 @@ it but at 600 N/m the search stopped tracking and success collapsed (UR5e force-
 the r6 spiral and `search_k` is an exposed gain. **Gen3 limitation:** its 2F-85 hides the held peg from the overhead
 tracker (no in-hand offset correction, no tracker seating check) and the transit to the hole collides with the fixture
 (1 collision per episode; the peg ends ~8 cm off the hole) - no collision-free transit planner in the skill layer yet.
+
+**Audit AFTER (frozen envs-r7, `results/v2/envs/ceiling_r7.{md,json}`; 6 seeds, tight_insert 10; oracle success, r6 ->
+r7; nominal / probe-then-act (PTA) / force-ramp for reference):**
+
+| family | UR5e oracle r6 -> r7 (nominal, PTA) | Panda oracle r6 -> r7 (nominal, PTA) | Gen3 oracle r6 -> r7 (nominal, PTA) |
+|---|---|---|---|
+| bin_clearing (6 cm bin) | 0.17 -> **0.83** (0.17, 0.17) | 0.00 -> 0.33 (0.00, 0.33) | 0.17 -> 0.67 (0.00, 0.00) |
+| bin_clearing @deep_bin (10 cm, r6 geometry) | 0.17 -> 0.67 (0.00, 0.17) | 0.00 -> 0.00 (0.00, 0.00) | 0.17 -> 0.33 (0.00, 0.00) |
+| fixture_place | 1.00 -> **1.00** (0.83, 1.00) | 0.83 -> **1.00** (0.67, 0.67) | 0.50 -> 0.67 (0.33, 0.50) |
+| tool_return | 0.67 -> 0.50 (0.00, 0.17) | 0.33 -> 0.17 (0.17, 0.17) | 0.50 -> 0.00 (0.17, 0.00) |
+| pouch_transfer | 0.33 -> 0.33 (0.33, 0.00) | 0.33 -> 0.33 (0.33, 0.33) | 0.33 -> 0.17 (0.17, 0.00) |
+| depalletize (parallel jaws) | 0.17 -> 0.17 | 0.50 -> 0.50 | 0.00 -> 0.00 |
+| conveyor_sort | 0.17 -> 0.00 | 0.00 -> 0.00 | 0.00 -> 0.00 |
+| tight_insert (new; nominal / force-ramp / oracle) | 0.80 / **0.90** / 0.70 | 0.30 / 0.70 / 0.60 | 0.30 / 0.40 / 0.10 |
+| fastener_pick (new) | 0.17 | 0.00 | 0.00 |
+
+Not reached (honest): the >= 0.90 oracle bar holds only for fixture_place (UR5e, Panda) and tight_insert with
+force-ramp on UR5e; bin_clearing UR5e is 0.83. tool_return and conveyor_sort did not improve (6 seeds: tool_return
+UR5e 0.67 -> 0.50 is within noise; the r7 pick changes did not address the tool's head-imbalance slip / jam or the
+belt intercept); depalletize with parallel jaws stays grasp-limited (cartons; the suction arms are the intended robots).
+Decision relevance holds wherever the oracle works: nominal crushes (bin_clearing, fixture_place) or under-presses
+(tight_insert).
 
 **Ceilings accepted at the r7 freeze (lead):** fixture_place, bin_clearing (after the fixes), tight_insert with
 force-ramp; pouch_transfer gripper-limited (soft pouches need >= the damage force with a parallel pinch); fastener_pick
