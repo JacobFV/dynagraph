@@ -1,0 +1,64 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage[section]{placeins}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[colorlinks=true,linkcolor=blue!50!black,citecolor=blue!50!black,urlcolor=blue!50!black]{hyperref}
+
+% Figures: paper-local files first, then stills that already exist in the repo
+% (paths relative to paper/). Large videos are never copied or included.
+\graphicspath{{figures/}{../results/v2/envs/}{../results/v2/videos_paired/stills/}}
+
+% ---- placeholders (list them with `make todo`) -----------------------------
+\newcommand{\todo}[1]{\textcolor{red}{\textbf{[TODO: #1]}}}
+\newcommand{\pending}[1]{\textcolor{orange!80!black}{\textbf{[PENDING: #1]}}}
+\newcommand{\tbd}{\textcolor{orange!80!black}{\textbf{--}}}
+
+% ---- notation ---------------------------------------------------------------
+\newcommand{\fm}[1]{\texttt{\detokenize{#1}}}   % task family / identifier
+\newcommand{\ci}[2]{[#1,\,#2]}                   % 95% bootstrap CI
+\newcommand{\sysI}{System~I}
+\newcommand{\sysII}{System~II}
+\newcommand{\pta}{PTA}
+\newcommand{\inkling}{Inkling-2-Mini}
+
+% include a figure only if the file exists, otherwise leave a visible placeholder
+\newcommand{\maybefig}[3][\linewidth]{%
+  \IfFileExists{#2}{\includegraphics[width=#1]{#2}}{\fbox{\parbox{0.8\linewidth}{\centering\todo{figure: #3}}}}}
+
+\emergencystretch=1.5em
+
+\title{Typed Physical Memory for Robot Manipulation:\\
+A Pre-Registered Simulation Study of When Remembered Physics Changes Decisions}
+\author{Jacob Valdez}
+\date{Working draft, \today. Simulation only; results sections grow as experiments finish.}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\input{sections/abstract}
+\end{abstract}
+
+\input{sections/introduction}
+\input{sections/related}
+\input{sections/method}
+\input{sections/environments}
+\input{sections/protocol}
+\input{sections/results}
+\input{sections/limitations}
+\input{sections/conclusion}
+
+\FloatBarrier
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\end{document}

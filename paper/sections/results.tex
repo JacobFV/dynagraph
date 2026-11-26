@@ -1,0 +1,465 @@
+\section{Results}
+\label{sec:results}
+
+Results are presented in chronological order because later designs respond to earlier failures. Every number
+is taken from the project's result documents; the source section is given in a comment next to each table in
+the \LaTeX{} source. All results are from simulation.
+
+% ---------------------------------------------------------------------------
+\subsection{Exploratory sprint: structure helps prediction, the typed slot is not used}
+\label{sec:res-sprint}
+
+The first study used simple pushing worlds with hidden friction and mass, compact recurrent memory models
+(1.33\,M parameters, generic and structured within 0.6\% of each other), and a $2\times2$ factorial of
+structured memory $\times$ physics-informed loss (Table~\ref{tab:factorial}).
+
+% Source: docs/findings.md, "compact 2x2 factorial (v2 test, 512 roots, 3 seeds; 0.5 s position error)".
+\begin{table}[!htbp]
+  \centering\small
+  \caption{Sprint factorial: position error 0.5\,s ahead and negative log-likelihood on the test split
+  (512 roots, 3 seeds). Exploratory.}
+  \label{tab:factorial}
+  \begin{tabular}{@{}lrr@{}}
+    \toprule
+    model & pos.\ error (mm) & NLL \\
+    \midrule
+    generic memory                 & 14.9 & $-1.38$ \\
+    structured memory              & 12.7 & $-1.29$ \\
+    generic + physics loss         & 16.6 & $-1.38$ \\
+    structured + physics loss      & 14.0 & $-1.22$ \\
+    Coulomb analytic / oracle (labelled) & 40.7 / 40.8 & -- \\
+    constant velocity              & 84.2 & -- \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Structure reduced position error by $2.44$\,mm \ci{2.12}{2.77}. The physics loss made it \emph{worse} by
+$1.52$\,mm \ci{1.26}{1.79}. Effects on likelihood were not significant. Structure helped under occlusion,
+delay, dropout and reduced data (10\%), and lost on chains of two or more boxes ($+1.4$\,mm at length 2,
+$+7.3$\,mm at length 4), with a distractor entity, and out of distribution in friction. The number of
+recurrent refinement passes (1, 2, 4, 8) made no measurable difference.
+
+\paragraph{The typed friction slot was not causally used.} Overwriting the friction slot from 0.35 to 0.65
+moved the compact models' predictions by 0.07--0.10\,mm where the simulator moves by 9.9\,mm. The slot had
+collapsed to its prior ($0.50 \pm 0.003$). A post-hoc fix that routed an explicit per-push summary into the slot
+did not help: the bottleneck was extracting friction from the observations, not routing it. Lesioning the
+friction token cost 4--6\,mm against 1.4--1.8\,mm for a random token, so the token carried information, but
+not friction.
+
+\paragraph{Pretrained looped core, first attempt.} With the pretrained \inkling{} core (memory through
+per-pass cross-attention, LoRA on the core), the adaptation gate passed with one documented amendment (a
+40-step overfit criterion failed and a 200-step check passed; both are recorded). Table~\ref{tab:inkling-v1}
+gives prediction results. The trained models use the pretrained core (bypassing it roughly doubles the error),
+but compute was not matched to the compact models (about 1\% of their training examples) and no random-initialised
+control was run, so a benefit of pretraining is untested here.
+
+% Source: docs/findings.md, "actual inkling core (e08; v2 test; 2 seeds)".
+\begin{table}[!htbp]
+  \centering\small
+  \caption{Sprint, pretrained looped core: test position error and NLL for two seeds. Exploratory;
+  not compute-matched with Table~\ref{tab:factorial}.}
+  \label{tab:inkling-v1}
+  \begin{tabular}{@{}lrr@{}}
+    \toprule
+    model & pos.\ error, mm (seed 0 / 1) & NLL (seed 0 / 1) \\
+    \midrule
+    generic memory                          & 28.9 / 30.2 & $-0.20$ / $-0.19$ \\
+    typed memory + physics loss             & 32.3 / 32.7 & $-0.31$ / $-0.42$ \\
+    typed, trained without core LoRA (seed 0) & 33.9 & $-0.35$ \\
+    core bypassed (constant message)        & 53--61 & 0.9--7.4 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Humanoid push loop.} On a fixed-base Unitree G1 push task with synthetic sensors, a lift/place gate
+failed (3/10) and pushing was fixed as the endpoint. In paired closed loop (Table~\ref{tab:g1}) \emph{no
+learned model beat a prior-mean stub}, and even true friction barely helped: execution scatter of the hand
+speed dominated. The one place a structured-memory advantage appeared was after fine-tuning on G1 data, in
+final error rather than success (structured vs.\ generic: $-2.20$\,cm \ci{-3.76}{-0.81} per seed).
+
+% Source: docs/findings.md, "unitree g1 (fixed-base simulation, synthetic sensors, push task)".
+\begin{table}[!htbp]
+  \centering\small
+  \caption{Sprint, G1 push task: paired closed-loop successes. Exploratory.}
+  \label{tab:g1}
+  \resizebox{\linewidth}{!}{%
+  \begin{tabular}{@{}llr@{}}
+    \toprule
+    set & policy & successes \\
+    \midrule
+    30 seeds & prior-mean stub / analytic / oracle friction (labelled) & 14 / 8 / 15 of 30 \\
+    30 seeds & pretrained core: generic / typed & 8 / 6 of 30 \\
+    50 seeds, zero-shot & compact generic / structured & 22 / 15 of 50 \\
+    50 seeds, fine-tuned on G1 data & compact generic / structured & 15 / 20 of 50 \\
+    50 seeds & prior-mean stub / oracle friction (labelled) & 22 / 23 of 50 \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+% ---------------------------------------------------------------------------
+\subsection{Second-generation model: latents work; the planner beats the heuristic only on a synthetic world}
+\label{sec:res-r4r6}
+
+\paragraph{Synthetic world.} On a synthetic sanity world, across three training seeds and 300 paired episodes
+per cell, the model-based planner improved success over the scripted heuristic in four of five families
+(Table~\ref{tab:synth}). The typed planner did \emph{not} beat the generic-memory planner: success was equal
+in most cells. Typed was better only on the held-out-robot \fm{sweep} cell and worse on held-out-robot
+\fm{drawer}. The value of knowing the latent (oracle minus prior-mean) was at most $+0.08$ in every family,
+so these families could not have shown a latent-memory advantage in the first place.
+
+% Source: docs/MODEL_V2.md sec. 9f (headline, synthetic G3, 3 training seeds, n = 300).
+\begin{table}[!htbp]
+  \centering\small
+  \caption{Synthetic world: change in success relative to the scripted heuristic ($n = 300$ paired episodes,
+  3 training seeds). 95\% CI shown for the typed planner where reported. Last column: value of latent
+  (oracle $-$ prior-mean). Effort ratios are omitted.}
+  \label{tab:synth}
+  \resizebox{\linewidth}{!}{%
+  \begin{tabular}{@{}l l r r r r r@{}}
+    \toprule
+    cell & typed & generic & no-mem. & oracle & prior & VoL \\
+    \midrule
+    test: drawer  & $+0.44$ \ci{+0.38}{+0.50} & $+0.44$ & $+0.45$ & $+0.41$ & $+0.38$ & $+0.03$ \\
+    test: slide   & $+0.09$ \ci{+0.06}{+0.12} & $+0.09$ & $+0.09$ & $+0.09$ & $+0.07$ & $+0.02$ \\
+    test: lift    & $+0.04$ \ci{+0.02}{+0.06} & $+0.04$ & $+0.04$ & $+0.04$ & $+0.04$ & $0.00$ \\
+    test: insert  & $+0.05$ \ci{+0.03}{+0.08} & $+0.05$ & $+0.05$ & $+0.05$ & $+0.05$ & $0.00$ \\
+    test: sweep   & $+0.00$ & $-0.00$ & $-0.01$ & $+0.00$ & $-0.00$ & $0.00$ \\
+    held-out robot: drawer & $+0.31$ \ci{+0.25}{+0.37} & $+0.36$ & $+0.34$ & $+0.29$ & $+0.21$ & $+0.08$ \\
+    held-out robot: slide  & $+0.05$ & $+0.05$ & $+0.05$ & $+0.05$ & $+0.03$ & $+0.02$ \\
+    held-out robot: sweep  & $+0.00$ & $-0.07$ & $-0.02$ & $+0.00$ & $-0.01$ & $+0.01$ \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+\paragraph{Robots, round 2.} On MuJoCo stations with real robot models (30 cells, $n = 30$ each, Gen3 held
+out), free planning with any single model (typed, generic, and even the labelled oracle) was significantly
+worse than the scripted heuristic in several families (door, singulation, kitting, twist-lock), at 3--7 times
+the effort. The failure mode was action selection under model error, not latent estimation.
+The competence-gated residual planner was not significantly worse than the heuristic in 29 of 30 cells,
+better in 9, significantly better in one (Panda \fm{fixture_place}, $+0.13$ \ci{+0.03}{+0.27}), and significantly worse
+in one (gantry \fm{depalletize}, $-0.23$ \ci{-0.43}{-0.03}), a family that had passed the validation gate:
+the gate is necessary but not sufficient.
+% Source: docs/MODEL_V2.md sec. 9g (headline, real robots, n = 30 per cell) and its verdicts.
+
+\paragraph{Robots, round 3: fragile parts.} Round~3 added a crush limit to the typed memory, a damage event,
+actor-legal fragility cues, a parameter-only residual planner, and the \pta{} baseline, on site-dressed scenes
+(33 cells). Table~\ref{tab:r6} lists the main significant cells.
+
+% Source: docs/MODEL_V2.md sec. 10h (headline round 3, r6f models, envs-r6 site-dressed, n = 30; single models n = 90).
+\begin{table}[!htbp]
+  \centering\small
+  \caption{Round 3, selected significant cells. Success / damage rate for the two scripted baselines, then
+  the change in success for model policies. Single-model results pool three training seeds ($n = 90$);
+  residual results use a three-seed ensemble ($n = 30$). Exploratory.}
+  \label{tab:r6}
+  \resizebox{\linewidth}{!}{%
+  \begin{tabular}{@{}l l c c p{0.42\linewidth}@{}}
+    \toprule
+    robot & family & nominal & \pta & result \\
+    \midrule
+    UR5e  & \fm{pouch_transfer} & 0.13 / 0.63 & 0.47 / 0.07 &
+      residual anchored on \pta: $+0.30$ \ci{+0.13}{+0.47} vs.\ nominal, damage 0.07; vs.\ \pta{} $-0.03$ (tie) \\
+    Panda & \fm{fixture_place}  & 0.67 / 0.03 & 0.40 / 0.03 &
+      typed $+0.09$, generic $+0.10$, oracle $+0.09$ vs.\ nominal \\
+    Panda & \fm{tool_return}    & 0.27 / 0.47 & 0.40 / 0.43 &
+      typed $+0.09$, generic $+0.09$, oracle $+0.07$ vs.\ nominal \\
+    UR5e  & \fm{bin_clearing}   & 0.03 / 0.60 & 0.10 / 0.13 &
+      typed $+0.07$, generic $+0.07$ vs.\ nominal; damage 0.60 $\to$ 0.42--0.44 \\
+    gantry & \fm{depalletize}   & 0.63 / 0.00 & same &
+      typed $-0.31$, generic $-0.63$, oracle $-0.40$ (losses); gated residual $-0.07$ (n.s.) \\
+    Gen3 (held out) & \fm{door_open} & 0.87 / 0.13 & same &
+      typed $-0.07$, generic $-0.22$, oracle $-0.07$ (losses); gated residual $+0.00$ \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+Against the nominal heuristic the goal was partially met: one significant residual win (UR5e pouch) and small
+single-model wins, and the nominal-anchored gated residual was never significantly worse than the heuristic in
+any of the 33 cells. Against \pta{} the goal was \emph{not} met: the residual anchored on \pta{} ties it, and
+gains over \pta{} appear only where \pta{} itself is weak. The large damage reductions come mostly from the
+probe-then-act mechanism, not from the learned model on top of it. Typed and generic memory showed no consistent
+difference, and typed was again about equal to the oracle. On the held-out family (\fm{drawer_open}) single
+models lost ($-0.09$ to $-0.28$) and the gated residual tied; on the held-out robot the gated residual stayed
+within $[-0.07, +0.03]$ of the heuristic in all six cells.
+
+% ---------------------------------------------------------------------------
+\subsection{Round 4 (pre-registered): lot memory and memory-conditioned probing}
+\label{sec:res-r7}
+
+Round~4 used the lot protocol on \fm{bin_clearing} (three parts per lot, four calls per part) with good parts
+per lot as the registered primary metric (Table~\ref{tab:r7}).
+
+% Source: docs/MODEL_V2.md sec. 11d (pre-registered results, n = 30 paired lots per robot, tau = 0.15 from VAL).
+\begin{table}[!htbp]
+  \centering\small
+  \setlength{\tabcolsep}{4pt}
+  \caption{Round 4, pre-registered: good parts per lot (3 parts, $n = 30$ paired lots per robot). ``No lot''
+  is the memory ablation (lot fusion off). Oracle uses true lot physics (labelled). Bold: CI above 0.}
+  \label{tab:r7}
+  \resizebox{\linewidth}{!}{%
+  \begin{tabular}{@{}l c c c c c c l l@{}}
+    \toprule
+    robot & never & \pta & generic & no lot & typed & oracle & typed $-$ \pta & typed $-$ generic \\
+    \midrule
+    UR5e             & 0.28 & 0.34 & 0.16 & 0.41 & 0.39 & 0.37 & $+0.04$ \ci{-0.03}{+0.13} & $\mathbf{+0.23}$ \ci{+0.12}{+0.34} \\
+    Panda            & 0.09 & 0.08 & 0.07 & 0.11 & 0.13 & 0.10 & $+0.06$ \ci{-0.01}{+0.12} & $\mathbf{+0.07}$ \ci{+0.01}{+0.12} \\
+    Gen3 (held out)  & 0.11 & 0.18 & 0.10 & 0.20 & 0.24 & 0.26 & $+0.07$ \ci{-0.03}{+0.18} & $\mathbf{+0.14}$ \ci{+0.06}{+0.26} \\
+    gantry           & 0.54 & 0.87 & 0.48 & 0.84 & 0.82 & 0.84 & $-0.04$ \ci{-0.11}{+0.01} & $\mathbf{+0.34}$ \ci{+0.24}{+0.46} \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+\begin{itemize}
+  \item \textbf{vs.\ generic memory: met} on all four robots, including the held-out Gen3.
+  \item \textbf{vs.\ never probing: met} on all four ($+0.04$ to $+0.28$).
+  \item \textbf{vs.\ \pta: not met.} No interval excludes zero. The typed planner matched \pta's good parts while
+        using no probes on the arms, with higher (not significantly) damage on UR5e (0.17 vs.\ 0.07).
+  \item \textbf{The registered probing rule did not do memory-conditioned probing.} It never probed on the arms
+        and always probed on the gantry; the decision tracked the embodiment's risk level, not what memory held
+        about the lot. The memory ablation is within noise of the full model on good parts on all four robots.
+        The registered gains therefore come from per-call grip and lift-speed choice, not from carrying the
+        lot across parts.
+\end{itemize}
+A diagnosis showed the memory itself working: after one probe the crush posterior was sharp and carried to
+untouched parts, but the risk head did not turn it into a grip limit.
+
+\paragraph{Exploratory follow-up (fresh lots).} The crush-gated rule (Section~\ref{sec:planner}) was designed
+after seeing Table~\ref{tab:r7} and evaluated on a fresh lot set (Table~\ref{tab:r7v2}). With lot memory on,
+the planner probes about once per lot and then skips; with it off, the same rule probes every part. Good parts
+equal \pta's with 1.2--2.3 fewer probes per lot on three of four robots. There is still no significant
+good-parts win over \pta: with four calls per part, the probes \pta{} spends rarely bind.
+
+% Source: docs/MODEL_V2.md sec. 11e (EXPLORATORY v2, fresh lot set, n = 30).
+\begin{table}[!htbp]
+  \centering\small
+  \setlength{\tabcolsep}{4pt}
+  \caption{Round 4, \textbf{exploratory} crush-gated rule on fresh lots ($n = 30$): good parts / probes per
+  lot, and paired differences. Bold: CI excludes 0 in the favourable direction.}
+  \label{tab:r7v2}
+  \resizebox{\linewidth}{!}{%
+  \begin{tabular}{@{}l c c l l l@{}}
+    \toprule
+    robot & \pta & typed & $\Delta$ good vs.\ \pta & $\Delta$ probes vs.\ \pta & $\Delta$ probes, memory on $-$ off \\
+    \midrule
+    UR5e            & 0.22 / 3.2 & 0.24 / 1.7 & $+0.02$ \ci{-0.06}{+0.12} & $\mathbf{-1.50}$ \ci{-2.40}{-0.67} & $\mathbf{-1.97}$ \ci{-2.80}{-1.20} \\
+    Panda           & 0.07 / 5.7 & 0.08 / 5.4 & $+0.01$ \ci{+0.00}{+0.03} & n.s. & $\mathbf{-1.50}$ \ci{-2.23}{-0.83} \\
+    gantry          & 0.77 / 3.5 & 0.77 / 1.2 & $-0.00$ \ci{-0.07}{+0.07} & $\mathbf{-2.27}$ \ci{-2.90}{-1.77} & $\mathbf{-2.07}$ \ci{-2.60}{-1.70} \\
+    Gen3 (held out) & 0.17 / 2.5 & 0.18 / 1.3 & $+0.01$ \ci{-0.08}{+0.10} & $\mathbf{-1.23}$ \ci{-1.73}{-0.70} & $\mathbf{-1.97}$ \ci{-2.77}{-1.23} \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+% ---------------------------------------------------------------------------
+\subsection{Round 5 (pre-registered): do saved probes become good parts under a shared budget?}
+\label{sec:res-r8}
+
+Round~5 asked whether the probes saved by lot memory turn into parts when calls are scarce: five parts per lot
+and one shared budget of 12 skill calls. The budget was chosen on validation by a rule fixed in advance, using
+scripted baselines only. The registration stated beforehand that the budget binds only on the gantry, so the
+test had power only there; the arms were still registered and are reported (Table~\ref{tab:r8}). The models
+are the round-4 checkpoints, without retraining.
+
+% Source: docs/MODEL_V2.md sec. 12b (pre-registered test; 5-part lots, 12 shared calls, n = 30 paired lots per robot).
+\begin{table}[!htbp]
+  \centering\small
+  \setlength{\tabcolsep}{3.5pt}
+  \caption{Round 5, pre-registered: good parts per lot (5 parts, 12 shared calls, $n = 30$ paired lots per
+  robot). Primary endpoint: typed $-$ \pta. Bold: CI above 0.}
+  \label{tab:r8}
+  \resizebox{\linewidth}{!}{%
+  \begin{tabular}{@{}l c c l l l c@{}}
+    \toprule
+    robot & \pta & typed & typed $-$ \pta{} (primary) & typed $-$ memory off & typed $-$ generic & probes/lot \\
+    \midrule
+    gantry          & 0.72 & 0.81 & $\mathbf{+0.09}$ \ci{+0.03}{+0.16} & $\mathbf{+0.17}$ \ci{+0.11}{+0.23} & $\mathbf{+0.39}$ \ci{+0.29}{+0.50} & 4.9 $\to$ 1.1 \\
+    UR5e            & 0.22 & 0.21 & $-0.01$ \ci{-0.07}{+0.07} & $+0.02$ \ci{-0.07}{+0.11} & $\mathbf{+0.13}$ \ci{+0.05}{+0.21} & 3.7 $\to$ 1.0 \\
+    Panda           & 0.05 & 0.05 & $+0.01$ \ci{-0.03}{+0.05} & $-0.01$ \ci{-0.04}{+0.03} & $\mathbf{+0.05}$ \ci{+0.02}{+0.09} & 5.3 $\to$ 3.3 \\
+    Gen3 (held out) & 0.15 & 0.17 & $+0.01$ \ci{-0.03}{+0.05} & $+0.02$ \ci{-0.03}{+0.07} & $\mathbf{+0.14}$ \ci{+0.06}{+0.24} & 3.3 $\to$ 1.3 \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+\begin{itemize}
+  \item \textbf{Primary: a win on one of four robots, the gantry}, $+0.09$ \ci{+0.03}{+0.16} good parts per lot
+        (about 0.45 extra good parts per five-part lot). The mechanism matches the hypothesis: the typed planner
+        probes 1.1 times per lot against \pta's 4.9, \pta{} exhausts the 12 calls before the bin is empty, and
+        episode success rises from 0.13 to 0.40. Damage is unchanged. With lot memory off, the same rule probes
+        every part and does worse than \pta{} ($-0.07$ \ci{-0.14}{-0.02}). On the gantry the extra parts come
+        from the lot memory.
+  \item \textbf{UR5e, Panda, Gen3: no win over \pta{}} ($-0.01$ to $+0.01$), although the typed planner saves
+        2.0--2.7 probes per lot there as well. As predicted from validation, \pta{} on the arms is not
+        budget-bound: it fails picks and places for other reasons, and saved calls have nothing to turn into.
+        Memory on vs.\ off is not significant on any arm.
+  \item \textbf{Secondary, vs.\ generic memory: met on all four robots.}
+  \item The labelled oracle reaches 0.85 on the gantry and only 0.24 / 0.11 / 0.19 on UR5e / Panda / Gen3:
+        even with true lot physics, the arms deliver few good parts.
+\end{itemize}
+
+\begin{figure}[!htbp]
+  \centering
+  \maybefig[0.9\linewidth]{../results/v2/videos_paired/stills/pouch_transfer__ur5e_2f85__s2900001__t70.png}{paired same-seed still}
+  \caption{Still from the round-3 paired same-seed video (UR5e, \fm{pouch_transfer}; left: nominal script,
+  right: gated residual anchored on \pta). \todo{add a still of the round-5 gantry paired video, the one
+  significant good-parts win over \pta.}}
+  \label{fig:paired}
+\end{figure}
+
+% ---------------------------------------------------------------------------
+\subsection{Skill-layer ceiling}
+\label{sec:res-ceiling}
+
+Because even the oracle planner delivered few good parts on the arms, the environment was audited: the scripted
+policy was run with nominal and with oracle parameters per robot and family, and the skill layer was repaired
+(collision-aware grasp selection, in-skill regrasp, gripper force calibration, slip-reactive grip). One station
+change makes \fm{bin_clearing} easier and is labelled as such (bin walls lowered from 10 to 6\,cm).
+Table~\ref{tab:ceiling} shows the audit after the repairs.
+
+% Source: results/v2/envs/ceiling_r7.md on branch envs-r7 (6 seeds; tight_insert 10 seeds; site-dressed).
+\begin{table}[!htbp]
+  \centering\small
+  \caption{Scripted-policy success after the skill repairs (6 seeds per cell, \fm{tight_insert} 10; note
+  the small sample). Second baseline column: force-ramp for \fm{tight_insert}, \pta{} otherwise. Oracle
+  uses true hidden physics (labelled). Gen3 rows predate a robot-model fix (see text).}
+  \label{tab:ceiling}
+  \begin{tabular}{@{}l l c c c@{}}
+    \toprule
+    robot & family & nominal & \pta{} / force-ramp & oracle \\
+    \midrule
+    UR5e   & \fm{bin_clearing}   & 0.17 & 0.17 & 0.83 \\
+    UR5e   & \fm{fixture_place}  & 0.83 & 1.00 & 1.00 \\
+    UR5e   & \fm{tight_insert}   & 0.80 & 0.90 & 0.70 \\
+    UR5e   & \fm{pouch_transfer} & 0.33 & 0.00 & 0.33 \\
+    UR5e   & \fm{tool_return}    & 0.00 & 0.17 & 0.50 \\
+    UR5e   & \fm{conveyor_sort}  & 0.00 & 0.00 & 0.00 \\
+    \midrule
+    Panda  & \fm{bin_clearing}   & 0.00 & 0.33 & 0.33 \\
+    Panda  & \fm{fixture_place}  & 0.67 & 0.67 & 1.00 \\
+    Panda  & \fm{tight_insert}   & 0.30 & 0.70 & 0.60 \\
+    Panda  & \fm{pouch_transfer} & 0.33 & 0.33 & 0.33 \\
+    Panda  & \fm{tool_return}    & 0.17 & 0.17 & 0.17 \\
+    Panda  & \fm{conveyor_sort}  & 0.00 & 0.00 & 0.00 \\
+    \midrule
+    Gen3   & \fm{bin_clearing}   & 0.00 & 0.00 & 0.67 \\
+    Gen3   & \fm{fixture_place}  & 0.33 & 0.50 & 0.67 \\
+    Gen3   & \fm{tight_insert}   & 0.30 & 0.40 & 0.10 \\
+    \midrule
+    gantry & \fm{bin_clearing}   & 0.17 & 0.50 & 0.67 \\
+    gantry & \fm{fixture_place}  & 0.83 & 1.00 & 1.00 \\
+    gantry & \fm{depalletize}    & 1.00 & 1.00 & 1.00 \\
+    gantry & \fm{tool_return}    & 1.00 & 1.00 & 1.00 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Three observations. First, knowledge of hidden physics is decision-relevant for \fm{bin_clearing}: nominal
+parameters crush fragile parts and the oracle bounds the grip (UR5e 0.17 to 0.83). Second, on
+\fm{tight_insert} a reactive force-ramp script already matches or exceeds the oracle on success, so what
+memory can still buy there is cycle time, not success. Third, some families stay at or near zero for the
+arms even with oracle parameters (\fm{conveyor_sort} at 0.00 on all three arms, \fm{fastener_pick} at
+most 0.17), so no parameter-choosing policy can succeed there. A 90\% oracle bar is reached only
+for \fm{fixture_place} (UR5e, Panda) and for \fm{tight_insert} with force-ramp on the UR5e.
+
+\paragraph{Gen3 model defect.} The audit exposed a persistent self-collision between the Gen3's base and
+shoulder links in every Gen3 episode up to this point. After the fix, Gen3 oracle success changed from 0.10 to
+0.80 on \fm{tight_insert}, 0.67 to 0.83 on \fm{bin_clearing}, and 0.00 to 0.67 on \fm{fastener_pick}
+(\fm{fixture_place} unchanged at 0.67). Every held-out-robot number in Sections~\ref{sec:res-r4r6}--\ref{sec:res-r8}
+was measured on the defective arm: success and damage were measured as reported, but they understate Gen3.
+% Source: docs/ENVS.md (envs-r7.1 section) and docs/MODEL_V2.md sec. 13e erratum.
+
+% ---------------------------------------------------------------------------
+\subsection{Pending work}
+\label{sec:res-pending}
+
+\paragraph{Round 6: outside baselines on repaired skills.}
+The registered design (draft; to be frozen before any test episode) compares, per cell and on the same tasks,
+the typed gated residual planner against the best scripted baseline per family (P1), against ACT imitation with
+the memory model trained on all data (P2), and against ACT with the memory model trained on exactly ACT's
+demonstrations (P3), with generic and no-memory variants compute-matched. Cells: \fm{bin_clearing},
+\fm{fixture_place} and \fm{tight_insert} on UR5e and Panda, plus Gen3 (held out) on \fm{bin_clearing} and
+\fm{tight_insert}. Validation baselines for the scripted policies are in Table~\ref{tab:r9val}; they fix the
+per-family anchor (nominal for \fm{fixture_place}, \pta{} for \fm{bin_clearing}, force-ramp for
+\fm{tight_insert}).
+
+% Source: docs/MODEL_V2.md sec. 13a, "VAL scripted baselines" (envs-r7.1, 30 VAL tasks per cell). VALIDATION split, not a test result.
+\begin{table}[!htbp]
+  \centering\small
+  \caption{Round 6, \textbf{validation} split: scripted baselines (30 tasks per cell; UR5e / Panda).
+  Not a test result.}
+  \label{tab:r9val}
+  \begin{tabular}{@{}l c c c c@{}}
+    \toprule
+    family & nominal & \pta & force-ramp & oracle-param.\ (labelled) \\
+    \midrule
+    \fm{tight_insert}  & 0.63 / 0.47 & 0.47 / 0.33 & 0.83 / 0.57 & 0.60 / 0.60 \\
+    \fm{fixture_place} & 0.57 / 0.57 & 0.40 / 0.33 & --          & 0.67 / 0.67 \\
+    \fm{bin_clearing}  & 0.10 / 0.03 & 0.23 / 0.20 & --          & 0.50 / 0.43 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+An ACT dry run on the previous environment version was used for debugging only (it surfaced an error-integrating
+delta-action format and a causal-confusion failure from controller-command inputs, both fixed before the tuning
+grid); its numbers are not results and are not reported here.
+
+\begin{table}[!htbp]
+  \centering\small
+  \caption{Round 6 test results. \pending{all cells; filled only after the pre-registration is frozen and
+  the test has run}}
+  \label{tab:r9}
+  \resizebox{\linewidth}{!}{%
+  \begin{tabular}{@{}l l c c c c c c@{}}
+    \toprule
+    robot & family & best script & typed (full) & typed (matched) & ACT & P1 & P2 / P3 \\
+    \midrule
+    UR5e  & \fm{bin_clearing}  & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    UR5e  & \fm{fixture_place} & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    UR5e  & \fm{tight_insert}  & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    Panda & \fm{bin_clearing}  & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    Panda & \fm{fixture_place} & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    Panda & \fm{tight_insert}  & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    Gen3 (held out) & \fm{bin_clearing} & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    Gen3 (held out) & \fm{tight_insert} & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+\pending{Round 6: ACT validation-grid selection (chunk length, vision, KL weight, steps, ensembling weight).}
+
+\pending{Round 6: typed vs.\ generic vs.\ no-memory in both data regimes, with parameter counts and GPU-hours;
+cycle-time comparisons.}
+
+\paragraph{\sysI/\sysII{} closed loop.}
+The comparison is pre-registered. It has three cells (lots of \fm{bin_clearing} on UR5e,
+\fm{pouch_transfer} on UR5e, and lots of \fm{bin_clearing} on the held-out Gen3), with $n = 30$ paired tasks
+on a fresh seed range, and six comparisons
+(C1--C6) between the native variant (\sysII{} routing, pretrained-core \sysI), the delegated variant
+(\sysII{} routing, world-model ensemble as \sysI), a scripted-routing variant, the world model alone, and
+\pta. The stated predictions are that the native variant will not beat the world model alone (it saw about 6\%
+of its training samples and is a single model) and that \sysII{} will mostly agree with the scripted skill
+choice. A null is the expected outcome and will be reported as such.
+
+\begin{table}[!htbp]
+  \centering\small
+  \caption{\sysI/\sysII{} closed-loop comparison. \pending{all cells; no test episode had been reported at
+  the time of writing}}
+  \label{tab:sys12}
+  \begin{tabular}{@{}l c c c c c c@{}}
+    \toprule
+    cell & C1 & C2 & C3 & C4 & C5 & C6 \\
+    \midrule
+    \fm{bin_clearing} lots, UR5e            & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    \fm{pouch_transfer}, UR5e               & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    \fm{bin_clearing} lots, Gen3 (held out) & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\pending{\sysI{} offline prediction quality for the gated arm and its controls (ungated adapters,
+shuffled-weight core, compact transformer, sample-matched world model).}
+
+\pending{Language retention: measured language-task performance of the adapted model in \sysII{} mode and
+under the ungated control. By design \sysII{} runs with adapters off; the measured evaluation is not yet in.}
+
+\pending{Per-decision latency of \sysII{} and \sysI{} in closed loop.}
+
+\pending{Re-evaluation of held-out-robot (Gen3) cells on the repaired robot model.}

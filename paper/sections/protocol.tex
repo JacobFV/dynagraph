@@ -1,0 +1,41 @@
+\section{Experimental Protocol}
+\label{sec:protocol}
+
+\paragraph{Pre-registration.} Rounds 4 and 5 and the \sysI/\sysII{} comparison were pre-registered: cells,
+policies, primary metric, comparisons, thresholds and seeds were written down and committed to the repository
+before any model policy was run on the corresponding test tasks \citep{nosek2018preregistration}. The round~6
+pre-registration is drafted and will be frozen in its own commit before any test episode. Earlier rounds and
+the sprint are exploratory and are labelled so. Analyses designed after seeing registered results are labelled
+\emph{exploratory} and were run on fresh seeds. Errata to registrations are recorded, not silently fixed
+(Section~\ref{sec:limitations}).
+
+\paragraph{Paired evaluation.} Within a cell (robot $\times$ family), every policy runs on the same seeded
+tasks. We report paired mean differences with 95\% bootstrap confidence intervals over tasks
+\citep{efron1979bootstrap,efron1993introduction}. A difference is called significant when the interval
+excludes zero. There is no pooling across robots and no multiple-comparison correction; every registered cell is
+reported, including nulls.
+
+\paragraph{Sample size.} Closed-loop cells use $n = 30$ paired tasks (or lots) unless stated; cells that pool
+three training seeds have $n = 90$, and the synthetic-world comparison has $n = 300$. With $n = 30$ the
+intervals are wide (typically $\pm 0.1$ on a success rate), which limits what a single cell can show.
+
+\paragraph{Tuning.} Every threshold is chosen on the validation split and then frozen: the probing threshold
+$\tau = 0.15$, the competence gate (validation AUC $\ge 0.8$), and the shared budget in round~5, which was
+selected by a rule fixed before the validation baselines were seen and using scripted baselines only.
+
+\paragraph{Held-out conditions.} The Gen3 arm appears in no training set and no selection step. The
+\fm{drawer_open} family is excluded from training and validation data from round~3.
+
+\paragraph{Metrics.} Episode success (environment predicate on true state); for lots, \emph{good parts per lot},
+the fraction of parts that end in the tote and undamaged, which was registered as primary because episode
+success is near zero for all policies on arm lots; damage rate; probes per lot; effort; simulated time.
+Timeouts and crashes inside an episode count as failures.
+
+\paragraph{Baselines.} Scripted: nominal, \pta{}, force-ramp, and the oracle-parameter script (labelled).
+Learned: the generic-memory and no-memory variants of the world model under the same planner; the oracle planner
+(true latents in the slots; labelled); and, in round~6, ACT imitation \citep{zhao2023act} trained from scratch
+on oracle-parameter demonstrations, with the memory models also trained in a \emph{budget-matched} regime on
+exactly the same episodes. Both sides get a validation tuning grid of comparable effort.
+
+\paragraph{Reporting rules.} Oracle rows use privileged labels and are always marked. Gantry results are kept
+apart from arm results. Absolute success rates are reported alongside differences.

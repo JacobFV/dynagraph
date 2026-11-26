@@ -1,0 +1,13 @@
+# build artefacts
+build/
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.xdv
+main.pdf

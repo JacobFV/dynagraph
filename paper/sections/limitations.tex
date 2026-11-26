@@ -1,0 +1,43 @@
+\section{Limitations}
+\label{sec:limitations}
+
+\paragraph{Simulation only.} No result here was obtained on a physical robot. Sensors are synthetic, with
+randomised noise, latency and dropout, and the fragility cues (vision material, tactile stiffness) are idealised.
+
+\paragraph{Absolute performance is far from industrial.} On arm lots, good parts per lot in round~5 are at most 0.24 for
+every policy, including the labelled oracle, and episode success is at or near zero. The gantry is
+the only embodiment with high absolute rates. The skill layer, not physical knowledge, is the binding
+constraint on the arms, and after repairs several families still have oracle success at or below 0.5.
+
+\paragraph{No win over probe-then-act on arms.} The learned system has not beaten a simple scripted
+probe-then-act baseline on any arm in good parts or success. Its demonstrated advantages are over a
+generic-memory model, over never probing, in probe count, and on the gantry under a shared budget.
+
+\paragraph{Typed versus generic is not settled.} In prediction and in free planning (rounds~2--3) typed and
+generic memory were indistinguishable. The consistent typed advantage appears in the lot experiments. In
+round~4 that advantage did not depend on lot memory (the ablation matched), so part of it reflects the typed
+model's per-call parameter choice rather than memory across parts.
+
+\paragraph{Statistical power.} Most cells have $n = 30$; intervals are wide, there is no correction for
+multiple comparisons, and the ceiling audit uses 6--10 seeds per cell. Single-cell findings should be read as
+provisional.
+
+\paragraph{Pre-registration scope and errata.} The sprint and rounds 1--3 were exploratory. Registered rounds
+have recorded errata: the round-5 test seed numbers had been used in round~3 under a different protocol
+(evaluation only; no training or tuning used them); the \sysI/\sysII{} registration initially hashed code from
+a working tree contaminated with a development version of the environments, corrected before any test episode
+by pinning a frozen tree with a guard; and a data-sanitising step had silently dropped every held-out-robot
+row from an offline evaluation (no reported number used it).
+
+\paragraph{Held-out robot.} All Gen3 numbers in rounds 2--5 were measured with a self-collision defect in the
+robot model and understate that arm. Some Gen3 episodes also hit a wall-clock guard because of simulator
+instabilities and were counted as failures.
+
+\paragraph{Environment changes between rounds.} The environments were revised between rounds (fragility cues,
+site dressing, skill repairs, an easier bin geometry), so absolute numbers are not comparable across rounds.
+
+\paragraph{Pretrained core.} Whether pretraining helps is untested so far: the sprint comparison was not
+compute-matched and had no random-initialised control. The controls are built but their results are pending.
+
+\paragraph{Value of the latent.} In many families the gap between knowing and not knowing the hidden physics
+is small (at most $+0.08$ on the synthetic world), which bounds what any memory can add there.

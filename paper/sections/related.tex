@@ -1,0 +1,41 @@
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Online system identification and adaptation.}
+Conditioning a policy on an online estimate of hidden dynamics parameters is a standard route to robustness
+\citep{yu2017uposi,kumar2021rma}. Those estimates are usually an unstructured latent consumed by a policy
+network. We instead keep one labelled slot per physical quantity, which makes the estimate inspectable and
+allows interventions that test whether it is used.
+
+\paragraph{Structured and set-valued memory.}
+Our encoders use object-centric and set-based components: slot attention over entity tokens
+\citep{locatello2020slot}, attention pooling and cross-attention between a small latent array and an unordered
+set \citep{lee2019set,jaegle2021perceiver}, on top of the transformer \citep{vaswani2017attention}. Learned
+physical reasoning over objects and relations goes back at least to interaction networks
+\citep{battaglia2016interaction}. Feature-wise modulation \citep{perez2018film} is how the typed slot values
+enter the outcome head.
+
+\paragraph{Model-based planning under uncertainty.}
+The planner optimises skill parameters with the cross-entropy method \citep{rubinstein1999cross} and uses
+ensemble disagreement as epistemic uncertainty, following probabilistic-ensemble model-based control
+\citep{chua2018pets,lakshminarayanan2017ensembles}.
+
+\paragraph{Imitation learning baselines.}
+Action chunking with transformers (ACT) \citep{zhao2023act}, a conditional VAE \citep{kingma2014vae} policy
+that predicts action chunks and ensembles them over time, is our end-to-end imitation baseline.
+
+\paragraph{Fast and slow pathways in one model.}
+The \sysI/\sysII{} vocabulary comes from dual-process accounts of cognition \citep{kahneman2011thinking}.
+Vision-language-action models such as RT-2 \citep{brohan2023rt2} put high-level reasoning and low-level action
+in one pretrained network. Our variant uses a looped (weight-shared, recurrent-depth) transformer
+\citep{dehghani2019universal} and low-rank adapters \citep{hu2022lora} that are switched on only for the fast
+pathway, so that the slow pathway remains the unmodified pretrained model.
+
+\paragraph{Evaluation practice.}
+Small-sample comparisons in learning-based control are fragile \citep{henderson2018matters,agarwal2021precipice}.
+We use paired designs with bootstrap intervals \citep{efron1979bootstrap,efron1993introduction} and
+pre-registration \citep{nosek2018preregistration}.
+
+\todo{Related work is a first pass. Add: tactile / interactive perception for grasp-force selection,
+value-of-information probing, memory in VLA models, and other dual-system robot stacks, once each citation
+has been checked.}

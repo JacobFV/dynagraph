@@ -1,0 +1,48 @@
+\section{Introduction}
+\label{sec:intro}
+
+Many manipulation failures in industrial cells are not failures of geometry but of unobserved physics: a part
+is heavier, more slippery or more fragile than the nominal recipe assumes. The quantities involved are
+few, have physical units, persist across interactions with the same object or the same lot, and can be probed
+at a cost. This suggests a specific architecture: keep what has been learned about each entity in an
+explicit \emph{typed} memory (one slot per physical quantity, with uncertainty and provenance), refine it
+recurrently as evidence arrives, and let a planner read it when it chooses skill parameters.
+
+This paper is an empirical account of how far that idea gets in simulation, written while the work is still in
+progress. It deliberately includes the parts that did not work. The project has gone through one exploratory
+sprint and six evaluation rounds; from round~4 on, the test protocol was pre-registered and committed before any
+test episode was run.
+
+\paragraph{Questions.}
+\begin{enumerate}
+  \item Does a typed, structured memory predict better than a generic one of the same size, and is the typed
+        slot \emph{causally} used (does overwriting it change predictions and decisions as the simulator says it
+        should)?
+  \item Does a planner that reads the memory beat scripted baselines in closed loop, in particular a simple
+        probe-then-act (\pta{}) script that needs no learning?
+  \item Does memory shared across a \emph{lot} of parts change behaviour (fewer probes) and outcomes (more good
+        parts)?
+  \item Does this transfer to a robot and a task family never seen in training?
+  \item Can a pretrained looped language model host the fast physical pathway (\sysI) without disturbing its
+        language pathway (\sysII)?
+\end{enumerate}
+
+\paragraph{Summary of what we know so far.}
+\begin{itemize}
+  \item \textbf{Negative:} in the first sprint the typed friction slot collapsed to its prior and was not
+        causally used; a physics regulariser made prediction worse; no learned model beat a prior-mean stub in a
+        humanoid push loop (Section~\ref{sec:res-sprint}).
+  \item \textbf{Positive but narrow:} with a non-bypass architecture and an actor-legal tactile signal, the crush
+        posterior of a lot sharpens after one probe in a diagnostic case and is carried to later parts; the typed planner beats the
+        generic-memory planner on all four robots, including the held-out one
+        (Sections~\ref{sec:res-r7}--\ref{sec:res-r8}).
+  \item \textbf{Null against the strongest script:} against \pta{} there is no significant gain in good parts on
+        any arm in any round. The single pre-registered win is on the gantry, where a shared call budget makes
+        saved probes worth parts (Section~\ref{sec:res-r8}).
+  \item \textbf{Ceiling:} absolute success on the arms is low and is limited by the scripted skills and
+        controllers, not by knowledge of hidden physics (Section~\ref{sec:res-ceiling}).
+  \item \textbf{Pending:} a comparison against ACT-style imitation and compute-matched memory ablations on
+        repaired skills, and the closed-loop \sysI/\sysII{} comparison (Section~\ref{sec:res-pending}).
+\end{itemize}
+
+Nothing in this paper was run on a physical robot.

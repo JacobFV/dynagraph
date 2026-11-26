@@ -1,0 +1,155 @@
+\section{Method}
+\label{sec:method}
+
+The system has four parts: a memory store that records what was observed and when
+(Section~\ref{sec:memory}), a world model that turns interaction histories into typed latent estimates and
+outcome predictions (Section~\ref{sec:model}), planners that choose skill parameters and decide when to probe
+(Section~\ref{sec:planner}), and an adaptation of a pretrained looped language model that hosts the same
+interface (Section~\ref{sec:inkling}).
+
+\subsection{Typed, versioned, causal memory store}
+\label{sec:memory}
+% Source: docs/findings.md "what was built"; ENVS.md "Observations".
+
+The record layer is a property graph over entities (objects, robot links, regions). Each observation is an
+immutable \emph{evidence event} carrying an entity, a typed property (pose, wrench, joint, gripper state,
+tactile, size, shape, region, and so on), a value with units and frame, a source, and two timestamps: when
+it was measured and when it becomes available to the actor. The store provides:
+\begin{itemize}
+  \item \textbf{versioning}: revisions are explicit; nothing is overwritten in place;
+  \item \textbf{causal availability}: late packets are buffered and become readable only at their availability
+        time, so a query at time $t$ never sees the future;
+  \item \textbf{evidence hygiene}: duplicate suppression, same-source correlation (repeated readings from one
+        source do not inflate confidence), authoritative correction, and retraction or deletion that removes
+        every readable view;
+  \item \textbf{provenance}: estimates written back by a model are marked as model-written and derived;
+  \item \textbf{an actor boundary}: evaluator-only labels (true hidden physics, true contact graph) are rejected
+        if anything on the actor side tries to read them.
+\end{itemize}
+Several invariances hold exactly by construction at this layer (duplicate and replay invariance, opaque-identifier
+renaming, event-order permutation, time-origin shift, unit conversion, frame round trips, quaternion sign).
+Latent physical properties such as grip friction, restitution, compliance, clearance and joint friction are part
+of the property vocabulary but are never emitted by a sensor; they exist only as model-written estimates.
+
+\subsection{World model with a typed-slot bottleneck}
+\label{sec:model}
+% Source: docs/MODEL_V2.md sec. 2, 10a, 11a.
+
+The sprint models (Section~\ref{sec:res-sprint}) let history reach the prediction head through several routes,
+and the typed slot was ignored. The second-generation model (Figure~\ref{fig:arch}; 2.28\,M parameters in the
+typed variant, the generic variant within 10\%) removes the bypass.
+
+\paragraph{History path.} Up to six past interactions with the target are encoded. Each interaction is a
+$64\times26$ resampled time-series segment of actor-legal signals (three strided 1-D convolutions, two
+transformer layers, attention pooling), the skill call that produced it, 14 analytic features, and an embodiment
+vector. Each interaction yields a diagonal Gaussian over the typed latents (ten in the first version; a crush
+limit was added in round~3).
+
+\paragraph{Fusion.} Per-interaction estimates are fused by precision weighting with a learned prior conditioned
+on the target and embodiment tokens, with a learned equicorrelation correction so that $n$ correlated readings
+count for less than $n$ independent ones:
+\begin{equation}
+  \mathrm{prec}_\ell \;=\; p_{0,\ell} \;+\; \sum_{k=1}^{n} \frac{\mathrm{prec}_{k,\ell}}{1 + \rho_\ell\,(n-1)} .
+\end{equation}
+The result is one \emph{typed slot} (mean and variance, in normalised physical units) per latent. Slots can be
+read out, and overwritten for interventions. A per-latent variance temperature is fitted on validation data.
+
+\paragraph{Scene path.} The current entity state (1 to 256 entity tokens) goes through an MLP and slot attention
+with eight slots \citep{locatello2020slot}, is joined by target and embodiment tokens, and is reduced by two
+transformer layers to a context vector of width 128. The scene path sees only the current state.
+
+\paragraph{Head.} A FiLM-conditioned residual MLP \citep{perez2018film} takes the candidate skill call, the
+context and the slot values, and predicts eight continuous outcomes with heteroscedastic variance, event logits
+(success, slip, drop, jam, collision, stall; damage from round~3), and log effort. Physics margins are given
+to the head explicitly, for example the crush margin $\log(\text{crush}) - \log(\text{grip force})$ and a
+slip margin from mass and grip friction, so that the minimal safe grip is an explicit trade-off.
+
+\paragraph{Non-bypass property.} Interaction histories reach the head \emph{only} through the typed slots. A
+unit test checks that with all slots overwritten, predictions are identical with and without history and change
+when the slots change.
+
+\paragraph{Training.} System identification is trained with per-interaction, fused-posterior and prior negative
+log-likelihoods against evaluator labels; the outcome loss is detached from the estimator. The head receives,
+per sample, either the true latent (with a probability annealed from 0.75 to 0.5) or a sample of the fused
+posterior, always presented as a known value, which is what the planner feeds at test time. History dropout is
+0.15. Optimisation is AdamW \citep{loshchilov2019adamw} with a one-cycle schedule and family-homogeneous batches.
+
+\paragraph{Variants.} \emph{Typed} (above); \emph{generic} (same budget, an unstructured memory vector instead
+of typed slots); \emph{no-memory} (no interaction history); \emph{oracle} (the typed model with the true
+latents written into the slots; always labelled, an upper reference rather than a competitor).
+
+\begin{figure}[!htbp]
+  \centering
+  \fbox{\parbox{0.92\linewidth}{\small\ttfamily\raggedright
+  past interactions ($\le 6$): segment, skill call, analytic features, embodiment\\
+  \hspace*{1.5em}$\rightarrow$ per-interaction Gaussian over typed latents\\
+  \hspace*{1.5em}$\rightarrow$ precision fusion with learned prior $\rightarrow$ TYPED SLOTS (mean, var)\\[2pt]
+  current entity state: entity MLP, slot attention, target + embodiment tokens\\
+  \hspace*{1.5em}$\rightarrow$ transformer $\times 2$ $\rightarrow$ context $c$\\[2pt]
+  slot values $z$, candidate skill call, $c$ $\rightarrow$ FiLM head\\
+  \hspace*{1.5em}$\rightarrow$ continuous outcomes, event probabilities, effort}}
+  \caption{World model, schematic. History reaches the head only through the typed slots.
+  \todo{replace this text box with a drawn architecture figure}}
+  \label{fig:arch}
+\end{figure}
+
+\subsection{Planners}
+\label{sec:planner}
+% Source: docs/MODEL_V2.md sec. 3, 9g, 10a, 11a, 11e.
+
+\paragraph{Sampling planner.} The base planner runs the cross-entropy method \citep{rubinstein1999cross}
+(population 256, four iterations, 10\% elites) over the scalar parameters of the candidate skill calls proposed
+by the environment. The cost of an action under latent sample $s$ combines failure, missing progress, effort
+relative to a state-dependent reference, risk and duration; the score is the mean over 32 posterior samples of
+the slots plus a multiple of their standard deviation. A value-of-information term (expected value of perfect
+information, scaled by the fraction of decision-relevant variance a probe is predicted to remove) decides
+whether to spend a probe.
+
+\paragraph{Residual planner with a competence gate.} Planning freely with an imperfect model was the main source
+of closed-loop losses (Section~\ref{sec:res-r4r6}). The residual planner therefore starts from the scripted
+call and changes only its continuous parameters, never the discrete choice of skill and target, and only when
+a lower confidence bound on the improvement, computed from a three-seed ensemble and the latent posterior, is
+positive. A \emph{competence gate} allows deviations only in families whose validation success AUC is at least
+0.8; elsewhere the planner plays the scripted action. A variant is anchored on the \pta{} script instead of the
+nominal one.
+
+\paragraph{Lot planner.} For lots of parts that share hidden physics, interactions with every part are fused
+under one lot identifier. For each pick the planner scores grip force $\times$ lift speed candidates by
+predicted damage, slip and drop risk plus a time cost. The pre-registered rule (round~4) probes when the upper
+bound on the best candidate's risk exceeds a threshold $\tau$ tuned on validation. The later \emph{crush-gated}
+rule uses the typed posterior directly: probe only while the lot's crush posterior is still wide and the part
+is unprobed, and cap the grip at 0.7 times the posterior 10th percentile when the lot is believed fragile.
+
+\subsection{\sysI{} and \sysII{} on a pretrained looped transformer}
+\label{sec:inkling}
+% Source: docs/INKLING_SYS12.md sec. b; docs/findings.md "inkling gate".
+
+We adapt the pretrained \inkling{} language model, a looped transformer whose core block is applied three times
+\citep{dehghani2019universal}, at a pinned revision with verified weight checksums.
+
+\paragraph{\sysII{} (slow).} \sysII{} is the base language model with every adapter off. It reads an
+actor-legal summary of the cell state and the list of allowed calls, and selects one by constrained
+log-likelihood over handoff lines of the form \texttt{<sys1> skill=<skill> target=<entity>}. A gate test
+checks that this path is bit-identical to the unmodified model.
+
+\paragraph{\sysI{} (fast).} After the \sysII{} context, a trained mode-token embedding, one action token (the
+skill chosen by \sysII) and 16 readout tokens are appended. \sysI{} runs the pre-loop layers and \emph{one} of
+the three native core passes; post-loop layers and the language head are skipped. Typed memory enters only
+through zero-initialised, gated set cross-attention \citep{lee2019set,jaegle2021perceiver}: memory to the
+\sysI{} positions at the start of the pass (read), and \sysI{} positions to memory at the end (write).
+Low-rank adapters \citep{hu2022lora} of rank 8 on the query, key, value and output projections of the twelve
+core layers (48 modules) have three modes: \emph{off} (\sysII), \emph{gated} (active only at positions from the
+mode token onward, so every \sysII{} prefix position keeps its base state and its key-value cache can be reused),
+and \emph{always} (an ungated control). The readout feeds the same outcome head as Section~\ref{sec:model}, so
+the same planners run on top. The memory tokens come from the frozen typed front end of the world model:
+target, embodiment, eight entity slots, and eleven typed-latent tokens (posterior mean, log-variance, evidence
+count).
+
+\paragraph{Memory footprint.} The model's quantised expert weights are kept packed on the GPU and only the
+experts a batch routes to are dequantised on the fly, reproducing the reference arithmetic bit for bit. This
+brings the footprint from 52.8\,GB (dequantised) to 20.6\,GB allocated (22.2\,GB peak), and \sysI{} training at
+batch size 32 stays near 25\,GB.
+
+\paragraph{Controls.} Ungated adapters; the same architecture with shuffled core weights (matched weight
+statistics, destroyed structure); a compact two-layer transformer \sysI{} over the same memory tokens; and the
+world model of Section~\ref{sec:model} trained with the same number of samples.

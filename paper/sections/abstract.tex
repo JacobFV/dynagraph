@@ -1,0 +1,21 @@
+We study whether a robot that keeps an explicit, typed memory of the hidden physics of the things it
+handles (mass, friction, crush limit, clearance) makes better manipulation decisions than one that does not.
+We build (i) a typed, versioned, causal property-graph memory with provenance and an actor/evaluator
+boundary, (ii) a 2.28\,M-parameter world model whose interaction history reaches the outcome head only through
+readable, overwritable typed slots, (iii) uncertainty-aware planners that deviate from a scripted skill only
+when an ensemble lower bound supports it, and (iv) an adaptation of the pretrained looped transformer
+\inkling{} into a slow \sysII{} (the unmodified language model) and a fast \sysI{} (gated LoRA and memory
+cross-attention active only after a mode token).
+Everything is evaluated in simulation, on procedural MuJoCo industrial stations with UR5e, Panda and a held-out
+Kinova Gen3 arm, a gantry, and a Unitree G1, using paired tasks, $n\ge 30$ per cell, 95\% bootstrap confidence
+intervals, thresholds tuned on validation only, and pre-registration of the later rounds.
+The results are mixed and we report them as such.
+A typed friction slot trained in a first sprint was \emph{not} causally used.
+In a diagnostic case a redesigned model sharpens its fragility estimate after one probe and carries it across a lot; it beats a
+generic-memory model on all four robots, but it does not beat a simple probe-then-act script on any arm.
+Its one pre-registered win over that script is on the gantry under a shared call budget:
+$+0.09$ \ci{+0.03}{+0.16} good parts per lot, attributable to lot memory ($+0.17$ \ci{+0.11}{+0.23} against the
+memory-off ablation).
+Absolute success on the arms is far from industrial levels and is bounded by the scripted skill layer.
+Comparisons against end-to-end imitation (ACT) and the closed-loop \sysI/\sysII{} evaluation are pre-registered
+and pending.

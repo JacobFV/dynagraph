@@ -1,0 +1,74 @@
+\section{Environments and Robots}
+\label{sec:envs}
+% Source: docs/ENVS.md and docs/ROBOTS.md on branch envs-r7.
+
+\paragraph{Simulator and integrity.} All environments are procedural MuJoCo \citep{todorov2012mujoco} scenes
+built from primitives and procedural meshes. Objects move only through robot actuator torques and forces (and
+an environment-owned conveyor drive). An integrity monitor checks at every physics step that no object pose or
+velocity was written, no external force was applied to an object, and no weld is active on an object;
+violations are counted per episode, and the data-generation runs report none. Suction is a contact-mediated
+adhesion actuator with capped force.
+
+\paragraph{Observations.} The actor sees only a sensor stream with per-episode randomised noise, latency and
+dropout: a fixed-camera pose tracker with line-of-sight occlusion (10\,Hz), joint encoders, a tared wrist
+force/torque sensor, gripper state and tactile pads (25\,Hz), and one-shot size and shape estimates. From
+round~3 the stream also carries two actor-legal fragility cues, a vision material reading and a tactile squeeze
+stiffness reading. True hidden physics is available to the evaluator only.
+
+\paragraph{Task families.} The full suite has 18 families across bulk handling, fine manipulation and one
+deformable task. Each has a success predicate on true state and hidden variables chosen to change the best
+action. Table~\ref{tab:families} lists the families used in this paper. Scenes are ``site-dressed'' from
+round~3 on (warehouse hall, racking, lighting; only nearby props collide), with dressing drawn from a separate
+random stream so that object poses and hidden physics are unchanged.
+
+\begin{table}[!htbp]
+  \centering\small
+  \caption{Task families referred to in this paper (a subset of the suite).}
+  \label{tab:families}
+  \begin{tabular}{@{}l p{0.36\linewidth} p{0.30\linewidth}@{}}
+    \toprule
+    family & success & hidden variables that matter \\
+    \midrule
+    \fm{bin_clearing}   & every part in the tote (lot protocol: and undamaged) & mass, grip friction, crush limit \\
+    \fm{conveyor_sort}  & every part in the bin of its class & belt speed, mass, grip friction \\
+    \fm{depalletize}    & all cartons upright on the outfeed, no drops & carton mass (hidden heavy cartons) \\
+    \fm{fixture_place}  & within 2\,mm and $3^\circ$ of the mark, released & mass, grip friction \\
+    \fm{pouch_transfer} & deformable pouch in the tote, released & stiffness, mass, friction \\
+    \fm{tool_return}    & tool shank seated in its holder & head mass and imbalance, clearance \\
+    \fm{tight_insert}   & square peg (0.1--0.5\,mm clearance) seated past snap-fit lips & lip stiffness, dent limit \\
+    \fm{fastener_pick}  & ordered screws and connector blocks moved from a tray into a kit & not characterised here \\
+    \fm{drawer_open} (held out) & drawer opened to 85\% of travel & friction, damping, contents mass \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Robots.} Arms are driven by torque only, through a task-space inverse-dynamics (operational-space)
+controller \citep{khatib1987unified} with torque-limit scaling, and a library of parameterised skills (reach,
+pick, place, push, insert, open, probe). The main embodiments are a UR5e with a Robotiq 2F-85 gripper and a
+Franka Panda; a Kinova Gen3 with a 2F-85 is the \emph{held-out robot}, absent from every training and tuning
+set. A Cartesian gantry (``probe'' robot) with force limits and the same skill interface serves as a
+high-competence reference embodiment; gantry results are not arm results and are reported separately.
+Training data additionally includes other embodiments (suction arms, a bimanual platform, a mobile manipulator,
+low-cost arms). A fixed-base Unitree G1 humanoid is used only in the sprint's push demonstration.
+
+\paragraph{Splits.} Train, validation and test are split by root seed (80/10/10), decided before generation.
+Held-out splits use test-bucket seeds: \fm{heldout_robot} (Gen3) and a held-out family (\fm{drawer_open},
+excluded from training and validation data from round~3).
+
+\paragraph{Lot protocol.} In the lot experiments on \fm{bin_clearing}, all parts in a bin come from one lot
+that shares a density factor, grip friction and crush limit (fragile with probability 0.6). The actor is told
+only that the parts are one lot. Fragile lots are drawn so that a policy knowing the lot can always succeed,
+but the admissible grip window is often narrow and requires a slower lift.
+
+\paragraph{Scripted baselines.}
+\emph{Nominal}: a conservative engineer's heuristic with fixed parameters and escalating retries; it never
+reads labels. \emph{Probe-then-act (\pta)}: a light 4\,N squeeze, then a grip of at most 0.7 times the estimated
+crush limit. \emph{Force-ramp} (\fm{tight_insert} only): press at 4\,N, add 2\,N per stall, up to 14\,N.
+\emph{Oracle-parameter} script: the same skills with parameters set from the true hidden physics (labelled).
+
+\begin{figure}[!htbp]
+  \centering
+  \maybefig[0.5\linewidth]{../results/v2/envs/contact_sheet_probe.png}{contact sheet of the task families}
+  \caption{Contact sheet of the task families (gantry embodiment, undressed scenes).}
+  \label{fig:families}
+\end{figure}
