@@ -1,0 +1,135 @@
+{
+ "source": "Yi et al., 'CLEVRER: CoLlision Events for Video REpresentation and Reasoning', ICLR 2020; arXiv:1910.01442v2, Tables 2 (baselines) and 3 (NS-DR)",
+ "pdf_sha256": "a2975a41eb74f53c45df706202e4b173e482a46a1c36dc30fc848eaed3054e31",
+ "notes": [
+  "Question-answering accuracy (%), test set, transcribed from the PDF text layer. The task is QA; our models do not answer questions, so any CLEVRER number EXT reports (e.g. collision prediction from tracks) is a derived, non-official task and is not comparable to this table."
+ ],
+ "columns": [
+  "descriptive",
+  "explanatory_per_opt",
+  "explanatory_per_ques",
+  "predictive_per_opt",
+  "predictive_per_ques",
+  "counterfactual_per_opt",
+  "counterfactual_per_ques"
+ ],
+ "rows": {
+  "Q-type (random)": {
+   "descriptive": 29.2,
+   "explanatory_per_opt": 50.1,
+   "explanatory_per_ques": 8.1,
+   "predictive_per_opt": 50.7,
+   "predictive_per_ques": 25.5,
+   "counterfactual_per_opt": 50.1,
+   "counterfactual_per_ques": 10.3
+  },
+  "Q-type (frequent)": {
+   "descriptive": 33.0,
+   "explanatory_per_opt": 50.2,
+   "explanatory_per_ques": 16.5,
+   "predictive_per_opt": 50.0,
+   "predictive_per_ques": 0.0,
+   "counterfactual_per_opt": 50.2,
+   "counterfactual_per_ques": 1.0
+  },
+  "LSTM": {
+   "descriptive": 34.7,
+   "explanatory_per_opt": 59.7,
+   "explanatory_per_ques": 13.6,
+   "predictive_per_opt": 50.6,
+   "predictive_per_ques": 23.2,
+   "counterfactual_per_opt": 53.8,
+   "counterfactual_per_ques": 3.1
+  },
+  "CNN+MLP": {
+   "descriptive": 48.4,
+   "explanatory_per_opt": 54.9,
+   "explanatory_per_ques": 18.3,
+   "predictive_per_opt": 50.5,
+   "predictive_per_ques": 13.2,
+   "counterfactual_per_opt": 55.2,
+   "counterfactual_per_ques": 9.0
+  },
+  "CNN+LSTM": {
+   "descriptive": 51.8,
+   "explanatory_per_opt": 62.0,
+   "explanatory_per_ques": 17.5,
+   "predictive_per_opt": 57.9,
+   "predictive_per_ques": 31.6,
+   "counterfactual_per_opt": 61.2,
+   "counterfactual_per_ques": 14.7
+  },
+  "TVQA+": {
+   "descriptive": 72.0,
+   "explanatory_per_opt": 63.3,
+   "explanatory_per_ques": 23.7,
+   "predictive_per_opt": 70.3,
+   "predictive_per_ques": 48.9,
+   "counterfactual_per_opt": 53.9,
+   "counterfactual_per_ques": 4.1
+  },
+  "Memory": {
+   "descriptive": 54.7,
+   "explanatory_per_opt": 53.7,
+   "explanatory_per_ques": 13.9,
+   "predictive_per_opt": 50.0,
+   "predictive_per_ques": 33.1,
+   "counterfactual_per_opt": 54.2,
+   "counterfactual_per_ques": 7.0
+  },
+  "IEP (V)": {
+   "descriptive": 52.8,
+   "explanatory_per_opt": 52.6,
+   "explanatory_per_ques": 14.5,
+   "predictive_per_opt": 50.0,
+   "predictive_per_ques": 9.7,
+   "counterfactual_per_opt": 53.4,
+   "counterfactual_per_ques": 3.8
+  },
+  "TbD-net (V)": {
+   "descriptive": 79.5,
+   "explanatory_per_opt": 61.6,
+   "explanatory_per_ques": 3.8,
+   "predictive_per_opt": 50.3,
+   "predictive_per_ques": 6.5,
+   "counterfactual_per_opt": 56.1,
+   "counterfactual_per_ques": 4.4
+  },
+  "MAC (V)": {
+   "descriptive": 85.6,
+   "explanatory_per_opt": 59.5,
+   "explanatory_per_ques": 12.5,
+   "predictive_per_opt": 51.0,
+   "predictive_per_ques": 16.5,
+   "counterfactual_per_opt": 54.6,
+   "counterfactual_per_ques": 13.7
+  },
+  "MAC (V+)": {
+   "descriptive": 86.4,
+   "explanatory_per_opt": 70.5,
+   "explanatory_per_ques": 22.3,
+   "predictive_per_opt": 59.7,
+   "predictive_per_ques": 42.9,
+   "counterfactual_per_opt": 63.5,
+   "counterfactual_per_ques": 25.1
+  },
+  "NS-DR": {
+   "descriptive": 88.1,
+   "explanatory_per_opt": 87.6,
+   "explanatory_per_ques": 79.6,
+   "predictive_per_opt": 82.9,
+   "predictive_per_ques": 68.7,
+   "counterfactual_per_opt": 74.1,
+   "counterfactual_per_ques": 42.2
+  },
+  "NS-DR (NE)": {
+   "descriptive": 85.8,
+   "explanatory_per_opt": 85.9,
+   "explanatory_per_ques": 74.3,
+   "predictive_per_opt": 75.4,
+   "predictive_per_ques": 54.1,
+   "counterfactual_per_opt": 76.1,
+   "counterfactual_per_ques": 42.0
+  }
+ }
+}
