@@ -307,3 +307,34 @@ Reading: with only the agent and patient tracked, nothing in the first 1.5 s pre
 depend on the untracked middle dominoes, so the result is at chance. The full-movie readout detects the contact at
 0.90, so the chain works. Rows for the other scenarios are added as their readout prefixes arrive
 (`results/ext/physion_ocp_color-v2.json`, `scripts/ext/physion_table.py`).
+
+### 5a. Validation of the hand front end on DexYCB (subject 01, partial download; evaluator labels only)
+
+The run (`scripts/ext/dexycb_pose_validate.py`, `results/ext/dexycb_pose_validation.json`) covered:
+- 9 sequences from the first part of the subject-01 archive, all 8 views (65 complete views, 4456 frames with the
+  labelled hand present);
+- 6 objects: cracker box, potted meat can, bleach cleanser, bowl, scissors, foam brick;
+- 48 right-hand and 17 left-hand views.
+
+The labels are DexYCB's mocap-fitted MANO joints (`joint_2d`, `joint_3d`).
+
+| metric | value |
+|---|---|
+| detection recall (frames with the hand present) | 0.877 (per view 0.55–1.00; the H6 view `836212060125` 0.95) |
+| 2-D joint error, median / mean | 7.1 px / 12.1 px (640×480) |
+| PCK@10 px / PCK@20 px | 0.664 / 0.895 |
+| depth-lifted 3-D error, root-relative, median / mean | 27.4 mm / 63.5 mm (mean inflated by depth outliers at occluded joints) |
+| depth-lifted 3-D error, absolute camera frame, median | 24.1 mm |
+| MediaPipe world landmarks, root-relative, median | 48.7 mm (no alignment) |
+| frames with a valid depth lift | 0.983 |
+
+These are our measurements, not a published benchmark protocol: there is no hand-cropping, MediaPipe runs in
+single-hand VIDEO mode, and the thumb-joint names are mapped index for index.
+
+Known biases:
+- Depth lifting reads the hand *surface*, while the labels are joint centres, so the absolute 3-D error has a
+  floor of roughly 10 mm.
+- Under grasp occlusion, the finger joints pick up the object's depth.
+
+For H6 the depth-lifted **wrist** is what matters. On the debug sequence, its height above the RANSAC table plane
+follows the label to about 1 cm through the whole lift (§6).

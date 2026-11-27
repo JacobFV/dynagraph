@@ -43,8 +43,7 @@ def run(a):
         for si in a.serials:
             serial = q.serials[si]
             fr = range(0, q.num_frames, a.stride)
-            last = q.path / serial / f"labels_{q.num_frames - 1:06d}.npz"
-            if not last.exists():        # view not (yet) extracted completely
+            if not D.view_complete(q, serial):        # partial download
                 continue
             rgb, dep, K = D.load_view(q, serial, fr)
             lab = D.load_labels(q, serial, fr)

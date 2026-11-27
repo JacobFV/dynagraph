@@ -98,7 +98,7 @@ def main():
     subs = [s for s in a.subjects.split(",") if s]
     for q in D.sequences(subjects=subs or None):
         serial = q.serials[a.serial]
-        if not (q.path / serial / f"labels_{q.num_frames - 1:06d}.npz").exists():
+        if not D.view_complete(q, serial):
             continue
         dst = out / f"{q.subject}__{q.name}.json"
         if dst.exists():

@@ -105,3 +105,10 @@ def load_labels(seq: Sequence, serial: str, frames=None):
         j3.append(z["joint_3d"][0])
         py.append(z["pose_y"])
     return dict(joint_2d=np.stack(j2), joint_3d=np.stack(j3), pose_y=np.stack(py))
+
+
+def view_complete(seq: Sequence, serial: str) -> bool:
+    """True iff every frame's color, aligned depth and label file exists (partial-download safe)."""
+    d = seq.path / serial
+    return all((d / f"{p}_{f:06d}.{e}").exists() for f in range(seq.num_frames)
+               for p, e in (("color", "jpg"), ("aligned_depth_to_color", "png"), ("labels", "npz")))
