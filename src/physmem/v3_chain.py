@@ -185,7 +185,7 @@ def main(argv=None):
     t = sub.add_parser("train")
     t.add_argument("--data", default="data/v3_chain")
     t.add_argument("--run", required=True)
-    t.add_argument("--kind", default="lbs", choices=["lbs", "v1", "dense"])
+    t.add_argument("--kind", default="lbs", choices=["lbs", "v1", "dense", "generic"])
     t.add_argument("--nolaw", action="store_true")
     t.add_argument("--law-w", type=float, default=1.0)
     t.add_argument("--cf-frac", type=float, default=0.25)

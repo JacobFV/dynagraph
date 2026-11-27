@@ -483,9 +483,14 @@ class V1(nn.Module):
 
 
 def build(kind, d=128):
+    """kinds: lbs | dense | v1 | generic (LBS backbone whose parameter fields are an UNNAMED latent: no property
+    supervision, no laws, never clamped by name -- the matched generic-memory twin)."""
     if kind == "v1":
         return V1(d)
-    return LBS(d, dense=(kind == "dense"))
+    m = LBS(d, dense=(kind == "dense"))
+    if kind == "generic":
+        m.kind, m.typed = "generic", False
+    return m
 
 
 # ----------------------------------------------------------------------------- losses
@@ -507,8 +512,10 @@ def label_targets(b: Batch, lab: Labels):
     return pm_t, pmask, lab.X / X_SC, lab.V / V_SC, xmask, lab.Cn.float(), cmask
 
 
-def pred_loss(store: Store, b, lab, sample_w=None):
+def pred_loss(store: Store, b, lab, sample_w=None, typed=True):
     pm_t, pmask, xt, vt, xmask, ct, cmask = label_targets(b, lab)
+    if not typed:
+        pmask = torch.zeros_like(pmask)
     if sample_w is not None:
         pmask = pmask & sample_w[:, None, None]; xmask = xmask & sample_w[:, None, None]
         cmask = cmask & sample_w[:, None, None]
@@ -608,6 +615,8 @@ def total_loss(model, b, lab, passes, law_w=1.0, cf_frac=0.25, ds_w=0.3, gen=Non
     """prediction loss on the final pass (+ ds_w deep supervision on earlier passes, LBS only) and law loss on every
     pass (LBS) / on the final outputs (V1). Counterfactually edited rows get the law loss only."""
     clamps, keep = (), None
+    if not getattr(model, "typed", True):
+        law_w, cf_frac = 0.0, 0.0
     if law_w > 0 and cf_frac > 0:
         rows, cl = random_param_edit(b, gen, cf_frac)
         clamps, keep = (cl,), ~rows
@@ -616,7 +625,7 @@ def total_loss(model, b, lab, passes, law_w=1.0, cf_frac=0.25, ds_w=0.3, gen=Non
     n = len(outs)
     for i, st in enumerate(outs):
         w = 1.0 if i == n - 1 else ds_w
-        lp, lg = pred_loss(st, b, lab, keep)
+        lp, lg = pred_loss(st, b, lab, keep, typed=getattr(model, "typed", True))
         loss = loss + w * lp
         if law_w > 0:
             r = store_law(st, b)

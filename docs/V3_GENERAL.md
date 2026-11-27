@@ -225,6 +225,15 @@ log 0.447, scale 0.6); conversion always goes through SI.
 - Passive third-person domain (`models/v3/passive.py`): draft generator. It has spring, collide, bounce and slide
   scenes seen only through the tracker, an optional known-force poke, and realised-restitution labels. It is not
   yet trained or evaluated.
+- Human modality (EXT H6 interface, `contract.human_evidence`, commit e610e78). Each hand is a `human_part`
+  entity of an embodiment without force sensing (`human_pose` tokens only). The object's typed `mass` slot is
+  reached through a `grasp` relation. The matched twin is LBS-generic (untyped store of equal width).
+  Plan (lead, 2026-11-27), queued behind §0:
+  - train or adapt the human pathway on REAL DexYCB TRAIN subjects 01–05, with VAL subject 06, using EXT's
+    leave-objects-out folds (object_index % 4), so no test object's mass is ever seen;
+  - add a sim human-like lift scene as extra pretraining;
+  - report sim-only vs sim+real;
+  - subjects 07–08 are never touched before EXT's H6 freeze commit.
 - Sprint w1/w2, v2 synthetic and v2 stations: adapters are pending (H1). The v2 segment channels map to
   `proprio_force` tokens; the tracker channel of v2 (`obj_*`) maps to `keypoint_track`.
 

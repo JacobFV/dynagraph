@@ -5,7 +5,7 @@ RUNS=${RUNS:-"lbs_law_s0 lbs_law_s1 lbs_law_s2 v1_s0 v1_s1 v1_s2 lbs_nolaw_s0 lb
 until [ -f results/v3/eval/simcf_test.json ] && [ -f results/v3/eval/simcf_test_L4.json ]; do sleep 60; done
 for r in $RUNS; do
   ck=results/v3/checkpoints/$r.pt
-  [ -f $ck ] || { echo "missing $ck"; continue; }
+  until [ -f $ck ]; do sleep 60; done
   cat > logs/eval_$r.sh <<EOS
 cd ~/dynagraph_v3
 export PYTHONPATH=src MUJOCO_GL=egl OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
