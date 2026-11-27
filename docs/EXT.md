@@ -66,7 +66,16 @@ Two license questions for the PI (no registration needed, but terms unclear): **
 license (it has per-object mass/friction/restitution labels and is ideal for H3), and **ComPhy** states no license.
 EXT will not download either until the PI decides or the authors confirm.
 
-## 2. Local downloads (cap 150 GB; ~1.5 MB/s link, so prioritised)
+## 2. Local downloads (cap 150 GB downloaded; footprint ≤ 300 GB; ~1.5 MB/s link, so prioritised)
+Two caps apply, both enforced in `fetch.py`:
+- at most 150 GB **downloaded**;
+- a total local **footprint** (raw + extracted) of at most 300 GB, set by the lead on 2026-11-26.
+
+Large archives (DexYCB subjects, models) are extracted, verified member by member against the archive, and then
+deleted (`scripts/ext/extract_and_prune.py`). Deletion happens only after the archive's sha256 has been re-checked
+against the manifest. The manifest keeps URL + sha256 + `deleted_after_extraction`, so any archive can be
+re-fetched and checked. The download order is one queue, `scripts/ext/fetch_chain.sh`:
+Physion++ → CLEVRER val → DexYCB s01 → Physion v1 readout prefixes (5%) → DexYCB s02–08.
 Manifest: `results/ext/datasets_manifest.json` (url, bytes, sha256, license, license source, UTC fetch time).
 Scripts: `scripts/ext/fetch.py` (whole official files, resumable) and `scripts/ext/physion_readout_prefix.py`
 (prefix subset of the Physion readout archives, §3); `scripts/ext/pget.py` fetches S3 files over 8 parallel

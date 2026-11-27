@@ -19,7 +19,8 @@ from pathlib import Path
 ROOT = Path(os.environ.get("EXT_DATA_ROOT", "/home/brandonin/datasets"))
 REPO = Path(__file__).resolve().parents[2]
 REPO_MANIFEST = REPO / "results" / "ext" / "datasets_manifest.json"
-CAP_BYTES = 150e9   # PI cap on total local download
+CAP_BYTES = 150e9   # PI cap on total download (raw bytes fetched)
+FOOTPRINT_CAP = 300e9   # lead rule: total local footprint under ROOT (raw + extracted) <= 300 GB
 
 S3P = "https://physics-benchmarking-neurips2021-dataset.s3.amazonaws.com"
 GD = "https://drive.usercontent.google.com/download?export=download&confirm=t&id="
@@ -80,6 +81,15 @@ def total_on_disk() -> int:
     return sum(f.stat().st_size for f in ROOT.glob("*/raw/**/*") if f.is_file()) if ROOT.exists() else 0
 
 
+def footprint() -> int:
+    return sum(f.stat().st_size for f in ROOT.rglob("*") if f.is_file()) if ROOT.exists() else 0
+
+
+def _deleted(name, fn) -> bool:
+    m = ROOT / name / "manifest.json"
+    return m.exists() and json.loads(m.read_text()).get(name, {}).get(fn, {}).get("deleted_after_extraction", False)
+
+
 def record(name, lic, lic_src, fn, url, path):
     entry = dict(file=fn, url=url, bytes=path.stat().st_size, sha256=sha256(path), license=lic,
                  license_source=lic_src, fetched_utc=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -98,6 +108,12 @@ def fetch(group: str):
     d.mkdir(parents=True, exist_ok=True)
     for fn, url, nbytes in files:
         p = d / fn
+        if _deleted(name, fn):
+            print(f"[skip] {name}/{fn} already extracted and pruned", flush=True)
+            continue
+        if nbytes and not p.exists() and footprint() + 2 * nbytes > FOOTPRINT_CAP:   # archive + its extraction
+            print(f"[cap] {name}/{fn}: footprint {footprint()/1e9:.0f} GB + 2x{nbytes/1e9:.1f} GB > 300 GB", flush=True)
+            continue
         if nbytes and p.exists() and p.stat().st_size == nbytes:
             m = ROOT / name / "manifest.json"
             if not (m.exists() and fn in json.loads(m.read_text()).get(name, {})):
