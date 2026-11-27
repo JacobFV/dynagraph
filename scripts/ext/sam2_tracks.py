@@ -7,6 +7,9 @@ downstream code identify the red agent / yellow patient by colour without simula
 
 usage (gb10): python -I sam2_tracks.py --list movies.txt --out tracks_dir --ckpt sam2.1_hiera_small.pt
               [--cfg configs/sam2.1/sam2.1_hiera_s.yaml] [--max-obj 8] [--stride 1]
+List lines: "<mp4>" (auto masks on frame 0) or "<mp4> <map.png> <frame>" (Physion++: the official red/yellow cue map
+gives the agent and patient masks at the cue frame -- the same cue humans get -- entities "agent", "patient" first,
+then auto masks for the remaining objects; propagation runs forward and backward from that frame).
 """
 from __future__ import annotations
 
@@ -74,16 +77,31 @@ def main():
     vp = build_sam2_video_predictor(a.cfg, a.ckpt, device=dev)
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    movies = [Path(x) for x in Path(a.list).read_text().split()]
+    jobs = [ln.split() for ln in Path(a.list).read_text().splitlines() if ln.strip()]
     t0 = time.time()
-    for i, mp4 in enumerate(movies):
-        dst = out / (mp4.parent.parent.name + "__" + mp4.stem + ".npz")
+    for i, job in enumerate(jobs):
+        mp4 = Path(job[0])
+        dst = out / (mp4.parent.parent.name + "__" + mp4.parent.name + "__" + mp4.stem + ".npz")
         if dst.exists():
             continue
         rgb = read_frames(mp4, a.stride)
         T, H, W, _ = rgb.shape
+        f0, names, cue = 0, [], []
+        if len(job) == 3:
+            cm = iio.imread(job[1])
+            f0 = min(int(job[2]) // a.stride, T - 1)
+            red = (cm[..., 0] > 200) & (cm[..., 1] < 60) & (cm[..., 3] > 0)
+            yel = (cm[..., 0] > 200) & (cm[..., 1] > 200) & (cm[..., 3] > 0)
+            for nm, mk in (("agent", red), ("patient", yel)):
+                if mk.sum() >= 8:
+                    cue.append(mk)
+                    names.append(nm)
         with torch.inference_mode(), torch.autocast("cuda", dtype=torch.bfloat16):
-            sel = select_masks(gen.generate(rgb[0]), H, W, a.max_obj)
+            auto = select_masks(gen.generate(rgb[f0]), H, W, a.max_obj)
+            occ = np.any(cue, 0) if cue else np.zeros((H, W), bool)
+            auto = [m for m in auto if (m & occ).sum() < 0.2 * m.sum()]
+            sel = cue + auto[: max(a.max_obj - len(cue), 0)]
+            names = names + [f"obj{k}" for k in range(len(sel) - len(names))]
             uv = np.full((T, max(len(sel), 1), 3, 2), np.nan, np.float32)
             area = np.zeros((T, max(len(sel), 1)), np.float32)
             col0 = np.zeros((max(len(sel), 1), 3), np.float32)
@@ -93,22 +111,24 @@ def main():
                         iio.imwrite(f"{td}/{t:05d}.jpg", rgb[t], quality=95)
                     st = vp.init_state(video_path=td)
                     for k, m in enumerate(sel):
-                        vp.add_new_mask(st, frame_idx=0, obj_id=k, mask=m)
-                        col0[k] = rgb[0][m].mean(0)
-                    for f, ids, logits in vp.propagate_in_video(st):
-                        ms = (logits > 0).cpu().numpy()[:, 0]
-                        for k, m in zip(ids, ms):
-                            if m.sum() < 8:
-                                continue
-                            ys, xs = np.nonzero(m)
-                            uv[f, k] = [(xs.mean(), ys.mean()), (xs.min(), ys.min()), (xs.max(), ys.max())]
-                            area[f, k] = m.sum()
+                        vp.add_new_mask(st, frame_idx=f0, obj_id=k, mask=m)
+                        col0[k] = rgb[f0][m].mean(0)
+                    for rev in ((False, True) if f0 > 0 else (False,)):
+                        for f, ids, logits in vp.propagate_in_video(st, start_frame_idx=f0, reverse=rev):
+                            ms = (logits > 0).cpu().numpy()[:, 0]
+                            for k, m in zip(ids, ms):
+                                if m.sum() < 8:
+                                    continue
+                                ys, xs = np.nonzero(m)
+                                uv[f, k] = [(xs.mean(), ys.mean()), (xs.min(), ys.min()), (xs.max(), ys.max())]
+                                area[f, k] = m.sum()
                     vp.reset_state(st)
-        ts = TrackSet(KIND_OBJECT, np.arange(T) * a.stride / a.fps, uv, [f"obj{k}" for k in range(uv.shape[1])],
-                      ["centroid", "bbox_min", "bbox_max"], (H, W), f"{mp4} | {tag}",
-                      extra=dict(area=area, color0=col0))
+        ents = names if sel else ["obj0"]
+        ts = TrackSet(KIND_OBJECT, np.arange(T) * a.stride / a.fps, uv, ents,
+                      ["centroid", "bbox_min", "bbox_max"], (H, W), f"{mp4} | {tag} | prompt_frame={f0}",
+                      extra=dict(area=area, color0=col0, prompt_frame=np.array(f0)))
         ts.save(dst)
-        print(f"[sam2] {i + 1}/{len(movies)} {mp4.name} objs={len(sel)} {time.time() - t0:.0f}s", flush=True)
+        print(f"[sam2] {i + 1}/{len(jobs)} {mp4.name} objs={len(sel)} {time.time() - t0:.0f}s", flush=True)
 
 
 if __name__ == "__main__":

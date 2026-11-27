@@ -69,9 +69,11 @@ EXT will not download either until the PI decides or the authors confirm.
 ## 2. Local downloads (cap 150 GB; ~1.5 MB/s link, so prioritised)
 Manifest: `results/ext/datasets_manifest.json` (url, bytes, sha256, license, license source, UTC fetch time).
 Scripts: `scripts/ext/fetch.py` (whole official files, resumable) and `scripts/ext/physion_readout_prefix.py`
-(prefix subset of the Physion readout archives, §3). Order: Physion v1 test/train MP4s/human results → MediaPipe
+(prefix subset of the Physion readout archives, §3); `scripts/ext/pget.py` fetches S3 files over 8 parallel
+range connections, because S3 gives ~0.2 MB/s per connection here and the link saturates at ~2.3 MB/s aggregate.
+Order: Physion v1 test/train MP4s/human results → MediaPipe
 model files → Physion++ readout/test/human → DexYCB subject 01 (+ models, calibration) → CLEVRER validation →
-Physion v1 readout prefixes (10%, extendable to 20%).
+Physion v1 readout prefixes (5% of each archive, ~50 stimuli per scenario; resumable, so it can grow).
 
 ## 3. Physion v1: loader, official protocol, published baselines
 
@@ -80,7 +82,7 @@ Physion v1 readout prefixes (10%, extendable to 20%).
   `mp4s-redyellow` versions (512×512, 30 fps), and `labels.csv` with ground-truth OCP outcomes (600 contact / 600 not).
 - READOUT-FITTING set: the official set is 1000 HDF5 stimuli per scenario (256×256 frames stored as PNG inside the
   HDF5, 17–45 GB per scenario). With a ~1.5 MB/s link we fetch a byte **prefix** of each official archive and keep
-  the complete members (`scripts/ext/physion_readout_prefix.py`). That gives the first ~10% of stimuli in archive order.
+  the complete members (`scripts/ext/physion_readout_prefix.py`). That gives the first ~5% of stimuli in archive order (about 50 per scenario).
   Archive order mixes sub-configurations (checked on Collide) but is not a random sample.
   **Any number fitted on it is labelled "reduced readout set", which is not the official protocol.**
   The README link for the Roll readout archive (`Rollreadout_HDF5s.tar.gz`) returns 404. The bucket key is

@@ -121,19 +121,25 @@ def read_hdf5(path, max_frames=None, with_seg=False):
 
 
 # ----------------------------------------------------------------- official human data (model_human_results.zip)
-def human_responses(root: Path = ROOT):
-    """-> dict stim_name -> (n_participants responses as 0/1 array). Built from the official human CSVs.
-    Returns {} if the results archive is not extracted (see docs/EXT.md §3)."""
+def human_tables(root: Path = ROOT):
+    """official human responses (results/csv/humans/human_responses-*.csv; participants listed in
+    excluded_games.csv dropped, as in the official analysis inputs). Returns
+      per_stim:     stim_ID -> np.array of 0/1 responses (YES = 1) over included participants
+      participants: gameID -> {stim_ID: 0/1}
+    stim_ID matches labels.csv keys (e.g. pilot_it2_collision_..._0002_img). {} , {} if not extracted."""
     import pandas as pd
-    d = root / "results"
-    files = sorted(d.rglob("*human*.csv"))
+    d = root / "results" / "csv" / "humans"
+    files = sorted(d.glob("human_responses-*.csv"))
     if not files:
-        return {}
-    df = pd.concat([pd.read_csv(p) for p in files], ignore_index=True)
-    stim_col = next(c for c in ("stim_ID", "stim_id", "stimulus_name", "Stim") if c in df.columns)
-    resp_col = next(c for c in ("responseBool", "response", "resp") if c in df.columns)
-    out = {}
-    for k, g in df.groupby(stim_col):
-        k = re.sub(r"\.(mp4|hdf5)$", "", str(k))
-        out[k] = g[resp_col].astype(float).to_numpy()
-    return out
+        return {}, {}
+    excl = set(pd.read_csv(d / "excluded_games.csv")["gameID"]) if (d / "excluded_games.csv").exists() else set()
+    df = pd.concat([pd.read_csv(p, usecols=["gameID", "stim_ID", "response", "condition"]) for p in files])
+    df = df[(df["condition"] == "prediction") & ~df["gameID"].isin(excl)]
+    df["y"] = (df["response"].astype(str).str.upper() == "YES").astype(int)
+    per_stim = {k: g["y"].to_numpy() for k, g in df.groupby("stim_ID")}
+    parts = {k: dict(zip(g["stim_ID"], g["y"])) for k, g in df.groupby("gameID")}
+    return per_stim, parts
+
+
+def human_responses(root: Path = ROOT):
+    return human_tables(root)[0]

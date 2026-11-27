@@ -13,11 +13,11 @@ import numpy as np
 
 from .tracks import KIND_OBJECT, TrackSet
 
-VERSION = "color-v1"
+VERSION = "color-v2"   # v2: patient band widened for washed-out zones (tuned on Dominoes readout only)
 # OpenCV HSV: H in [0, 180), S, V in [0, 255]
 BANDS = {
     "agent": [((0, 110, 35), (3, 255, 255)), ((168, 110, 35), (180, 255, 255))],      # red (H~177; floors are H 5-8)
-    "patient": [((20, 70, 150), (32, 255, 255))],                                     # pale yellow zone
+    "patient": [((22, 25, 200), (30, 255, 255))],                                     # pale/washed-out yellow zone
 }
 MIN_AREA = 12
 KEYPOINTS = ["centroid", "bbox_min", "bbox_max"]

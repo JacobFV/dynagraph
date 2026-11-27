@@ -97,6 +97,12 @@ def fetch(group: str):
         elif nbytes and total_on_disk() + nbytes - (p.stat().st_size if p.exists() else 0) > CAP_BYTES:
             print(f"[cap] {name}/{fn} would exceed {CAP_BYTES/1e9:.0f} GB; skipped", flush=True)
             continue
+        if "s3.amazonaws.com" in url and nbytes and nbytes > 1e8:     # S3 scales with connections
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            from pget import pget
+            pget(url, p, nbytes, nconn=8, log=lambda m: print(m, flush=True))
+            record(name, lic, lic_src, fn, url, p)
+            continue
         for attempt in range(20):
             r = subprocess.run(["curl", "-sSL", "--fail", "-C", "-", "--retry", "5", "--retry-delay", "10",
                                 "-o", str(p), url])

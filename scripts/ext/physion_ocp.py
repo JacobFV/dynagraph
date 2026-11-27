@@ -69,7 +69,7 @@ def _load(split, scen):
 
 
 def cmd_readout(a):
-    human = P.human_responses()
+    human, parts = P.human_tables()
     res = dict(frontend=FC.VERSION, protocol_note="official readout model/CV/seeds; readout-fitting set is a "
                "local PREFIX subset of the official 1000/scenario (not the official protocol); test = official "
                "150/scenario", scenarios={})
@@ -80,7 +80,8 @@ def cmd_readout(a):
             continue
         r = dict(n_readout=int(len(tr["y"])), readout_pos_frac=float(tr["y"].mean()), n_test=int(len(te["y"])))
         for prot in ocp.PROTOCOLS:
-            r[prot] = ocp.fit_eval(tr[prot], tr["y"], te[prot], te["y"], human=human, names_te=te["names"])
+            r[prot] = ocp.fit_eval(tr[prot], tr["y"], te[prot], te["y"], human=human, names_te=te["names"],
+                                   participants=parts)
         print(scen, {p: round(r[p]["mean"]["accuracy"], 3) for p in ocp.PROTOCOLS}, f"n_readout={r['n_readout']}",
               flush=True)
         res["scenarios"][scen] = r

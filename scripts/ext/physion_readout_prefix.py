@@ -14,6 +14,7 @@ import argparse
 import json
 import os
 import subprocess
+import sys
 import tarfile
 import time
 import zlib
@@ -30,16 +31,10 @@ def url(s):
     return f"{S3}/{s}_readout_training_HDF5s.tar.gz"
 
 
-def fetch_prefix(s, nbytes, part: Path):
-    have = part.stat().st_size if part.exists() else 0
-    while have < nbytes:
-        r = subprocess.run(["curl", "-sS", "--fail", "--retry", "5", "--retry-delay", "10", "-r",
-                            f"{have}-{nbytes - 1}", url(s), "-o", "-"], stdout=open(part, "ab"))
-        new = part.stat().st_size
-        print(f"[{s}] {new / 1e9:.2f}/{nbytes / 1e9:.2f} GB rc={r.returncode}", flush=True)
-        if r.returncode != 0:
-            time.sleep(30)
-        have = new
+def fetch_prefix(s, nbytes, part: Path, nconn=8):
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from pget import pget
+    pget(url(s), part, nbytes, nconn=nconn, log=lambda m: print(f"[{s}] {m}", flush=True))
 
 
 class _GzPrefix:
