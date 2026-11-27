@@ -86,3 +86,218 @@ estimates; losses constrain only final predictions):
 
 ## Status
 - 2026-11-26: plan written; tracks launched. Results are appended per track below.
+
+---
+
+# V3-MODEL track (owner: agent V3-MODEL; branch `v3-model`, worktree `dynagraph-v3`, gb10 dir `~/dynagraph_v3`)
+
+Redirect (2026-11-26, lead, after the PI's audit): §0 outranks H1–H3. The order is: the looped typed belief store on
+one identifiable family → its causal acceptance test → matched comparisons. Unification (H1–H3) follows on the
+same architecture. The §1 contract below is written for that architecture.
+
+## §0a. Implementation (what was built)
+
+Code: `src/physmem/models/v3/` (`chain.py` family + analytic simulator, `tracks.py` camera tracker,
+`belief.py` model/losses, `contract.py` §1 contract), `src/physmem/v3_chain.py` (data, training),
+`src/physmem/v3_chain_eval.py` (prediction, classical baseline, causal tests, planner), tests
+`tests/test_v3_belief.py`.
+
+**Family: 1-D contact chain** (MuJoCo 4.0.1, dt 2 ms, elliptic cones). A force-controlled pusher (0.2 kg, known
+joint damping 2 N s/m) drives L boxes (L ∈ {1, 2, 3} train/val/test; **L = 4 held out**). Hidden per box: mass
+log-U[0.2, 1.0] kg and Coulomb friction U[0.15, 0.6]. With p = 0.4 the last box is tied to a wall mount by a spring
+(hidden k log-U[15, 150] N/m, known damping 1 N s/m). Box widths 4–8 cm, initial gaps 0–1 cm. Each episode has 4
+windows. In each window there is a **fixed-force excitation**: a known constant force F ~ U[1, 15] N for
+T ~ U[0.1, 0.3] s, with an admittance speed limit (the force fades to 0 between 0.5 and 0.6 m/s). Then a −2 N
+retract for 0.15 s, then coasting: the **post-release slide**. Then 0.8 s of settling, and the pusher is
+re-placed 1–5 mm behind box 1. The excitation is drawn independently of the hidden properties, so the data policy
+cannot leak them.
+
+**Observations (three modalities; force is one of them):**
+- `proprio_force`: pusher encoder (sd 0.05 mm, 100 Hz), velocity, wrist force along x (sd 0.2 N plus a
+  per-episode bias with sd 0.3 N), contact flag, commanded force.
+- `keypoint_track`: an RGB-D keypoint tracker of every box (`tracks.CameraTracker`):
+  - random camera pose; 30 Hz with 3 ms timestamp jitter and 8% frame drops;
+  - 1 px noise, 1% outliers (15 px), 5% keypoint dropout;
+  - an occluder band in 50% of episodes;
+  - depth noise of 0.3% plus 1 mm;
+  - actor calibration error: focal length 0.5%, 0.2° rotation, 1 mm translation.
+
+  Detections are back-projected with the actor's own calibration.
+- `pose_anchor`: sparse golden fixes (sd 0.3 mm, Poisson(1.2) per box and window, plus a fix just before the
+  window in 50% of cases).
+- A map anchor gives the spring rest position (sd 1 mm).
+
+The current pose estimate of each box is the fresh anchor if one exists, else the tracker median over 0.25 s, else
+the last known detection. Its provenance (anchor/tracker/known/stale) and age are inputs. Validation: re-simulating
+a window from its true start state reproduces the logged window to ≤ 4 mm. With true parameters and the actor's
+start estimates, the analytic simulator predicts the final positions to 3.7 mm mean (the labelled oracle ceiling).
+Truth law residuals are small (friction cone 4e-4, sliding 4e-4, complementarity 3e-3, normalised).
+
+**Model `LBS` (looped belief store).** The store is keyed (entity × property class). Per entity it holds log
+mass, friction, log k (parameters) and pose x(τ) and velocity v(τ) on the physical-time grid τ = 0, 0.1, …, 1.5 s
+for the queried action, each as mean + log-variance. Per relation it holds a contact logit c(τ) and an
+interval-average normal force f(τ) ≥ 0. Each pass k:
+1. Re-embeds every named value with known inputs (type, size, provenance, age, current estimate, the queried
+   action for the pusher) and an opaque random id per entity.
+2. Runs 2 attention layers (weights tied across passes, pass embedding) over [entity tokens, relation tokens,
+   evidence tokens]. A **graph mask** routes all entity–entity information through relation tokens: an entity
+   sees itself, its incident relations and its own evidence; a relation sees its two endpoints and their evidence.
+3. Decodes a proposal (mean, log-variance) and a write gate w for every named belief, and writes back with an
+   uncertainty-aware, recency-normalised convex update in natural parameters (λ' = (1−w)λ + wλ_prop, η likewise).
+4. Re-applies anchors (pusher pose and velocity at τ0 from encoders; wall pose from the map) and any interventions
+   (clamped beliefs, tiny variance).
+
+Pass k+1 reads only the written store, so there is no hidden channel (unit test). Refinement depth k (2–6 random in
+training, 4 at evaluation) is separate from physical time τ. The candidate action enters the loop as the pusher's
+known command, and the horizon is the τ grid. Evidence tokens are one per (entity, modality, past window): a
+1-D conv over 32 bins with a modality embedding, the window age and that window's action.
+
+**Losses.**
+- Gaussian NLL on x(τ), v(τ) (pusher and boxes) and on the parameters, plus BCE on contacts, at the final pass
+  and with weight 0.3 at earlier passes (deep supervision, identical for every LBS variant).
+- **Law regularisation on every pass's decoded beliefs** (weight 1; `belief.law_residuals`):
+  - kinematic consistency;
+  - pusher Newton with the known speed-limited command;
+  - box Newton with the Coulomb friction cone |f_fr| ≤ μmg and the sliding equality f_fr = −μmg·sgn(v);
+  - Hooke spring force −k(x − x_rest) − c v on the spring box;
+  - contact non-penetration and force–gap complementarity.
+- **Counterfactual consistency**: in 25% of training rows one parameter of one box is clamped to a random prior
+  value. These rows get only the law loss (no labels exist for that world), so the laws, not data, define how the
+  rest of the store must respond to an edit.
+- Modality dropout: 15% of rows have no tracks, 15% no proprio/force, 25% no anchors.
+
+**Matched comparators** (same observations, labels, data, steps (15k × 256 rows), optimiser and planner):
+- `V1`: the v1/Inkling design. Typed parameter estimates are decoded once after an encoder pass, before the loop.
+  The loop refines hidden tokens without writeback, and the readout uses the final hidden tokens plus the pre-loop
+  typed estimates. Law loss on the final outputs only, with the same counterfactual rows. Interventions edit the
+  pre-loop typed estimates. A unit test checks that loop depth cannot change the typed estimates.
+- `LBS-nolaw`: law weight 0 and no counterfactual rows.
+- `classical`: CEM system identification (64 × 8 iterations, MAP under the training prior) of all masses,
+  frictions and k. It uses the vectorised analytic chain simulator against the same binned tracker/anchor
+  displacements, pusher force and encoder evidence, then predicts with the analytic simulator.
+- `oracle` (labelled): true parameters + analytic simulator.
+- Ablations: recurrence depth K ∈ {1, 2, 4, 8} at evaluation; relation ablation `dense` (dense attention, LBS loss).
+
+## §1. Unified data contract (`src/physmem/models/v3/contract.py`; built for the §0 architecture)
+
+One contract for every domain, in three parts.
+
+**1. Evidence tokens.** There is one token per (entity, modality, time window). The modality is explicit:
+- `proprio_force`;
+- `keypoint_track`;
+- `pose_anchor`;
+- `vision_material`;
+- `human_pose` (EXT front end);
+- `map_anchor`.
+
+A missing modality is a masked token, never a zero signal. Force is one modality among several, and in the chain
+family every modality can be dropped independently, during training and at test.
+
+**2. Entity and relation tokens.** Entity types are effector, object, fixture, agent, link, particle, goal_region
+and human_part, and each entity has an opaque random id. Relations are contact, spring, joint, support, grasp,
+carried_by and observes. Identity comes from the relation graph, never from list position. In LBS, all
+entity–entity information flows through relation tokens, which makes "edge blocking" an exact intervention.
+
+**3. Typed belief store.** The key is (entity, property class). The value is a belief: a mean and log-variance in a
+normalised space, or a logit. Each value carries its provenance (anchor / tracker / known / stale / model / prior)
+and age. The property classes are a superset of the v2 latents (`spec.LATENTS`, same order and transforms; unit
+test):
+
+| group | property classes |
+|---|---|
+| v2 latents | mass, friction, grip_friction, stiffness, clearance, offset_x/y, damping, breakaway, bulk_friction, crush |
+| V3 additions | spring_k, k_over_m, c_over_m, mass_ratio, restitution, length_scale (metric scale of monocular tracks) |
+| states on the physical-time grid | pose, velocity |
+| relations | contact_mode, contact_force |
+
+Every class has an identifiability tag:
+- `passive`: recoverable from third-person tracks alone (friction, k/m, c/m, mass ratio, restitution, pose,
+  velocity, contact mode);
+- `force`: needs a known-force interaction (mass, spring_k, contact_force, …);
+- `anchor`: needs an anchor (length_scale).
+
+The H3 test checks these tags. A structural identity (log k = log k/m + log m) is exposed as a cross-domain
+consistency check. Domains may use their own normalisation inside a store (the chain uses log-mass loc
+log 0.447, scale 0.6); conversion always goes through SI.
+
+**Domain mapping (status).**
+- Chain (§0): done.
+- Passive third-person domain (`models/v3/passive.py`): draft generator. It has spring, collide, bounce and slide
+  scenes seen only through the tracker, an optional known-force poke, and realised-restitution labels. It is not
+  yet trained or evaluated.
+- Sprint w1/w2, v2 synthetic and v2 stations: adapters are pending (H1). The v2 segment channels map to
+  `proprio_force` tokens; the tracker channel of v2 (`obj_*`) maps to `keypoint_track`.
+
+## §0b. Pre-registration: causal acceptance test and matched comparisons (frozen before any TEST run)
+
+Status: written and committed on its own before any TEST-split evaluation. Training and the pilot used train/VAL
+only. Every number below will come from `results/v3/eval/*` via `physmem.v3_chain_report`.
+
+**Runs.**
+- Training: 4000 steps × 512 rows each, AdamW 1e-3 one-cycle, bf16 autocast, passes ~ U{2..5}, d = 128, a hard
+  5 GB GPU cap. Data `data/v3_chain` (manifest with sha256): train 10k, val 600, test 600 and test_L4 300 episodes.
+- Runs:
+  - `lbs_law_s{0,1,2}`, `lbs_nolaw_s{0,1,2}` and `v1_s{0,1,2}`;
+  - `dense_law_s0` (relation ablation);
+  - `classical` (deterministic CEM, seed 0) and `oracle` (labelled).
+- The law weight is fixed at 1.0. No hyperparameter is tuned on TEST.
+- The budget was lowered from 15k × 256: the first run at batch 1024 exceeded the 6 GB lane rule and was stopped.
+
+**VAL-pilot decisions taken before this freeze** (classical/oracle only; no trained model had been evaluated):
+1. Planner goals are displacements the true world can reach with one grid action (≥ 1 cm when possible; drawn
+   model-independently). Uniform goals were often infeasible (labelled-oracle error 23 mm).
+2. The A1 correlation is Spearman (Pearson was dominated by spring outliers).
+
+VAL reference values:
+- classical (CEM + analytic): own-box sign 0.96, action sign 0.79, counterfactual-outcome Δ −4.0 mm,
+  closed loop 9.9 mm / 82% within 15 mm;
+- oracle: 0.99, 0.82, −8.7 mm, 3.6 mm / 97%.
+
+**Evaluation protocol.**
+- TEST split: 600 episodes, L ∈ {1, 2, 3}. `test_L4`: 300 episodes, held-out chain length 4.
+- Prediction is scored on all rows. Causal tests and the planner use window k = 3 (three windows of evidence) of the
+  first 200 TEST episodes (and the first 200 `test_L4` episodes for the secondary L4 check), with K = 4 passes.
+- Edit plan (`v3_chain_eval.edit_plan`, rng seed 12345, identical for every model): per episode, a random box, a
+  random property (friction or mass, or k when the box carries the spring) and a random sign. The edit is ±0.67
+  normalised units: friction ±0.10, mass ×/÷1.49, k ×/÷1.60. The model's belief is clamped at every pass to
+  (posterior mean + edit); the reference is the same clamp without the edit. The physical counterfactual is a
+  MuJoCo re-simulation of the same window from its true start state with the true property changed by the same
+  physical amount (reference: the replayed factual window).
+- Planner (identical for every model): slide-to-target for the last box, the goal is a world-coordinate position the true world reaches with one grid action
+  (decision 1 above). F is chosen from 29 values in [1, 15] N with T = 0.2 s, minimising |predicted final x_L − goal|.
+  Outcomes are realised in MuJoCo. Oracle ΔF = argmin over the same grid in the true and counterfactual worlds.
+
+**Acceptance criteria for the causal test (LBS-law; must hold in each of the 3 seeds).**
+- A1 future motion: sign agreement of Δ(final position) for the edited box ≥ 0.85, wherever |Δsim| > 2 mm;
+  Spearman corr(Δmodel, Δsim) ≥ 0.6. For the other boxes, sign agreement ≥ 0.75.
+- A2 intermediate physical states: sign agreement at τ = 0.3 s and 0.6 s for the edited box ≥ 0.80. Sign agreement of
+  the change in contact impulse on the edited box's incoming relation ≥ 0.75 (|Δsim| > 0.005 N s).
+- A3 chosen action: sign agreement of ΔF (edited − unedited belief) with the oracle ΔF ≥ 0.80, over episodes where
+  the oracle ΔF ≠ 0.
+- A4 realised outcome: in the counterfactual world, the action chosen with the edited belief has lower realised error
+  than the action chosen without the edit: the paired mean difference has a 95% CI upper bound < 0.
+- A5 anchor removal (`no_anchor`, all rows with k ≥ 1): the predicted final-position sd increases (paired CI > 0), and
+  80% coverage of final positions lies in [0.70, 0.90] both with and without anchors.
+- A6 delayed evidence: the last window's evidence becomes available only from pass 2 of 4. The parameter abs error
+  is ≤ 1.10 × the on-time error, and lower than never-available (paired CI < 0).
+- A7 edge blocking (L ≥ 2): blocking relation (B1, B2) suppresses B2's predicted displacement to ≤ 20% of the
+  unblocked value in ≥ 80% of rows where the unblocked prediction is > 1 cm. The change in B1's displacement agrees
+  in sign with the simulator (boxes 2.. removed) in ≥ 0.80 of rows.
+- A8 held-out L = 4: LBS-law final-position error (rows k ≥ 1) on `test_L4` ≤ 1.5 × its TEST error.
+
+The causal test is **passed** if A1–A4 hold. A5–A8 are reported as pass/fail individually.
+
+**Matched comparisons (paired over episodes, seeds averaged per episode, 95% bootstrap CI).**
+- C1 LBS-law vs V1 on (i) the own-box sign agreement (A1 indicator), (ii) action sign agreement (A3), (iii) the
+  closed-loop realised error, and (iv) final-position error. Prediction: LBS-law better on (i) and (ii).
+- C2 LBS-law vs LBS-nolaw on the same four. Prediction: law regularisation improves (i) and (ii) (counterfactual
+  consistency); no directional prediction for (iii) and (iv).
+- C3 LBS-law vs classical (CEM + analytic) on (iii) and (iv), and on A1/A3. No directional prediction: the
+  classical estimator has the exact model class.
+- C4 relation ablation: `dense_law_s0` on A7 and A8 (expected: no edge-blocking control, worse L = 4).
+- C5 recurrence depth: LBS-law final error and parameter error at K = 1, 2, 4, 8 (trained with K ∈ 2..5), descriptive.
+- C6 modalities (descriptive): final error and parameter recovery with tracks only (`no_proprio`), force/proprio only
+  (`no_track`), and all.
+
+Nulls and failures are reported as such. A V1 failure on A6 is expected by construction: its typed estimates are
+fixed before the loop. It is reported, not counted as a win.
