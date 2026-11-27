@@ -174,3 +174,79 @@ entries that point back to the entry they correct.
   - cloth_fold: heavier fabrics. Recalibrating.
   - g1_push_terrain: the change was reverted; the family is labelled competence/controller-limited.
   - pour: oracle − PTA ≈ 0 (a calibrate-once family), and it is reported that way.
+
+### Backfill (lead, 2026-11-27 ~03:30Z): events since the entries above
+- **Logging convention (PI, 2026-11-27):**
+  - "ensure you are logging notes on everything so that other claudes in the future will be able to continue your
+    work … not a handoff. just a continuous log of everything."
+  - From now on every agent appends a dated entry here for each milestone, decision, incident, PI message and
+    finding: one `cat >>` per entry, no rewrites. The lead commits periodically.
+  - Locations: worktrees `../dynagraph-{envs-r7,envs-v3,ext,v3}` on branches `envs-r7`, `envs-v3`, `ext`,
+    `v3-model`. gb10 trees: `~/dynagraph` (main/MODEL), `~/dynagraph_sys12` (INKLING), `~/dynagraph_v3`,
+    `~/dynagraph_envs_v3`, `~/dynagraph_ext`. Frozen: `~/dynagraph_r6`, `_r7`, `_r7_1`; MODEL overlay
+    `~/dynagraph_m6run71`. Each track's pid files are in `<tree>/logs/*.pid`, and the GPU ledger is
+    `~/dynagraph/logs/gpu_small_ledger.log`.
+- **Repo and paper:**
+  - Public at github.com/JacobFV/dynagraph, MIT license (a1bc057).
+  - Paper draft in `paper/` (037bc57, by a Fable agent; build with tectonic via `make`).
+  - Abstract reframed around the multi-modal thesis (1cfc248).
+- **INKLING (agent a2383a2eff398bd47; code in the main checkout, uncommitted until the run ends):**
+  - Milestones 3–5:
+    - Offline, 4 arms on the same 128,032 samples. Success / slip / damage AUC and NLL:
+      - gated: .844 / .879 / .730, NLL −1.15;
+      - ungated: .847 / .887 / .702, −0.98;
+      - random-init: .840 / .862 / .717, −0.80;
+      - compact: .826 / .885 / .711, −1.35.
+    - Held-out drawer_open: damage AUC .51–.54, i.e. chance.
+    - Gate re-test: System II logits bit-identical. The prefix check is not bit-identical (max diff 5.0), because
+      MoE GEMM batch shapes change; a row-wise test is queued.
+    - Language: perplexity 8.337, the same as base, in System II. Ungated: 52.8, parsing .45. The free-form scores
+      are invalid (the thinking span was truncated), and a 256-token rerun is queued.
+    - A MODEL-V2 reference row-subset bug (family_id ordering) was found; the re-eval is queued.
+  - Closed-loop cell 1/3, bin_ur5e, n = 30: all six pre-registered good-parts comparisons are null.
+    - C1 native − v2 damage: +0.20 [+0.07, +0.37].
+    - C3 delegated − v2 damage: +0.13 [+0.03, +0.27].
+    - Native never probes.
+    - System II takes 8.5 s per decision under contention.
+  - Still to run: pouch_ur5e, bin_gen3.
+- **MODEL round 6 (agent a266f589ad5111d62):**
+  - ACT is near zero on VAL (0.017), and the pipeline is verified.
+  - Lead decision: finish the pre-registered grid, report it as a weak baseline, no second imitation variant.
+  - §13a frozen at c22846d, with the S-lot classical cached estimator and the whole-package note.
+  - Test running on gb10 (`scripts/v2/r9_test.sh`, then `r9_lot_test.sh`), about 9–10 h from 02:16Z.
+- **V3-MODEL (agent afa9352bea6c04cff, branch v3-model):**
+  - §0 implementation: LBS chain family; three modalities (proprio/force, RGB-D keypoint tracks, golden anchors);
+    per-pass write-back; per-pass law loss.
+  - Pre-registration 0b8b189 (A1–A8, C1–C6). Contract with the human modality: e610e78.
+  - First TEST read: **LBS-law s0 FAILS the causal test.**
+    - Own-box sign 0.52, action sign 0.10.
+    - Counterfactual Δ −0.29 mm, CI crosses 0.
+    - Prediction 16.0 mm, against classical ≈ 13 mm and oracle 3.7 mm.
+    - Edge blocking has no effect; delayed evidence has no effect; mass corr 0.27.
+  - Lead approved two EXPLORATORY arms, each pre-registered alone on fresh seeds:
+    - P: law-projection layer, labelled a hybrid;
+    - I: interventional MuJoCo counterfactual pairs, a non-bypass bottleneck from parameter slots plus initial state,
+      and a mass-identifiability check first.
+  - The Inkling port waits until an arm passes A1–A4 on VAL. The H6 human-track model is queued after §0.
+- **EXT (agent a7904569556662098, branch ext; datasets local at `~/datasets`):**
+  - License audit and registration list as above.
+  - Physion v1 loader and official OCP reproduced; humans within 0.008 of Table S1.
+  - Physion++ official readout/test local; SAM 2.1 tracks validated at sub-pixel error.
+  - MediaPipe hands on DexYCB: recall .88, 7.1 px, 27 mm.
+  - Lead decisions:
+    - fetch DexYCB 02–08;
+    - footprint ≤ 300 GB;
+    - the H6 freeze waits for V3's human model, before any subject 07–08 inference, and is code-enforced;
+    - control C3 (object-identity lookup) added;
+    - fragility untested.
+- **ENVS-V3 (agent af82bf1a1f6313039, branch envs-v3):**
+  - First 3 ceilings had low headroom. Changes per family are listed in the entry above.
+  - granular_dose spout went from 4 cm to 5 cm (with 4 cm there was no lever).
+  - Compute lapse logged.
+- **Open PI decisions** (asked, not yet answered):
+  1. dataset registrations, MANO first;
+  2. Kubric MOVi / ComPhy, whose data license is unstated;
+  3. any physical robot or force-sensing hardware for a real-world track.
+- **Host snapshot (03:30Z):** gb10 available memory 85 GB; disk 86 GB free (96%), down from 101 GB. Two
+  `envs_v3_calibrate.py cloth_fold` processes are running (ENVS-V3's share is 1), and the lead is asking about it. A
+  `uv pip install causal-conv1d` into `venv-fast` is running (an INKLING fast-path build, to be confirmed).
