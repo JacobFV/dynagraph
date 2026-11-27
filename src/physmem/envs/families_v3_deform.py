@@ -264,7 +264,7 @@ class CableRoute(V3Base):
         self.surface_z = top
         self.safe_z = top + 0.25
         scene.spec.option.integrator = mujoco.mjtIntegrator.mjINT_IMPLICITFAST
-        kb = float(params.get("bend_k", math.exp(rng.uniform(math.log(0.003), math.log(0.2)))))
+        kb = float(params.get("bend_k", math.exp(rng.uniform(math.log(0.003), math.log(0.4)))))   # v3.1: to thick power cords (was 0.2)
         damp = float(params.get("cable_damp", math.exp(rng.uniform(math.log(2e-4), math.log(3e-3)))))
         lin = float(params.get("lin_kg", rng.uniform(0.06, 0.16)))
         mu = float(params.get("mu", rng.uniform(0.3, 0.8)))

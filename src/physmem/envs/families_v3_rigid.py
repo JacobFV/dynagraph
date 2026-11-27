@@ -96,7 +96,7 @@ class StackOverhang(V3Base):
         masses, offs = [], []
         for i in range(3):
             m = float(params.get(f"mass{i}", rng.uniform(0.15, 0.8)))
-            e = float(params.get(f"com{i}", rng.uniform(-0.3, 0.3) * hx))
+            e = float(params.get(f"com{i}", rng.uniform(-0.45, 0.45) * hx))   # v3.1: steel ballast inserts (was +-0.3)
             mu = float(rng.uniform(0.3, 0.9))
             # two halves of the block: the ballast imbalance sets the COM offset e (mass split between x<0 / x>0)
             # COM of halves at -hx/2, +hx/2: e = (m_r - m_l) / m * hx / 2 -> m_r = m (1/2 + e / hx)
@@ -117,7 +117,7 @@ class StackOverhang(V3Base):
             scene.region(f"level{i}", (ex, ey, top + ph + (2 * i + 1) * hz), (hx, hy, hz), yaw=0.0,
                          support_z=top + ph + 2 * i * hz, sym=2 * math.pi)
         # target overhang: a fraction of the block length (uniform blocks reach 11/12 L)
-        self.D = float(params.get("overhang_m", rng.uniform(0.55, 0.72) * L))
+        self.D = float(params.get("overhang_m", rng.uniform(0.6, 0.75) * L))   # v3.1 (was 0.55-0.72 L)
         _, best = stack_plan(L, masses, offs, self.D, margin=0.006, maximal=True)
         self.hidden_task = dict(masses=masses, com_offs=offs, oracle_max_overhang=best, feasible=bool(best >= self.D))
         self.budget = int(params.get("budget", 12))
@@ -369,7 +369,7 @@ class Handover(V3Base):
     timestep = 0.002
     settle_s = 0.8
     budget = 6
-    TUG_LIMIT = 15.0
+    TUG_LIMIT = 15.0          # (10 N was tried in v3.1: the grasp itself loads the proxy ~8-10 N -> every policy failed)
     TOOL = (0.07, 0.015, 0.015)
     success_doc = ("take the tool the human proxy presents and put it in the tote: tool in the tote region, released, the "
                    "horizontal force on the proxy's hand never above 15 N, nothing dropped")
@@ -383,7 +383,7 @@ class Handover(V3Base):
         self.safe_z = top + 0.30
         hx, hy, hz = self.TOOL
         mode = params.get("mode", "timed" if rng.random() < 0.5 else "pull")
-        tau = float(params.get("tau", rng.uniform(0.3, 2.0)))
+        tau = float(params.get("tau", rng.uniform(0.3, 3.0)))   # v3.1: hesitant proxies too (was 0.3-2.0 s)
         f_rel = float(params.get("f_rel", rng.uniform(2.0, 9.0)))
         g_h = float(params.get("human_grip", rng.uniform(15.0, 30.0)))
         mass = float(params.get("mass", rng.uniform(0.2, 0.9)))
