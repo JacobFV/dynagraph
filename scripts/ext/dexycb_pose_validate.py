@@ -33,6 +33,8 @@ OUT = Path(__file__).resolve().parents[2] / "results" / "ext"
 
 def run(a):
     seqs = D.sequences()
+    if a.subjects:
+        seqs = [q for q in seqs if q.subject in a.subjects]
     # deterministic spread over objects: every k-th sequence
     seqs = seqs[:: max(1, len(seqs) // a.max_seq)][: a.max_seq]
     rows, agg = [], dict(e2=[], e3=[], e3r=[], ew=[], present=0, det=0)
@@ -41,6 +43,9 @@ def run(a):
         for si in a.serials:
             serial = q.serials[si]
             fr = range(0, q.num_frames, a.stride)
+            last = q.path / serial / f"labels_{q.num_frames - 1:06d}.npz"
+            if not last.exists():        # view not (yet) extracted completely
+                continue
             rgb, dep, K = D.load_view(q, serial, fr)
             lab = D.load_labels(q, serial, fr)
             ht = HandTracker(num_hands=1)
@@ -90,6 +95,8 @@ if __name__ == "__main__":
     ap.add_argument("--max-seq", type=int, default=20)
     ap.add_argument("--serials", default="0")
     ap.add_argument("--stride", type=int, default=1)
+    ap.add_argument("--subjects", default="")
     a = ap.parse_args()
     a.serials = [int(s) for s in a.serials.split(",")]
+    a.subjects = [x for x in a.subjects.split(",") if x]
     run(a)

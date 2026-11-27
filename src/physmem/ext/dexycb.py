@@ -57,22 +57,30 @@ class Sequence:
         return YCB_MASS_G[self.grasped] / 1000.0
 
 
-def sequences(root: Path = ROOT, subjects=None) -> list[Sequence]:
+def _yaml(text):
+    """safe YAML load that also accepts the !!python/tuple tags DexYCB's meta files use (as lists)."""
     import yaml
+
+    class L(yaml.SafeLoader):
+        pass
+    L.add_constructor("tag:yaml.org,2002:python/tuple", lambda ld, node: ld.construct_sequence(node))
+    return yaml.load(text, Loader=L)
+
+
+def sequences(root: Path = ROOT, subjects=None) -> list[Sequence]:
     out = []
     for sd in sorted(p for p in root.glob("*-subject-*") if p.is_dir()):
         if subjects and sd.name not in subjects:
             continue
         for q in sorted(p for p in sd.iterdir() if (p / "meta.yml").exists()):
-            m = yaml.safe_load((q / "meta.yml").read_text())
+            m = _yaml((q / "meta.yml").read_text())
             out.append(Sequence(sd.name, q.name, q, m["serials"], m["ycb_ids"], m["ycb_grasp_ind"],
                                 m["mano_sides"][0], m["num_frames"]))
     return out
 
 
 def intrinsics(serial: str, root: Path = ROOT) -> np.ndarray:
-    import yaml
-    c = yaml.safe_load((root / "calibration" / "intrinsics" / f"{serial}_640x480.yml").read_text())["color"]
+    c = _yaml((root / "calibration" / "intrinsics" / f"{serial}_640x480.yml").read_text())["color"]
     return np.array([[c["fx"], 0, c["ppx"]], [0, c["fy"], c["ppy"]], [0, 0, 1]], np.float64)
 
 
