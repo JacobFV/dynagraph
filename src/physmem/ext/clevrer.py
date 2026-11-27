@@ -1,8 +1,8 @@
 """CLEVRER loader (Yi et al., ICLR 2020; data CC0). Owner: agent EXT. docs/EXT.md §1/§3c.
 
 Layout after extracting the official validation archives into $EXT_DATA_ROOT/clevrer/extracted:
-  video_validation/video_10000-11000/video_XXXXX.mp4         480x320, 128 frames, 25 fps
-  annotation_validation/annotation_10000-11000/annotation_XXXXX.json
+  video_10000-11000/video_XXXXX.mp4            480x320, 128 frames, 25 fps (validation ids 10000-14999)
+  annotation_10000-11000/annotation_XXXXX.json  (the official zips have no split-level top directory)
 Annotation fields (official README): object_property (id, color, material, shape), motion_trajectory (per frame:
 objects with location, orientation, velocity, angular_velocity, inside_camera_view), collision (object_ids, frame_id,
 location). Annotations are SIMULATOR state: evaluator-only labels under the V3 rules; model inputs come from the track
@@ -21,15 +21,11 @@ ROOT = Path(os.environ.get("EXT_DATA_ROOT", "/home/brandonin/datasets")) / "clev
 FPS = 25.0
 
 
-def videos(split="validation", root: Path = ROOT):
-    """-> list of (video_id:int, mp4 path, annotation path or None)."""
-    out = []
-    for mp4 in sorted((root / f"video_{split}").rglob("video_*.mp4")):
-        vid = int(mp4.stem.split("_")[1])
-        ann = next((root / f"annotation_{split}").rglob(f"annotation_{vid:05d}.json"), None) \
-            if (root / f"annotation_{split}").exists() else None
-        out.append((vid, mp4, ann))
-    return out
+def videos(root: Path = ROOT):
+    """-> list of (video_id:int, mp4 path or None, annotation path or None) for every id found locally."""
+    mp4 = {int(p.stem.split("_")[1]): p for p in root.glob("video_*/video_*.mp4")}
+    ann = {int(p.stem.split("_")[1]): p for p in root.glob("annotation_*/annotation_*.json")}
+    return [(k, mp4.get(k), ann.get(k)) for k in sorted(set(mp4) | set(ann))]
 
 
 def load_annotation(path) -> dict:
