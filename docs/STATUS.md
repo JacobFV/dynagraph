@@ -63,6 +63,8 @@ Every track doc has a **"Status at 2026-11-27 (in flight)"** section. It lists e
   - System II logits are bit-identical to the base model. Ungated training would destroy language (perplexity 52.8).
   - Closed loop, 3 cells: no wins. Pouch transfer shows significant losses, traced to the pre-registered System I
     probe rule.
+  - System II prefix states inside a System I call are bit-identical to the base model (gate check (d), 4/4 cases).
+  - Gen3 offline damage AUC: MODEL-V2 0.778 vs System I 0.68–0.71.
   - A diagnostic that separates "model" from "rule" is running.
 - **V3-MODEL** (the centerpiece):
   - The pre-registered looped belief store (LBS-law) **fails** the causal test on TEST: edit-direction agreement is
@@ -91,7 +93,7 @@ target `~/dynagraph`.** Worktree branches rsync to their own directory.
 | track | gb10 dir | what is running | how to collect |
 |---|---|---|---|
 | MODEL-V2 round 6 | `~/dynagraph` | chain pid 1705445: `r9_lot_test.sh` (lot secondary; the main test is done) | see `MODEL_V2.md` status section (`scripts/v2/r9_table.py`) |
-| INKLING | `~/dynagraph` (+ `~/dynagraph_sys12`) | `logs/sys12/pipeline2.log`: Gen3 offline, row-gate test, 256-token language eval, aligned MODEL-V2 re-eval, then the exploratory diagnostic (heavy lane, about 22 GB) | see `INKLING_SYS12.md` status section |
+| INKLING | `~/dynagraph_sys12` (frozen tree) | pipeline4 pid 2339725 (256-token language eval), pipeline5 pid 2451747 (aligned MODEL-V2 re-eval), pipeline6 pid 2867454 (EXPLORATORY rule-vs-model diagnostic), gpu_share.sh pid 158722 (turn-taking) | `INKLING_SYS12.md` §s (collect/finish commands) |
 | V3-MODEL | `~/dynagraph_v3` | `scripts/v3/arm_test2.sh` (pid 3468490): arm_i2 VAL, selection, seeds 1–2, test2; `train_all.sh` (3108447) and `eval_gpu.sh` (1970118) for the frozen matrix | `PYTHONPATH=src python -m physmem.v3_chain_report --split test --groups "LBS=lbs_law_s0+lbs_law_s1+lbs_law_s2;V1=v1_s0+v1_s1+v1_s2;nolaw=lbs_nolaw_s0+lbs_nolaw_s1+lbs_nolaw_s2;classical=classical;oracle=oracle"`, then the same with `--split test2` plus the selected arm. Results go to `V3_GENERAL.md` §0f |
 | ENVS-V3 | `~/dynagraph_envs_v3` | queue pid 2078781 (`logs/v3_queue3.log`): granular_dose calibration, then the n=20 ceiling on probe and UR5e, the stability scan, stills | `docs/ENVS.md` status subsection on `envs-v3`; then rebuild the table, tag `envs-v3`, make src read-only, record the sha256 |
 | EXT | `~/dynagraph_ext` | SAM2 driver pid 3346796 (192 Physion++ mass test videos, 20-video chunks, small lane), log `logs/sam2_pp_te_mass.log`. **Laptop:** DexYCB download chain pid 2877296 (s03–s08, 83 of 300 GB cap) | `docs/EXT.md` §8 on `ext` (next: the Physion++ mass OCP readout) |

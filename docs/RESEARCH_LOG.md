@@ -804,3 +804,29 @@ Partial lot files are committed and labelled partial. INKLING's files are left o
 
 **Next:** finish S-lot (tabulate with r7_table.py, commands in §14); typed-vs-ACT paired videos (the renderer still
 has to be written); a final MODEL_V2 §13 update.
+
+## 2026-11-27, INKLING: milestone + wrap-up, gate fully passes; single commit of INKLING code/results (lead request)
+- Finding: gate check (d) PASSES with shape-invariant row-wise experts (`results/sys12/gate_test_rowwise.json`).
+  Inside a System I call, the System II prefix core states are bit-identical to base, 4/4 (bin_clearing and
+  pouch_transfer, 1 and 3 passes, max diff 0.0). The earlier mismatch was MoE GEMM-shape rounding, not information
+  flow (see the 2026-11-26 gate entry).
+- Finding: Gen3 offline eval (aux1 masked, one process, identical rows for every model; Gen3 self-collision caveat):
+  - damage AUC: MODEL-V2 r7 0.778, System I arms 0.68–0.71, sample-matched MODEL-V2 0.49.
+  - success and slip are similar (`results/sys12/eval/gen3_heldout_robot_aux1masked.json`).
+- Did: added §c (results) and §s ("Status at 2026-11-27 (in flight)") to `docs/INKLING_SYS12.md`. Committing the
+  INKLING paths only (inkling_quant.py, sys12.py, sys12_train.py, tests/test_sys12.py, scripts/sys12/, the doc and
+  the small files of results/sys12; no .pt). The hash is in the next entry.
+- Still running on gb10 (frozen tree `~/dynagraph_sys12`):
+  - pipeline4 (pid 2339725): 256-token language eval, `logs/sys12/lang_eval256.log`
+  - pipeline5 (pid 2451747): aligned MODEL-V2 reference re-eval
+  - pipeline6 (pid 2867454): EXPLORATORY rule-vs-model cells
+  - gpu_share.sh (pid 158722)
+  - The collect/finish commands are in `INKLING_SYS12.md` §s.
+
+## 2026-11-27, INKLING: wrap-up commit pushed, a9b0ea9 (main)
+- Did: one commit of the INKLING paths only: 64 files, no .pt/.npz/weights. pytest tests/test_sys12.py: 5 passed on
+  gb10 (tiny model, frozen tree).
+- origin/main had not moved, so no rebase was needed. Other agents' unstaged files were left untouched. This research
+  log is NOT in the commit (the lead commits it).
+- Next: the gb10 chain keeps running (pipelines 4-6 + gpu_share; see INKLING_SYS12.md §s). When it finishes: collect
+  with the §s commands, update §c3/§c4, add §c6 (exploratory). Those land in a follow-up commit.
