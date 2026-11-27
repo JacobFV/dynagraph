@@ -291,3 +291,130 @@ entries that point back to the entry they correct.
     small lane: native System I predictions plugged into MODEL-V2's LotPlanner probe rule. It separates the model from
     the decision rule.
   - Asked to publish the INKLING code and small results to main in one commit at the end.
+
+## 2026-11-26 ~23:30 UTC, V3-MODEL: track started, isolation set up
+- Worktree `/home/brandonin/Documents/dynagraph-v3` on branch `v3-model` (pushed to origin). gb10 directory
+  `~/dynagraph_v3`, synced by `scripts/v3/sync.sh`; the shared sync/remote scripts are never used.
+- GPU only through `~/dynagraph/scripts/v2/gpu_small.sh`, via `scripts/v3/gpu_job.sh`. One niced CPU process.
+- PIDs are in `~/dynagraph_v3/logs/*.pid` (`*.child.pid` for the python children).
+
+## 2026-11-27 ~00:30 UTC, V3-MODEL: decision, redirect to V3 §0 accepted
+- What: after the PI's audit, the lead put §0 above H1–H3. I built §0 first; H1–H3 follow on the same architecture.
+- Built (commit 2fb7818):
+  - a MuJoCo 1-D contact-chain family (`models/v3/chain.py`);
+  - an RGB-D keypoint tracker error model (`tracks.py`);
+  - the looped belief store LBS and the V1 baseline, law residuals and counterfactual-edit rows (`belief.py`);
+  - the §1 contract (`contract.py`);
+  - data, training and evaluation code (`v3_chain*.py`).
+- Data: `~/dynagraph_v3/data/v3_chain` (train 10k / val 600 / test 600 / test_L4 300 episodes; sha256 in
+  `manifest.json`).
+
+## 2026-11-27 ~00:50 UTC, V3-MODEL: findings during the build, and the fixes
+- First data had 20 m/s slides and box tunnelling. Fix: an admittance speed limit on the pusher (0.6 m/s).
+- A missing spring-rest estimate (the tracker never saw the last box) gave NaN. Fix: a map anchor for the rest
+  position. The data were regenerated; the stale generator child was killed after its PID was recorded.
+- The analytic simulator's oracle error was 45 mm because overlapping start estimates launched the penalty contacts.
+  Fix: project the start estimates to a non-penetrating configuration. The oracle error is now 3.7 mm.
+
+## 2026-11-27 ~01:30 UTC, V3-MODEL: VAL-pilot decisions (classical/oracle only), then the §0b pre-registration
+- Decisions: planner goals are drawn as true-world-reachable displacements (uniform goals gave an infeasible
+  oracle error of 23 mm), and the A1 correlation is Spearman.
+- Pre-registration committed on its own: 0b8b189 (`V3_GENERAL.md` §0b), before any TEST run.
+
+## 2026-11-27 01:42 UTC, V3-MODEL: incident, GPU memory over the lane rule
+- lbs_law_s0 at batch 1024 used 6.2 GB, over the < 6 GB rule. I killed it after about 5 min (PIDs recorded).
+- Fix: a hard torch cap of 5 GB, batch 512, bf16, 4000 steps. The budget change is recorded in §0b before the freeze.
+
+## 2026-11-27 ~03:05 UTC, V3-MODEL: finding, first §0 TEST read (LBS-law s0)
+- The causal test FAILS:
+  - own-box sign agreement 0.52 (chance), and an edit moves the predicted motion by only 6% of MuJoCo's effect;
+  - action sign agreement 0.10;
+  - counterfactual-outcome Δ −0.29 mm [−0.85, +0.22];
+  - edge blocking suppressed B2 in 0 of 82 rows;
+  - delayed evidence: adding it mid-loop is the same as never adding it.
+- Prediction is decent (16 mm; classical 13 mm, oracle 3.7 mm).
+- Comparators: classical 0.95 / 0.80 / −5.8 mm; oracle 0.98 / 0.83 / −8.2 mm.
+- Files: `~/dynagraph_v3/results/v3/eval/lbs_law_s0_test_*`, `V3_GENERAL.md` §0c (commit 5874514).
+
+## 2026-11-27 ~03:15 UTC, V3-MODEL: decision, lead-approved exploratory arms and the identifiability check
+- Identifiability check on VAL: a converged CEM recovers mass (L=1 corr 0.95; L=2 total mass 0.90). The
+  excitation is adequate. The registered classical comparator (64×8 CEM) is under-converged; noted.
+- Arm I (learned loop):
+  - a non-bypass learned Rollout that sees only the slots and the τ0 state (unit-checked);
+  - teacher forcing;
+  - real MuJoCo do()-pairs (`data/v3_chain/{train,val}_cf.npz`, `v3_chain cfgen`).
+- Arm P: a hybrid law-projection step inside the loop.
+- Fresh test seed sets `test2` (4e6+) and `test2_L4` (5e6+) were generated. They stay untouched until their own
+  pre-registration.
+- Commits f97f16d (arms) and 5874514 (docs §0d).
+
+## 2026-11-27 ~03:50 UTC, V3-MODEL: deviation in run order only
+- I paused the frozen-matrix training driver (`train_all.pid`; lbs_law_s1 had not started) and the remaining L4
+  classical/oracle CPU evals, so the arm I/P pilots could go first. Nothing is dropped.
+- Both are re-queued: `logs/cpu_l4.sh` re-runs the L4 evals, and `train_all.sh` is restarted after the pilots (it
+  skips finished checkpoints).
+- Done so far in the frozen matrix: lbs_law_s0, v1_s0 and lbs_nolaw_s0 trained; the TEST eval of lbs_law_s0 is
+  complete.
+
+## 2026-11-27 04:31 UTC, V3-MODEL: finding, arm I trained (VAL)
+- arm_i_s0 at VAL step 4000: final error 16.9 mm (LBS-law 17.0 mm).
+- Parameter recovery at k=3 (arm I vs LBS-law):
+
+| parameter | arm I | LBS-law |
+|---|---|---|
+| mass | 0.68 | 0.32 |
+| friction | 0.67 | 0.58 |
+| k | 0.89 | 0.84 |
+
+- The VAL causal pilot is queued (`logs/pilot.sh`, `logs/pilot_arm_i_s0.log`). Next: the proj_s0 training, then a
+  separate pre-registration for test2 if an arm passes A1–A4 on VAL.
+
+## 2026-11-27 ~03:00 UTC, V3-MODEL: H6 interface (EXT) planned into the contract
+- `contract.human_evidence` reads TrackSet(kind=human) by duck typing; the joint names were checked against
+  ext `MP_HAND`. EMBODIMENT_HUMAN has no force sensing, and the grasp relation leads to the object's typed mass slot.
+- Matched twin: LBS-generic (`kind=generic`). Sim human-lift pretraining scene: `passive.human_lift_episode`.
+- Lead decision: train on real DexYCB subjects 01–05 and VAL 06 with leave-objects-out folds; never touch 07–08
+  before EXT's freeze. Queued behind §0. Commits e610e78, 1147bf1, f97f16d.
+
+### 2026-11-27 ~03:20Z — MODEL-V2 round 6 (r9): catch-up entry under the new logging rule
+**Track:** MODEL-V2. **What happened in round 6 so far:**
+- **Outside baseline (a): ACT imitation.** il-v1 demo/action format agreed with ENVS: env.demo_call (oracle-param
+  scripted), control_state/set_control, 64x64 wrist camera. Recorder/executor in `src/physmem/models/v2/imitation/`.
+  Data: 6 cells, 200 demos each, 792 successful, `data/v2_il_r7` and the image-split copy `data/v2_il_r7s`.
+- **Baseline engineering, each diagnosed on TRAIN demos.** Recorded in §13a (13.0 is the dry run):
+  - absolute chunk targets;
+  - controller-command dims dropped (copycat);
+  - binarized gripper;
+  - leading idle ticks trimmed;
+  - vision at 5 Hz, to fit the < 6 GB small-GPU cap.
+- **ACT VAL grid:** 3 stages (H x vision; β / 50k steps; ensembling incl. open-loop). Frozen r9t_h10v_50k, m = 0.1,
+  VAL mean 0.017.
+  - Diagnosis: live and recorded observations agree to ~1e-4. A model overfit to 5 demos runs the whole sequence but
+    releases ~1.3 cm off.
+  - Lead decision (option 1): report it as a weak-baseline limitation; diffusion policy / 50 Hz are future work.
+- **Baseline (b):** compute-matched typed / generic / nomem models in two regimes, 3 seeds each, config selected on
+  VAL (`results/v2/r9_select_{budget,full}.txt`, trust in `results/v2/trust_r9_*.json`):
+  - budget-matched = the memory view of exactly the demo episodes, `data/v2_r9_budget`;
+  - full = r2-r6 + tranche9_r7 + the r7.1 Gen3 episodes + demos, `data/v2_r9_full`.
+- **Incidents:**
+  - The first dry run used uncommitted envs-r7-dev code. It was set aside and every script now asserts EXPECT_ENV.
+  - Gen3 base/shoulder self-collision (1.8 MN): found by MODEL-V2, fixed by ENVS in envs-r7.1, erratum in §13e.
+  - v2_train.sanitize dropped every Gen3 row (reported by INKLING): absurd continuous values are now masked instead.
+  - A fill-pass wrapper matched its own pgrep pattern and waited forever: killed and relaunched.
+  - An 8k-step budget model was superseded by 4k for consistency (`results/v2/checkpoints/_superseded_r9_8k/`).
+- **External-audit request (lead):** added a classical cached-estimator baseline on bin_clearing lots
+  (`LotPlanner.cached_estimator`) as secondary S-lot, plus the note that typed vs generic measures the whole package.
+- **Pre-registration:** §13a frozen and committed on its own, **c22846d** (02:16Z), before any test episode.
+- **Running now (gb10):**
+  - The test chain (chain pid 1705445; `scripts/v2/r9_test.sh` pid 1705446) runs PROCS=2, then `scripts/v2/r9_lot_test.sh`.
+  - Logs: `~/dynagraph/logs/v2_r9_test_*.log`, `v2_r9_test_il_*.log`, `v2_r9lot_*.log`, `v2_r9_test_chain.log`.
+  - Outputs: `results/v2/closed_loop/v2_r9_<fam>_<robot>.json`, `results/v2_il/test/`, and `v2_r9lot_<robot>.json`.
+  - First finished test cell, tight_insert ur5e (n = 30, success within budget): nominal .57, PTA .60, force-ramp .70,
+    oracle .67, typed_full .50, generic_full .63, nomem_full .60, typed_budget .40.
+- **Next:** wait for all cells (~9 h). Then `scripts/v2/r9_table.py r9t_h10v_50k 0.1`, the S-lot table, paired videos
+  only for significant wins, §13b results, and the final report to the lead.
+- **Round 6, first finished test cell** (lead entry from the MODEL report; CIs pending):
+  - tight_insert/UR5e, n = 30, success: force-ramp .70, oracle-param .67, generic(full) .63, PTA .60, nomem(full) .60,
+    nominal .57, typed(full) .50, typed(budget) .40. The ACT result for this cell is pending.
+  - Point estimates put typed below the pre-registered best scripted baseline (force-ramp) and below generic.
+  - About 9 h of the chain remain (chain pid 1705445 on gb10).
