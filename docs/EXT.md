@@ -457,3 +457,72 @@ GPU, over the 6 GB rule. We killed it within 2 minutes. It now runs with frames 
 | MediaPipe world-landmark error, root-relative, median | 26.8 mm |
 
 This view is a TRAIN subject; subjects 07–08 were not touched.
+
+## 8. Status at 2026-11-27 (in flight)
+
+**License table state (§1).** Done; every license was verified from the official pages.
+- Downloaded: Physion v1, Physion++ (MIT), CLEVRER (CC0), DexYCB (CC BY-NC 4.0), MediaPipe models (Apache-2.0).
+- Open PI registration decisions:
+  - MANO (needed for MANO params and for HaMeR);
+  - ARCTIC (+ SMPL-X);
+  - GRAB;
+  - HOT3D;
+  - ContactPose (IEEE DataPort);
+  - H2O;
+  - OakInk v1 annotations.
+- Open PI license questions (no registration needed, but no data license stated; held until decided): Kubric MOVi
+  (has mass/friction/restitution labels, H3) and ComPhy.
+
+**Done.**
+- **Physion v1:**
+  - loader, official label rule, official human tables (reproduced within 0.008 of Table S1);
+  - OCP readout protocol reproduced (`ocp.py`); published baselines recorded verbatim;
+  - reduced-readout reference run on all 8 scenarios (§3a, NOT official);
+  - colour front end validated per scenario: agent good everywhere; patient weak in Drape, Contain and Drop.
+- **Physion++:**
+  - official readout (800) and test (768) sets local; 192-per-property test list reconstructed from the human data;
+  - SAM2 tier-B tracks for all 200 mass readout trials: agent recall 0.93, median 0.7 px; patient recall 0.74,
+    median 0.5 px.
+- **MediaPipe hand front end, validated on DexYCB** (TRAIN subjects only):
+  - 9 sequences × 8 views: recall 0.88, 7.1 px;
+  - all of subject 01 on the H6 view: recall 0.83, 7.0 px, PCK@20 0.89, 21.9 mm absolute depth-lifted error.
+- **H6:**
+  - draft pre-registration in §6, with C0–C3 controls and a code guard that keeps subjects 07–08 untouched;
+  - `h6_eval.py` written;
+  - actor-legal features extracted for TRAIN subjects 01 (90/100 pass the exclusion rule) and 02.
+- **CLEVRER:** validation videos and annotations local (5000 pairs); loader done; published QA baselines recorded.
+
+**Running on gb10** (all leave the lane between chunks; hard 4.5 GB allocator cap; peak 2.5 GB):
+- `gb10_sam2_driver.sh pp_test_mass.txt tracks_pp pp_te_mass 20`, PID **3346796**. It runs the mass official test
+  set (192 videos) in 20-video `gpu_small.sh` chunks with a 5-min pause between chunks. Its flock is PID 3679527.
+- Logs: `gb10:~/dynagraph_ext/logs/sam2_pp_te_mass.log`; ledger `~/dynagraph/logs/gpu_small_ledger.log`.
+- Tracks are written to `gb10:~/dynagraph_ext/tracks_pp/` (200 readout tracks done).
+- PID history: `/home/brandonin/datasets/logs/gb10_pids.txt`.
+
+**Running locally.**
+- Download chain `scripts/ext/fetch_chain.sh`, PID **2877296**, log `/home/brandonin/datasets/logs/chain.log`.
+- It is fetching DexYCB s03, then s04–s08; each archive is verified-extracted and the archive deleted.
+- Footprint 83 GB, against the 300 GB cap.
+
+**Exact next commands** (run from the ext worktree):
+```
+# 1. when "driver done" appears in gb10:~/dynagraph_ext/logs/sam2_pp_te_mass.log:
+rsync -a gb10-direct:dynagraph_ext/tracks_pp/ /home/brandonin/datasets/physionpp/tracks/sam2-v1/
+.venv/bin/python -I scripts/ext/physionpp_validate_tracks.py --split test --prop mass
+.venv/bin/python -I scripts/ext/physionpp_ocp.py readout        # writes results/ext/physionpp_ocp_sam2-v1.json
+#    label: SAM2 tracks + our features + the official readout procedure; a reference, not a model result
+
+# 2. other Physion++ properties (lists already on gb10):
+ssh gb10-direct 'cd ~/dynagraph_ext && grep -v /mass_ pp_readout_jobs.txt > pp_ro_rest.txt && \
+  setsid nohup bash code/ext/gb10_sam2_driver.sh pp_ro_rest.txt tracks_pp pp_ro_rest 20 \
+  > logs/driver_pp_ro_rest.out 2>&1 < /dev/null &'
+
+# 3. DexYCB as subjects land (TRAIN/VAL only: 01-06):
+.venv/bin/python -I scripts/ext/h6_features.py --subjects 20200820-subject-03,20200903-subject-04,20200908-subject-05,20200918-subject-06
+
+# 4. H6 freeze (only after V3-MODEL's human-track model + generic twin exist, trained and run on TRAIN/VAL only):
+#    commit §6 alone with message "H6 pre-registration, frozen before any test run";
+#    then h6_features.py --allow-test and h6_eval.py --split test
+
+# 5. Physion v1 tier B for Drape/Contain/Drop/Dominoes: the colour tracker fails on the patient there.
+```

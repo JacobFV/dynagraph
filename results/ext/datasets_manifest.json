@@ -54,6 +54,20 @@
    "sha256": "ce44e97a7567f7fb128b474ae33f327715314956a1c7b24cb08b08bc51cf4303",
    "url": "https://drive.usercontent.google.com/download?export=download&confirm=t&id=1Ehh92wDE3CWAiKG7E9E73HjN2Xk2XfEk"
   },
+  "20200813-subject-02.tar.gz": {
+   "bytes": 12004145048,
+   "deleted_after_extraction": true,
+   "deleted_utc": "2026-11-27T08:42:04Z",
+   "extracted_to": "/home/brandonin/datasets/dexycb/extracted",
+   "fetched_utc": "2026-11-27T08:41:13Z",
+   "file": "20200813-subject-02.tar.gz",
+   "license": "CC BY-NC 4.0 (non-commercial; research use allowed)",
+   "license_source": "https://dex-ycb.github.io/",
+   "local_path": "/home/brandonin/datasets/dexycb/raw/20200813-subject-02.tar.gz",
+   "n_members": 174008,
+   "sha256": "df785049fdaf9266cbba4102084bd435e72ae12836fa603bdce00182c449bd89",
+   "url": "https://drive.usercontent.google.com/download?export=download&confirm=t&id=1Uo7MLqTbXEa-8s7YQZ3duugJ1nXFEo62"
+  },
   "calibration.tar.gz": {
    "bytes": 14464,
    "fetched_utc": "2026-11-27T01:11:34Z",
