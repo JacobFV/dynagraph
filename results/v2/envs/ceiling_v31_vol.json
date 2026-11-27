@@ -1,0 +1,954 @@
+{
+ "tag": "v31",
+ "table": [
+  {
+   "family": "cable_route",
+   "robot": "gen3_2f85",
+   "nominal": {
+    "n": 20,
+    "success": 0.9,
+    "causes": {
+     "jam": 1,
+     "crush_or_damage": 1
+    }
+   },
+   "probe_then_act": {
+    "n": 20,
+    "success": 0.9,
+    "causes": {
+     "jam": 2
+    }
+   },
+   "oracle": {
+    "n": 20,
+    "success": 0.9,
+    "causes": {
+     "jam": 2
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 20,
+    "mean_ci": [
+     0.0,
+     -0.15,
+     0.15
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 20,
+    "mean_ci": [
+     0.0,
+     -0.15,
+     0.15
+    ]
+   }
+  },
+  {
+   "family": "cable_route",
+   "robot": "panda",
+   "nominal": {
+    "n": 20,
+    "success": 0.55,
+    "causes": {
+     "crush_or_damage": 6,
+     "slip": 1,
+     "jam": 2
+    }
+   },
+   "probe_then_act": {
+    "n": 20,
+    "success": 0.65,
+    "causes": {
+     "crush_or_damage": 4,
+     "slip": 1,
+     "jam": 2
+    }
+   },
+   "oracle": {
+    "n": 20,
+    "success": 0.6,
+    "causes": {
+     "crush_or_damage": 5,
+     "slip": 1,
+     "jam": 2
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 20,
+    "mean_ci": [
+     0.05,
+     -0.1,
+     0.2
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 20,
+    "mean_ci": [
+     -0.05,
+     -0.2,
+     0.1
+    ]
+   }
+  },
+  {
+   "family": "cable_route",
+   "robot": "probe",
+   "nominal": {
+    "n": 20,
+    "success": 0.7,
+    "causes": {
+     "perception": 1,
+     "crush_or_damage": 2,
+     "jam": 3
+    }
+   },
+   "probe_then_act": {
+    "n": 20,
+    "success": 0.75,
+    "causes": {
+     "jam": 5
+    }
+   },
+   "oracle": {
+    "n": 20,
+    "success": 0.75,
+    "causes": {
+     "perception": 1,
+     "jam": 4
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 20,
+    "mean_ci": [
+     0.05,
+     0.0,
+     0.15
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 20,
+    "mean_ci": [
+     0.0,
+     -0.15,
+     0.15
+    ]
+   }
+  },
+  {
+   "family": "cable_route",
+   "robot": "ur5e_2f85",
+   "nominal": {
+    "n": 20,
+    "success": 0.85,
+    "causes": {
+     "perception": 1,
+     "jam": 1,
+     "crush_or_damage": 1
+    }
+   },
+   "probe_then_act": {
+    "n": 20,
+    "success": 0.9,
+    "causes": {
+     "jam": 2
+    }
+   },
+   "oracle": {
+    "n": 20,
+    "success": 0.8,
+    "causes": {
+     "jam": 3,
+     "perception": 1
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 20,
+    "mean_ci": [
+     -0.05,
+     -0.15,
+     0.0
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 20,
+    "mean_ci": [
+     -0.1,
+     -0.25,
+     0.0
+    ]
+   }
+  },
+  {
+   "family": "cloth_fold",
+   "robot": "gen3_2f85",
+   "nominal": {
+    "n": 20,
+    "success": 0.45,
+    "causes": {
+     "slip": 11
+    }
+   },
+   "probe_then_act": {
+    "n": 0,
+    "success": null,
+    "causes": {}
+   },
+   "oracle": {
+    "n": 20,
+    "success": 0.55,
+    "causes": {
+     "slip": 9
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 20,
+    "mean_ci": [
+     0.1,
+     0.0,
+     0.25
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 0,
+    "mean_ci": [
+     NaN,
+     NaN,
+     NaN
+    ]
+   }
+  },
+  {
+   "family": "cloth_fold",
+   "robot": "panda",
+   "nominal": {
+    "n": 20,
+    "success": 0.0,
+    "causes": {
+     "grasp_miss": 18,
+     "perception": 2
+    }
+   },
+   "probe_then_act": {
+    "n": 0,
+    "success": null,
+    "causes": {}
+   },
+   "oracle": {
+    "n": 20,
+    "success": 0.0,
+    "causes": {
+     "grasp_miss": 18,
+     "perception": 2
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 20,
+    "mean_ci": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 0,
+    "mean_ci": [
+     NaN,
+     NaN,
+     NaN
+    ]
+   }
+  },
+  {
+   "family": "cloth_fold",
+   "robot": "probe",
+   "nominal": {
+    "n": 20,
+    "success": 0.55,
+    "causes": {
+     "perception": 1,
+     "place_miss_or_predicate": 8
+    }
+   },
+   "probe_then_act": {
+    "n": 0,
+    "success": null,
+    "causes": {}
+   },
+   "oracle": {
+    "n": 20,
+    "success": 0.5,
+    "causes": {
+     "place_miss_or_predicate": 8,
+     "perception": 2
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 20,
+    "mean_ci": [
+     -0.05,
+     -0.3,
+     0.2
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 0,
+    "mean_ci": [
+     NaN,
+     NaN,
+     NaN
+    ]
+   }
+  },
+  {
+   "family": "cloth_fold",
+   "robot": "ur5e_2f85",
+   "nominal": {
+    "n": 20,
+    "success": 0.5,
+    "causes": {
+     "slip": 7,
+     "perception": 2,
+     "grasp_miss": 1
+    }
+   },
+   "probe_then_act": {
+    "n": 0,
+    "success": null,
+    "causes": {}
+   },
+   "oracle": {
+    "n": 20,
+    "success": 0.5,
+    "causes": {
+     "slip": 7,
+     "perception": 2,
+     "grasp_miss": 1
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 20,
+    "mean_ci": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 0,
+    "mean_ci": [
+     NaN,
+     NaN,
+     NaN
+    ]
+   }
+  },
+  {
+   "family": "g1_push_terrain",
+   "robot": "g1_dex3",
+   "nominal": {
+    "n": 20,
+    "success": 0.2,
+    "causes": {
+     "perception": 2,
+     "collision": 7,
+     "foot_slip": 6,
+     "jam": 1
+    }
+   },
+   "probe_then_act": {
+    "n": 20,
+    "success": 0.1,
+    "causes": {
+     "perception": 2,
+     "foot_slip": 8,
+     "jam": 5,
+     "collision": 3
+    }
+   },
+   "oracle": {
+    "n": 20,
+    "success": 0.15,
+    "causes": {
+     "perception": 2,
+     "foot_slip": 9,
+     "jam": 4,
+     "collision": 2
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 20,
+    "mean_ci": [
+     -0.05,
+     -0.15,
+     0.0
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 20,
+    "mean_ci": [
+     0.05,
+     -0.1,
+     0.2
+    ]
+   }
+  },
+  {
+   "family": "g1_push_terrain",
+   "robot": "g1_dex3_fixed",
+   "nominal": {
+    "n": 20,
+    "success": 1.0,
+    "causes": {}
+   },
+   "probe_then_act": {
+    "n": 20,
+    "success": 1.0,
+    "causes": {}
+   },
+   "oracle": {
+    "n": 20,
+    "success": 1.0,
+    "causes": {}
+   },
+   "oracle_minus_nominal": {
+    "n": 20,
+    "mean_ci": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 20,
+    "mean_ci": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "family": "handover",
+   "robot": "gen3_2f85",
+   "nominal": {
+    "n": 20,
+    "success": 0.75,
+    "causes": {
+     "tug_or_snatch": 5
+    }
+   },
+   "probe_then_act": {
+    "n": 20,
+    "success": 1.0,
+    "causes": {}
+   },
+   "oracle": {
+    "n": 20,
+    "success": 1.0,
+    "causes": {}
+   },
+   "oracle_minus_nominal": {
+    "n": 20,
+    "mean_ci": [
+     0.25,
+     0.1,
+     0.45
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 20,
+    "mean_ci": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "family": "handover",
+   "robot": "panda",
+   "nominal": {
+    "n": 20,
+    "success": 0.65,
+    "causes": {
+     "tug_or_snatch": 6,
+     "slip": 1
+    }
+   },
+   "probe_then_act": {
+    "n": 20,
+    "success": 0.85,
+    "causes": {
+     "tug_or_snatch": 3
+    }
+   },
+   "oracle": {
+    "n": 20,
+    "success": 0.8,
+    "causes": {
+     "collision": 2,
+     "slip": 1,
+     "tug_or_snatch": 1
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 20,
+    "mean_ci": [
+     0.15,
+     -0.05,
+     0.35
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 20,
+    "mean_ci": [
+     -0.05,
+     -0.2,
+     0.1
+    ]
+   }
+  },
+  {
+   "family": "handover",
+   "robot": "probe",
+   "nominal": {
+    "n": 20,
+    "success": 0.35,
+    "causes": {
+     "slip": 2,
+     "tug_or_snatch": 4,
+     "grasp_miss": 6,
+     "place_miss_or_predicate": 1
+    }
+   },
+   "probe_then_act": {
+    "n": 20,
+    "success": 0.7,
+    "causes": {
+     "slip": 3,
+     "grasp_miss": 2,
+     "tug_or_snatch": 1
+    }
+   },
+   "oracle": {
+    "n": 20,
+    "success": 0.75,
+    "causes": {
+     "slip": 2,
+     "grasp_miss": 3
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 20,
+    "mean_ci": [
+     0.4,
+     0.2,
+     0.6
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 20,
+    "mean_ci": [
+     0.05,
+     0.0,
+     0.15
+    ]
+   }
+  },
+  {
+   "family": "handover",
+   "robot": "ur5e_2f85",
+   "nominal": {
+    "n": 20,
+    "success": 0.55,
+    "causes": {
+     "tug_or_snatch": 9
+    }
+   },
+   "probe_then_act": {
+    "n": 20,
+    "success": 1.0,
+    "causes": {}
+   },
+   "oracle": {
+    "n": 20,
+    "success": 1.0,
+    "causes": {}
+   },
+   "oracle_minus_nominal": {
+    "n": 20,
+    "mean_ci": [
+     0.45,
+     0.25,
+     0.65
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 20,
+    "mean_ci": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "family": "pour",
+   "robot": "gen3_2f85",
+   "nominal": {
+    "n": 20,
+    "success": 0.0,
+    "causes": {
+     "place_miss_or_predicate": 20
+    }
+   },
+   "probe_then_act": {
+    "n": 20,
+    "success": 0.0,
+    "causes": {
+     "place_miss_or_predicate": 20
+    }
+   },
+   "oracle": {
+    "n": 20,
+    "success": 0.0,
+    "causes": {
+     "place_miss_or_predicate": 20
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 20,
+    "mean_ci": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 20,
+    "mean_ci": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "family": "pour",
+   "robot": "panda",
+   "nominal": {
+    "n": 20,
+    "success": 0.05,
+    "causes": {
+     "slip": 5,
+     "place_miss_or_predicate": 11,
+     "grasp_miss": 3
+    }
+   },
+   "probe_then_act": {
+    "n": 20,
+    "success": 0.1,
+    "causes": {
+     "slip": 5,
+     "place_miss_or_predicate": 10,
+     "grasp_miss": 3
+    }
+   },
+   "oracle": {
+    "n": 20,
+    "success": 0.05,
+    "causes": {
+     "slip": 5,
+     "place_miss_or_predicate": 11,
+     "grasp_miss": 3
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 20,
+    "mean_ci": [
+     0.0,
+     -0.15,
+     0.15
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 20,
+    "mean_ci": [
+     -0.05,
+     -0.15,
+     0.0
+    ]
+   }
+  },
+  {
+   "family": "pour",
+   "robot": "probe",
+   "nominal": {
+    "n": 20,
+    "success": 0.2,
+    "causes": {
+     "place_miss_or_predicate": 16
+    }
+   },
+   "probe_then_act": {
+    "n": 20,
+    "success": 0.65,
+    "causes": {
+     "place_miss_or_predicate": 7
+    }
+   },
+   "oracle": {
+    "n": 20,
+    "success": 0.8,
+    "causes": {
+     "place_miss_or_predicate": 4
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 20,
+    "mean_ci": [
+     0.6,
+     0.4,
+     0.8
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 20,
+    "mean_ci": [
+     0.15,
+     -0.05,
+     0.35
+    ]
+   }
+  },
+  {
+   "family": "pour",
+   "robot": "ur5e_2f85",
+   "nominal": {
+    "n": 20,
+    "success": 0.6,
+    "causes": {
+     "place_miss_or_predicate": 8
+    }
+   },
+   "probe_then_act": {
+    "n": 20,
+    "success": 0.55,
+    "causes": {
+     "place_miss_or_predicate": 9
+    }
+   },
+   "oracle": {
+    "n": 20,
+    "success": 0.55,
+    "causes": {
+     "place_miss_or_predicate": 9
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 20,
+    "mean_ci": [
+     -0.05,
+     -0.3,
+     0.2
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 20,
+    "mean_ci": [
+     0.0,
+     -0.2,
+     0.2
+    ]
+   }
+  },
+  {
+   "family": "stack_overhang",
+   "robot": "gen3_2f85",
+   "nominal": {
+    "n": 20,
+    "success": 0.45,
+    "causes": {
+     "topple": 11
+    }
+   },
+   "probe_then_act": {
+    "n": 20,
+    "success": 0.2,
+    "causes": {
+     "topple": 13,
+     "budget": 2,
+     "perception": 1
+    }
+   },
+   "oracle": {
+    "n": 20,
+    "success": 0.6,
+    "causes": {
+     "place_miss_or_predicate": 5,
+     "topple": 3
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 20,
+    "mean_ci": [
+     0.15,
+     0.0,
+     0.3
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 20,
+    "mean_ci": [
+     0.4,
+     0.15,
+     0.65
+    ]
+   }
+  },
+  {
+   "family": "stack_overhang",
+   "robot": "panda",
+   "nominal": {
+    "n": 20,
+    "success": 0.2,
+    "causes": {
+     "topple": 15,
+     "perception": 1
+    }
+   },
+   "probe_then_act": {
+    "n": 20,
+    "success": 0.05,
+    "causes": {
+     "topple": 14,
+     "budget": 3,
+     "perception": 2
+    }
+   },
+   "oracle": {
+    "n": 20,
+    "success": 0.45,
+    "causes": {
+     "topple": 8,
+     "place_miss_or_predicate": 3
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 20,
+    "mean_ci": [
+     0.25,
+     0.1,
+     0.45
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 20,
+    "mean_ci": [
+     0.4,
+     0.2,
+     0.6
+    ]
+   }
+  },
+  {
+   "family": "stack_overhang",
+   "robot": "probe",
+   "nominal": {
+    "n": 20,
+    "success": 0.15,
+    "causes": {
+     "topple": 15,
+     "perception": 2
+    }
+   },
+   "probe_then_act": {
+    "n": 20,
+    "success": 0.45,
+    "causes": {
+     "budget": 7,
+     "perception": 2,
+     "topple": 2
+    }
+   },
+   "oracle": {
+    "n": 20,
+    "success": 0.55,
+    "causes": {
+     "topple": 4,
+     "place_miss_or_predicate": 5
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 20,
+    "mean_ci": [
+     0.4,
+     0.2,
+     0.6
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 20,
+    "mean_ci": [
+     0.1,
+     -0.15,
+     0.35
+    ]
+   }
+  },
+  {
+   "family": "stack_overhang",
+   "robot": "ur5e_2f85",
+   "nominal": {
+    "n": 20,
+    "success": 0.15,
+    "causes": {
+     "topple": 15,
+     "perception": 2
+    }
+   },
+   "probe_then_act": {
+    "n": 20,
+    "success": 0.15,
+    "causes": {
+     "topple": 13,
+     "budget": 2,
+     "perception": 2
+    }
+   },
+   "oracle": {
+    "n": 20,
+    "success": 0.5,
+    "causes": {
+     "topple": 4,
+     "place_miss_or_predicate": 5,
+     "perception": 1
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 20,
+    "mean_ci": [
+     0.35,
+     0.15,
+     0.55
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 20,
+    "mean_ci": [
+     0.35,
+     0.1,
+     0.6
+    ]
+   }
+  }
+ ],
+ "labels": {
+  "cable_route": "competence / generalization",
+  "cloth_fold": "competence / generalization",
+  "g1_push_terrain": "competence / generalization",
+  "handover": "decision-relevant",
+  "pour": "decision-relevant",
+  "stack_overhang": "decision-relevant"
+ }
+}

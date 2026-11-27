@@ -1,0 +1,485 @@
+{
+ "tag": "v3",
+ "table": [
+  {
+   "family": "cable_route",
+   "robot": "gen3_2f85",
+   "nominal": {
+    "n": 8,
+    "success": 1.0,
+    "causes": {}
+   },
+   "probe_then_act": {
+    "n": 8,
+    "success": 1.0,
+    "causes": {}
+   },
+   "oracle": {
+    "n": 8,
+    "success": 1.0,
+    "causes": {}
+   },
+   "oracle_minus_nominal": {
+    "n": 8,
+    "mean_ci": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 8,
+    "mean_ci": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "family": "cable_route",
+   "robot": "panda",
+   "nominal": {
+    "n": 8,
+    "success": 0.75,
+    "causes": {
+     "jam": 1,
+     "crush_or_damage": 1
+    }
+   },
+   "probe_then_act": {
+    "n": 8,
+    "success": 1.0,
+    "causes": {}
+   },
+   "oracle": {
+    "n": 8,
+    "success": 0.875,
+    "causes": {
+     "crush_or_damage": 1
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 8,
+    "mean_ci": [
+     0.125,
+     0.0,
+     0.375
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 8,
+    "mean_ci": [
+     -0.125,
+     -0.375,
+     0.0
+    ]
+   }
+  },
+  {
+   "family": "cable_route",
+   "robot": "probe",
+   "nominal": {
+    "n": 8,
+    "success": 0.875,
+    "causes": {
+     "perception": 1
+    }
+   },
+   "probe_then_act": {
+    "n": 8,
+    "success": 1.0,
+    "causes": {}
+   },
+   "oracle": {
+    "n": 8,
+    "success": 0.875,
+    "causes": {
+     "perception": 1
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 8,
+    "mean_ci": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 8,
+    "mean_ci": [
+     -0.125,
+     -0.375,
+     0.0
+    ]
+   }
+  },
+  {
+   "family": "cable_route",
+   "robot": "ur5e_2f85",
+   "nominal": {
+    "n": 8,
+    "success": 0.875,
+    "causes": {
+     "perception": 1
+    }
+   },
+   "probe_then_act": {
+    "n": 8,
+    "success": 1.0,
+    "causes": {}
+   },
+   "oracle": {
+    "n": 8,
+    "success": 0.75,
+    "causes": {
+     "jam": 1,
+     "perception": 1
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 8,
+    "mean_ci": [
+     -0.125,
+     -0.375,
+     0.0
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 8,
+    "mean_ci": [
+     -0.25,
+     -0.625,
+     0.0
+    ]
+   }
+  },
+  {
+   "family": "handover",
+   "robot": "gen3_2f85",
+   "nominal": {
+    "n": 8,
+    "success": 0.875,
+    "causes": {
+     "tug_or_snatch": 1
+    }
+   },
+   "probe_then_act": {
+    "n": 8,
+    "success": 1.0,
+    "causes": {}
+   },
+   "oracle": {
+    "n": 8,
+    "success": 1.0,
+    "causes": {}
+   },
+   "oracle_minus_nominal": {
+    "n": 8,
+    "mean_ci": [
+     0.125,
+     0.0,
+     0.375
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 8,
+    "mean_ci": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "family": "handover",
+   "robot": "panda",
+   "nominal": {
+    "n": 8,
+    "success": 0.875,
+    "causes": {
+     "tug_or_snatch": 1
+    }
+   },
+   "probe_then_act": {
+    "n": 8,
+    "success": 1.0,
+    "causes": {}
+   },
+   "oracle": {
+    "n": 8,
+    "success": 1.0,
+    "causes": {}
+   },
+   "oracle_minus_nominal": {
+    "n": 8,
+    "mean_ci": [
+     0.125,
+     0.0,
+     0.375
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 8,
+    "mean_ci": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "family": "handover",
+   "robot": "probe",
+   "nominal": {
+    "n": 8,
+    "success": 0.625,
+    "causes": {
+     "tug_or_snatch": 1,
+     "grasp_miss": 2
+    }
+   },
+   "probe_then_act": {
+    "n": 8,
+    "success": 0.75,
+    "causes": {
+     "slip": 1,
+     "grasp_miss": 1
+    }
+   },
+   "oracle": {
+    "n": 8,
+    "success": 0.75,
+    "causes": {
+     "slip": 1,
+     "grasp_miss": 1
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 8,
+    "mean_ci": [
+     0.125,
+     0.0,
+     0.375
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 8,
+    "mean_ci": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "family": "handover",
+   "robot": "ur5e_2f85",
+   "nominal": {
+    "n": 8,
+    "success": 0.875,
+    "causes": {
+     "tug_or_snatch": 1
+    }
+   },
+   "probe_then_act": {
+    "n": 8,
+    "success": 1.0,
+    "causes": {}
+   },
+   "oracle": {
+    "n": 8,
+    "success": 1.0,
+    "causes": {}
+   },
+   "oracle_minus_nominal": {
+    "n": 8,
+    "mean_ci": [
+     0.125,
+     0.0,
+     0.375
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 8,
+    "mean_ci": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "family": "stack_overhang",
+   "robot": "gen3_2f85",
+   "nominal": {
+    "n": 8,
+    "success": 0.75,
+    "causes": {
+     "topple": 2
+    }
+   },
+   "probe_then_act": {
+    "n": 8,
+    "success": 0.5,
+    "causes": {
+     "topple": 3,
+     "perception": 1
+    }
+   },
+   "oracle": {
+    "n": 8,
+    "success": 0.875,
+    "causes": {
+     "topple": 1
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 8,
+    "mean_ci": [
+     0.125,
+     0.0,
+     0.375
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 8,
+    "mean_ci": [
+     0.375,
+     0.125,
+     0.75
+    ]
+   }
+  },
+  {
+   "family": "stack_overhang",
+   "robot": "panda",
+   "nominal": {
+    "n": 8,
+    "success": 0.75,
+    "causes": {
+     "topple": 2
+    }
+   },
+   "probe_then_act": {
+    "n": 8,
+    "success": 0.625,
+    "causes": {
+     "topple": 3
+    }
+   },
+   "oracle": {
+    "n": 8,
+    "success": 0.875,
+    "causes": {
+     "topple": 1
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 8,
+    "mean_ci": [
+     0.125,
+     0.0,
+     0.375
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 8,
+    "mean_ci": [
+     0.25,
+     0.0,
+     0.625
+    ]
+   }
+  },
+  {
+   "family": "stack_overhang",
+   "robot": "probe",
+   "nominal": {
+    "n": 8,
+    "success": 0.5,
+    "causes": {
+     "topple": 4
+    }
+   },
+   "probe_then_act": {
+    "n": 8,
+    "success": 0.75,
+    "causes": {
+     "budget": 1,
+     "topple": 1
+    }
+   },
+   "oracle": {
+    "n": 8,
+    "success": 0.625,
+    "causes": {
+     "topple": 3
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 8,
+    "mean_ci": [
+     0.125,
+     0.0,
+     0.375
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 8,
+    "mean_ci": [
+     -0.125,
+     -0.375,
+     0.0
+    ]
+   }
+  },
+  {
+   "family": "stack_overhang",
+   "robot": "ur5e_2f85",
+   "nominal": {
+    "n": 8,
+    "success": 0.75,
+    "causes": {
+     "topple": 2
+    }
+   },
+   "probe_then_act": {
+    "n": 8,
+    "success": 0.625,
+    "causes": {
+     "topple": 3
+    }
+   },
+   "oracle": {
+    "n": 8,
+    "success": 0.75,
+    "causes": {
+     "topple": 2
+    }
+   },
+   "oracle_minus_nominal": {
+    "n": 8,
+    "mean_ci": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "oracle_minus_probe_then_act": {
+    "n": 8,
+    "mean_ci": [
+     0.125,
+     -0.25,
+     0.5
+    ]
+   }
+  }
+ ],
+ "labels": {
+  "cable_route": "competence / generalization",
+  "handover": "competence / generalization",
+  "stack_overhang": "competence / generalization"
+ }
+}

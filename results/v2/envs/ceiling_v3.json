@@ -1,0 +1,590 @@
+{
+ "tag": "v3",
+ "table": [
+  {
+   "robot": "gen3_2f85",
+   "family": "cable_route",
+   "policy": "nominal",
+   "n": 8,
+   "success": 1.0,
+   "progress": 1.0,
+   "damaged": 0.0,
+   "calls": 1.0,
+   "wall_s": 12.6677805185318,
+   "tactile_per_pick": 8.0,
+   "causes": {
+    "success": 8
+   }
+  },
+  {
+   "robot": "gen3_2f85",
+   "family": "cable_route",
+   "policy": "oracle",
+   "n": 8,
+   "success": 1.0,
+   "progress": 1.0,
+   "damaged": 0.0,
+   "calls": 1.0,
+   "wall_s": 13.651762634515762,
+   "tactile_per_pick": 8.0,
+   "causes": {
+    "success": 8
+   }
+  },
+  {
+   "robot": "gen3_2f85",
+   "family": "cable_route",
+   "policy": "probe_then_act",
+   "n": 8,
+   "success": 1.0,
+   "progress": 1.0,
+   "damaged": 0.0,
+   "calls": 2.0,
+   "wall_s": 15.53883883357048,
+   "tactile_per_pick": 16.0,
+   "causes": {
+    "success": 8
+   }
+  },
+  {
+   "robot": "gen3_2f85",
+   "family": "handover",
+   "policy": "nominal",
+   "n": 8,
+   "success": 0.875,
+   "progress": 0.925,
+   "damaged": 0.0,
+   "calls": 1.875,
+   "wall_s": 1.5775008499622345,
+   "tactile_per_pick": 8.0,
+   "causes": {
+    "success": 7,
+    "tug_or_snatch": 1
+   }
+  },
+  {
+   "robot": "gen3_2f85",
+   "family": "handover",
+   "policy": "oracle",
+   "n": 8,
+   "success": 1.0,
+   "progress": 1.0,
+   "damaged": 0.0,
+   "calls": 2.0,
+   "wall_s": 1.7565227448940277,
+   "tactile_per_pick": 8.0,
+   "causes": {
+    "success": 8
+   }
+  },
+  {
+   "robot": "gen3_2f85",
+   "family": "handover",
+   "policy": "probe_then_act",
+   "n": 8,
+   "success": 1.0,
+   "progress": 1.0,
+   "damaged": 0.0,
+   "calls": 2.0,
+   "wall_s": 2.1314591765403748,
+   "tactile_per_pick": 8.0,
+   "causes": {
+    "success": 8
+   }
+  },
+  {
+   "robot": "gen3_2f85",
+   "family": "stack_overhang",
+   "policy": "nominal",
+   "n": 8,
+   "success": 0.75,
+   "progress": 0.8375,
+   "damaged": 0.0,
+   "calls": 6.125,
+   "wall_s": 5.3355607986450195,
+   "tactile_per_pick": 24.0,
+   "causes": {
+    "success": 6,
+    "topple": 2
+   }
+  },
+  {
+   "robot": "gen3_2f85",
+   "family": "stack_overhang",
+   "policy": "oracle",
+   "n": 8,
+   "success": 0.875,
+   "progress": 0.9333333333333333,
+   "damaged": 0.0,
+   "calls": 6.125,
+   "wall_s": 5.265334397554398,
+   "tactile_per_pick": 24.0,
+   "causes": {
+    "success": 7,
+    "topple": 1
+   }
+  },
+  {
+   "robot": "gen3_2f85",
+   "family": "stack_overhang",
+   "policy": "probe_then_act",
+   "n": 8,
+   "success": 0.5,
+   "progress": 0.7041666666666666,
+   "damaged": 0.0,
+   "calls": 12.0,
+   "wall_s": 8.354500383138657,
+   "tactile_per_pick": 48.0,
+   "causes": {
+    "topple": 3,
+    "success": 4,
+    "perception": 1
+   }
+  },
+  {
+   "robot": "panda",
+   "family": "cable_route",
+   "policy": "nominal",
+   "n": 8,
+   "success": 0.75,
+   "progress": 0.9375,
+   "damaged": 0.125,
+   "calls": 1.25,
+   "wall_s": 17.568132758140564,
+   "tactile_per_pick": 9.0,
+   "causes": {
+    "success": 6,
+    "jam": 1,
+    "crush_or_damage": 1
+   }
+  },
+  {
+   "robot": "panda",
+   "family": "cable_route",
+   "policy": "oracle",
+   "n": 8,
+   "success": 0.875,
+   "progress": 1.0,
+   "damaged": 0.125,
+   "calls": 1.125,
+   "wall_s": 14.479378491640091,
+   "tactile_per_pick": 8.0,
+   "causes": {
+    "success": 7,
+    "crush_or_damage": 1
+   }
+  },
+  {
+   "robot": "panda",
+   "family": "cable_route",
+   "policy": "probe_then_act",
+   "n": 8,
+   "success": 1.0,
+   "progress": 1.0,
+   "damaged": 0.0,
+   "calls": 2.125,
+   "wall_s": 20.860400676727295,
+   "tactile_per_pick": 16.0,
+   "causes": {
+    "success": 8
+   }
+  },
+  {
+   "robot": "panda",
+   "family": "handover",
+   "policy": "nominal",
+   "n": 8,
+   "success": 0.875,
+   "progress": 0.925,
+   "damaged": 0.0,
+   "calls": 1.875,
+   "wall_s": 1.7717112302780151,
+   "tactile_per_pick": 8.0,
+   "causes": {
+    "success": 7,
+    "tug_or_snatch": 1
+   }
+  },
+  {
+   "robot": "panda",
+   "family": "handover",
+   "policy": "oracle",
+   "n": 8,
+   "success": 1.0,
+   "progress": 1.0,
+   "damaged": 0.0,
+   "calls": 2.0,
+   "wall_s": 1.8670544624328613,
+   "tactile_per_pick": 10.0,
+   "causes": {
+    "success": 8
+   }
+  },
+  {
+   "robot": "panda",
+   "family": "handover",
+   "policy": "probe_then_act",
+   "n": 8,
+   "success": 1.0,
+   "progress": 1.0,
+   "damaged": 0.0,
+   "calls": 2.0,
+   "wall_s": 2.2658166587352753,
+   "tactile_per_pick": 8.0,
+   "causes": {
+    "success": 8
+   }
+  },
+  {
+   "robot": "panda",
+   "family": "stack_overhang",
+   "policy": "nominal",
+   "n": 8,
+   "success": 0.75,
+   "progress": 0.8375,
+   "damaged": 0.0,
+   "calls": 6.0,
+   "wall_s": 5.427172511816025,
+   "tactile_per_pick": 24.0,
+   "causes": {
+    "success": 6,
+    "topple": 2
+   }
+  },
+  {
+   "robot": "panda",
+   "family": "stack_overhang",
+   "policy": "oracle",
+   "n": 8,
+   "success": 0.875,
+   "progress": 0.9041666666666667,
+   "damaged": 0.0,
+   "calls": 6.0,
+   "wall_s": 5.634439080953598,
+   "tactile_per_pick": 24.0,
+   "causes": {
+    "success": 7,
+    "topple": 1
+   }
+  },
+  {
+   "robot": "panda",
+   "family": "stack_overhang",
+   "policy": "probe_then_act",
+   "n": 8,
+   "success": 0.625,
+   "progress": 0.8,
+   "damaged": 0.0,
+   "calls": 12.0,
+   "wall_s": 8.625750064849854,
+   "tactile_per_pick": 48.0,
+   "causes": {
+    "success": 5,
+    "topple": 3
+   }
+  },
+  {
+   "robot": "probe",
+   "family": "cable_route",
+   "policy": "nominal",
+   "n": 8,
+   "success": 0.875,
+   "progress": 0.875,
+   "damaged": 0.0,
+   "calls": 1.125,
+   "wall_s": 7.37285041809082,
+   "tactile_per_pick": 7.0,
+   "causes": {
+    "success": 7,
+    "perception": 1
+   }
+  },
+  {
+   "robot": "probe",
+   "family": "cable_route",
+   "policy": "oracle",
+   "n": 8,
+   "success": 0.875,
+   "progress": 0.875,
+   "damaged": 0.0,
+   "calls": 1.125,
+   "wall_s": 7.463771373033524,
+   "tactile_per_pick": 7.0,
+   "causes": {
+    "success": 7,
+    "perception": 1
+   }
+  },
+  {
+   "robot": "probe",
+   "family": "cable_route",
+   "policy": "probe_then_act",
+   "n": 8,
+   "success": 1.0,
+   "progress": 1.0,
+   "damaged": 0.0,
+   "calls": 2.25,
+   "wall_s": 13.542023181915283,
+   "tactile_per_pick": 16.0,
+   "causes": {
+    "success": 8
+   }
+  },
+  {
+   "robot": "probe",
+   "family": "handover",
+   "policy": "nominal",
+   "n": 8,
+   "success": 0.625,
+   "progress": 0.7749999999999999,
+   "damaged": 0.0,
+   "calls": 2.0,
+   "wall_s": 0.482502818107605,
+   "tactile_per_pick": 8.0,
+   "causes": {
+    "success": 5,
+    "tug_or_snatch": 1,
+    "grasp_miss": 2
+   }
+  },
+  {
+   "robot": "probe",
+   "family": "handover",
+   "policy": "oracle",
+   "n": 8,
+   "success": 0.75,
+   "progress": 0.8875,
+   "damaged": 0.0,
+   "calls": 2.125,
+   "wall_s": 0.5651517510414124,
+   "tactile_per_pick": 8.0,
+   "causes": {
+    "success": 6,
+    "slip": 1,
+    "grasp_miss": 1
+   }
+  },
+  {
+   "robot": "probe",
+   "family": "handover",
+   "policy": "probe_then_act",
+   "n": 8,
+   "success": 0.75,
+   "progress": 0.8875,
+   "damaged": 0.0,
+   "calls": 2.125,
+   "wall_s": 0.6496744751930237,
+   "tactile_per_pick": 8.0,
+   "causes": {
+    "success": 6,
+    "slip": 1,
+    "grasp_miss": 1
+   }
+  },
+  {
+   "robot": "probe",
+   "family": "stack_overhang",
+   "policy": "nominal",
+   "n": 8,
+   "success": 0.5,
+   "progress": 0.675,
+   "damaged": 0.0,
+   "calls": 6.0,
+   "wall_s": 1.8131297826766968,
+   "tactile_per_pick": 24.0,
+   "causes": {
+    "success": 4,
+    "topple": 4
+   }
+  },
+  {
+   "robot": "probe",
+   "family": "stack_overhang",
+   "policy": "oracle",
+   "n": 8,
+   "success": 0.625,
+   "progress": 0.7416666666666667,
+   "damaged": 0.0,
+   "calls": 6.0,
+   "wall_s": 1.8282648026943207,
+   "tactile_per_pick": 24.0,
+   "causes": {
+    "success": 5,
+    "topple": 3
+   }
+  },
+  {
+   "robot": "probe",
+   "family": "stack_overhang",
+   "policy": "probe_then_act",
+   "n": 8,
+   "success": 0.75,
+   "progress": 0.9314899698451882,
+   "damaged": 0.0,
+   "calls": 12.0,
+   "wall_s": 3.04472878575325,
+   "tactile_per_pick": 48.0,
+   "causes": {
+    "success": 6,
+    "budget": 1,
+    "topple": 1
+   }
+  },
+  {
+   "robot": "ur5e_2f85",
+   "family": "cable_route",
+   "policy": "nominal",
+   "n": 8,
+   "success": 0.875,
+   "progress": 0.875,
+   "damaged": 0.0,
+   "calls": 1.125,
+   "wall_s": 11.993742495775223,
+   "tactile_per_pick": 7.0,
+   "causes": {
+    "success": 7,
+    "perception": 1
+   }
+  },
+  {
+   "robot": "ur5e_2f85",
+   "family": "cable_route",
+   "policy": "oracle",
+   "n": 8,
+   "success": 0.75,
+   "progress": 0.8125,
+   "damaged": 0.0,
+   "calls": 1.25,
+   "wall_s": 12.994559794664383,
+   "tactile_per_pick": 8.0,
+   "causes": {
+    "jam": 1,
+    "success": 6,
+    "perception": 1
+   }
+  },
+  {
+   "robot": "ur5e_2f85",
+   "family": "cable_route",
+   "policy": "probe_then_act",
+   "n": 8,
+   "success": 1.0,
+   "progress": 1.0,
+   "damaged": 0.0,
+   "calls": 2.375,
+   "wall_s": 20.547237157821655,
+   "tactile_per_pick": 17.0,
+   "causes": {
+    "success": 8
+   }
+  },
+  {
+   "robot": "ur5e_2f85",
+   "family": "handover",
+   "policy": "nominal",
+   "n": 8,
+   "success": 0.875,
+   "progress": 0.925,
+   "damaged": 0.0,
+   "calls": 1.875,
+   "wall_s": 1.8958684206008911,
+   "tactile_per_pick": 8.0,
+   "causes": {
+    "success": 7,
+    "tug_or_snatch": 1
+   }
+  },
+  {
+   "robot": "ur5e_2f85",
+   "family": "handover",
+   "policy": "oracle",
+   "n": 8,
+   "success": 1.0,
+   "progress": 1.0,
+   "damaged": 0.0,
+   "calls": 2.0,
+   "wall_s": 1.8620981574058533,
+   "tactile_per_pick": 8.0,
+   "causes": {
+    "success": 8
+   }
+  },
+  {
+   "robot": "ur5e_2f85",
+   "family": "handover",
+   "policy": "probe_then_act",
+   "n": 8,
+   "success": 1.0,
+   "progress": 1.0,
+   "damaged": 0.0,
+   "calls": 2.0,
+   "wall_s": 2.182659685611725,
+   "tactile_per_pick": 8.0,
+   "causes": {
+    "success": 8
+   }
+  },
+  {
+   "robot": "ur5e_2f85",
+   "family": "stack_overhang",
+   "policy": "nominal",
+   "n": 8,
+   "success": 0.75,
+   "progress": 0.8083333333333333,
+   "damaged": 0.0,
+   "calls": 6.0,
+   "wall_s": 7.178664207458496,
+   "tactile_per_pick": 24.0,
+   "causes": {
+    "success": 6,
+    "topple": 2
+   }
+  },
+  {
+   "robot": "ur5e_2f85",
+   "family": "stack_overhang",
+   "policy": "oracle",
+   "n": 8,
+   "success": 0.75,
+   "progress": 0.8083333333333333,
+   "damaged": 0.0,
+   "calls": 6.0,
+   "wall_s": 5.2933617532253265,
+   "tactile_per_pick": 24.0,
+   "causes": {
+    "success": 6,
+    "topple": 2
+   }
+  },
+  {
+   "robot": "ur5e_2f85",
+   "family": "stack_overhang",
+   "policy": "probe_then_act",
+   "n": 8,
+   "success": 0.625,
+   "progress": 0.7708333333333333,
+   "damaged": 0.0,
+   "calls": 12.0,
+   "wall_s": 8.241883963346481,
+   "tactile_per_pick": 48.0,
+   "causes": {
+    "success": 5,
+    "topple": 3
+   }
+  }
+ ],
+ "best_oracle": {
+  "gen3_2f85/cable_route": "oracle",
+  "gen3_2f85/handover": "oracle",
+  "gen3_2f85/stack_overhang": "oracle",
+  "panda/cable_route": "probe_then_act",
+  "panda/handover": "oracle",
+  "panda/stack_overhang": "oracle",
+  "probe/cable_route": "probe_then_act",
+  "probe/handover": "oracle",
+  "probe/stack_overhang": "probe_then_act",
+  "ur5e_2f85/cable_route": "probe_then_act",
+  "ur5e_2f85/handover": "oracle",
+  "ur5e_2f85/stack_overhang": "oracle"
+ }
+}

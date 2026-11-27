@@ -917,6 +917,179 @@ MODEL-V2 labels unbreakable parts as crush_n = 500 N (instead of inf) for traini
    run_skill) and tell us its name/params here.
 3. r3 adapter notes above (suction unreachable, UR5e door/peg) still apply to the r3 data.
 
+## envs-v3: new physical domains for the V3 general model (agent ENVS-V3, branch / tag `envs-v3`)
+
+Why: V3 hypothesis H4 (docs/V3_GENERAL.md) needs deformables, liquids, granular media, stacking, legged contact and
+handover with hidden per-object / per-lot physics. envs-v3 = envs-r7.1 + seven new families; **every older family is
+unchanged** (their scene builders are untouched; the only shared-code edits are additive hooks, listed below).
+ENV_VERSION "envs-v3". Code: `envs/v3_motion.py`, `envs/families_v3_common.py`, `families_v3_media.py` (pour,
+granular_dose), `families_v3_deform.py` (cloth_fold, cable_route), `families_v3_rigid.py` (stack_overhang,
+handover), `families_v3_g1.py` (g1_push_terrain). Scripts: `envs_v3_dev.py` (one episode + contact sheet),
+`envs_v3_sens.py` (fixed-policy sweeps), `envs_v3_calibrate.py` (calibrated oracle), `envs_v3_queue.sh` (one-process
+gb10 queue); ceilings with the existing `envs_ceiling.py` (tag `v3`). Tests `tests/test_envs_v3.py`.
+
+### Contract (same as r7)
+* Actor-legal events only (tracker POSE3 / SIZE / SHAPE, proprio, wrist F/T, tactile, CAD REGIONs). Hidden physics in
+  `labels.hidden` / `labels.task_hidden` only; `metrics` carry family extras (`x_*`, poured_kg, fold_err, ...).
+* **New sensor: load-cell scale** (pour, granular_dose): the receiving container sits on a stiff vertical slide joint
+  (8 kN/m); the reading is the spring force from the joint deflection, tared after the reset settle, emitted as
+  `Prop.MASS` on entity `scale/receiver` (source `scale`, 25 Hz, latency 40-70 ms, sigma 1-2 g). It measures the
+  container's contents physically, so it is actor-legal (it is not a read of the particles' state).
+* **Particle media are not entities**: no per-particle events (the actor sees the scale, its own F/T and the tracked
+  vessel). A particle blow-up monitor (non-finite / faster than 6 m/s) marks the episode unstable.
+* Oracle = `envs/oracle.py::rule(env, call, 'true')`, which now delegates to `env.v3_rule` for v3 families
+  (closed-form rules: stacking COM plan, handover release timing, cable grip window, G1 force cap; CALIBRATED rules:
+  pour, granular_dose, cloth_fold - see below). Probe-then-act = `env.probe_then_act`.
+* Failure taxonomy (`envs_ceiling.py::CAT`) extended with the v3 skill statuses: toppled -> topple, tugged /
+  tug_hold -> tug_or_snatch, foot_slip, stalled -> jam, unsupported.
+
+### Shared-code changes (additive; older families' behaviour unchanged)
+* `StationEnv.execute`: a SkillCall whose skill has an env method `fsk_<skill>` runs it through
+  `v3_motion.run_family_skill` (effort metering like the robot skill runners); otherwise unchanged.
+* `oracle.rule`: `if hasattr(env, "v3_rule"): return env.v3_rule(call, src)` (no older family has v3_rule).
+* `envs_ceiling.py::CAT`: new status keys only.
+* `v3_motion.ProbeTiltRobot` (TEST-ONLY): the probe gantry + ONE wrist tilt hinge about the hand x axis through the TCP
+  (20 N m, PD + min-jerk). Used only by v3 families that tilt (pour, granular_dose); the r7 `ProbeRobot` is untouched.
+* `v3_motion.Motion`: task-space move with yaw + tilt for the probe and the real arms (ROBOTS controller with a full
+  orientation target; IK reachability checked per move), grip / open / holding / wrist F/T median from the EMITTED
+  event stream. Fix found on the way: after a light squeeze the 2F-85 drive force is tiny ((F - 3 N) / 9.07) and the
+  linkage did not reopen - `Motion.open` restores full drive effort before opening.
+
+### Families (7; category "v3"; probe-then-act (PTA) = actor-legal probe or reactive variant; oracle = TRUE hidden physics)
+
+| family | task (success predicate) | hidden per object / lot | decision the hidden physics changes | PTA (actor-legal) | oracle |
+|---|---|---|---|---|---|
+| cable_route | pinch the connector plug at the end of a 0.6 m cable, carry it low round a 4 cm post on the robot side, push it into a horizontal panel socket with a spring latch (seated >= 70 % of 20 mm, cable winding about the post > 1 rad, released) | bend stiffness 0.003-0.2 N m/rad per 3 cm joint (EI 1e-4-6e-3 N m2), joint damping, mass/length, plug grip friction, socket clearance 1-1.8 mm/side, connector housing crush limit 10-22 N (50 % fragile) | grip force window [cable pull-back need, crush], wrap radius | light 4 N squeeze -> tactile stiffness -> crush estimate (r6 mechanism) -> grip <= 0.7 x estimate | closed form: grip 12 + 20 x k (cap 18 N, <= 0.7 crush), wrap 8-10 cm |
+| cloth_fold | diagonal fold: tab corner within 3 cm of the opposite corner 2 s after release, far corner moved < 4 cm, cloth on the bench | shell thickness 0.3-1.5 mm at Young 2e5-1e6 Pa (bending), cloth<->bench friction 0.25-1.0, areal mass | lift / arc / overshoot / press-and-dwell of the fold (spring-back of stiff cloth, dragging of slippery cloth) | none implemented (reported as nominal) | CALIBRATED (8-candidate grid, 4 bins thickness x friction) |
+| pour | pour the stated 40-90 g from an opaque, lidded, spouted vessel into the container on the scale (+-15 g, spill <= 10 g, vessel back upright at home) | fill 40-80 spheres x 1.6-2.8 g (opaque), viscosity proxy = per-sphere drag 0.001-0.05 N s/m | tilt rate, pre-tilt, stop lead (material in flight / on the lip after the scale says stop) | weigh the vessel on the wrist F/T after the lift -> fill bin -> calibrated params of that bin | CALIBRATED (12 candidates, 4 bins fill x drag) |
+| granular_dose | dose 40-90 g of grains from a spouted scoop into the container on the scale (same predicate as pour) | grain friction 0.1-0.8 (arching / clogging over the 4 cm spout above ~0.3), radius 4.5-6.5 mm, density, fill | tapping (tilt oscillation) amplitude, tap only when stalled, stop lead | reactive tapping: tap only while the scale shows no flow for 1 s | CALIBRATED (10 candidates, 4 bins friction x size) |
+| stack_overhang | stack 3 blocks (10 x 5 x 4 cm) on a pedestal so the top block overhangs the edge by D (0.55-0.72 L); stands 3 s after the last release | per block mass 0.15-0.8 kg and ballast COM offset +-15 mm along the long axis, friction | each level's offset beyond the support (greedy COM-over-support plan with >= 5 mm margins) | weigh pass: lift each block once, wrist F/T force -> mass, torque / force -> COM offset; plan with the estimates | closed form: the same plan with the TRUE masses / COMs |
+| handover | take a tool from a scripted kinematic human PROXY and put it in a tote; the horizontal force on the proxy's hand stays <= 15 N and the tool is never pulled > 1 cm through its still-closed fingers | proxy release mode (timed / pull-triggered, 50/50), delay 0.3-2.0 s, pull threshold 2-9 N, proxy grip 15-30 N, tool mass 0.2-0.9 kg | wait before pulling vs pull to trigger the release | compliant pull: advance while the wrist F/T horizontal force < 8 N, else back off and wait | closed form: timed -> wait tau + 0.25 s then pull; pull-triggered -> pull at once |
+| g1_push_terrain | G1 + Dex3 (floating base, ROBOTS whole-body QP, standing only) pushes a box 6 cm along the bench without falling and without either foot sliding > 2 cm | floor friction 0.08-0.9 and compliance (solref 5-30 ms) under the feet; box mass 1-4 kg x friction 0.3-0.5 (push 3-20 N) | hand force cap vs the feet's friction capacity, push speed, the QP's assumed friction | force ramp: cap 15 N +15 N per retry, QP mu 0.4 | closed form: cap 1.4 x need (<= 0.6 mu W), QP mu 0.8 x true mu, slow on soft floors |
+
+**Calibrated oracle** (pour, granular_dose, cloth_fold): `scripts/envs_v3_calibrate.py` runs every candidate of the
+family's CAL_GRID on CALIBRATION seeds (train bucket from 2,000,000 - disjoint from the ceiling's test-bucket seeds from
+1,700,000) and stores, per hidden-physics bin of the TRUE values, the candidate with the best success (ties: progress,
+then the lower index) in `results/v2/envs/v3_oracle_<family>.json`. The oracle looks up the true bin; 'prior' = the
+best candidate over all bins; PTA = the bin of its actor-legal estimate. Calibrated on the probe (cloth also on the
+UR5e); other robots fall back to the probe table (labelled in the ceiling table). This is a per-bin best-of-grid
+ceiling, not an optimum: a finer grid could raise it.
+
+### Task changes and design decisions made during the build (all before any ceiling or model run)
+* **granular scoop -> granular_dose.** The planned dustpan / cup scoop through a grain bed was built and dropped:
+  with 6-9 mm grains (~180 in the bin) the scoop ran ~20x slower than real time (about 20 min per episode on the
+  local CPU); with 8-11 mm pellets it collected ~0-20 g per scoop (grains as large as the pan's walls roll off). The
+  family now doses grains out of the spouted scoop (same vessel / scale as pour); the granular physics that matters
+  (arching / clogging of frictional grains over an outlet of 3-4.5 grain diameters, Beverloo-type flow) is in play and
+  the decision is tapping. Hidden: grain friction, size, density, fill.
+* **pour liquid = frictionless spheres + drag.** Frictional spheres (mu 0.1-0.5) clogged the 3-4 cm spout (that is the
+  granular regime, now in granular_dose) and the elliptic friction cones made them 3-5x slower; the liquid is
+  frictionless (condim 1), with per-sphere linear drag as the viscosity proxy. An open (lid-less) cylinder poured as
+  one avalanche; the lid with a 4 cm spout makes the flow controllable. Fill <= 80 spheres (more overfilled the lid).
+* **cable_route:** the open-top channel ("lay the cable into a clip") prototype was unreliable (the trailing cable rode
+  over the walls or stayed slack whatever the path) and was replaced by a topological route round a 4 cm post (a
+  winding-angle check). Without retention a stiff cable (> 0.1 N m/rad) pulled the seated plug back out after release,
+  whatever the route; the socket got a spring latch (real connectors latch). Then the hidden stiffness hardly changed
+  the outcome on the probe / UR5e (a 15 N pinch held at every stiffness), so a 50 % fragile connector housing (crush
+  10-22 N) was added: the decision is the grip window. 2 ms steps gave solver blow-ups (badqacc) with the 2F-85
+  pinching the chain end -> 1 ms. The plug is pinched 17 mm behind its centre so 39 mm of it lead the fingers (the
+  fingers hit the panel otherwise).
+* **cloth_fold:** the fold is a dedicated skill (low carry along the tracked diagonal, optional arc, overshoot, press /
+  dwell); the r7 pick / place lifted the corner to the 30 cm safe height and dragged the whole cloth. The pull tab
+  (12 g, 8 x 24 x 25 mm fin) is a labelled simplification; a 4 g tab was pushed aside by the first finger to touch
+  it. Thickness 0.3-1.5 mm (3 mm was cardboard-like and went unstable in 1 of 3 seeds); bench friction 0.25-1.0
+  (0.15 slid as a sheet under any carry). MuJoCo 4 integrates flex elasticity only with Euler / discrete: the family
+  sets Euler. Success tolerance on the far corner 4 cm (3 cm failed every slippery cloth for every policy).
+* **stack_overhang:** target overhang D = 0.55-0.72 L (0.45-0.65 L let the uniform-block plan pass 0.81 of the time).
+* **handover:** the proxy hand is welded to its mocap driver at 20 kN/m (direct-form solref) with gravity
+  compensation (a 4 ms soft weld let the hand sag 5 cm and follow the pull); the tug is the weld's horizontal force
+  minus its pre-grasp average; the tool's free end is grasped at its TRACKED 3-D position (it droops 15-25 degrees in
+  the proxy's pinch); the tote sits clear of the pull path.
+* **g1_push_terrain:** box mass 1-4 kg (2-8 kg pushes toppled the 35 kg robot whatever the floor); floor compliance
+  5-30 ms (2 ms made the QP-balanced G1 chatter and fall even at mu 0.8).
+
+### Physically limited / flagged (read before using a family)
+* **pour is not fluid dynamics** (module docstring of `families_v3_media.py`): frictionless spheres + world-frame drag
+  through a spout lid. No surface tension, splashing, wetting or true viscous shear; the drag also slows the falling
+  stream. Use it as "pouring a flowable medium"; one sphere = 1.6-3 g quantisation.
+* **granular_dose is a dosing task, not scooping** (see task changes). Coarse grains (4.5-6.5 mm) for cost.
+* **cloth_fold uses a rigid pull tab** on one corner (a hemmed / clipped corner), and a 9 x 9 vertex shell; Panda's
+  fingers cannot pinch the 8 mm fin reliably (gripper-limited, see the ceiling).
+* **cable_route's cable is a capsule chain with ball-joint springs** (a discrete elastic rod, not MuJoCo's cable
+  plugin); torsion is not modelled separately; 1 ms steps. Stiffness is weakly decision-relevant on its own.
+* **handover's human is a scripted kinematic proxy** (mocap-welded hand, force-controlled finger pads, visual-only arm
+  in geom group 2 so it never occludes the tracker): a rule with hidden parameters, not a model of people.
+* **g1_push_terrain**: standing balance only (ROBOTS' G1 has no walking); the floating G1 falls in a large share of
+  episodes for EVERY policy (QP balance under a hand push on stiff / slippery floors), so its ceiling is
+  controller-limited; the fixed-base G1 is a control on which the floor is irrelevant by construction. Feet contact =
+  MuJoCo soft point contacts on the ankle collision spheres (explicit pairs with the hidden friction / solref).
+* Evaluator-side predicates read true state (particle positions, flex vertices, foot positions, weld force); none of
+  it is emitted as events.
+
+### v3.1 changes after the lead's value-of-latent feedback (2026-11-27; ONE physically honest change per family)
+stack_overhang: ballast COM offset up to +-45 % of the half length (was +-30 %), D 0.6-0.75 L. handover: proxy
+release delay 0.3-3.0 s (was 0.3-2.0; a 10 N tug limit was tried and rejected - the grasp itself loads the proxy
+8-10 N, so every policy failed). cable_route: bend stiffness to 0.4 N m/rad (thick power cords). cloth_fold:
+thickness 0.6-1.6 mm (heavier fabrics; 2.2 mm was tried: nobody folds it), recalibrated on 24 (probe) / 12 (UR5e)
+seeds. granular_dose: 5 cm spout (with 4 cm every tapping / lead candidate tied: no lever). g1_push_terrain: a 5 kg
+box was tried and did not help (reverted). Older v3 rows (tag `v3`, n = 8) are kept as the pre-change record.
+
+### Status at 2026-11-27 (in flight)
+**Ceiling table so far** (tag `v31`, n = 20 seeds per cell, site-dressed, paired by seed; 95 % bootstrap CIs over
+seeds; `results/v2/envs/ceiling_v31_vol.{md,json}`, rows `ceiling_v31_rows.jsonl`, built by
+`scripts/envs_v3_table.py v31`). Label rule (lead): "decision-relevant" if oracle - nominal >= 0.15 on some robot,
+else "competence / generalization". cloth_fold has no PTA (no actor-legal probe implemented). granular_dose is NOT in
+the table yet (calibration running).
+
+| family | robot | n | nominal | PTA | oracle | oracle - nominal [95% CI] | oracle - PTA [95% CI] | oracle failures | nominal failures | label |
+|---|---|---|---|---|---|---|---|---|---|---|
+| cable_route | gen3_2f85 | 20 | 0.90 | 0.90 | 0.90 | +0.00 [-0.15, +0.15] | +0.00 [-0.15, +0.15] | jam 2 | jam 1, crush_or_damage 1 | competence / generalization |
+| cable_route | panda | 20 | 0.55 | 0.65 | 0.60 | +0.05 [-0.10, +0.20] | -0.05 [-0.20, +0.10] | crush_or_damage 5, jam 2, slip 1 | crush_or_damage 6, jam 2, slip 1 | competence / generalization |
+| cable_route | probe | 20 | 0.70 | 0.75 | 0.75 | +0.05 [+0.00, +0.15] | +0.00 [-0.15, +0.15] | jam 4, perception 1 | jam 3, crush_or_damage 2, perception 1 | competence / generalization |
+| cable_route | ur5e_2f85 | 20 | 0.85 | 0.90 | 0.80 | -0.05 [-0.15, +0.00] | -0.10 [-0.25, +0.00] | jam 3, perception 1 | perception 1, jam 1, crush_or_damage 1 | competence / generalization |
+| cloth_fold | gen3_2f85 | 20 | 0.45 | - | 0.55 | +0.10 [+0.00, +0.25] | - | slip 9 | slip 11 | competence / generalization |
+| cloth_fold | panda | 20 | 0.00 | - | 0.00 | +0.00 [+0.00, +0.00] | - | grasp_miss 18, perception 2 | grasp_miss 18, perception 2 | competence / generalization |
+| cloth_fold | probe | 20 | 0.55 | - | 0.50 | -0.05 [-0.30, +0.20] | - | place_miss_or_predicate 8, perception 2 | place_miss_or_predicate 8, perception 1 | competence / generalization |
+| cloth_fold | ur5e_2f85 | 20 | 0.50 | - | 0.50 | +0.00 [+0.00, +0.00] | - | slip 7, perception 2, grasp_miss 1 | slip 7, perception 2, grasp_miss 1 | competence / generalization |
+| g1_push_terrain | g1_dex3 | 20 | 0.20 | 0.10 | 0.15 | -0.05 [-0.15, +0.00] | +0.05 [-0.10, +0.20] | foot_slip 9, jam 4, perception 2, collision 2 | collision 7, foot_slip 6, perception 2, jam 1 | competence / generalization |
+| g1_push_terrain | g1_dex3_fixed | 20 | 1.00 | 1.00 | 1.00 | +0.00 [+0.00, +0.00] | +0.00 [+0.00, +0.00] |  |  | competence / generalization |
+| handover | gen3_2f85 | 20 | 0.75 | 1.00 | 1.00 | +0.25 [+0.10, +0.45] | +0.00 [+0.00, +0.00] |  | tug_or_snatch 5 | decision-relevant |
+| handover | panda | 20 | 0.65 | 0.85 | 0.80 | +0.15 [-0.05, +0.35] | -0.05 [-0.20, +0.10] | collision 2, slip 1, tug_or_snatch 1 | tug_or_snatch 6, slip 1 | decision-relevant |
+| handover | probe | 20 | 0.35 | 0.70 | 0.75 | +0.40 [+0.20, +0.60] | +0.05 [+0.00, +0.15] | grasp_miss 3, slip 2 | grasp_miss 6, tug_or_snatch 4, slip 2, place_miss_or_predicate 1 | decision-relevant |
+| handover | ur5e_2f85 | 20 | 0.55 | 1.00 | 1.00 | +0.45 [+0.25, +0.65] | +0.00 [+0.00, +0.00] |  | tug_or_snatch 9 | decision-relevant |
+| pour | gen3_2f85 | 20 | 0.00 | 0.00 | 0.00 | +0.00 [+0.00, +0.00] | +0.00 [+0.00, +0.00] | place_miss_or_predicate 20 | place_miss_or_predicate 20 | decision-relevant |
+| pour | panda | 20 | 0.05 | 0.10 | 0.05 | +0.00 [-0.15, +0.15] | -0.05 [-0.15, +0.00] | place_miss_or_predicate 11, slip 5, grasp_miss 3 | place_miss_or_predicate 11, slip 5, grasp_miss 3 | decision-relevant |
+| pour | probe | 20 | 0.20 | 0.65 | 0.80 | +0.60 [+0.40, +0.80] | +0.15 [-0.05, +0.35] | place_miss_or_predicate 4 | place_miss_or_predicate 16 | decision-relevant |
+| pour | ur5e_2f85 | 20 | 0.60 | 0.55 | 0.55 | -0.05 [-0.30, +0.20] | +0.00 [-0.20, +0.20] | place_miss_or_predicate 9 | place_miss_or_predicate 8 | decision-relevant |
+| stack_overhang | gen3_2f85 | 20 | 0.45 | 0.20 | 0.60 | +0.15 [+0.00, +0.30] | +0.40 [+0.15, +0.65] | place_miss_or_predicate 5, topple 3 | topple 11 | decision-relevant |
+| stack_overhang | panda | 20 | 0.20 | 0.05 | 0.45 | +0.25 [+0.10, +0.45] | +0.40 [+0.20, +0.60] | topple 8, place_miss_or_predicate 3 | topple 15, perception 1 | decision-relevant |
+| stack_overhang | probe | 20 | 0.15 | 0.45 | 0.55 | +0.40 [+0.20, +0.60] | +0.10 [-0.15, +0.35] | place_miss_or_predicate 5, topple 4 | topple 15, perception 2 | decision-relevant |
+| stack_overhang | ur5e_2f85 | 20 | 0.15 | 0.15 | 0.50 | +0.35 [+0.15, +0.55] | +0.35 [+0.10, +0.60] | place_miss_or_predicate 5, topple 4, perception 1 | topple 15, perception 2 | decision-relevant |
+
+Honest read of the table:
+* **Decision-relevant (the hidden physics changes the best action):** stack_overhang (oracle - nominal +0.15 to
+  +0.40 on every robot; the F/T weigh-pass PTA reaches the oracle only on the probe), handover (+0.15 to +0.45; the
+  reactive compliant-pull PTA matches the oracle), pour on the PROBE only (+0.60; mostly the calibrated stop lead -
+  the arms fail the task for every policy: Gen3 0 / 20, Panda 1 / 20, UR5e ~0.55 with no gain).
+* **Competence / generalization (latent barely matters with these skills):** cable_route (stiffness / crush window:
+  +-0.05), cloth_fold (the v3.1 thickness change did not produce a gap at n = 20: probe 0.55 vs 0.50; Panda 0 / 20 -
+  its fingers cannot pinch the tab), g1_push_terrain (floating G1 0.10-0.20 for every policy: falls / foot slip -
+  controller-limited; fixed-base control 1.0 for every policy, floor irrelevant by construction).
+
+**Running on gb10-direct** (one niced queue in `~/dynagraph_envs_v3`; queue pid in `logs/v3_queue3.pid` = 2078781,
+log `logs/v3_queue3.log`, steps `logs/steps3.txt`; each step = an idle python parent + ONE Pool worker): step
+`envs_v3_calibrate.py granular_dose probe 16 1` (started 08:21Z; rows so far in
+`results/v2/envs/v3_cal_granular_dose_rows.PARTIAL.jsonl` locally), then queued:
+`envs_ceiling.py v31 probe,ur5e_2f85 granular_dose 20 nominal,probe_then_act,oracle 1`, the stability scan
+(`envs_v3_stability.py` x 3: probe 10 seeds x 6 families, UR5e 5 x 5, G1 10), the stills (`envs_v3_stills.py`, 7 frames sets).
+
+**Remaining before the envs-v3 freeze / tag:** (1) granular_dose calibration + n = 20 ceiling finish; rebuild
+`ceiling_v31_vol.md`; (2) stability scan + stills finish and are fetched (`results/v2/envs/v3_stability_*.json`,
+`v3_stills/`); (3) fill this section's final table and the stability numbers; (4) freeze: tag `envs-v3` on the final
+commit, make `~/dynagraph_envs_v3/src` read-only and record its sources sha256 here; (5) RESEARCH_LOG freeze entry +
+report to the lead. Superseded / partial files: `_superseded_cloth_cal/` (80 KB, tab-orientation bug),
+`_superseded_granular_dose_4cm_spout/`, `v3_cal_granular_dose_rows.PARTIAL.jsonl` - each labelled.
+
 ## What failed / limitations (honest list)
 * connector_insert: clearance now changes the fixed-action outcome monotonically (.33 -> .67) but friction does not;
   machine_tending's vise clearance effect is weak (.83 -> 1).
