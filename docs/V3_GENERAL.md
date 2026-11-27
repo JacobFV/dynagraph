@@ -5,6 +5,46 @@ lines: sprint compact, v2 synthetic, v2 stations and Inkling System I. V3 merges
 adds passive third-person observation, new physical domains and human bodies, and every claim is tested with
 held-out domains.
 
+## 0. Centerpiece (added 2026-11-26 after the PI's external audit; takes priority over breadth)
+
+The PI's original thesis: the looped core of Inkling-2-Mini is a semi-editable, semantically structured variable
+store (key = entity × property class, value = current belief, with recency-normalized writes). Recurrent attention
+updates it according to rigid-body, Coulomb static/dynamic friction, Hookean elasticity and an indeterminacy-aware
+model of other agents. Anchors are added, updated and removed, with availability masks. The anchors are:
+- retrospective annotations;
+- real-time linear-probe estimates from encoder features;
+- simulator insider state (training only);
+- digital-twin and golden sensors (IMU, joint encoders, camera SE(3), contact points, tracked centroids).
+
+Property identity is reached by traversing the interaction graph from those anchors (SE(3) chains plus
+property-class identifiers).
+
+The audit and our own code agree on what is missing (`models/inkling.py:494`: readout reuses the pre-loop typed
+estimates; losses constrain only final predictions):
+1. **Explicit per-pass typed belief state.** Each pass k decodes, updates and writes back named physical beliefs
+   (poses, velocities, contact modes, parameters, uncertainty, anchor provenance), and the next pass reads them.
+   Refinement depth k is kept separate from physical time t. Candidate actions and horizons enter the loop.
+2. **Law regularization on intermediate states**, not only on outputs: Newton–Euler/contact consistency,
+   friction cone, Hooke, plus supervision of intermediate physical consistency and final prediction.
+3. **The acceptance test is causal, not decodability:** change one named property, and the intermediate estimates,
+   future motion, chosen action and realized outcome must change as physics says. Also test anchor removal,
+   delayed evidence, graph-edge blocking and held-out chain lengths.
+4. **Architectural separation under matched observations, labels, planner and budget:**
+   - current v1;
+   - explicit per-pass updates;
+   - the same without law regularization;
+   - v2/classical estimation plus analytic physics.
+
+   Add relation and recurrence ablations, and the pretrained vs random-init core (already started: offline ≈ equal).
+5. **Strongest practical comparator for lot memory:** a classical estimator that probes once, caches the lot estimate
+   and uses the same planner and risk rule.
+6. **One identifiable family first:** a small contact chain with hidden mass and friction, a fixed-force excitation, a
+   post-release slide, an optional spring, and sparse pose anchors. Then transfer it to one competent G1 skill and
+   show evidence → revised belief → different action → better outcome with the controller held fixed.
+7. **Modalities:** force/touch is one channel among vision, third-person tracks, proprioception, digital-twin anchors
+   and other agents. The PI's bar is general real-world performance, so every track must say how its claim reaches
+   real data (EXT real human-object datasets; real video benchmarks; a real-robot pathway if hardware becomes available).
+
 ## Hypotheses (each will be pre-registered in its track section before any test run)
 - **H1 (unification):** one model trained on all domains is within a small tolerance of each single-domain
   specialist on that domain's test split. The tolerance is set in the pre-registration.

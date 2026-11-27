@@ -1,5 +1,12 @@
-We study whether a robot that keeps an explicit, typed memory of the hidden physics of the things it
-handles (mass, friction, crush limit, clearance) makes better manipulation decisions than one that does not.
+General real-world manipulation depends on physical properties that no single sensor reveals: mass,
+friction, elasticity, crush limits, clearances, and the intentions of other agents. A robot has to infer
+these by combining vision, third-person observation, proprioception, force and touch, and digital-twin anchors
+(joint encoders, IMUs, tracked poses). Our thesis is that a looped transformer can hold these as an explicit,
+interpretable, editable physical belief state, a typed variable store whose recurrent attention updates obey
+rigid-body, friction and elasticity structure and is shared across modalities, embodiments and tasks.
+This paper reports the first steps toward that goal. Only a subset of modalities has been evaluated so far:
+actor-legal force/pose interaction series, entity states and a scalar visual material reading. Third-person
+keypoint tracks, human hand and body observation, and further physical domains are in progress.
 We build (i) a typed, versioned, causal property-graph memory with provenance and an actor/evaluator
 boundary, (ii) a 2.28\,M-parameter world model whose interaction history reaches the outcome head only through
 readable, overwritable typed slots, (iii) uncertainty-aware planners that deviate from a scripted skill only

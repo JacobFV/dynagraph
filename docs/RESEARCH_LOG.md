@@ -100,3 +100,21 @@ entries that point back to the entry they correct.
        Generalization evidence: held-out robot positive (typed vs generic +0.14), held-out family negative.
   - **PI decision: "yes, let's do that path and all those other areas", and document everything internally.**
   - Plan: `V3_GENERAL.md`. Tracks V3-MODEL, ENVS-V3 and EXT start now, alongside round 6 and the INKLING closed loop.
+- **PI comment + external audit (2026-11-26, late):**
+  - The PI said force sensing must not be the only emphasised modality. We should be doing everything we set out
+    to explore. What ultimately matters is general real-world performance.
+  - The PI shared an external audit of `main@037bc57`. Its key finding, verified by the lead at
+    `models/inkling.py:494`: the recurrent loop does not expose or write back named physical states; the readout
+    reuses pre-loop typed estimates; physics losses constrain outputs only. Its other points:
+    - v2's causal physical dependence comes largely from analytic features;
+    - typed vs generic measures the whole package;
+    - the lot-memory result lacks a classical cached-estimator comparator;
+    - frames are SE(2) only;
+    - visual "material" is a noisy sim scalar;
+    - no other-agent model;
+    - sys1/sys2 code is not yet public.
+  - Decisions:
+    - Abstract (paper + README) rewritten around the multi-modal thesis, with an honest "distance to thesis" section.
+    - `V3_GENERAL.md` §0 makes the per-pass typed belief state the V3-MODEL priority.
+    - MODEL round 6 gets the cached classical estimator added before its §13a freeze, if the freeze hasn't happened.
+    - INKLING code is published when its run completes.

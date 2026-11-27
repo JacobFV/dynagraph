@@ -13,20 +13,46 @@
 
 ## Abstract
 
-Industrial manipulation fails on properties a camera cannot see: how hard a part can be squeezed before it
-cracks, how much a snap fit resists, how slippery a lot of pouches is. Robots learn these properties through
-contact, and parts in one production lot share them. We study whether a robot that keeps a **typed,
-versioned, causal property-graph memory** of such properties, and refines it recurrently with a learned world
-model, makes better decisions than robots with generic (untyped) memory, no memory, or a fixed scripted policy.
-The memory stores immutable evidence events with explicit revisions, causal availability, duplicate
-suppression and provenance. It rejects privileged simulator labels at the actor boundary. A world model reads
-that memory, predicts per-skill outcomes (success, slip, damage, effort) with uncertainty, and drives a planner
-that may deviate from a scripted anchor only when a lower confidence bound says it is safe. We also adapt a
-pretrained looped transformer, **Inkling-2-Mini**, as a fast **System I** controller, entered with a mode token,
-while leaving its language-level **System II** behaviour bit-identical. We evaluate on procedural industrial
-stations (bin clearing, conveyor sorting, depalletizing, fixture placement, pouch transfer, tool return,
-tight snap-fit insertion, fastener picking) with four robots, one held-out robot and one held-out task family,
-using pre-registered, paired comparisons with bootstrap confidence intervals.
+General real-world manipulation depends on physical properties no single sensor reveals: mass, friction,
+elasticity, crush limits, clearances, and the behaviour of other agents. A robot has to infer them by fusing
+**vision, third-person observation, proprioception, force and touch, and digital-twin anchors** (joint encoders,
+IMUs, tracked poses, contact points). Our thesis is that the looped core of a pretrained transformer
+(**Inkling-2-Mini**) can act as a *hyperdimensional physics engine*. In that view it holds an explicit,
+interpretable, editable physical belief state, a typed variable store keyed by entity and property class (MASS,
+FRICTION, STIFFNESS, POSE, FORCE, AGENCY, ...). Recurrent attention would update that state in agreement with
+rigid-body, friction and Hookean-elastic structure, and anchors would be added, revised and removed as evidence
+arrives. We want one model that works across modalities, embodiments and domains, and that generalizes beyond
+them. A fast **System I** mode (entered by a mode token) carries that computation, and the language-level
+**System II** mode stays intact.
+
+What is built and evaluated so far is a subset:
+- a typed, versioned, causal property-graph memory with provenance and privileged-label rejection;
+- a world model whose interaction history reaches the decision only through typed slots;
+- uncertainty-gated planners;
+- the Inkling System I/II adaptation.
+
+All of it is tested in simulation on industrial stations with four robots, a held-out robot and a held-out task,
+under pre-registered, paired comparisons. The evaluated observations are actor-legal force/pose interaction series,
+entity states and a scalar visual material reading. Third-person tracks, human hands and bodies, and new physical
+domains are in progress ([`docs/V3_GENERAL.md`](docs/V3_GENERAL.md)).
+
+## Distance to the thesis (honest status)
+
+- **Not yet built:** a recurrent loop whose *intermediate* states are named physical beliefs. Today the Inkling
+  loop refines hidden vectors, and the readout reuses the typed estimates made before the loop
+  (`src/physmem/models/inkling.py:494`). The physics losses constrain only final predictions.
+- **Not yet shown:**
+  - that pretraining helps (pretrained ≈ random-init core);
+  - that more loop passes help (1/2/4/8 passes made no difference);
+  - that interventions on a named property propagate through belief, action and outcome inside the loop;
+  - SE(3) interaction-graph traversal;
+  - other-agent modelling;
+  - multi-rate streams;
+  - any real-world (non-simulated) result.
+- **Strongest positive result:** v2 lot memory, a hybrid of an estimator, analytic physics and a planner. It is not
+  yet compared against a classical cached-estimate baseline.
+
+The next increment targets this centerpiece ([`docs/V3_GENERAL.md`](docs/V3_GENERAL.md) §0).
 
 ## Main findings so far
 
