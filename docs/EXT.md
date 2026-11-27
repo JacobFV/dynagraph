@@ -423,3 +423,18 @@ GPU, over the 6 GB rule. We killed it within 2 minutes. It now runs with frames 
    01–06 only. TEST subjects 07–08 stay untouched until the H6 freeze commit (§6).
 4. CLEVRER: track validation videos with tier B, and use `clevrer.py` annotations as evaluator labels for a derived,
    non-official collision-prediction check.
+
+**Update 2026-11-27: full subject 01, H6 view `836212060125`, all 100 sequences (20 objects × 5)** — results in
+`results/ext/dexycb_pose_validation_s01_view0.json`:
+
+| metric | value |
+|---|---|
+| frames with the hand present | 6866 |
+| recall | 0.833 |
+| 2-D error, median | 7.0 px |
+| PCK@10 / PCK@20 | 0.654 / 0.888 |
+| depth-lifted error, root-relative, median | 33.2 mm |
+| depth-lifted error, absolute, median | 21.9 mm |
+| MediaPipe world-landmark error, root-relative, median | 26.8 mm |
+
+This view is a TRAIN subject; subjects 07–08 were not touched.
