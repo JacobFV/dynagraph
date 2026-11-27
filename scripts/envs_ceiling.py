@@ -33,6 +33,9 @@ CAT = {  # skill status -> failure category
     "guard_tripped": "collision", "collided": "collision",
     "jammed": "jam", "not_inserted": "jam",
     "not_observed": "perception", "fell": "collision", "timeout": "timeout",
+    # envs-v3 family-skill statuses
+    "toppled": "topple", "tugged": "tug_or_snatch", "tug_hold": "tug_or_snatch", "foot_slip": "foot_slip",
+    "stalled": "jam", "unsupported": "unsupported", "empty": "grasp_miss",
 }
 LIMIT_S = int(os.environ.get("CEIL_LIMIT_S", "300"))
 

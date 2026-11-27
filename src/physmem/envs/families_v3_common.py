@@ -45,11 +45,60 @@ class V3Base(StationEnv):
         return super()._make_robot(name)
 
     # ------------------------------------------------------------------ oracle / PTA hooks (scripts/envs_ceiling.py)
-    def v3_rule(self, call, src):
+    # CALIBRATED ORACLE (families without a closed-form rule): CAL_GRID = candidate engineer parameter sets (overrides of
+    # NOMINAL); scripts/envs_v3_calibrate.py runs every candidate on CALIBRATION seeds (train bucket, disjoint from the
+    # ceiling's test seeds) and stores, per hidden-physics bin (bin_of(hidden)), the candidate with the best success
+    # (ties: progress) in results/v2/envs/v3_oracle_<family>.json. The oracle looks the TRUE bin up; 'prior' uses the
+    # best candidate over all bins; probe-then-act uses the bin of its actor-legal estimates (pta_bin()).
+    CAL_GRID = None
+    ORACLE_DIR = "results/v2/envs"
+
+    @staticmethod
+    def bin_of(hidden):
+        return "all"
+
+    def pta_bin(self):
+        return None
+
+    def _cal_table(self):
+        import json
+        import os
+        key = "_cal_cache"
+        if getattr(type(self), key, None) is None:
+            path = os.path.join(self.ORACLE_DIR, f"v3_oracle_{self.family}.json")
+            setattr(type(self), key, json.load(open(path)) if os.path.exists(path) else {})
+        return getattr(type(self), key)
+
+    def cal_params(self, src):
+        tab = self._cal_table()
+        rob = self.task.robot
+        t = tab.get(rob) or tab.get("probe") or {}
+        if not t:
+            return None
+        if src == "true":
+            return t.get("bins", {}).get(self.bin_of(self.hidden_task), t.get("prior"))
+        if src == "pta":
+            b = self.pta_bin()
+            return t.get("pta_bins", {}).get(b, t.get("prior")) if b is not None else t.get("prior")
+        return t.get("prior")
+
+    def calls_from(self, prm, call):
+        """rebuild `call` with the engineer parameters `prm` (family-specific)."""
         return call
 
+    def v3_rule(self, call, src):
+        if call is None or self.CAL_GRID is None:
+            return call
+        p = self.cal_params("true" if src == "true" else "prior")
+        if p is None:
+            return call
+        return self.calls_from(dict(self.NOMINAL, **p), call)
+
     def probe_then_act(self, call):
-        return call
+        if call is None or self.CAL_GRID is None:
+            return call
+        p = self.cal_params("pta")
+        return call if p is None else self.calls_from(dict(self.NOMINAL, **p), call)
 
     # ------------------------------------------------------------------ generic light-squeeze probe (actor-legal)
     PROBE_F = 4.0
@@ -264,7 +313,7 @@ def vessel(scene, eid, pos, yaw, r_in, h, wall=0.004, n_seg=14, post=(0.012, 0.0
     info = EntityInfo(eid, kind, EntityType.OBJECT, eid, "cylinder", tuple(float(v) for v in half), hidden,
                       graspable=True, geoms=geoms,
                       meta=dict(r_in=r_in, h=h, post_r=r_in + wall + px / 2, post_top=h + ph, post_bot=h - 0.01,
-                                origin="floor_centre"))
+                                origin="floor_centre", rest_h=wall))
     scene.entities[eid] = info
     scene.grip_pairs_objects.append(eid)
     return b, info
@@ -296,3 +345,41 @@ def hex_fill(rng, center, r_in, z0, radius, n, jitter=0.15):
             k += 1
         z += d * 0.95
     return pts
+
+
+def dustpan(scene, eid, pos, yaw, L=0.06, W=0.05, wall_h=0.014, t=0.003, post=(0.012, 0.010, 0.07), mass=0.09,
+            mu=0.5, mu_grip=0.9, rgba=(0.6, 0.62, 0.66, 1), extra_hidden=None):
+    """free hand SCOOP shaped like a dustpan: a flat plate (L along -x from the back wall, W across) with side walls and
+    a back wall, OPEN at the front (-x end), and a vertical handle post rising behind the back wall (+x), pinched across
+    x like the vessel's post. Dragged front-first along -x it collects grains; lifted, grains above the angle of repose
+    roll off the open front. Body origin = plate centre (top face of the plate at z = +t/2)."""
+    from .scene import EntityInfo
+    from ..schema import EntityType
+    b = scene.spec.worldbody.add_body(name=eid, pos=list(pos), quat=list(quat_z(yaw)))
+    b.add_freejoint(name=eid + "_free")
+    fr = [mu, 0.005, 0.0001]
+    geoms = []
+    parts = [((0, 0, 0), (L / 2, W / 2, t / 2), 0.5),                                       # plate
+             ((L / 2 + t / 2, 0, wall_h / 2), (t / 2, W / 2 + t, wall_h / 2 + t / 2), 0.15),  # back wall
+             ((0, W / 2 + t / 2, wall_h / 2), (L / 2, t / 2, wall_h / 2 + t / 2), 0.1),
+             ((0, -W / 2 - t / 2, wall_h / 2), (L / 2, t / 2, wall_h / 2 + t / 2), 0.1)]
+    for k, (p, h, mf) in enumerate(parts):
+        g = b.add_geom(type=G.mjGEOM_BOX, size=list(h), pos=list(p), rgba=list(rgba), friction=fr, name=f"{eid}_g{k}")
+        g.mass = mass * mf
+        geoms.append(g.name)
+    px, py, ph = post
+    post_x = L / 2 + t + px / 2
+    g = b.add_geom(type=G.mjGEOM_BOX, size=[px / 2, py, ph / 2], pos=[post_x, 0, ph / 2 - 0.005],
+                   rgba=[0.2, 0.2, 0.22, 1], friction=fr, name=f"{eid}_post")
+    g.mass = mass * 0.15
+    geoms.append(g.name)
+    half = ((L + 2 * t + px) / 2, W / 2 + t, (ph + t) / 2)
+    hidden = dict(mass=float(mass), mu=float(mu), mu_grip=float(mu_grip))
+    hidden.update(extra_hidden or {})
+    info = EntityInfo(eid, "scoop", EntityType.OBJECT, eid, "box", tuple(float(v) for v in half), hidden,
+                      graspable=True, geoms=geoms,
+                      meta=dict(post_r=post_x, post_top=ph - 0.005, post_bot=-0.005, L=L, W=W, wall_h=wall_h, t=t,
+                                origin="plate_centre", r_in=L / 2, h=wall_h, rest_h=t / 2))
+    scene.entities[eid] = info
+    scene.grip_pairs_objects.append(eid)
+    return b, info

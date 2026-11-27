@@ -204,6 +204,20 @@ class ClothFold(V3Base):
 
     # ------------------------------------------------------------------ policies
     NOMINAL = dict(grip_force=15.0, lift=0.06, speed=0.3, overshoot=0.0, release_h=0.01, arc=0.0, dwell=0.2)
+    CAL_GRID = [{}, dict(arc=1.0, lift=0.06, speed=0.15, overshoot=0.03), dict(lift=0.12, arc=0.5),
+                dict(arc=1.0, speed=0.1, overshoot=0.05, release_h=0.0, dwell=1.0),
+                dict(overshoot=0.04, release_h=0.0, dwell=1.0), dict(lift=0.03, arc=0.8, speed=0.1),
+                dict(arc=0.5, overshoot=0.02, speed=0.15), dict(arc=1.0, lift=0.1, speed=0.1, overshoot=0.05, dwell=1.0)]
+
+    @staticmethod
+    def bin_of(h):
+        return f"thick{'H' if h['thickness'] >= 7e-4 else 'L'}_mu{'H' if h['mu'] >= 0.55 else 'L'}"
+
+    def calls_from(self, prm, call):
+        return self._fold_calls(prm) if call.skill == "fold" else call
+
+    def probe_then_act(self, call):
+        return call            # no actor-legal probe of bending / bench friction is implemented for the fold
 
     def _fold_calls(self, prm):
         return SkillCall("fold", dict(prm), target="tab")

@@ -36,8 +36,11 @@ def run(job):
             if last.done:
                 break
         ex = {k: float(v) for k, v in (env.metrics_extra() or {}).items() if isinstance(v, (int, float, bool))}
+        hid = {k: v for k, v in getattr(env, "hidden_task", {}).items() if isinstance(v, (int, float, str, bool))}
         return dict(over=over, seed=seed, success=bool(env.solved()), progress=float(env.progress()),
-                    unstable=bool(env.unstable), wall=time.time() - t0, sim=env.t, **ex)
+                    unstable=bool(env.unstable), wall=time.time() - t0, sim=env.t, hidden=hid,
+                    bin=type(env).bin_of(env.hidden_task) if hasattr(type(env), "bin_of") else None,
+                    pta_bin=env.pta_bin() if hasattr(env, "pta_bin") else None, **ex)
     except Exception as e:
         return dict(over=over, seed=seed, error=repr(e)[:200])
 
@@ -63,7 +66,8 @@ if __name__ == "__main__":
         G.setdefault(json.dumps(r["over"]), []).append(r)
     for k, rs in G.items():
         ok = [r for r in rs if "error" not in r]
-        mets = sorted({m for r in ok for m in r if m not in ("over", "seed", "success", "wall", "sim")})
+        mets = sorted({m for r in ok for m in r if m not in ("over", "seed", "success", "wall", "sim", "hidden", "bin",
+                                                               "pta_bin") and isinstance(r[m], (int, float))})
         s = " ".join(f"{m}={np.mean([r[m] for r in ok]):.3f}" for m in mets)
         print(f"{k}: n={len(ok)} err={len(rs) - len(ok)} success={np.mean([r['success'] for r in ok]) if ok else 0:.2f} "
               f"{s} wall={np.mean([r['wall'] for r in ok]) if ok else 0:.0f}s", flush=True)

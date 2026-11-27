@@ -44,10 +44,12 @@ _REG = {
     "fastener_pick": ("families_fine_motor", "FastenerPick"),       # envs-r7 fine motor
     # envs-v3 (agent ENVS-V3): new physical domains for the V3 general model (docs/ENVS.md "envs-v3")
     "pour": ("families_v3_media", "Pour"),
+    "granular_scoop": ("families_v3_media", "GranularScoop"),
     "cloth_fold": ("families_v3_deform", "ClothFold"),
     "cable_route": ("families_v3_deform", "CableRoute"),
     "stack_overhang": ("families_v3_rigid", "StackOverhang"),
     "handover": ("families_v3_rigid", "Handover"),
+    "g1_push_terrain": ("families_v3_g1", "G1PushTerrain"),
 }
 
 FAMILIES = tuple(_REG)
