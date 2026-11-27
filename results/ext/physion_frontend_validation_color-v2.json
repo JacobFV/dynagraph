@@ -1,0 +1,16 @@
+{
+ "Dominoes": {
+  "agent": {
+   "frames_visible": 8521,
+   "recall": 0.9938974298791222,
+   "median_px": 0.3116321914233722,
+   "p90_px": 13.59401586251744
+  },
+  "patient": {
+   "frames_visible": 8569,
+   "recall": 1.0,
+   "median_px": 8.812464775714384,
+   "p90_px": 46.18573460491027
+  }
+ }
+}

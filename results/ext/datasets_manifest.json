@@ -1,4 +1,26 @@
 {
+ "dexycb": {
+  "calibration.tar.gz": {
+   "bytes": 14464,
+   "fetched_utc": "2026-11-27T01:11:34Z",
+   "file": "calibration.tar.gz",
+   "license": "CC BY-NC 4.0 (non-commercial; research use allowed)",
+   "license_source": "https://dex-ycb.github.io/",
+   "local_path": "/home/brandonin/datasets/dexycb/raw/calibration.tar.gz",
+   "sha256": "1f6cb30cfe290833ac66edec919c3b9b3f3937af2ba7bb78f0700a5349edd645",
+   "url": "https://drive.usercontent.google.com/download?export=download&confirm=t&id=1UAwVKT4Rgb1fLcFoa1o71_-0NtSvvLAQ"
+  },
+  "models.tar.gz": {
+   "bytes": 1455399753,
+   "fetched_utc": "2026-11-27T01:33:40Z",
+   "file": "models.tar.gz",
+   "license": "CC BY-NC 4.0 (non-commercial; research use allowed)",
+   "license_source": "https://dex-ycb.github.io/",
+   "local_path": "/home/brandonin/datasets/dexycb/raw/models.tar.gz",
+   "sha256": "7b066c369be56d8cd84314d01c0c9169d543f00792f0e26bb787c657bad75d7d",
+   "url": "https://drive.usercontent.google.com/download?export=download&confirm=t&id=1cAzlQBpcTatI5ykYQ8ziQiHLUG_a_UpM"
+  }
+ },
  "mediapipe_models": {
   "hand_landmarker.task": {
    "bytes": 7819105,

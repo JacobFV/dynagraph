@@ -1,0 +1,119 @@
+{
+ "frontend": "color-v2",
+ "protocol_note": "official readout model/CV/seeds; readout-fitting set is a local PREFIX subset of the official 1000/scenario (not the official protocol); test = official 150/scenario",
+ "scenarios": {
+  "Dominoes": {
+   "n_readout": 47,
+   "readout_pos_frac": 0.48936170212765956,
+   "n_test": 150,
+   "observed": {
+    "runs": [
+     {
+      "n": 150,
+      "accuracy": 0.48,
+      "pearson_r_human_mean": -0.11424382727222807,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": -0.0388924445736224,
+      "best_C": 1000.0,
+      "seed": 0
+     },
+     {
+      "n": 150,
+      "accuracy": 0.5066666666666667,
+      "pearson_r_human_mean": -0.1028303834862493,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": -0.019921851228045146,
+      "best_C": 10.0,
+      "seed": 1
+     },
+     {
+      "n": 150,
+      "accuracy": 0.46,
+      "pearson_r_human_mean": -0.09774585892634607,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": -0.05910226810138296,
+      "best_C": 100.0,
+      "seed": 2
+     }
+    ],
+    "mean": {
+     "accuracy": 0.4822222222222223,
+     "pearson_r_human_mean": -0.10494002322827449,
+     "cohen_kappa_mean": -0.03930552130101683
+    }
+   },
+   "observed+simulated": {
+    "runs": [
+     {
+      "n": 150,
+      "accuracy": 0.5266666666666666,
+      "pearson_r_human_mean": -0.033752400588637065,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": -0.024213172794403943,
+      "best_C": 100000.0,
+      "seed": 0
+     },
+     {
+      "n": 150,
+      "accuracy": 0.5,
+      "pearson_r_human_mean": -0.08429444213788408,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": -0.02519028669237976,
+      "best_C": 10.0,
+      "seed": 1
+     },
+     {
+      "n": 150,
+      "accuracy": 0.47333333333333333,
+      "pearson_r_human_mean": -0.07381645489774209,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": -0.04031174835953359,
+      "best_C": 100.0,
+      "seed": 2
+     }
+    ],
+    "mean": {
+     "accuracy": 0.5,
+     "pearson_r_human_mean": -0.06395443254142108,
+     "cohen_kappa_mean": -0.029905069282105765
+    }
+   },
+   "full": {
+    "runs": [
+     {
+      "n": 150,
+      "accuracy": 0.8,
+      "pearson_r_human_mean": 0.43468856856318216,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.22965531767631192,
+      "best_C": 1.0,
+      "seed": 0
+     },
+     {
+      "n": 150,
+      "accuracy": 0.9466666666666667,
+      "pearson_r_human_mean": 0.5558929081788101,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.3412728713872589,
+      "best_C": 1000.0,
+      "seed": 1
+     },
+     {
+      "n": 150,
+      "accuracy": 0.9533333333333334,
+      "pearson_r_human_mean": 0.5538053976888638,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.35280097083350453,
+      "best_C": 100.0,
+      "seed": 2
+     }
+    ],
+    "mean": {
+     "accuracy": 0.9,
+     "pearson_r_human_mean": 0.5147956248102853,
+     "cohen_kappa_mean": 0.3079097199656918
+    }
+   }
+  }
+ }
+}

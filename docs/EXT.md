@@ -275,3 +275,28 @@ thresholds. Frozen before TEST:
 **What would falsify our reading.**
 - If C1 (grasp aperture) explains as much as TYPED, the "mass inference" is size inference. We will say so.
 - If TYPED beats GENERIC only on in-distribution objects (VAL) and not on held-out objects, the claim fails.
+
+### 3a. Pipeline check: our track-feature reference readout (NOT a model result, NOT the official protocol)
+This check runs the official readout (`ocp.py`) on fixed hand-made features of the tier-A colour tracks
+(`frontend_color.ocp_track_features`):
+- **observed**: centroid, bbox, velocity, distance and gap of agent/patient over frames 0–44;
+- **+simulated**: constant-velocity extrapolation of both centroids to 0.5/1/2/4 s;
+- **full**: the same features over the whole movie.
+
+The readout-fitting set is the reduced prefix set. Its purpose is only to show that the loader → tracks → readout
+→ metrics chain works end to end and to give a floor that any learned model must beat.
+
+Sanity check of the official human data and the label join: recomputing human accuracy from the official
+per-participant CSVs (`excluded_games.csv` removed; 794 participants) gives
+Dominoes 0.692 / Support 0.755 / Collide 0.803 / Contain 0.760 / Drop 0.740 / Link 0.638 / Roll 0.878 /
+Drape 0.677. Each is within 0.008 of Table S1. The paper reports 688 participants kept after exclusions, so the
+released exclusion list looks incomplete.
+
+| scenario | n readout (reduced) | observed | observed+simulated | full (detection) |
+|---|---|---|---|---|
+| Dominoes | 47 | 0.482 | 0.500 | 0.900 |
+
+Reading: with only the agent and patient tracked, nothing in the first 1.5 s predicts Dominoes outcomes, which
+depend on the untracked middle dominoes, so the result is at chance. The full-movie readout detects the contact at
+0.90, so the chain works. Rows for the other scenarios are added as their readout prefixes arrive
+(`results/ext/physion_ocp_color-v2.json`, `scripts/ext/physion_table.py`).
