@@ -600,3 +600,26 @@ entries that point back to the entry they correct.
   - Arm P (hybrid projection) trained badly at first; a pilot is queued.
   - Lead instruction: count and report every VAL iteration (forking paths) in the arm-I pre-registration. test2 must
     be fresh seeds, never looked at.
+
+- **2026-11-27 00:15 CST — EXT: DexYCB subject 01 complete** (download → extract → verify → archive deleted;
+  174,680 files under `/home/brandonin/datasets/dexycb/extracted/`).
+  - Hand front-end validation on all 100 sequences, H6 view only: recall 0.83, 2-D median 7.0 px, PCK@20 0.89,
+    depth-lifted absolute median 21.9 mm.
+  - Results: `results/ext/dexycb_pose_validation_s01_view0.json` (branch ext). The earlier 9-sequence × 8-view run is
+    kept in `dexycb_pose_validation.json`.
+  - Our measurement, not a published protocol. TRAIN subject only.
+  - The download chain moves on to the Physion v1 readout prefixes, then DexYCB s02–08.
+  - Physion++ mass SAM2 readout: 131/200 done.
+
+- **2026-11-27 00:25 CST — EXT: H6 actor-legal features extracted for TRAIN subject 01** (`h6-feat-v1`,
+  `/home/brandonin/datasets/dexycb/h6/h6-feat-v1/`, log `/home/brandonin/datasets/logs/h6_feat_s01.log`).
+  - Of 100 sequences, lift-off was detected in 97, and 90 pass the draft exclusion rule (hand detected in ≥ 50% of
+    frames and lift detected).
+  - No mass analysis was run. H6 stays a draft until V3-MODEL's models exist.
+
+### 2026-11-27T06:55Z — lead: small-lane check (ext_sam2_pp_ro_mass_c_003)
+- V3-MODEL flagged that `.gpu_small.lock` had been held by EXT's SAM2 chunk c_003 since 05:37Z (about 76 min, against about 25 min for earlier chunks).
+- Lead checked on gb10, by PID only:
+  - pid 3098462 (`sam2_tracks.py`, 3.1 GB GPU) is at 100% CPU, and 3 new track files were written in the last 5 min. It is progressing, not hung.
+  - Likely cause of the slowdown: the box is contended. Another tenant has 4 × `points.py` processes at 100% CPU, plus the INKLING `lang_eval` (about 24 GB, heavy lane).
+- No action taken. Queued behind it, all small: V3 arm_i_s0 re-pilot, proj_s0, lbs_law_s1, arm_i2_s0.
