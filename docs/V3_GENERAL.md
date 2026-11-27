@@ -368,3 +368,16 @@ The frozen matrix (§0b) is finished as registered. The exploratory arms use fre
   (x, v, contact force) given the current parameter beliefs.
 - The same budget (4000 × 512), VAL-only pilot, then a separate pre-registration commit before any `test2` run.
   The Inkling port waits until an arm passes A1–A4 on VAL.
+
+### §0d.1 VAL attempt log (every exploratory VAL evaluation; the count is cited in the arm pre-registration)
+`test2` / `test2_L4` were generated (sha256 in the manifest) and have not been evaluated by anything: no model, no
+classical, no oracle, no simcf.
+
+| # | arm / run | config | VAL result | what changed next |
+|---|---|---|---|---|
+| 1 | arm_i_s0 | LBSI, cf-frac 0.3, tf 0.5, law 1, 4000 × 512; clamps applied inside the loop | A1 0.91 / Spearman 0.80 / other 0.88; A2 0.98 / 0.94 / impulse 0.88; A3 0.54 (37% ties); A4 −3.3 mm [−6.0, −0.7]; A6 fail; A7 B2 suppressed 4%; final 16.8 mm | the clamp leaked into the τ0 state (plan changed in 51% of episodes when clamping at the posterior mean) → do() acts only on the rollout's slots (#2) |
+| 2 | arm_i_s0 (same weights) | eval change only: do() at the rollout input | pending | – |
+| 3 | proj_s0 | LBS + 4 law-projection steps (η init 0.3) | training VAL at step 1000: 62.8 mm, params at chance; causal pilot pending | – |
+| 4 | arm_i2_s0 | #2 + relation do()-pairs (rel-frac 0.15) + late-evidence augmentation (0.2) | pending (training queued) | – |
+
+Classical (CEM + analytic) goes through the same do()/A3/A4 harness on `test2`, so the comparison is matched.
