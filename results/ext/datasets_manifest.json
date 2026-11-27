@@ -23,9 +23,37 @@
    "n_members": 5000,
    "sha256": "d89e74714dff7a1117fd113b54af99fbbc51583ebd742c788c484d708eb426d2",
    "url": "http://data.csail.mit.edu/clevrer/annotations/validation/annotation_validation.zip"
+  },
+  "video_validation.zip": {
+   "bytes": 6206059321,
+   "deleted_after_extraction": true,
+   "deleted_utc": "2026-11-27T05:05:12Z",
+   "extracted_to": "/home/brandonin/datasets/clevrer/extracted",
+   "fetched_utc": "2026-11-27T05:02:27Z",
+   "file": "video_validation.zip",
+   "license": "CC0 (README.txt: 'Our dataset is under the CC0.')",
+   "license_source": "http://data.csail.mit.edu/clevrer/README.txt",
+   "local_path": "/home/brandonin/datasets/clevrer/raw/video_validation.zip",
+   "n_members": 5000,
+   "sha256": "07f6d48bd708c80428684fcf17a7874f6c01fbb82a59b2f79ede199a63db7aae",
+   "url": "http://data.csail.mit.edu/clevrer/videos/validation/video_validation.zip"
   }
  },
  "dexycb": {
+  "20200709-subject-01.tar.gz": {
+   "bytes": 12412314463,
+   "deleted_after_extraction": true,
+   "deleted_utc": "2026-11-27T06:05:00Z",
+   "extracted_to": "/home/brandonin/datasets/dexycb/extracted",
+   "fetched_utc": "2026-11-27T05:58:56Z",
+   "file": "20200709-subject-01.tar.gz",
+   "license": "CC BY-NC 4.0 (non-commercial; research use allowed)",
+   "license_source": "https://dex-ycb.github.io/",
+   "local_path": "/home/brandonin/datasets/dexycb/raw/20200709-subject-01.tar.gz",
+   "n_members": 174680,
+   "sha256": "ce44e97a7567f7fb128b474ae33f327715314956a1c7b24cb08b08bc51cf4303",
+   "url": "https://drive.usercontent.google.com/download?export=download&confirm=t&id=1Ehh92wDE3CWAiKG7E9E73HjN2Xk2XfEk"
+  },
   "calibration.tar.gz": {
    "bytes": 14464,
    "fetched_utc": "2026-11-27T01:11:34Z",
@@ -38,11 +66,15 @@
   },
   "models.tar.gz": {
    "bytes": 1455399753,
+   "deleted_after_extraction": true,
+   "deleted_utc": "2026-11-27T06:06:18Z",
+   "extracted_to": "/home/brandonin/datasets/dexycb/extracted",
    "fetched_utc": "2026-11-27T01:33:40Z",
    "file": "models.tar.gz",
    "license": "CC BY-NC 4.0 (non-commercial; research use allowed)",
    "license_source": "https://dex-ycb.github.io/",
    "local_path": "/home/brandonin/datasets/dexycb/raw/models.tar.gz",
+   "n_members": 226,
    "sha256": "7b066c369be56d8cd84314d01c0c9169d543f00792f0e26bb787c657bad75d7d",
    "url": "https://drive.usercontent.google.com/download?export=download&confirm=t&id=1cAzlQBpcTatI5ykYQ8ziQiHLUG_a_UpM"
   }

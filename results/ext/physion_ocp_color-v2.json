@@ -114,6 +114,345 @@
      "cohen_kappa_mean": 0.3079097199656918
     }
    }
+  },
+  "Support": {
+   "n_readout": 51,
+   "readout_pos_frac": 0.45098039215686275,
+   "n_test": 150,
+   "observed": {
+    "runs": [
+     {
+      "n": 150,
+      "accuracy": 0.56,
+      "pearson_r_human_mean": 0.1980569961310949,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.10924642473603813,
+      "best_C": 1000.0,
+      "seed": 0
+     },
+     {
+      "n": 150,
+      "accuracy": 0.5,
+      "pearson_r_human_mean": 0.13216931754063463,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 6.758625559809611e-18,
+      "best_C": 1e-08,
+      "seed": 1
+     },
+     {
+      "n": 150,
+      "accuracy": 0.5533333333333333,
+      "pearson_r_human_mean": 0.1705772831455404,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.10988562111496415,
+      "best_C": 0.1,
+      "seed": 2
+     }
+    ],
+    "mean": {
+     "accuracy": 0.5377777777777778,
+     "pearson_r_human_mean": 0.1669345322724233,
+     "cohen_kappa_mean": 0.07304401528366743
+    }
+   },
+   "observed+simulated": {
+    "runs": [
+     {
+      "n": 150,
+      "accuracy": 0.5,
+      "pearson_r_human_mean": 0.15242520638672633,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 6.758625559809611e-18,
+      "best_C": 1e-08,
+      "seed": 0
+     },
+     {
+      "n": 150,
+      "accuracy": 0.5,
+      "pearson_r_human_mean": 0.15242520638672633,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 6.758625559809611e-18,
+      "best_C": 1e-08,
+      "seed": 1
+     },
+     {
+      "n": 150,
+      "accuracy": 0.6333333333333333,
+      "pearson_r_human_mean": 0.24737964684057653,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.17285876751629267,
+      "best_C": 10.0,
+      "seed": 2
+     }
+    ],
+    "mean": {
+     "accuracy": 0.5444444444444444,
+     "pearson_r_human_mean": 0.1840766865380097,
+     "cohen_kappa_mean": 0.05761958917209756
+    }
+   },
+   "full": {
+    "runs": [
+     {
+      "n": 150,
+      "accuracy": 0.9333333333333333,
+      "pearson_r_human_mean": 0.6487788097673398,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.4679593053098506,
+      "best_C": 0.1,
+      "seed": 0
+     },
+     {
+      "n": 150,
+      "accuracy": 0.8866666666666667,
+      "pearson_r_human_mean": 0.5906284624818984,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.39557423758848226,
+      "best_C": 0.01,
+      "seed": 1
+     },
+     {
+      "n": 150,
+      "accuracy": 0.8866666666666667,
+      "pearson_r_human_mean": 0.5906284624818984,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.39557423758848226,
+      "best_C": 0.01,
+      "seed": 2
+     }
+    ],
+    "mean": {
+     "accuracy": 0.9022222222222224,
+     "pearson_r_human_mean": 0.6100119115770455,
+     "cohen_kappa_mean": 0.41970259349560507
+    }
+   }
+  },
+  "Collide": {
+   "n_readout": 50,
+   "readout_pos_frac": 0.46,
+   "n_test": 150,
+   "observed": {
+    "runs": [
+     {
+      "n": 150,
+      "accuracy": 0.5333333333333333,
+      "pearson_r_human_mean": 0.17404873154588754,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.10766366219098857,
+      "best_C": 1.0,
+      "seed": 0
+     },
+     {
+      "n": 150,
+      "accuracy": 0.56,
+      "pearson_r_human_mean": 0.2317139230159297,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.16479410140509174,
+      "best_C": 10.0,
+      "seed": 1
+     },
+     {
+      "n": 150,
+      "accuracy": 0.52,
+      "pearson_r_human_mean": 0.0611509269509155,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.06496259954822015,
+      "best_C": 0.01,
+      "seed": 2
+     }
+    ],
+    "mean": {
+     "accuracy": 0.5377777777777778,
+     "pearson_r_human_mean": 0.15563786050424425,
+     "cohen_kappa_mean": 0.11247345438143348
+    }
+   },
+   "observed+simulated": {
+    "runs": [
+     {
+      "n": 150,
+      "accuracy": 0.56,
+      "pearson_r_human_mean": 0.245552090984313,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.1808102038266989,
+      "best_C": 100.0,
+      "seed": 0
+     },
+     {
+      "n": 150,
+      "accuracy": 0.5333333333333333,
+      "pearson_r_human_mean": 0.2775854866333116,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.10061181559008801,
+      "best_C": 0.1,
+      "seed": 1
+     },
+     {
+      "n": 150,
+      "accuracy": 0.5933333333333334,
+      "pearson_r_human_mean": 0.2677926618592605,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.18595645401315572,
+      "best_C": 1000.0,
+      "seed": 2
+     }
+    ],
+    "mean": {
+     "accuracy": 0.5622222222222222,
+     "pearson_r_human_mean": 0.2636434131589617,
+     "cohen_kappa_mean": 0.15579282447664755
+    }
+   },
+   "full": {
+    "runs": [
+     {
+      "n": 150,
+      "accuracy": 0.7,
+      "pearson_r_human_mean": 0.3704151159270251,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.26674349610082637,
+      "best_C": 1000000.0,
+      "seed": 0
+     },
+     {
+      "n": 150,
+      "accuracy": 0.7266666666666667,
+      "pearson_r_human_mean": 0.418727819749345,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.31028257431699374,
+      "best_C": 100000.0,
+      "seed": 1
+     },
+     {
+      "n": 150,
+      "accuracy": 0.7333333333333333,
+      "pearson_r_human_mean": 0.4334842226274357,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.3242152160002695,
+      "best_C": 10000.0,
+      "seed": 2
+     }
+    ],
+    "mean": {
+     "accuracy": 0.7200000000000001,
+     "pearson_r_human_mean": 0.4075423861012686,
+     "cohen_kappa_mean": 0.30041376213936316
+    }
+   }
+  },
+  "Contain": {
+   "n_readout": 53,
+   "readout_pos_frac": 0.4716981132075472,
+   "n_test": 150,
+   "observed": {
+    "runs": [
+     {
+      "n": 150,
+      "accuracy": 0.4666666666666667,
+      "pearson_r_human_mean": 0.06239034220536716,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.010957095709570956,
+      "best_C": 10.0,
+      "seed": 0
+     },
+     {
+      "n": 150,
+      "accuracy": 0.5266666666666666,
+      "pearson_r_human_mean": 0.15615861305264123,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.09048947417094239,
+      "best_C": 100.0,
+      "seed": 1
+     },
+     {
+      "n": 150,
+      "accuracy": 0.56,
+      "pearson_r_human_mean": 0.24055870817492012,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.16650331711316543,
+      "best_C": 100000.0,
+      "seed": 2
+     }
+    ],
+    "mean": {
+     "accuracy": 0.5177777777777778,
+     "pearson_r_human_mean": 0.15303588781097618,
+     "cohen_kappa_mean": 0.08931662899789293
+    }
+   },
+   "observed+simulated": {
+    "runs": [
+     {
+      "n": 150,
+      "accuracy": 0.4866666666666667,
+      "pearson_r_human_mean": 0.09144016232413432,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.029037980283916548,
+      "best_C": 1.0,
+      "seed": 0
+     },
+     {
+      "n": 150,
+      "accuracy": 0.4866666666666667,
+      "pearson_r_human_mean": 0.09144016232413432,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.029037980283916548,
+      "best_C": 1.0,
+      "seed": 1
+     },
+     {
+      "n": 150,
+      "accuracy": 0.5733333333333334,
+      "pearson_r_human_mean": 0.24557370363027078,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.18444554719615405,
+      "best_C": 100.0,
+      "seed": 2
+     }
+    ],
+    "mean": {
+     "accuracy": 0.5155555555555557,
+     "pearson_r_human_mean": 0.1428180094261798,
+     "cohen_kappa_mean": 0.08084050258799572
+    }
+   },
+   "full": {
+    "runs": [
+     {
+      "n": 150,
+      "accuracy": 0.5333333333333333,
+      "pearson_r_human_mean": 0.125474655174812,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.0332010863452967,
+      "best_C": 1.0,
+      "seed": 0
+     },
+     {
+      "n": 150,
+      "accuracy": 0.58,
+      "pearson_r_human_mean": 0.12740628831289344,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.058738508659053626,
+      "best_C": 100000.0,
+      "seed": 1
+     },
+     {
+      "n": 150,
+      "accuracy": 0.5333333333333333,
+      "pearson_r_human_mean": 0.125474655174812,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.0332010863452967,
+      "best_C": 1.0,
+      "seed": 2
+     }
+    ],
+    "mean": {
+     "accuracy": 0.5488888888888889,
+     "pearson_r_human_mean": 0.1261185328875058,
+     "cohen_kappa_mean": 0.041713560449882336
+    }
+   }
   }
  }
 }

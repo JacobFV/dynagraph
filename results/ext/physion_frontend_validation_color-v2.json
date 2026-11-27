@@ -1,16 +1,44 @@
 {
- "Dominoes": {
+ "Support": {
   "agent": {
-   "frames_visible": 8521,
-   "recall": 0.9938974298791222,
-   "median_px": 0.3116321914233722,
-   "p90_px": 13.59401586251744
+   "frames_visible": 6666,
+   "recall": 0.9753975397539754,
+   "median_px": 0.36622045456832497,
+   "p90_px": 1.7261792078341733
   },
   "patient": {
-   "frames_visible": 8569,
+   "frames_visible": 7321,
    "recall": 1.0,
-   "median_px": 8.812464775714384,
-   "p90_px": 46.18573460491027
+   "median_px": 0.36231668831682556,
+   "p90_px": 68.7092464175921
+  }
+ },
+ "Collide": {
+  "agent": {
+   "frames_visible": 2942,
+   "recall": 0.9969408565601632,
+   "median_px": 0.4108136539782613,
+   "p90_px": 6.250627776934705
+  },
+  "patient": {
+   "frames_visible": 2935,
+   "recall": 0.9928449744463373,
+   "median_px": 0.6351328180829952,
+   "p90_px": 10.370768678881683
+  }
+ },
+ "Contain": {
+  "agent": {
+   "frames_visible": 6538,
+   "recall": 0.9862343224227592,
+   "median_px": 0.6207025704496337,
+   "p90_px": 107.37645948088398
+  },
+  "patient": {
+   "frames_visible": 6766,
+   "recall": 1.0,
+   "median_px": 52.41844243224345,
+   "p90_px": 77.64993852355965
   }
  }
 }
