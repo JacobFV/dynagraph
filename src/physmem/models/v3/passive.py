@@ -164,3 +164,59 @@ def generate_episode(seed, scene=None):
     p = sample_scene(rng, scene)
     tr = simulate(p, rng)
     return p, tr, observe(tr, rng)
+
+
+# ----------------------------------------------------------------------------- sim human-like grasp-and-lift (H6)
+# SYNTHETIC BEHAVIOURAL MODEL (an assumption, documented in V3_GENERAL §1): a person with an unknown strength grasps
+# an object of hidden mass and lifts it. Loosely following grasp-lift studies (Johansson & Westling 1984): the
+# load force ramps at a person-specific rate until it exceeds m g (pre-lift loading phase ~ m g / rate), then the
+# lift accelerates at min(a_max, (F_peak - m g) / m) along a minimum-jerk profile to a 0.1-0.2 m height. Object size
+# (seen through the grasp aperture) = (m / density)^(1/3) with density log-U[200, 2000] kg/m^3, so size is only a
+# weak mass cue. Emits a TrackSet-like object (kind="human", 21 MediaPipe joints, camera-frame xyz with tracker
+# noise) that `contract.human_evidence` consumes, plus the evaluator-only mass label. No force channel exists.
+HAND_TEMPLATE = None
+
+
+def _hand_template(rng_aperture):
+    """21 joint offsets (m) in a wrist frame (x forward, y left, z up) with thumb-index aperture a."""
+    a = rng_aperture
+    pts = [(0, 0, 0)]
+    for f, (y0, L) in enumerate([(0.03, 0.035), (0.02, 0.07), (0.0, 0.075), (-0.02, 0.07), (-0.035, 0.06)]):
+        for j in range(4):
+            x = 0.03 + (j + 1) * L / 4 if f else 0.02 + (j + 1) * L / 4
+            z = (-a / 2 if f == 0 else a / 2) * (j + 1) / 4
+            pts.append((x, y0 * (0.4 if f == 0 else 1.0), z))
+    return np.array(pts)
+
+
+def human_lift_episode(seed, fps=30.0):
+    from types import SimpleNamespace
+    from .contract import HAND_JOINTS
+    rng = np.random.default_rng(seed)
+    m = float(np.exp(rng.uniform(np.log(0.015), np.log(1.2))))        # DexYCB/YCB mass range
+    rho = float(np.exp(rng.uniform(np.log(200), np.log(2000))))
+    size = (m / rho) ** (1 / 3)
+    rate = rng.uniform(15.0, 40.0)                                     # N/s load-force rate
+    F_peak = rng.uniform(12.0, 35.0)
+    a_max = rng.uniform(2.0, 6.0)
+    H = rng.uniform(0.1, 0.2)
+    t_reach = rng.uniform(0.6, 1.2)
+    t_load = m * G / rate
+    a = min(a_max, max((F_peak - m * G) / m, 0.3))
+    T_lift = math.sqrt(5.77 * H / a)                                   # min-jerk peak accel = 5.77 H / T^2
+    t = np.arange(0, t_reach + t_load + T_lift + 0.8, 1 / fps)
+    z = np.zeros_like(t)
+    s = np.clip((t - t_reach - t_load) / T_lift, 0, 1)
+    z = H * (10 * s ** 3 - 15 * s ** 4 + 6 * s ** 5)
+    approach = np.clip(t / t_reach, 0, 1)
+    wrist = np.stack([-0.25 * (1 - approach), np.zeros_like(t), 0.05 + z], 1)
+    ap = np.where(t < t_reach * 0.7, 0.09, size + 0.005)
+    tmpl = np.stack([_hand_template(x) for x in ap])                   # (T,21,3)
+    P = wrist[:, None] + tmpl
+    cam = CameraTracker(rng, center=(0.0, 0.0, 0.1))
+    u, v, d = cam.observe(P, rng)
+    xyz_world = cam.backproject(u, v, d)
+    xyz = (xyz_world - cam.eye_hat) @ cam.R_hat.T                       # camera frame, like EXT's lift
+    up = cam.R_hat @ np.array([0.0, 0.0, 1.0])                          # actor's table-plane normal (camera frame)
+    ts = SimpleNamespace(kind="human", t=t, xyz=xyz[:, None], keypoints=list(HAND_JOINTS), entities=["right_hand"])
+    return ts, up, dict(mass=m, size=size, rate=rate, F_peak=F_peak)

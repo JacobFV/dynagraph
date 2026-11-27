@@ -16,12 +16,14 @@ import numpy as np
 
 from physmem.models.v3 import chain as C
 
-SEED_BASE = {"train": 0, "val": 1_000_000, "test": 2_000_000, "test_L4": 3_000_000}
+SEED_BASE = {"train": 0, "val": 1_000_000, "test": 2_000_000, "test_L4": 3_000_000,
+             # fresh TEST seed sets for the exploratory arms (V3 §0d): never used before their pre-registration
+             "test2": 4_000_000, "test2_L4": 5_000_000}
 
 
 def gen(out, split, n, start=0):
     os.makedirs(out, exist_ok=True)
-    Ls = (4,) if split == "test_L4" else (1, 2, 3)
+    Ls = (4,) if split.endswith("_L4") else (1, 2, 3)
     acc = {}
     t0 = time.time()
     for i in range(start, start + n):
@@ -55,6 +57,42 @@ def gen(out, split, n, start=0):
                                      time_utc=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
     json.dump(man, open(man_fn, "w"), indent=1)
     print(f"wrote {fn} sha256={h[:16]} in {time.time() - t0:.0f}s", flush=True)
+
+
+def cfgen(data, split, n=None):
+    """real do()-data (Arm I): for every episode window, one random named-property edit (box, mass/friction/k,
+    sign, 0.67 normalised units) and the MuJoCo re-simulation of that window from its TRUE start state with the
+    edited property. Evaluator/training-side only (labels)."""
+    from physmem.v3_chain_eval import true_params, perturb, sim_window
+    from physmem.models.v3.belief import si_to_p
+    z = dict(np.load(os.path.join(data, f"{split}.npz")))
+    N = len(z["L"]) if n is None else min(n, len(z["L"]))
+    W, E, NT = C.N_WIN, C.N_ENT, C.N_TAU
+    X = np.zeros((N, W, E, NT), np.float32); V = np.zeros_like(X)
+    ent = np.zeros((N, W), np.int8); prop = np.zeros((N, W), np.int8); val = np.zeros((N, W), np.float32)
+    t0 = time.time()
+    for e in range(N):
+        L = int(z["L"][e]); p = true_params(z, e)
+        for k in range(W):
+            rng = np.random.default_rng([7, SEED_BASE[split] + e, k])
+            box = int(rng.integers(L))
+            props = [0, 1] + ([2] if (p.spring and box == L - 1) else [])
+            pr = int(props[rng.integers(len(props))]); sg = float(rng.choice([-1.0, 1.0]))
+            q = perturb(p, box, pr, sg)
+            F, T = z["action"][e, k]
+            Xg, _ = sim_window(q, z, e, k, F, T)
+            _, Vg = None, None
+            # velocities: finite difference of the grid (sim_window returns positions); adequate on a 0.1 s grid
+            Vg = np.gradient(Xg, C.TAU, axis=0)
+            X[e, k, :L + 1] = Xg.T; V[e, k, :L + 1] = Vg.T
+            lm, mu, lk = si_to_p(q.mass, q.mu, q.k if q.spring else None)
+            ent[e, k] = 1 + box; prop[e, k] = pr
+            val[e, k] = (lm[box], mu[box], lk if lk is not None else 0.0)[pr]
+        if (e + 1) % 500 == 0:
+            print(f"cfgen {split} {e + 1}/{N} {time.time() - t0:.0f}s", flush=True)
+    fn = os.path.join(data, f"{split}_cf.npz")
+    np.savez(fn, cf_X=X, cf_V=V, cf_ent=ent, cf_prop=prop, cf_val=val)
+    print(f"wrote {fn} {time.time() - t0:.0f}s", flush=True)
 
 
 # ----------------------------------------------------------------------------- training
@@ -135,6 +173,10 @@ def train(args):
         b, lab = tr.gather(rows[idx], drop)
         passes = int(torch.randint(args.pmin, args.pmax + 1, (), generator=gen, device=dev))
         with torch.autocast("cuda", dtype=torch.bfloat16, enabled=(dev.type == "cuda" and not args.no_amp)):
+          if args.kind == "arm_i":
+            cf = tr.gather_cf(rows[idx], b, lab, args.cf_frac, gen) if tr.has_cf else None
+            loss, logs = B.arm_i_loss(model, b, lab, passes, cf=cf, law_w=law_w, gen=gen)
+          else:
             loss, logs = B.total_loss(model, b, lab, passes, law_w=law_w,
                                       cf_frac=0.0 if args.nolaw else args.cf_frac, ds_w=args.ds_w, gen=gen)
         opt.zero_grad(set_to_none=True)
@@ -185,7 +227,7 @@ def main(argv=None):
     t = sub.add_parser("train")
     t.add_argument("--data", default="data/v3_chain")
     t.add_argument("--run", required=True)
-    t.add_argument("--kind", default="lbs", choices=["lbs", "v1", "dense", "generic"])
+    t.add_argument("--kind", default="lbs", choices=["lbs", "v1", "dense", "generic", "proj", "arm_i"])
     t.add_argument("--nolaw", action="store_true")
     t.add_argument("--law-w", type=float, default=1.0)
     t.add_argument("--cf-frac", type=float, default=0.25)
@@ -202,8 +244,13 @@ def main(argv=None):
     t.add_argument("--no-amp", action="store_true")
     t.add_argument("--log-every", type=int, default=250)
     t.add_argument("--eval-every", type=int, default=2500)
+    c = sub.add_parser("cfgen")
+    c.add_argument("--data", default="data/v3_chain"); c.add_argument("--split", default="train")
+    c.add_argument("--n", type=int, default=None)
     a = ap.parse_args(argv)
-    if a.cmd == "gen":
+    if a.cmd == "cfgen":
+        cfgen(a.data, a.split, a.n)
+    elif a.cmd == "gen":
         gen(a.out, a.split, a.n, a.start)
     elif a.cmd == "train":
         train(a)

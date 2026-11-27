@@ -26,6 +26,7 @@ Variants
 from __future__ import annotations
 
 import math
+import os
 from dataclasses import dataclass
 
 import numpy as np
@@ -119,6 +120,24 @@ class ChainStore:
         self.X = t("lab_X"); self.V = t("lab_V"); self.Cn = t("lab_C", torch.bool); self.Fint = t("lab_Fint")
         self.mass = t("lab_mass"); self.mu = t("lab_mu"); self.k = t("lab_k"); self.spring = t("lab_spring", torch.bool)
         self.extra = {k: z[k][:n] for k in z.files if k.startswith("eval_")}
+        cfp = path[:-4] + "_cf.npz"
+        self.has_cf = os.path.exists(cfp)
+        if self.has_cf:
+            c = np.load(cfp)
+            tt = lambda k, dt=torch.float32: torch.as_tensor(np.asarray(c[k][:n]), device=device, dtype=dt)
+            self.cf_X, self.cf_V = tt("cf_X"), tt("cf_V")
+            self.cf_ent, self.cf_prop, self.cf_val = tt("cf_ent", torch.long), tt("cf_prop", torch.long), tt("cf_val")
+
+    def gather_cf(self, rows, b, lab, frac, gen=None):
+        """-> (row mask, edited TRUE normalised params (B,E,3), X_cf rel origin (B,E,NT), V_cf)."""
+        e, k = rows[:, 0], rows[:, 1]
+        B = len(e)
+        sel = torch.rand(B, device=e.device, generator=gen) < frac
+        pm_t = label_targets(b, lab)[0].clone()
+        ent, pr = self.cf_ent[e, k], self.cf_prop[e, k]
+        pm_t[torch.arange(B, device=e.device), ent, pr] = self.cf_val[e, k]
+        org = self.xhat_w[e, k, 0]
+        return sel, pm_t, self.cf_X[e, k] - org[:, None, None], self.cf_V[e, k]
 
     def rows(self, ks=(0, 1, 2, 3)):
         e = torch.arange(self.n_ep, device=self.device)
@@ -397,6 +416,35 @@ class LBS(nn.Module):
         f = (1 - wf) * store.f() + wf * F.softplus(dg[..., NT:GFD])
         return Store.from_parts(mean_n, lv_n, torch.cat([cl, f], -1))
 
+    proj_steps = 0
+
+    def enable_projection(self, steps=4):
+        """EXPLORATORY (V3 §0d): structural law projection inside the loop. After every write-back, `steps` learned-
+        step gradient steps on the law residual move the STATE beliefs (x, v, contact force) given the current
+        PARAMETER beliefs, so a parameter edit has to propagate through physics, not through a loss."""
+        self.proj_steps = steps
+        self.log_eta = nn.Parameter(torch.full((3,), math.log(math.expm1(0.3))))
+
+    def project(self, store: Store, b: Batch, cl):
+        train = self.training and torch.is_grad_enabled()
+        with torch.enable_grad():
+            xm, vm, f = store.xm(), store.vm(), store.f()
+            pm = store.pm()
+            if not train:
+                xm, vm, f, pm = (t.detach().requires_grad_() for t in (xm, vm, f, pm))
+            eta = F.softplus(self.log_eta)
+            for _ in range(self.proj_steps):
+                st = Store.from_parts(torch.cat([pm, xm, vm], -1), store.lvs(), torch.cat([store.cl(), f], -1))
+                r = sum(store_law(st, b, per_row=True).values()).sum()
+                gx, gv, gf = torch.autograd.grad(r, [xm, vm, f], create_graph=train)
+                xm = xm - (eta[0] * gx).clamp(-1, 1)
+                vm = vm - (eta[1] * gv).clamp(-1, 1)
+                f = F.relu(f - (eta[2] * gf).clamp(-1, 1))
+            if not train:
+                xm, vm, f = xm.detach(), vm.detach(), f.detach()
+        out = Store.from_parts(torch.cat([store.pm(), xm, vm], -1), store.lvs(), torch.cat([store.cl(), f], -1))
+        return apply_clamps(out, cl)
+
     def forward(self, b: Batch, passes=4, ids=None, clamps=(), block_edges=None, late_ev=None, late_from=None):
         """-> list of Store, one per pass (index -1 = final). clamps: [(mean_mask, values)] interventions.
         late_ev: (B,Nev) bool evidence tokens that become AVAILABLE only from pass `late_from` (delayed evidence)."""
@@ -417,6 +465,8 @@ class LBS(nn.Module):
             mask = mask1 if (late_ev is not None and k >= late_from) else mask0
             store = self.step(store, b, ids, evtok, mask, k)
             store = apply_clamps(store, cl)
+            if self.proj_steps:
+                store = self.project(store, b, cl)
             out.append(store)
         return out
 
@@ -487,7 +537,12 @@ def build(kind, d=128):
     supervision, no laws, never clamped by name -- the matched generic-memory twin)."""
     if kind == "v1":
         return V1(d)
+    if kind == "arm_i":
+        return LBSI(d)
     m = LBS(d, dense=(kind == "dense"))
+    if kind == "proj":
+        m.kind = "proj"
+        m.enable_projection(4)
     if kind == "generic":
         m.kind, m.typed = "generic", False
     return m
@@ -636,4 +691,161 @@ def total_loss(model, b, lab, passes, law_w=1.0, cf_frac=0.25, ds_w=0.3, gen=Non
         if i == n - 1:
             logs.update(lg)
     logs["loss"] = float(loss.item())
+    return loss, logs
+
+
+# ----------------------------------------------------------------------------- Arm I: non-bypass learned rollout
+class Rollout(nn.Module):
+    """LEARNED dynamics on the named store only (no evidence access): from parameter slots + the state at the start
+    of the horizon (x, v at tau0) + known inputs (sizes, types, the pusher's known command, relation graph), roll the
+    chain forward over the physical-time grid. Per step: graph-masked attention among entity and relation tokens
+    -> velocity increments (entities), contact logit + force (relations); positions integrate by construction."""
+
+    def __init__(self, d=96, layers=2):
+        super().__init__()
+        self.ent = mlp(3 + 2 + 1 + 3 + 1 + 1 + 1 + ID_D, 2 * d, d)
+        self.edge = mlp(2 + 1 + 1 + 2 + 2 * ID_D, 2 * d, d)
+        self.core = nn.ModuleList([CoreLayer(d) for _ in range(layers)])
+        self.dv = mlp(d, d, 2)            # dv (normalised), log-variance increment
+        self.de = mlp(d, d, 2)            # contact logit, force
+        self.d = d
+
+    def forward(self, pm, x0, v0, b: Batch, ids, block_edges=None):
+        """pm (B,E,3) normalised param VALUES; x0, v0 (B,E) normalised. -> xm, vm, xlv, vlv (B,E,NT), cl, f (B,Ed,NT/NI)."""
+        B, E = b.ent_type.shape
+        Ed = b.edges.shape[1]
+        dv_ = b.xhat.device
+        mask = graph_mask(b, False, block_edges)[:, :, :E + Ed]
+        tau = torch.as_tensor(C.TAU, device=dv_, dtype=torch.float32)
+        t_ = F.one_hot(b.ent_type.clamp(min=0), 3).float() * (b.ent_type >= 0)[..., None]
+        sp = b.edge_mask & (b.edges[..., 2] == C.EDGE_SPRING)
+        is_sb = (torch.zeros(B, E, device=dv_).scatter_add_(1, b.edges[..., 0], sp.float()) > 0).float()
+        movable = ((b.ent_type == C.ENT_BOX) | (b.ent_type == C.ENT_PUSHER)).float()
+        pus = (b.ent_type == C.ENT_PUSHER).float()
+        src, dst = b.edges[..., 0], b.edges[..., 1]
+        gi = lambda x, i: torch.gather(x, 1, i[..., None].expand(-1, -1, x.shape[-1]))
+        et = F.one_hot(b.edges[..., 2].clamp(0, 1), 2).float()
+        rad = b.size / X_SC
+        xr = torch.where(b.edges[..., 2] == C.EDGE_SPRING, (b.x_rest / X_SC)[:, None], torch.zeros_like(src).float())
+        xs, vs, xl, vl, cls, fs = [x0], [v0], [torch.full_like(x0, -6.0)], [torch.full_like(v0, -6.0)], [], []
+        x, v, lvx, lvv = x0, v0, torch.full_like(x0, -6.0), torch.full_like(v0, -6.0)
+        for j in range(NI):
+            tm = 0.5 * (tau[j] + tau[j + 1])
+            u = C.cmd_force(tm, b.action[:, 0], b.action[:, 1], v[:, 0] * V_SC, xp=torch) / 15.0
+            ent_in = torch.cat([pm.clamp(-4, 4), x[..., None], v[..., None], (b.size / 0.03)[..., None], t_,
+                                is_sb[..., None], (b.ent_type >= 0).float()[..., None], (u[:, None] * pus)[..., None],
+                                ids], -1)
+            gap = (gi(x[..., None], dst) - gi(x[..., None], src)).squeeze(-1) - (gi(rad[..., None], src) +
+                                                                                 gi(rad[..., None], dst)).squeeze(-1)
+            rel = (gi(v[..., None], src) - gi(v[..., None], dst)).squeeze(-1)
+            edge_in = torch.cat([et, (gap * 5)[..., None], xr[..., None], rel[..., None],
+                                 torch.full_like(rel, float(tm))[..., None], gi(ids, src), gi(ids, dst)], -1)
+            s = torch.cat([self.ent(ent_in), self.edge(edge_in)], 1)
+            for layer in self.core:
+                s = layer(s, s[:, :0], mask)
+            o = self.dv(s[:, :E]).float()
+            g = self.de(s[:, E:]).float()
+            v1 = v + o[..., 0] * movable
+            x = x + 0.5 * (v + v1) * (tau[j + 1] - tau[j]) * V_SC / X_SC * movable
+            v = v1
+            lvx = torch.logaddexp(lvx, o[..., 1].clamp(-12, 2)); lvv = torch.logaddexp(lvv, o[..., 1].clamp(-12, 2))
+            xs.append(x); vs.append(v); xl.append(lvx); vl.append(lvv); cls.append(g[..., 0])
+            fs.append(F.softplus(g[..., 1]))
+        cl = torch.stack([cls[0]] + cls, -1)
+        return (torch.stack(xs, -1), torch.stack(vs, -1), torch.stack(xl, -1), torch.stack(vl, -1), cl,
+                torch.stack(fs, -1))
+
+
+class LBSI(LBS):
+    """Arm I: learned loop (evidence -> parameter slots and the tau0 state) + non-bypass learned Rollout (future
+    beliefs computable ONLY from the slots + tau0 state). Trained with teacher forcing and real MuJoCo do()-pairs."""
+
+    def __init__(self, d=128):
+        super().__init__(d)
+        self.kind = "arm_i"
+        self.roll = Rollout()
+
+    def write_future(self, store, b, ids, pm_in=None, block_edges=None, cl=()):
+        pm = store.pm() if pm_in is None else pm_in
+        xm, vm, xlv, vlv, c_, f_ = self.roll(pm, store.xm()[..., 0], store.vm()[..., 0], b, ids, block_edges)
+        out = Store.from_parts(torch.cat([store.pm(), xm, vm], -1), torch.cat([store.plv(), xlv, vlv], -1),
+                               torch.cat([c_, f_], -1))
+        return apply_clamps(out, cl)
+
+    def loop(self, b, passes, ids, clamps=(), block_edges=None, late_ev=None, late_from=None):
+        """the learned loop over evidence: writes parameter slots and the tau0 state only (future fields are reset
+        to their uninformative init after every pass, so the loop carries no future-motion channel)."""
+        evtok = self.evidence(b, ids)
+        cl = [anchor_mask(b)] + list(clamps)
+        init = apply_clamps(init_store(b), cl)
+        store = init
+        b0 = b if late_ev is None else Batch(**{**b.__dict__, "ev_mask": b.ev_mask & ~late_ev})
+        mask0 = graph_mask(b0, False, block_edges)
+        mask1 = graph_mask(b, False, block_edges)
+        outs = []
+        for k in range(passes):
+            mask = mask1 if (late_ev is not None and k >= late_from) else mask0
+            st = apply_clamps(self.step(store, b, ids, evtok, mask, k), cl)
+            keep = torch.zeros_like(st.ent, dtype=torch.bool)
+            keep[..., :2 * NP] = True
+            keep[..., 2 * NP] = True; keep[..., 2 * NP + NT] = True              # x(tau0), xlv(tau0)
+            keep[..., 2 * NP + 2 * NT] = True; keep[..., 2 * NP + 3 * NT] = True  # v(tau0), vlv(tau0)
+            store = Store(torch.where(keep, st.ent, init.ent), init.edge)
+            outs.append(store)
+        return outs, cl
+
+    def forward(self, b, passes=4, ids=None, clamps=(), block_edges=None, late_ev=None, late_from=None):
+        B, E = b.ent_type.shape
+        if ids is None:
+            ids = torch.randn(B, E, ID_D, device=b.xhat.device)
+        loops, cl = self.loop(b, passes, ids, clamps, block_edges, late_ev, late_from)
+        return [self.write_future(st, b, ids, None, block_edges, cl) for st in loops]
+
+
+def arm_i_loss(model: LBSI, b, lab, passes, tf_prob=0.5, cf=None, law_w=1.0, gen=None):
+    """estimator (loop) trained by NLL on parameters + tau0 state (every pass); rollout trained on the final pass with
+    sample-form parameter input: TRUE parameters w.p. tf_prob, else the DETACHED loop estimate (v2 recipe). cf =
+    (rows mask, true edited params (B,E,3), X_cf, V_cf): those rows use the edited TRUE params and the MuJoCo
+    counterfactual trajectory as target (real do()-data)."""
+    pm_t, pmask, xt, vt, xmask, ct, cmask = label_targets(b, lab)
+    B = len(pm_t)
+    dv = pm_t.device
+    ids = torch.randn(B, b.ent_type.shape[1], ID_D, device=dv, generator=gen)
+    # loop passes (no rollout) -> estimator losses
+    tmp, _ = model.loop(b, passes, ids)
+    loss = 0.0
+    logs = {}
+    x0mask = xmask.clone(); x0mask[..., 1:] = False
+    for i, st in enumerate(tmp):
+        w = 1.0 if i == len(tmp) - 1 else 0.3
+        l_p = gnll(st.pm(), st.plv(), pm_t, pmask)
+        l_x0 = gnll(st.xm()[..., :1], st.xlv()[..., :1], xt[..., :1], x0mask[..., :1])
+        loss = loss + w * (l_p + l_x0)
+    est = tmp[-1].pm().detach()
+    tf = (torch.rand(B, 1, 1, device=dv, generator=gen) < tf_prob) & pmask
+    pm_in = torch.where(tf, pm_t, est)
+    X, V, keep = xt, vt, torch.ones(B, dtype=torch.bool, device=dv)
+    if cf is not None:
+        rows, pm_cf, Xcf, Vcf = cf
+        pm_in = torch.where(rows[:, None, None], torch.where(pmask, pm_cf, est), pm_in)
+        X = torch.where(rows[:, None, None], Xcf / X_SC, X)
+        V = torch.where(rows[:, None, None], Vcf / V_SC, V)
+    st0 = tmp[-1]
+    st = model.write_future(Store.from_parts(torch.cat([st0.pm().detach(), st0.xm().detach(), st0.vm().detach()], -1),
+                                             st0.lvs().detach(), st0.edge.detach()), b, ids, pm_in,
+                            cl=[anchor_mask(b)])
+    fm = xmask.clone(); fm[..., 0] = False
+    l_x = gnll(st.xm(), st.xlv(), X, fm)
+    l_v = gnll(st.vm(), st.vlv(), V, fm)
+    cm = cmask & (keep[:, None, None] if cf is None else ~cf[0][:, None, None])
+    bce = F.binary_cross_entropy_with_logits(st.cl(), ct, reduction="none")
+    l_c = (bce * cm).sum() / cm.sum().clamp(min=1)
+    loss = loss + l_x + l_v + 0.5 * l_c
+    if law_w > 0:
+        si = p_to_si(pm_in)
+        mass = torch.where(b.ent_type == C.ENT_PUSHER, torch.full_like(si["mass"], C.PUSHER_M), si["mass"])
+        r = law_residuals(st.xm() * X_SC, st.vm() * V_SC, st.f() * F_SC, mass, si["mu"], si["k"], b)
+        loss = loss + law_w * sum(r.values())
+        logs.update({f"law_{k}": v.item() for k, v in r.items()})
+    logs.update(l_p=l_p.item(), l_x=l_x.item(), l_v=l_v.item(), l_c=l_c.item(), loss=loss.item())
     return loss, logs
