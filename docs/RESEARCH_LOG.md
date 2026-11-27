@@ -684,3 +684,49 @@ entries that point back to the entry they correct.
   Use the same groups with `--split test2` plus the chosen arm.
 - When reporting A3, put classical (0.73 / 0.79 VAL) and oracle (0.82) next to arm I. Results go in
   `V3_GENERAL.md` §0f. Only a `\pending{}` block goes to paper/results.tex (lead's call).
+
+- **2026-11-27 02:10 CST — EXT: Physion v1 readout prefixes complete** (47–53 stimuli per scenario, 5% byte-prefix of
+  each official archive; `/home/brandonin/datasets/physion/readout/`).
+  - Reference readout on all 8 scenarios (colour tracks + our hand-made features + the official readout procedure;
+    the reduced readout set makes this NON-OFFICIAL, and it is not a model result):
+    - observed: 0.48–0.54, about chance;
+    - full-movie detection: 0.55–0.90;
+    - for comparison, the published pDEIT-lstm gets 0.59–0.69 (Table S1).
+  - Front-end findings:
+    - the agent is tracked at sub-pixel error in every scenario;
+    - the patient fails in Drape (recall 0.07), Contain (52 px), Drop (23 px) and Dominoes (6 px), so the colour
+      tracker is not adequate for those scenarios;
+    - tier B (SAM2) is the planned fix, after Physion++.
+  - Files: `results/ext/physion_ocp_color-v2.json`, `physion_frontend_validation_color-v2.json`, EXT.md §3a
+    (commit fdff1cd).
+  - The download chain is now on DexYCB s02–08. Physion++ mass readout SAM2 is at 183/200.
+
+- **2026-11-27 03:00 CST — EXT: Physion++ mass readout SAM2 tracks complete** (200/200; local copy at
+  `/home/brandonin/datasets/physionpp/tracks/sam2-v1/`).
+  - Check against the simulator `_id` segmentation (evaluator only), saved in
+    `results/ext/physionpp_tracks_validation_readout_mass.json`:
+
+    | object | recall | recall in observed window | median error | within 5 px |
+    |---|---|---|---|---|
+    | agent | 0.93 | 0.89 | 0.7 px | 93% |
+    | patient | 0.74 | 0.59 | 0.5 px | 93% |
+
+  - The patient is lost mainly before the cue frame. Backward propagation across the curtain and rearrangement phase
+    drops it.
+  - Next: the mass test driver (PID 3346796 → `gb10_sam2_driver.sh`, 192 videos in 20-video chunks with a 5-min
+    lane release between chunks) has now started. When it finishes, run `physionpp_ocp.py readout`.
+
+## 2026-11-27 ~07:50 UTC, V3-MODEL: finding, arm I VAL attempt 2 (do() at the rollout input)
+- arm_i_s0 on VAL (`results/v3/eval/arm_i_s0_val_causal.json`); A3 on VAL for comparison: classical 0.79,
+  classical_conv 0.73, oracle 0.82.
+
+| criterion | result |
+|---|---|
+| A1 own-box sign / Spearman / other boxes | 0.94 / 0.80 / 0.92 (pass) |
+| A2 τ 0.3 / 0.6 s / impulse | 0.98 / 0.94 / 0.86 (pass) |
+| A3 action sign | 0.63 (FAIL; ties 31%, wrong sign 6%) |
+| A4 counterfactual-outcome Δ | −4.7 mm [−7.4, −2.2] (pass) |
+| A6 delayed evidence, A7 edge blocking | still fail |
+
+- The clamp leak is fixed: a clamp at the slot's own posterior mean now changes the plan in 0% of episodes.
+- So no arm passes A1–A4 on VAL yet, and the Inkling port stays on hold. arm_i2 is next, via the selection driver.
