@@ -121,8 +121,10 @@ class Classical:
     POP, ITERS, ELITE = 64, 8, 8
     SIG_TRK, SIG_ANC, SIG_F = 0.003, 0.001, 0.5
 
-    def __init__(self, z, rng_seed=0):
+    def __init__(self, z, rng_seed=0, converged=False):
         self.z = z
+        if converged:                       # stronger, converged CEM (reported separately; VAL ident check)
+            self.POP, self.ITERS, self.ELITE = 256, 20, 16
         self.rng = np.random.default_rng(rng_seed)
 
     def _row_inputs(self, e, w):
@@ -344,14 +346,14 @@ def causal(args):
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     z = dict(np.load(os.path.join(args.data, f"{args.split}.npz")))
     kind = args.ckpt
-    if kind not in ("classical", "oracle"):
+    if kind not in ("classical", "oracle", "classical_conv"):
         from physmem.v3_chain import load
         model, _ = load(args.ckpt, dev)
         run = os.path.basename(args.ckpt)[:-3]
         st = B.ChainStore(os.path.join(args.data, f"{args.split}.npz"), dev)
     else:
         model, run, st = None, kind, None
-        cl = Classical(z, args.seed)
+        cl = Classical(z, args.seed, converged=(kind == "classical_conv"))
     sims = json.load(open(_out(f"simcf_{args.split}.json")))
     n = min(args.n, len(sims))
     k = C.N_WIN - 1
