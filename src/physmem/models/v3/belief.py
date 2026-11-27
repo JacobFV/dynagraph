@@ -127,6 +127,18 @@ class ChainStore:
             tt = lambda k, dt=torch.float32: torch.as_tensor(np.asarray(c[k][:n]), device=device, dtype=dt)
             self.cf_X, self.cf_V = tt("cf_X"), tt("cf_V")
             self.cf_ent, self.cf_prop, self.cf_val = tt("cf_ent", torch.long), tt("cf_prop", torch.long), tt("cf_val")
+            self.has_rel = "rel_X" in c.files
+            if self.has_rel:
+                self.rel_X, self.rel_edge = tt("rel_X"), tt("rel_edge", torch.long)
+
+    def gather_rel(self, rows, frac, gen=None):
+        """-> (row mask, block_edges (B,Ed) bool, X_rel rel origin) for relation do()-pairs (L >= 2 rows only)."""
+        e, k = rows[:, 0], rows[:, 1]
+        B = len(e)
+        sel = (torch.rand(B, device=e.device, generator=gen) < frac) & (self.rel_edge[e, k] > 0)
+        blk = F.one_hot(self.rel_edge[e, k], C.N_EDGE).bool() & sel[:, None]
+        org = self.xhat_w[e, k, 0]
+        return sel, blk, self.rel_X[e, k] - org[:, None, None]
 
     def gather_cf(self, rows, b, lab, frac, gen=None):
         """-> (row mask, edited TRUE normalised params (B,E,3), X_cf rel origin (B,E,NT), V_cf)."""
@@ -798,11 +810,14 @@ class LBSI(LBS):
         B, E = b.ent_type.shape
         if ids is None:
             ids = torch.randn(B, E, ID_D, device=b.xhat.device)
-        loops, cl = self.loop(b, passes, ids, clamps, block_edges, late_ev, late_from)
-        return [self.write_future(st, b, ids, None, block_edges, cl) for st in loops]
+        # do(property): the evidence loop is NOT clamped (an intervention on a property does not change what was
+        # observed or the current-state estimate); the clamp acts on the slots the rollout reads, at every pass.
+        loops, cl0 = self.loop(b, passes, ids, (), block_edges, late_ev, late_from)
+        cl = cl0 + list(clamps)
+        return [self.write_future(apply_clamps(st, cl), b, ids, None, block_edges, cl) for st in loops]
 
 
-def arm_i_loss(model: LBSI, b, lab, passes, tf_prob=0.5, cf=None, law_w=1.0, gen=None):
+def arm_i_loss(model: LBSI, b, lab, passes, tf_prob=0.5, cf=None, law_w=1.0, gen=None, rel=None, late_frac=0.0):
     """estimator (loop) trained by NLL on parameters + tau0 state (every pass); rollout trained on the final pass with
     sample-form parameter input: TRUE parameters w.p. tf_prob, else the DETACHED loop estimate (v2 recipe). cf =
     (rows mask, true edited params (B,E,3), X_cf, V_cf): those rows use the edited TRUE params and the MuJoCo
@@ -811,8 +826,16 @@ def arm_i_loss(model: LBSI, b, lab, passes, tf_prob=0.5, cf=None, law_w=1.0, gen
     B = len(pm_t)
     dv = pm_t.device
     ids = torch.randn(B, b.ent_type.shape[1], ID_D, device=dv, generator=gen)
-    # loop passes (no rollout) -> estimator losses
-    tmp, _ = model.loop(b, passes, ids)
+    # loop passes (no rollout) -> estimator losses; availability augmentation: the most recent window's evidence is
+    # withheld until pass ceil(K/2) in a fraction of rows (rows without history are unaffected)
+    late, late_from = None, None
+    if late_frac > 0 and passes >= 2:
+        nper = C.N_ENT * C.N_MOD
+        lr = torch.rand(B, device=dv, generator=gen) < late_frac
+        late = torch.zeros_like(b.ev_mask)
+        late[:, :nper] = b.ev_mask[:, :nper] & lr[:, None]
+        late_from = (passes + 1) // 2
+    tmp, _ = model.loop(b, passes, ids, late_ev=late, late_from=late_from)
     loss = 0.0
     logs = {}
     x0mask = xmask.clone(); x0mask[..., 1:] = False
@@ -830,14 +853,22 @@ def arm_i_loss(model: LBSI, b, lab, passes, tf_prob=0.5, cf=None, law_w=1.0, gen
         pm_in = torch.where(rows[:, None, None], torch.where(pmask, pm_cf, est), pm_in)
         X = torch.where(rows[:, None, None], Xcf / X_SC, X)
         V = torch.where(rows[:, None, None], Vcf / V_SC, V)
+    blk = None
+    if rel is not None:
+        rsel, blk, Xr = rel
+        X = torch.where(rsel[:, None, None], Xr / X_SC, X)
+        if cf is not None:
+            cf = (cf[0] & ~rsel,) + tuple(cf[1:])
     st0 = tmp[-1]
     st = model.write_future(Store.from_parts(torch.cat([st0.pm().detach(), st0.xm().detach(), st0.vm().detach()], -1),
                                              st0.lvs().detach(), st0.edge.detach()), b, ids, pm_in,
-                            cl=[anchor_mask(b)])
+                            block_edges=blk, cl=[anchor_mask(b)])
     fm = xmask.clone(); fm[..., 0] = False
     l_x = gnll(st.xm(), st.xlv(), X, fm)
-    l_v = gnll(st.vm(), st.vlv(), V, fm)
+    l_v = gnll(st.vm(), st.vlv(), V, fm if rel is None else fm & ~rel[0][:, None, None])
     cm = cmask & (keep[:, None, None] if cf is None else ~cf[0][:, None, None])
+    if rel is not None:
+        cm = cm & ~rel[0][:, None, None]
     bce = F.binary_cross_entropy_with_logits(st.cl(), ct, reduction="none")
     l_c = (bce * cm).sum() / cm.sum().clamp(min=1)
     loss = loss + l_x + l_v + 0.5 * l_c

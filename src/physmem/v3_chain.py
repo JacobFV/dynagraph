@@ -90,8 +90,25 @@ def cfgen(data, split, n=None):
             val[e, k] = (lm[box], mu[box], lk if lk is not None else 0.0)[pr]
         if (e + 1) % 500 == 0:
             print(f"cfgen {split} {e + 1}/{N} {time.time() - t0:.0f}s", flush=True)
+    # relation do()-pairs: block one box-box contact relation (edge j between box j and box j+1) by removing the
+    # downstream boxes from the scene; the removed boxes then do not move (target = their start position)
+    RX = np.zeros((N, W, E, NT), np.float32); redge = np.zeros((N, W), np.int8)
+    for e in range(N):
+        L = int(z["L"][e])
+        if L < 2:
+            continue
+        p = true_params(z, e)
+        for k in range(W):
+            rng = np.random.default_rng([8, SEED_BASE[split] + e, k])
+            j = int(rng.integers(1, L))                       # edge index j: entity j -> entity j+1
+            F, T = z["action"][e, k]
+            Xg, _ = sim_window(p, z, e, k, F, T, far_from=j + 1)
+            Xg[:, j + 1:] = z["eval_start_x"][e, k, j + 1:L + 1][None]
+            RX[e, k, :L + 1] = Xg.T; redge[e, k] = j
+        if (e + 1) % 500 == 0:
+            print(f"cfgen-rel {split} {e + 1}/{N} {time.time() - t0:.0f}s", flush=True)
     fn = os.path.join(data, f"{split}_cf.npz")
-    np.savez(fn, cf_X=X, cf_V=V, cf_ent=ent, cf_prop=prop, cf_val=val)
+    np.savez(fn, cf_X=X, cf_V=V, cf_ent=ent, cf_prop=prop, cf_val=val, rel_X=RX, rel_edge=redge)
     print(f"wrote {fn} {time.time() - t0:.0f}s", flush=True)
 
 
@@ -175,7 +192,10 @@ def train(args):
         with torch.autocast("cuda", dtype=torch.bfloat16, enabled=(dev.type == "cuda" and not args.no_amp)):
           if args.kind == "arm_i":
             cf = tr.gather_cf(rows[idx], b, lab, args.cf_frac, gen) if tr.has_cf else None
-            loss, logs = B.arm_i_loss(model, b, lab, passes, cf=cf, law_w=law_w, gen=gen)
+            rel = tr.gather_rel(rows[idx], args.rel_frac, gen) if (tr.has_cf and getattr(tr, "has_rel", False)
+                                                                  and args.rel_frac > 0) else None
+            loss, logs = B.arm_i_loss(model, b, lab, passes, cf=cf, law_w=law_w, gen=gen, rel=rel,
+                                      late_frac=args.late_frac)
           else:
             loss, logs = B.total_loss(model, b, lab, passes, law_w=law_w,
                                       cf_frac=0.0 if args.nolaw else args.cf_frac, ds_w=args.ds_w, gen=gen)
@@ -241,6 +261,8 @@ def main(argv=None):
     t.add_argument("--seed", type=int, default=0)
     t.add_argument("--max-episodes", type=int, default=None)
     t.add_argument("--gpu-cap-gb", type=float, default=5.0)
+    t.add_argument("--rel-frac", type=float, default=0.0)
+    t.add_argument("--late-frac", type=float, default=0.0)
     t.add_argument("--no-amp", action="store_true")
     t.add_argument("--log-every", type=int, default=250)
     t.add_argument("--eval-every", type=int, default=2500)
