@@ -377,7 +377,10 @@ classical, no oracle, no simcf.
 |---|---|---|---|---|
 | 1 | arm_i_s0 | LBSI, cf-frac 0.3, tf 0.5, law 1, 4000 × 512; clamps applied inside the loop | A1 0.91 / Spearman 0.80 / other 0.88; A2 0.98 / 0.94 / impulse 0.88; A3 0.54 (37% ties); A4 −3.3 mm [−6.0, −0.7]; A6 fail; A7 B2 suppressed 4%; final 16.8 mm | the clamp leaked into the τ0 state (plan changed in 51% of episodes when clamping at the posterior mean) → do() acts only on the rollout's slots (#2) |
 | 2 | arm_i_s0 (same weights) | eval change only: do() at the rollout input | pending | – |
-| 3 | proj_s0 | LBS + 4 law-projection steps (η init 0.3) | training VAL at step 1000: 62.8 mm, params at chance; causal pilot pending | – |
+| 3 | proj_s0 | LBS + 4 law-projection steps (η init 0.3) | **null**: final error 62.9 mm, parameter corr ≈ 0, own-box sign 0.59, edit effect 0.8% of physics, A3 0.19, A4 +0.7 mm [−5.3, +7.3], closed loop 52 mm | not pursued further now (hybrid; lead priority is arm I); a different projection design would need its own attempt |
 | 4 | arm_i2_s0 | #2 + relation do()-pairs (rel-frac 0.15) + late-evidence augmentation (0.2) | pending (training queued) | – |
 
 Classical (CEM + analytic) goes through the same do()/A3/A4 harness on `test2`, so the comparison is matched.
+The converged CEM classical (`classical_conv`, 256 × 20) on VAL gives own-box sign 0.94, Spearman 0.87, action 0.73,
+counterfactual outcome −3.6 mm [−6.2, −0.8] and closed loop 9.6 mm / 83%: no better than the registered 64 × 8 CEM.
+So A3 ≥ 0.80 lies above both classical estimators and near the oracle (0.82) on VAL.
