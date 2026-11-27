@@ -118,3 +118,49 @@ entries that point back to the entry they correct.
     - `V3_GENERAL.md` §0 makes the per-pass typed belief state the V3-MODEL priority.
     - MODEL round 6 gets the cached classical estimator added before its §13a freeze, if the freeze hasn't happened.
     - INKLING code is published when its run completes.
+- **EXT track (agent EXT, branch `ext`, `docs/EXT.md`)**:
+  - **License audit.** Done from the official pages (§1).
+    - No registration needed, research use allowed: Physion v1, Physion++ and PHYRE (MIT/Apache); CLEVRER (CC0);
+      IntPhys 2019 (CC BY); DexYCB (CC BY-NC); MediaPipe (Apache-2.0).
+    - Needs PI registration: MANO, ARCTIC, GRAB, SMPL-X, HOT3D, ContactPose, H2O and OakInk v1 annotations.
+    - Data license unstated, held: Kubric MOVi and ComPhy.
+  - **Downloads.**
+    - Local only, with sha256 and provenance in `results/ext/datasets_manifest.json`.
+    - Caps: ≤ 150 GB downloaded and ≤ 300 GB footprint. Archives are deleted after a verified extraction.
+    - The link gives ~1–2 MB/s, and S3 ~0.2 MB/s per connection, so we use parallel range downloads.
+    - The Physion v1 readout-fitting set (~250 GB) is fetched as a 5% byte-prefix per scenario. Every number from it
+      is labelled non-official.
+  - **Physion v1.**
+    - The loader, the official readout protocol (from neuroailab physics-models/physopt), and Table S1 are recorded
+      verbatim.
+    - Human accuracy recomputed from the official CSVs is within 0.008 of Table S1.
+    - The colour-track pipeline check on Dominoes gives observed 0.48 and full 0.90: the chain works, and agent+patient
+      tracks alone are not predictive there.
+  - **Physion++.**
+    - The official readout (800) and test sets are local. The 192-per-property test list is reconstructed from the
+      official human data. Table 2 is recorded.
+    - SAM 2.1 tier-B tracks, prompted by the cue map, have sub-pixel median centroid error against the simulator masks.
+      They run on gb10, mass property first.
+  - **Human pose.**
+    - We use MediaPipe Hand (Apache-2.0, no MANO).
+    - On DexYCB (9 sequences × 8 views) it gives recall 0.88, 2-D median error 7.1 px and PCK@20 0.90; the
+      depth-lifted root-relative median error is 27 mm.
+  - **H6.**
+    - The draft is in §6: GENERIC − TYPED log-mass error, object-cluster bootstrap, controls C1 aperture / C2 lift
+      kinematics / C3 identity lookup.
+    - Lead decision: EXT freezes it in its own commit once V3-MODEL's human-track model and its generic twin exist
+      (trained and run on TRAIN/VAL only), and before any inference on subjects 07–08. A code guard enforces this.
+    - Fragility is untested: no accessible labels.
+- **GPU lane overruns (lead note):**
+  - V3-MODEL's first training job hit 6.2 GB at batch 1024. It was stopped after 5 min, and runs are now capped at
+    5 GB, batch 512, bf16.
+  - EXT's SAM2 smoke run hit 7.2 GB. It was killed within about 2 min, and the job now uses CPU offload with a 4.5 GB
+    cap; its peak is 2.5 GB.
+  - Neither overrun pushed the tenancy past its 60 GB total. Rule kept: < 6 GB per small job, with a hard allocator
+    cap set before launch.
+- **Round 6 frozen** (c22846d) before any test episode. It adds a classical cached-estimator secondary (S-lot) and the
+  "whole package" note at the lead's request after the external audit. The VAL planner sanity run was stopped after its
+  first partial cell so the test gets both CPU slots.
+- **ENVS-V3 first ceilings:** stack_overhang, handover and cable_route have low headroom (oracle − nominal ≤ ~0.13).
+  The lead asked for a value-of-latent column (n ≥ 20) and one physically honest change per low-headroom family.
+  Failing that, the family is labelled competence-only.
