@@ -164,3 +164,13 @@ entries that point back to the entry they correct.
 - **ENVS-V3 first ceilings:** stack_overhang, handover and cable_route have low headroom (oracle − nominal ≤ ~0.13).
   The lead asked for a value-of-latent column (n ≥ 20) and one physically honest change per low-headroom family.
   Failing that, the family is labelled competence-only.
+- **Compute-rule lapse (ENVS-V3):** value-of-latent checks ran locally (nice 10, up to 10 processes, a few minutes
+  each) instead of on gb10. The lead flagged it, and from now on every n ≥ 20 run goes on gb10 under the one-process
+  queue.
+- **ENVS-V3 headroom changes** (one documented physical change per low-headroom family):
+  - stack_overhang: COM offset up to ±45%. Oracle − nominal is now +0.30.
+  - handover: release delay 0.3–3 s. UR5e +0.30.
+  - cable_route: thick cords. +0.15, borderline.
+  - cloth_fold: heavier fabrics. Recalibrating.
+  - g1_push_terrain: the change was reverted; the family is labelled competence/controller-limited.
+  - pour: oracle − PTA ≈ 0 (a calibrate-once family), and it is reported that way.
