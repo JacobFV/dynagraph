@@ -378,6 +378,7 @@ class GranularDose(Pour):
     Same vessel / spout / scale / skills as `pour` (the tilt skill takes shake_amp / shake_hz)."""
     family = "granular_dose"
     station = "dose_bench"
+    SPOUT_W = 0.05      # v3.1: 5 cm spout (4 cm: grains arched whatever the tapping - no lever, value of latent ~0.1)
     success_doc = ("dose the stated target mass (goal 'target_kg', 40-90 g) of grains into the container on the scale: "
                    "|dosed - target| <= 15 g, spilled <= 10 g, scoop set back upright in its home area, released")
     hidden_doc = ("grain friction 0.1-0.8 (arching over the spout: no flow without tapping above ~0.3), grain radius "
