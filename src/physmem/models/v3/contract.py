@@ -98,3 +98,59 @@ def derived_consistency(beliefs: dict) -> dict:
 CHAIN_PROPERTIES = {"log_mass": "mass", "friction": "friction", "log_k": "spring_k", "x": "pose", "v": "velocity",
                     "c": "contact_mode", "f": "contact_force"}
 CHAIN_MODALITIES = {0: "keypoint_track", 1: "proprio_force", 2: "pose_anchor"}
+
+
+# ----------------------------------------------------------------------------- human modality (EXT H6 interface)
+# EXT (branch `ext`, src/physmem/ext/tracks.py) emits TrackSet(kind="human"): t (T,), uv (T,E,K,2), xyz (T,E,K,3)
+# depth-lifted camera-frame keypoints (NaN = missed), entities e.g. ["right_hand"], keypoints = 21 MediaPipe hand
+# joints (MANO/DexYCB order). We read it by duck typing (no import of the ext package, no edit of that branch).
+# Mapping into this contract:
+#   * each hand  -> entity type "human_part" of an embodiment WITHOUT force sensing (EMBODIMENT_HUMAN below): no
+#                   proprio_force token can exist for it; its evidence is `human_pose` tokens only;
+#   * the grasped object -> entity type "object" with NO direct track in the confirmatory H6 test; it is linked to
+#                   the hand by a "grasp" relation, and its typed `mass` slot is what H6 reads out;
+#   * evidence channels per hand and window (HUMAN_CH): wrist xyz, wrist speed, thumb-index aperture, palm-normal
+#                   vertical component, valid. Gravity direction comes from a table-plane fit (EXT h6-feat-v1),
+#                   supplied as a known input, never from labels.
+# Matched twin for H6: LBS-generic = the same backbone with the named property fields replaced by an untyped
+# vector of equal width and no property supervision (planned; not yet trained).
+EMBODIMENT_HUMAN = dict(kind="human", force_sensing=False, proprio=False, modalities=("human_pose",))
+HAND_JOINTS = ["wrist", "thumb_cmc", "thumb_mcp", "thumb_ip", "thumb_tip", "index_mcp", "index_pip", "index_dip",
+               "index_tip", "middle_mcp", "middle_pip", "middle_dip", "middle_tip", "ring_mcp", "ring_pip",
+               "ring_dip", "ring_tip", "pinky_mcp", "pinky_pip", "pinky_dip", "pinky_tip"]
+HUMAN_CH = ["wrist_x", "wrist_y", "wrist_z", "wrist_speed", "aperture", "palm_up", "valid"]
+
+
+def human_evidence(ts, up=(0.0, -1.0, 0.0), n_bins=32, t0=None, span=None):
+    """TrackSet(kind="human") -> (E, n_bins, len(HUMAN_CH)) binned evidence + (E,) availability. `up` is the
+    actor-estimated gravity-up direction in the TrackSet frame (table-plane normal). Positions relative to the
+    first valid wrist sample of each entity."""
+    assert ts.kind == "human" and ts.xyz is not None
+    t = np.asarray(ts.t, float)
+    t0 = t[0] if t0 is None else t0
+    span = (t[-1] - t0 + 1e-6) if span is None else span
+    kp = {n: i for i, n in enumerate(ts.keypoints)}
+    up = np.asarray(up, float) / np.linalg.norm(up)
+    E = ts.xyz.shape[1]
+    out = np.zeros((E, n_bins, len(HUMAN_CH)), np.float32)
+    avail = np.zeros(E, bool)
+    b = np.clip(((t - t0) / span * n_bins).astype(int), 0, n_bins - 1)
+    for e in range(E):
+        X = ts.xyz[:, e]
+        w = X[:, kp["wrist"]]
+        ok = np.isfinite(w).all(1)
+        if ok.sum() < 2:
+            continue
+        avail[e] = True
+        w_rel = w - w[np.nonzero(ok)[0][0]]
+        sp = np.r_[0.0, np.linalg.norm(np.diff(w, axis=0), axis=1) / np.maximum(np.diff(t), 1e-3)]
+        ap = np.linalg.norm(X[:, kp["thumb_tip"]] - X[:, kp["index_tip"]], axis=1)
+        n = np.cross(X[:, kp["index_mcp"]] - w, X[:, kp["pinky_mcp"]] - w)
+        pu = (n @ up) / np.maximum(np.linalg.norm(n, axis=1), 1e-9)
+        feats = np.c_[w_rel, sp, ap, pu]
+        good = ok & np.isfinite(feats).all(1)
+        for c in range(feats.shape[1]):
+            s_ = np.bincount(b[good], feats[good, c], n_bins); n_ = np.bincount(b[good], None, n_bins)
+            out[e, :, c] = np.where(n_ > 0, s_ / np.maximum(n_, 1), 0.0)
+        out[e, :, -1] = np.bincount(b[good], None, n_bins) > 0
+    return out, avail

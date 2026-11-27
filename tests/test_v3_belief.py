@@ -107,3 +107,16 @@ def test_contract_is_superset_of_v2_latents():
         assert (n, tr, unit) == (p[0], p[2], p[5]) and abs(loc - p[3]) < 1e-12 and abs(sc - p[4]) < 1e-12
     for n in ("spring_k", "k_over_m", "c_over_m", "mass_ratio", "restitution", "length_scale"):
         assert n in K.PROP_NAMES
+
+
+def test_human_trackset_adapter_duck_typed():
+    from types import SimpleNamespace
+    from physmem.models.v3 import contract as K
+    T = 60
+    xyz = np.random.default_rng(0).normal(0, 0.01, (T, 1, 21, 3))
+    xyz[:, 0, :, 1] -= np.linspace(0, 0.1, T)[:, None]          # lift along -y (up)
+    xyz[5:8] = np.nan
+    ts = SimpleNamespace(kind="human", t=np.arange(T) / 30.0, xyz=xyz, keypoints=K.HAND_JOINTS)
+    ev, av = K.human_evidence(ts)
+    assert av[0] and ev.shape == (1, 32, len(K.HUMAN_CH)) and np.isfinite(ev).all()
+    assert ev[0, -1, 1] < ev[0, 0, 1]                              # wrist moves up (-y)
