@@ -54,6 +54,14 @@ HELDOUT_OBJECTS = {
     "small_parts_pick": dict(shapes=("mesh", "ellipsoid")),
     "small_peg_insert": dict(peg_half=0.0085),
     "shelf_restock": dict(n_items=7),
+    # envs-v3: one hidden quantity pushed just outside its train range (not used by the envs-v3 ceilings)
+    "pour": dict(visc=0.08),                      # train 0.001-0.05 N s/m
+    "granular_dose": dict(grain_r=0.0075),        # train 4.5-6.5 mm
+    "cloth_fold": dict(thickness=0.002),          # train 0.3-1.5 mm
+    "cable_route": dict(bend_k=0.3),              # train 0.003-0.2 N m/rad
+    "stack_overhang": dict(overhang_m=0.075),     # train 0.055-0.072 m
+    "handover": dict(tau=2.5),                    # train 0.3-2.0 s
+    "g1_push_terrain": dict(mu_floor=0.06),       # train 0.08-0.9
 }
 COUNT_SHIFT = {"shelf_restock": dict(n_items=7), "depalletize": dict(layers=3), "conveyor_sort": dict(n_parts=7), "tote_transfer": dict(n_totes=4),
                "pouch_transfer": dict(mass=0.8)}
