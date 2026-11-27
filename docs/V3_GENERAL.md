@@ -384,3 +384,45 @@ Classical (CEM + analytic) goes through the same do()/A3/A4 harness on `test2`, 
 The converged CEM classical (`classical_conv`, 256 × 20) on VAL gives own-box sign 0.94, Spearman 0.87, action 0.73,
 counterfactual outcome −3.6 mm [−6.2, −0.8] and closed loop 9.6 mm / 83%: no better than the registered 64 × 8 CEM.
 So A3 ≥ 0.80 lies above both classical estimators and near the oracle (0.82) on VAL.
+
+## §0e. Pre-registration: exploratory arm I on fresh seeds (`test2`, `test2_L4`), frozen before any test2 run
+
+Status: committed on its own. `test2` (seeds 4 000 000–4 000 599) and `test2_L4` (5 000 000–5 000 299) have
+been generated and never evaluated by anything (no model, classical, oracle or simcf).
+
+**Forking paths, disclosed.**
+- VAL attempts before this freeze: 4 (§0d.1).
+  1. arm_i_s0 with in-loop clamps;
+  2. arm_i_s0 with the clamp at the rollout input (eval change only);
+  3. proj_s0 (arm P), a VAL null, not carried to test2;
+  4. arm_i2_s0 (relation do()-pairs + late-evidence augmentation).
+- One additional VAL reference: `classical_conv`.
+- Candidates 2 and 4 were not yet scored on VAL when this was written.
+
+**Selection rule (deterministic, VAL only; `scripts/v3/select_arm.py`).**
+- Score each candidate {`arm_i` = attempt 2, `arm_i2` = attempt 4} by the number of A1–A4 criteria it passes on
+  VAL, using the §0b thresholds. The higher score wins; a tie goes to `arm_i2`. The output goes to
+  `results/v3/eval/arm_selection.json`.
+- The chosen configuration is trained for seeds 1 and 2 at the same budget (4000 × 512). It is evaluated on test2
+  **whether or not it passed on VAL**.
+
+**Evaluation.** Identical to §0b (same harness, edit-plan seed 12345, planner, n = 200 causal episodes of `test2`
+and 200 of `test2_L4`, K = 4), applied to:
+- the chosen arm (3 seeds);
+- the frozen-matrix checkpoints LBS-law, V1 and LBS-nolaw (3 seeds each), as matched comparators;
+- classical (registered 64 × 8 CEM) and the labelled oracle.
+
+**Criteria.** A1–A8 exactly as in §0b, required in each of the 3 seeds of the chosen arm.
+
+**Comparisons (paired over test2 episodes, seeds averaged, 95% bootstrap CI).**
+- D1: chosen arm vs LBS-law on own-box sign agreement, action sign agreement, closed-loop error and final error.
+  Prediction: arm better on the first two.
+- D2: chosen arm vs classical on the same four (no directional prediction).
+- D3: chosen arm vs V1 (prediction: arm better on own-box sign agreement).
+
+**Interpretation, fixed now.**
+- A pass by arm I is evidence that a learned loop with named slots can be made causally correct when it is trained
+  with real interventional data behind a non-bypass bottleneck.
+- It is not evidence that law regularisation alone does it (§0c says it does not).
+- The rollout is a learned network; MuJoCo only produces the training pairs. A failure is reported as such.
+- The Inkling port waits for a VAL pass and the lead's approval.
