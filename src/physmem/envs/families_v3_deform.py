@@ -37,7 +37,7 @@ class ClothFold(V3Base):
     budget = 6
     success_doc = ("diagonal fold: 2 s after release the tab corner lies within 3 cm (xy) of the opposite corner, that "
                    "corner moved < 4 cm from where it started (cloth not dragged), the cloth is on the bench, released")
-    hidden_doc = ("bending stiffness (shell thickness 0.3-1.5 mm at Young 2e5-1e6 Pa): a stiff cloth springs back after "
+    hidden_doc = ("bending stiffness (shell thickness 0.6-1.6 mm at Young 2e5-1e6 Pa): a stiff cloth springs back after "
                   "release -> the corner must be placed beyond the target / pressed; cloth<->bench friction 0.25-1.0: a "
                   "slippery cloth is dragged along when the corner is pulled low and fast -> lift higher / slower; "
                   "areal mass 0.1-0.4 kg/m2")
@@ -49,7 +49,7 @@ class ClothFold(V3Base):
         self.surface_z = top
         self.safe_z = top + 0.30
         scene.spec.option.integrator = mujoco.mjtIntegrator.mjINT_EULER      # MuJoCo 4: flex elasticity needs Euler
-        thick = float(params.get("thickness", math.exp(rng.uniform(math.log(3e-4), math.log(1.5e-3)))))
+        thick = float(params.get("thickness", math.exp(rng.uniform(math.log(6e-4), math.log(1.6e-3)))))   # v3.1: heavier fabrics (was 0.3-1.5 mm)
         young = float(params.get("young", math.exp(rng.uniform(math.log(2e5), math.log(1e6)))))
         mu = float(params.get("mu", rng.uniform(0.25, 1.0)))
         areal = float(params.get("areal_kg", rng.uniform(0.1, 0.4)))
@@ -213,7 +213,7 @@ class ClothFold(V3Base):
 
     @staticmethod
     def bin_of(h):
-        return f"thick{'H' if h['thickness'] >= 7e-4 else 'L'}_mu{'H' if h['mu'] >= 0.55 else 'L'}"
+        return f"thick{'H' if h['thickness'] >= 1.0e-3 else 'L'}_mu{'H' if h['mu'] >= 0.55 else 'L'}"
 
     def calls_from(self, prm, call):
         return self._fold_calls(prm) if call.skill == "fold" else call
