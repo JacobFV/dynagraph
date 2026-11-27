@@ -1,0 +1,36 @@
+{
+ "mediapipe_models": {
+  "hand_landmarker.task": {
+   "bytes": 7819105,
+   "fetched_utc": "2026-11-27T00:48:34Z",
+   "file": "hand_landmarker.task",
+   "license": "Apache-2.0 (MediaPipe model cards)",
+   "license_source": "https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker",
+   "local_path": "/home/brandonin/datasets/mediapipe_models/raw/hand_landmarker.task",
+   "sha256": "fbc2a30080c3c557093b5ddfc334698132eb341044ccee322ccf8bcf3607cde1",
+   "url": "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task"
+  },
+  "pose_landmarker_full.task": {
+   "bytes": 9398198,
+   "fetched_utc": "2026-11-27T00:48:38Z",
+   "file": "pose_landmarker_full.task",
+   "license": "Apache-2.0 (MediaPipe model cards)",
+   "license_source": "https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker",
+   "local_path": "/home/brandonin/datasets/mediapipe_models/raw/pose_landmarker_full.task",
+   "sha256": "4eaa5eb7a98365221087693fcc286334cf0858e2eb6e15b506aa4a7ecdcec4ad",
+   "url": "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task"
+  }
+ },
+ "physionpp": {
+  "human_data.zip": {
+   "bytes": 882404,
+   "fetched_utc": "2026-11-27T00:48:40Z",
+   "file": "human_data.zip",
+   "license": "MIT (NeurIPS 2023 D&B supplement: 'All products ... shared under the MIT license')",
+   "license_source": "https://proceedings.nips.cc/paper_files/paper/2023/file/d3e8011c912e651ab2a76e7935a1e464-Supplemental-Datasets_and_Benchmarks.pdf",
+   "local_path": "/home/brandonin/datasets/physionpp/raw/human_data.zip",
+   "sha256": "2441787cec4771d92d869957259c4bd4b5e999dda9e8fd7577d89229b708e3dc",
+   "url": "https://physion-v2.s3.amazonaws.com/human_data.zip"
+  }
+ }
+}

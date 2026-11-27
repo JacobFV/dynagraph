@@ -72,3 +72,204 @@ Scripts: `scripts/ext/fetch.py` (whole official files, resumable) and `scripts/e
 (prefix subset of the Physion readout archives, §3). Order: Physion v1 test/train MP4s/human results → MediaPipe
 model files → Physion++ readout/test/human → DexYCB subject 01 (+ models, calibration) → CLEVRER validation →
 Physion v1 readout prefixes (10%, extendable to 20%).
+
+## 3. Physion v1: loader, official protocol, published baselines
+
+**Data used** (all from the official MIT-licensed S3 bucket `physics-benchmarking-neurips2021-dataset`):
+- `Physion.zip` holds the official TEST set: 150 movies per scenario × 8 scenarios, the model-facing
+  `mp4s-redyellow` versions (512×512, 30 fps), and `labels.csv` with ground-truth OCP outcomes (600 contact / 600 not).
+- READOUT-FITTING set: the official set is 1000 HDF5 stimuli per scenario (256×256 frames stored as PNG inside the
+  HDF5, 17–45 GB per scenario). With a ~1.5 MB/s link we fetch a byte **prefix** of each official archive and keep
+  the complete members (`scripts/ext/physion_readout_prefix.py`). That gives the first ~10% of stimuli in archive order.
+  Archive order mixes sub-configurations (checked on Collide) but is not a random sample.
+  **Any number fitted on it is labelled "reduced readout set", which is not the official protocol.**
+  The README link for the Roll readout archive (`Rollreadout_HDF5s.tar.gz`) returns 404. The bucket key is
+  `Roll_readout_training_HDF5s.tar.gz`.
+- `model_human_results.zip`: the official per-participant human responses and model outputs.
+
+**Label rule (official):** `label = any(frame['labels']['target_contacting_zone'] for frame in frames)`, from
+`data/extract_labels.ipynb` in the benchmark repo. The agent (red) is `static/target_id` and the patient (yellow) is
+`static/zone_id`.
+
+**Official readout protocol, reproduced in `src/physmem/ext/ocp.py`:**
+- Sources: neuroailab/physics-models `physion/objective/objective.py`, neuroailab/physopt-physics-benchmarking
+  `physopt/config.py` (both MIT), and paper §2.4.
+- Readout model: `Pipeline([StandardScaler, LogisticRegression(max_iter=200)])`, `GridSearchCV` over
+  `C ∈ logspace(-8, 8, 17)`, `StratifiedKFold(5, shuffle=True, random_state=seed)`, seeds {0, 1, 2}.
+- Readouts are fit per scenario on the readout-fitting set and tested on the 150 test movies of that scenario.
+- Protocols:
+  - **observed**: features of the first 45 frames (1.5 s, the part humans saw);
+  - **observed+simulated**: observed features plus the model's predicted future;
+  - **full**: the whole movie. This is detection, not prediction, and is not comparable with humans.
+- Metrics:
+  - accuracy;
+  - Pearson r between P(contact) and the mean human response per stimulus;
+  - Cohen's κ between the model's binary predictions and each participant, averaged over participants.
+
+  This is our implementation of the definitions in the paper's text.
+
+**Published baselines** (verbatim, `results/ext/physion_published_baselines.json`; Bear et al., NeurIPS 2021 D&B,
+arXiv:2106.08261v3, Table S1, accuracy with bootstrapped 95% CIs):
+
+| model | Dominoes | Support | Collide | Contain | Drop | Link | Roll | Drape |
+|---|---|---|---|---|---|---|---|---|
+| Human | 0.693 | 0.763 | 0.809 | 0.767 | 0.744 | 0.643 | 0.883 | 0.678 |
+| SVG | 0.538 | 0.596 | 0.597 | 0.56 | 0.533 | 0.544 | 0.561 | 0.545 |
+| OP3 | 0.47 | 0.516 | 0.511 | 0.499 | 0.526 | 0.545 | 0.544 | 0.548 |
+| CSWM | 0.471 | 0.691 | 0.552 | 0.557 | 0.577 | 0.627 | 0.609 | 0.55 |
+| RPIN | 0.625 | 0.62 | 0.645 | 0.601 | 0.551 | 0.597 | 0.622 | 0.596 |
+| pVGG-mlp | 0.601 | 0.669 | 0.651 | 0.638 | 0.606 | 0.614 | 0.573 | 0.6 |
+| pVGG-lstm | 0.603 | 0.675 | 0.651 | 0.643 | 0.603 | 0.618 | 0.573 | 0.599 |
+| pDEIT-mlp | 0.664 | 0.686 | 0.677 | 0.664 | 0.619 | 0.59 | 0.62 | 0.608 |
+| pDEIT-lstm | 0.664 | 0.687 | 0.681 | 0.669 | 0.614 | 0.592 | 0.616 | 0.608 |
+| GNS* | 0.604 | 0.695 | 0.85 | 0.652 | 0.708 | 0.73 | 0.735 | 0.653 |
+| GNS-R* | 0.591 | 0.686 | 0.842 | 0.683 | 0.712 | 0.725 | 0.792 | 0.653 |
+| DPI* | 0.715 | 0.626 | 0.85 | 0.711 | 0.755 | 0.657 | 0.789 | 0.556 |
+
+\* Particle models get ground-truth simulator particles. DPI thresholds a contact distance and fits no readout. The
+paper reports overall human accuracy as 0.71. Table S1's caption does not name the training or readout protocol
+behind each cell; main-text Fig. 5A shows all-scenarios training with the observed+simulated readout.
+
+**Physion++** (Tung et al., NeurIPS 2023 D&B, arXiv:2306.15668v2, Table 2; `results/ext/physionpp_published_baselines.json`):
+
+| subset | condition | MCVD | DeiT-mlp | ResNet-mlp | VGG-mlp | ALOE | SlotFormer | DPI-Net* |
+|---|---|---|---|---|---|---|---|---|
+| Overall | unified, w/ property | 54.3 | 53.3 | 52.2 | 51.8 | 51.9 | 52.2 | 53.0 |
+| Overall | separate, w/ property | 54.3 | 55.4 | 55.1 | 55.5 | 53.4 | 56.7 | 60.2 |
+| Overall | separate, w/o property | 54.3 | 54.1 | 54.8 | 55.1 | 52.5 | 56.2 | 57.5 |
+| Overall | separate, fully observed | 59.9 | 63.9 | 61.2 | 56.0 | 55.5 | 65.1 | 92.2 |
+| Mass | separate, w/ property | 54.2 | 56.3 | 54.7 | 55.2 | 53.1 | 58.9 | 75.9 |
+
+The per-property rows (friction, elasticity, deformability) are in the JSON. Physion++'s readout-fitting and test sets
+are 192 trials (96 matched pairs) per property, and both are small enough to download in full. So **Physion++ is
+where we can run the complete official protocol locally**, and it is the natural H3/H5 test of property inference.
+
+## 4. Pixels → object tracks (third-person track modality)
+
+The record format is `src/physmem/ext/tracks.py::TrackSet`:
+- frame times;
+- per-entity, per-keypoint pixel tracks `uv`, with NaN where the entity was not detected;
+- optional depth and xyz;
+- detector score;
+- intrinsics;
+- a provenance string: source file, front-end version and model sha256.
+
+It mirrors the v3-model `CameraTracker` output: `(u, v, d)` detections with NaN, and frame times with drops.
+`to_v3_evidence` turns it into the V3 `MOD_TRACK` evidence channels
+`(x, v, f=0, contact=0, f_cmd=0, valid)` per entity and axis. It will be re-pointed at the committed V3 contract.
+Labels (OCP outcome, simulator masks, mocap) never enter a TrackSet; they are stored beside it as `*.label.json`.
+
+**Tier A (`frontend_color.py`, version `color-v1`).** This tier uses classical HSV colour segmentation of the
+agent (red) and the patient (yellow), which the Physion model-facing stimuli paint for the whole movie. It has no
+learned weights: provenance is the code plus OpenCV. For each frame and entity it reports the centroid, the bbox
+corners and the area of the largest connected component.
+- Thresholds were tuned on **readout-fitting** stimuli only (never test). The first bands confused a brown-red floor
+  (H 5–8) with the agent (H ≈ 177) and missed the pale-yellow zone (S ≈ 85). The final bands are red
+  H ∈ [168, 180] ∪ [0, 3], S ≥ 110, and yellow H ∈ [20, 32], S ≥ 70, V ≥ 150.
+- Check against the simulator segmentation, which is evaluator-only (`physion_ocp.py validate`):
+  - on 4 Collide readout stimuli, the median centroid error was 0.1–3.7 px (256 px frames) and recall was 100%;
+  - the per-scenario table is in `results/ext/physion_frontend_validation_color-v1.json`.
+
+**Tier B (planned).** SAM 2.1 (Apache-2.0 code and checkpoints, facebookresearch/sam2) for all objects:
+automatic masks on frame 0, then video propagation, then per-object centroid/bbox tracks. Colour picks out agent
+and patient among the SAM objects. It runs on gb10 through `gpu_small.sh` with the hiera-small checkpoint (< 6 GB).
+
+## 5. Human hand/body pose front end
+
+**Choice: MediaPipe Hand Landmarker** (21 keypoints per hand, plus 3-D "world" keypoints) and Pose Landmarker (33
+body keypoints). Code is Apache-2.0 and the model files are Apache-2.0 per their model cards. There is no MANO/SMPL
+dependency, no registration, and it runs on CPU. The model files are fetched by `fetch.py` (`hand_landmarker.task`
+sha256 `fbc2a300…`, `pose_landmarker_full.task` sha256 `4eaa5eb7…`).
+
+The 3-D hand-mesh estimators (HaMeR, WiLoR) need MANO, and WiLoR is NC-ND. HaMeR can come in once the PI registers MANO.
+
+`human_pose.py::HandTracker` returns a `TrackSet(kind="human")` with entities `left_hand`/`right_hand` and the
+21 MediaPipe joint names. The joint order matches DexYCB/MANO, and the thumb names map index-for-index. With an
+aligned depth image and intrinsics, `lift_depth` lifts each keypoint to camera-frame xyz from the median depth in a
+5×5 window: an actor-legal RGB-D lift.
+
+Validation on DexYCB (no registration, CC BY-NC 4.0) is in §5a, filled from `results/ext/dexycb_pose_validation.json`.
+
+## 6. H6 test design and pre-registration DRAFT (the lead commits the final text on its own, before any test run)
+
+**Status: DRAFT, not frozen.** Nothing in this section has been run on TEST data.
+
+**Question.** Humans are treated as an embodiment without force sensing. From third-person RGB-D video of a person
+grasping and lifting an object, does the V3 model with typed memory infer the object's **mass** more accurately than
+the same model with generic memory?
+
+**Fragility is out of scope for this test.** We found no human-object dataset accessible without registration that has
+fragility or crush labels, and the registered ones do not have them either. Fragility stays untested and is reported
+as such.
+
+**Data.** DexYCB (CC BY-NC 4.0). 10 subjects × 100 sequences. Each sequence: one hand grasps one of 20 YCB objects,
+5 trials per object per subject, recorded on 8 calibrated RGB-D views at 30 fps.
+- Mass labels: nominal YCB masses from Calli et al. 2015, Table 2 (`dexycb.py::YCB_MASS_G`). They span 15.8 g
+  (large marker) to 1131 g (bleach cleanser). These are evaluator-only.
+- Known limitation: these are catalogue masses, not weighed in DexYCB's lab.
+- Splits (fixed now; unseen-subject split like the toolkit's `s1`):
+  - TRAIN subjects 01–05;
+  - VAL subject 06;
+  - TEST subjects 07–08 (200 sequences).
+- Subjects 09–10 are not used, which keeps the local download ≤ 150 GB (8 subjects ≈ 99 GB).
+- One camera view, fixed now: serial index 0 (`836212060125`), all frames.
+
+**Observations (actor-legal only).**
+- The MediaPipe hand TrackSet from §5 (front end `mediapipe-hand-v1`, model sha256 frozen in the TrackSet source),
+  lifted to 3-D with the aligned depth and the camera intrinsics (the same lifting a real RGB-D rig would do).
+- The MediaPipe world landmarks.
+- Not used: DexYCB MANO/joint labels, object 6-D poses, segmentation, the object identity, or any pixel crop of the
+  object.
+- Not used in the confirmatory test: an object track. There is no off-the-shelf object tracker validated on
+  DexYCB yet. A SAM-2-based object track may be added as a separately pre-registered secondary input.
+
+**Arms** (matched observations, labels, readout and budget):
+- **TYPED**: the V3 general model, frozen at a commit hash recorded in the frozen pre-registration. It consumes the
+  human TrackSet as an embodiment without force sensing. We read out its typed **mass** slot (z and posterior sd)
+  for the grasped entity.
+- **GENERIC**: the matched generic-memory ablation from V3-MODEL (same backbone, data and training budget). Its
+  pooled entity features feed the readout.
+- Readout, identical for both arms: ridge regression to log-mass. TYPED uses the 2-D vector [z, log sd]; GENERIC uses
+  its feature vector, with PCA to ≤ 16 dims fit on TRAIN. Ridge α is chosen by grouped CV on TRAIN, grouped by object.
+  The readout is fit on TRAIN subjects **with leave-objects-out**: 4 object folds (objects with
+  `object_index % 4 == k`), so every TEST prediction comes from a readout that never saw that object.
+- **Controls** (reported; they are not the confirmatory comparison):
+  - C0: train-mean log-mass;
+  - C1: grasp-aperture-only. Static hand features at grasp onset (thumb-index distance, hand bbox), the same ridge
+    readout. This measures how much "mass" is just object size seen through the grasp.
+  - C2: a classical kinematic estimator, as the V3 §0 item 5 comparator. Hand-crafted lift features (time from grasp
+    onset to lift-off, peak vertical velocity and acceleration of the wrist, lift duration) with the same ridge
+    readout.
+  - Grasp onset and lift-off are defined from the actor-legal wrist track: lift-off = first frame after which wrist
+    height rises > 2 cm above its grasp-onset value; grasp onset = last local minimum of wrist speed before
+    lift-off.
+
+**Primary endpoint.** Per TEST sequence, absolute log-mass error `e = |log m̂ − log m|`. The paired difference is
+`d_i = e_GENERIC − e_TYPED` (n = 200 sequences, n ≥ 30 holds).
+- **H6 is supported iff the 95% cluster-bootstrap CI of mean d excludes 0 on the positive side.**
+- The bootstrap resamples the 20 objects with replacement, then sequences within each object: 10,000 resamples,
+  seed 0.
+- Objects are the clustering unit because masses are per object. The effective n is therefore 20 objects, and this
+  is stated up front as the main power limitation; a null is reportable.
+
+**Secondary (descriptive, no claims).**
+- Spearman ρ between per-object mean predicted and true mass, for each arm.
+- TYPED posterior calibration: coverage of the 50% and 90% intervals after the affine readout.
+- Each arm against C1 and C2: same paired statistic.
+- The share of the TYPED-vs-GENERIC gain that remains after partialling out C1's prediction.
+
+**Exclusions.** Decided on actor-legal signals only and applied identically to all arms: a sequence is excluded if
+the hand is detected in < 50% of frames, or if lift-off is never detected. Exclusion counts are reported per arm
+(they are the same by construction).
+
+**Tuning and freezing.** All choices are tuned on VAL subject 06 only: readout α grid, PCA dims and the front-end
+thresholds. Frozen before TEST:
+- model and code commit hashes;
+- the front-end version and model sha256;
+- the view;
+- the feature definitions in this section;
+- the analysis script `scripts/ext/h6_eval.py` (to be written; it reads TEST only after the freeze commit).
+
+**What would falsify our reading.**
+- If C1 (grasp aperture) explains as much as TYPED, the "mass inference" is size inference. We will say so.
+- If TYPED beats GENERIC only on in-distribution objects (VAL) and not on held-out objects, the claim fails.
