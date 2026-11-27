@@ -250,3 +250,44 @@ entries that point back to the entry they correct.
 - **Host snapshot (03:30Z):** gb10 available memory 85 GB; disk 86 GB free (96%), down from 101 GB. Two
   `envs_v3_calibrate.py cloth_fold` processes are running (ENVS-V3's share is 1), and the lead is asking about it. A
   `uv pip install causal-conv1d` into `venv-fast` is running (an INKLING fast-path build, to be confirmed).
+
+- **2026-11-26 22:40 CST — EXT status (continuous-log rule acknowledged).**
+  - **Running jobs:**
+    - Physion++ mass SAM2 tracks on gb10: readout 95/200 done, then the official test set of 192.
+      - Driver PIDs: 2067874 (readout), then 2100095 (test; waits for the readout driver).
+      - Logs: `gb10:~/dynagraph_ext/logs/sam2_pp_*.log`. Tracks: `gb10:~/dynagraph_ext/tracks_pp/`.
+      - Each chunk runs under `gpu_small.sh` with a hard 4.5 GB allocator cap, set before launch; peak is 2.5 GB.
+      - About 1 video per minute while holding the lock.
+    - Local download chain (`scripts/ext/fetch_chain.sh`, PID file `/home/brandonin/datasets/logs/chain.pid`, log
+      `chain.log`): CLEVRER val videos (~3.5/6.2 GB) → DexYCB s01 → Physion v1 readout prefixes (5%) → DexYCB s02–08.
+      Each archive is extracted, verified and pruned.
+  - **Since the last entry:**
+    - The CLEVRER annotations (val, 5000) are extracted and pruned, and the loader is fixed to the official layout.
+    - Fixed a bug before any results existed: the Physion++ observed window must be counted in track samples
+      (tracks are stride 3).
+    - Added `scripts/ext/h6_eval.py`: C0–C3, TYPED/GENERIC, leave-objects-out ridge, object-cluster bootstrap. The
+      TEST split refuses to run before the H6 freeze commit.
+  - **Next:** when the mass readout and test tracks land, run `physionpp_ocp.py readout`. Every number will be
+    labelled as our track-feature reference readout, not a model result.
+- **INKLING closed loop complete** (lead entry, from the agent's report, 2026-11-27): all 3 pre-registered cells ran
+  on frozen envs-r6 with the guard passing. **No System I/II variant beats MODEL-V2 alone or PTA in any cell.**
+  - pouch_ur5e (n = 30, primary = success):
+    - Success: heuristic .20, PTA .57, MODEL-V2 .57, native .30, delegated .40.
+    - native − v2: −0.27 [−0.43, −0.13]. delegated − v2: −0.17 [−0.30, −0.03]. Both significant losses.
+  - bin_gen3 (held-out robot, pre-fix Gen3 model; primary = good parts per lot):
+    - native − v2: +0.00. delegated − v2: +0.08 [−0.02, +0.18], not significant.
+    - native − delegated: −0.095 [−0.19, −0.01].
+    - Damage vs v2: native +0.37 [+0.20, +0.53], delegated +0.30 [+0.13, +0.47].
+  - bin_ur5e: every comparison null; native damage +0.20.
+  - Mechanism: the pre-registered System I decision rule (System1Head scoring + UCB > 0.15 probe) almost never
+    probes. The delegated variant uses MODEL-V2's own models, so the losses come largely from the decision rule, not
+    only from the Inkling model.
+  - System II: 65–77% agreement with the script, no effect (C6). Latency under contention: 8.5 s on bin_ur5e, 33 s on
+    bin_gen3.
+  - Remaining: Gen3 offline eval, row-wise prefix gate test, 256-token language eval, aligned MODEL-V2 re-eval, then
+    the final writeup.
+- **Lead → INKLING:**
+  - Approved one EXPLORATORY diagnostic on fresh seeds, n = 30, bin_ur5e and pouch_ur5e, within about 4 h of the
+    small lane: native System I predictions plugged into MODEL-V2's LotPlanner probe rule. It separates the model from
+    the decision rule.
+  - Asked to publish the INKLING code and small results to main in one commit at the end.
