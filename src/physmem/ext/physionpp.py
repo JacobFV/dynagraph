@@ -61,3 +61,21 @@ def trials(split: str, root: Path = ROOT) -> list[Trial]:
                 if pkl.exists():
                     out.append(Trial(split, sd.name, cd.name, idx, mp4, pkl))
     return out
+
+
+def stim_id(t: Trial) -> str:
+    """human-data stimulus id: '<scenario dir>_<config>_<idx>_img' (e.g. mass_dominoes_pp-copy1_mass_dominoes-..._0000_img)."""
+    return f"{t.scenario}_{t.config}_{t.idx}_img"
+
+
+def official_test_ids(root: Path = ROOT) -> dict:
+    """The paper's 192-per-property test list is not linked from the project page; we reconstruct it from the
+    official human data (human_data.zip, 'run2' files: 50 participants x 192 stimuli per property, paper §4.2).
+    Returns {property: set(stim_id)}; documented as a reconstruction in docs/EXT.md §3b."""
+    import pandas as pd
+    out = {}
+    for f in sorted((root / "humans").glob("human_responses-*_pilot-pilot_run2_*.csv")):
+        prop = PROPERTY[f.name.split("-")[1].split("_")[0]]
+        d = pd.read_csv(f, usecols=["stim_ID", "condition"])
+        out[prop] = set(d.loc[d.condition == "prediction", "stim_ID"])
+    return out

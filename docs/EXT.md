@@ -242,9 +242,16 @@ as such.
   - C2: a classical kinematic estimator, as the V3 §0 item 5 comparator. Hand-crafted lift features (time from grasp
     onset to lift-off, peak vertical velocity and acceleration of the wrist, lift duration) with the same ridge
     readout.
-  - Grasp onset and lift-off are defined from the actor-legal wrist track: lift-off = first frame after which wrist
-    height rises > 2 cm above its grasp-onset value; grasp onset = last local minimum of wrist speed before
-    lift-off.
+  - Grasp onset and lift-off are computed from the actor-legal wrist track in `scripts/ext/h6_features.py`
+    (`h6-feat-v1`):
+    - "up" is the normal of the table plane, RANSAC-fitted to the frame-0 depth cloud (depth and intrinsics only);
+    - wrist height h(t) is median-filtered over 5 frames;
+    - t_min is the minimum-height frame;
+    - lift-off is the first frame after t_min with h − h(t_min) > 2 cm, sustained for 5 frames;
+    - grasp onset is the frame of minimum wrist speed in [t_min − 15, lift-off].
+
+    On the first TRAIN sequence, the depth-lifted wrist height follows the DexYCB label to about 1 cm over the
+    whole lift. This was a pipeline debug on a TRAIN subject; no mass labels were looked at.
 
 **Primary endpoint.** Per TEST sequence, absolute log-mass error `e = |log m̂ − log m|`. The paired difference is
 `d_i = e_GENERIC − e_TYPED` (n = 200 sequences, n ≥ 30 holds).
