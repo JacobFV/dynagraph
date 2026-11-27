@@ -572,10 +572,14 @@ class Handover(V3Base):
             yaw = math.remainder(yaw + math.pi, 2 * math.pi)
         z = float(g3[2])
         M.open()
-        for q, v in (((tcp[0], tcp[1], z + 0.12), 0.4), ((g[0], g[1], z + 0.12), 0.4), ((g[0], g[1], z + 0.02), 0.2),
-                     ((g[0], g[1], z), 0.05)):
-            if M.move(q, yaw, 0.0, v) == "unreachable":
-                return "unreachable", {}
+        ok = False
+        for clr in (0.12, 0.05):          # short arms (Panda) cannot hover 12 cm above a tool held at chest height
+            ok = all(M.move(q, yaw, 0.0, v) != "unreachable" for q, v in
+                     (((g[0], g[1], z + clr), 0.4), ((g[0], g[1], z + 0.02), 0.2), ((g[0], g[1], z), 0.05)))
+            if ok:
+                break
+        if not ok:
+            return "unreachable", {}
         w0 = M.wrench()
         M.grip(float(p.get("grip_force", 25.0)))
         if not M.holding():

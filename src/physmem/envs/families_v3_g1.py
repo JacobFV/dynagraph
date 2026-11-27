@@ -56,6 +56,7 @@ class G1PushTerrain(V3Base):
         half = (0.06, 0.05, 0.05)
         _, info = scene.part("box", "box", half, (bx, by, top + half[2] + 0.001), yaw=0.0, mass=m_b, mu=mu_b, mu_grip=0.8,
                              restitution=0.05, timeconst=0.01, kind="box", rgba=(0.75, 0.55, 0.3, 1))
+        scene.region("push_goal", (bx, by + 0.08, top + half[2]), (half[0], 0.04, half[2]), support_z=top)
         # floor patch under the robot (visual; the physics are the explicit foot<->floor pairs added with the robot)
         scene.static_box((0.0, edge - 0.3, 0.0005), (0.4, 0.3, 0.0005), rgba=(0.25, 0.3, 0.35, 1), contact=False)
         self.hidden_task = dict(mu_floor=mu_f, floor_tc=tc, box_mass=m_b, box_mu=mu_b, push_n=mu_b * m_b * G9)

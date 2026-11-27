@@ -12,6 +12,7 @@ while IFS= read -r step; do
   if [ -e logs/v3_queue.stop ]; then echo "$(date -u +%FT%TZ) STOP file: halting"; break; fi
   echo "$(date -u +%FT%TZ) START $step"
   $PY $step < /dev/null
-  echo "$(date -u +%FT%TZ) END rc=$? $step"
+  rc=$?
+  echo "$(date -u +%FT%TZ) END rc=$rc $step"
 done < "$1"
 echo "$(date -u +%FT%TZ) QUEUE DONE"

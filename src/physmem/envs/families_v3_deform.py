@@ -75,12 +75,12 @@ class ClothFold(V3Base):
         ka, kc = 0, n * n - 1
         self.k_tab, self.k_far = ka, kc
         tab_b = scene.spec.body(f"cloth_{ka}")
-        th = (0.004, 0.012, 0.009)                  # pull tab: fin 8 mm thick, 24 mm long, 18 mm tall
+        th = (0.004, 0.012, 0.0125)                 # pull tab (corner clip): fin 8 mm thick, 24 mm long, 25 mm tall, 12 g
         g = tab_b.add_geom(type=G.mjGEOM_BOX, size=list(th), pos=[0, 0, th[2] + 0.0005], rgba=[0.15, 0.15, 0.17, 1],
-                           friction=[0.6, 0.005, 0.0001], name="tab_g", quat=list(quat_z(yaw + math.pi / 4)))
-        g.mass = 0.004
+                           friction=[0.6, 0.005, 0.0001], name="tab_g", quat=list(quat_z(math.pi / 4)))   # body already has the cloth yaw
+        g.mass = 0.012                              # a 4 g tab was pushed aside by the first finger to touch it
         info = EntityInfo("tab", "cloth_tab", EntityType.OBJECT, f"cloth_{ka}", "box", (th[0], th[1], th[2]),
-                          dict(mass=0.004, mu_grip=0.9), graspable=True, geoms=["tab_g"], meta=dict(on_flex=True))
+                          dict(mass=0.012, mu_grip=0.9), graspable=True, geoms=["tab_g"], meta=dict(on_flex=True))
         scene.entities["tab"] = info
         scene.grip_pairs_objects.append("tab")
         for name, k in (("corner_far", kc), ("corner_b", n - 1), ("corner_d", n * (n - 1))):
@@ -156,15 +156,16 @@ class ClothFold(V3Base):
         if est is None or far is None:
             return "not_observed", {}
         tpos, _, tyaw = est
-        reg = self.scene.regions["fold_target"]
-        dg = reg["yaw"]
+        # fold direction from the TRACKED tab and far-corner marker (the fin's long axis lies along this diagonal; the
+        # tab rides on a flex vertex whose tracked orientation carries no yaw information)
+        dvec = np.asarray(far[0][:2]) - np.asarray(tpos[:2])
+        dg = math.atan2(dvec[1], dvec[0])
         u = np.array([math.cos(dg), math.sin(dg)])
-        yaw = tyaw + math.pi / 2 - math.pi / 4      # pads close across the fin (fin long axis at tab yaw + 45 deg)
-        yaw = math.atan2(math.sin(yaw), math.cos(yaw))
+        yaw = dg                                    # pads close across the fin (perpendicular to the diagonal)
         tcp, y_now = M.tcp()
         if abs(math.remainder(yaw - y_now, 2 * math.pi)) > math.pi / 2:
             yaw = math.remainder(yaw + math.pi, 2 * math.pi)
-        z_g = max(self.surface_z + 0.012, self.surface_z + M.tip() + 0.003)
+        z_g = max(self.surface_z + 0.016, self.surface_z + M.tip() + 0.004)
         top = self.surface_z + 0.12
         M.open()
         for q in ((tcp[0], tcp[1], max(top, tcp[2])), (tpos[0], tpos[1], top), (tpos[0], tpos[1], z_g + 0.02),
@@ -200,7 +201,8 @@ class ClothFold(V3Base):
         tcp, _ = M.tcp()
         M.move((tcp[0], tcp[1], tcp[2] + 0.08), yaw, 0.0, 0.1)
         M.wait(2.0)                                        # the fold relaxes (spring-back) before it is judged
-        return ("slipped" if slipped else "done"), dict(fold_err=self.fold_err(), far_moved=self.far_moved())
+        st = "done" if (self.success() or not slipped) else "slipped"
+        return st, dict(fold_err=self.fold_err(), far_moved=self.far_moved(), lost_before_release=slipped)
 
     # ------------------------------------------------------------------ policies
     NOMINAL = dict(grip_force=15.0, lift=0.06, speed=0.3, overshoot=0.0, release_h=0.01, arc=0.0, dwell=0.2)
