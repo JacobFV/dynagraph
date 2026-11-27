@@ -2,6 +2,9 @@
 
 **Jacob Valdez** · work in progress (November 2026) · [MIT License](LICENSE) · paper draft in [`paper/`](paper/)
 
+**New to the project? Start with [`docs/STATUS.md`](docs/STATUS.md)** (orientation, branch map, what's in flight)
+and [`docs/RESEARCH_LOG.md`](docs/RESEARCH_LOG.md) (the full dated record).
+
 > **Status.** Research code and an honest, running record of experiments. **All results are in simulation
 > (MuJoCo); nothing has been run on a physical robot.** Negative and null results are reported alongside the
 > positive ones, and every number below is traceable to a file under `results/` and a section of `docs/`.
@@ -52,7 +55,15 @@ domains are in progress ([`docs/V3_GENERAL.md`](docs/V3_GENERAL.md)).
 - **Strongest positive result:** v2 lot memory, a hybrid of an estimator, analytic physics and a planner. It is not
   yet compared against a classical cached-estimate baseline.
 
-The next increment targets this centerpiece ([`docs/V3_GENERAL.md`](docs/V3_GENERAL.md) §0).
+The next increment targets this centerpiece ([`docs/V3_GENERAL.md`](docs/V3_GENERAL.md) §0, branch `v3-model`). First
+results on a small contact-chain family:
+- The pre-registered per-pass belief store with law losses **fails** the causal test on TEST. Editing a named
+  property moves predicted motion in the physically correct direction only 52% of the time, which is chance.
+- An exploratory variant trained on simulator do()-pairs, with a rollout that cannot bypass the beliefs, makes the
+  beliefs causal on VAL: edit direction 0.94, intermediate states 0.98/0.94, and an outcome gain of −4.7 mm
+  [−7.4, −2.2]. It fails the chosen-action criterion (0.63 against a 0.80 bar; the classical estimator gets 0.73–0.79,
+  the oracle 0.82).
+- Its fresh-seed test is pre-registered and has not run yet.
 
 ## Main findings so far
 

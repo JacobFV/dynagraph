@@ -730,3 +730,54 @@ entries that point back to the entry they correct.
 
 - The clamp leak is fixed: a clamp at the slot's own posterior mean now changes the plan in 0% of episodes.
 - So no arm passes A1–A4 on VAL yet, and the Inkling port stays on hold. arm_i2 is next, via the selection driver.
+
+- **2026-11-27 03:20 CST — EXT: DexYCB subject 02 downloaded, extracted, verified and pruned** (174,008 files).
+  - Local footprint is about 85 GB, against the 300 GB cap.
+  - The chain continues with s03–s08.
+  - The gb10 mass-test SAM2 driver (PID 3346796) is waiting on the small lane, which `v3_arm_i2_s0` has held since
+    08:13Z.
+
+- **2026-11-27 04:00 CST — EXT wrap-up for onboarding (branch ext, commit 1b53785; `docs/EXT.md` §8 "Status at
+  2026-11-27 (in flight)").**
+  - **Done:**
+    - license and access audit;
+    - Physion v1: loader, official OCP readout reproduction, published baselines, reduced-readout reference on 8
+      scenarios (non-official);
+    - Physion++: official sets local; SAM2 tracks on the 200 mass readout trials, checked against the simulator
+      segmentation;
+    - MediaPipe hand front end, validated on DexYCB subject 01;
+    - H6 draft, analysis script and guard;
+    - CLEVRER validation set local.
+  - **Left running:**
+    - gb10 SAM2 mass-test driver, PID 3346796, log `~/dynagraph_ext/logs/sam2_pp_te_mass.log`; it releases the lane
+      between chunks;
+    - local download chain, PID 2877296, on DexYCB s03 → s08 (footprint 83 GB / 300 GB).
+  - **Open PI decisions:**
+    - registrations: MANO, ARCTIC, GRAB, SMPL-X, HOT3D, ContactPose, H2O, OakInk v1;
+    - license questions: Kubric MOVi and ComPhy.
+  - **Next:** the exact commands are in EXT.md §8. The first is the Physion++ mass OCP reference, once the test tracks
+    land.
+  - H6 freeze still waits on V3-MODEL.
+
+## 2026-11-27T09:10Z ENVS-V3: wrap-up handoff (in flight; branch envs-v3 at e82167b, pushed)
+- What: committed all envs-v3 result files on branch `envs-v3`.
+  - v3 rows (n=8, pre-change) and v31 rows (n=20) with value-of-latent tables, at `results/v2/envs/ceiling_v31_vol.md`.
+  - Calibration rows and oracle tables.
+  - Superseded files, each labelled with a README: `_superseded_cloth_cal` (80 KB) and `_superseded_granular_dose_4cm_spout`.
+  - The granular_dose calibration rows are marked PARTIAL.
+- ENVS.md now has an envs-v3 section with a "Status at 2026-11-27 (in flight)" subsection: table, PIDs, logs, what remains.
+- Findings (v31, n=20, oracle − nominal):
+  - stack_overhang: +0.15 to +0.40 on all robots.
+  - handover: +0.15 to +0.45.
+  - pour: probe +0.60; arms ~0. The arms fail the pour for every policy.
+  - cable_route: ±0.05.
+  - cloth_fold: −0.05 to +0.10. The v3.1 thickness change did NOT create a gap. Panda scores 0/20 because it cannot pinch the tab.
+  - g1_push_terrain floating: 0.10–0.20 for every policy (controller-limited). Fixed-base: 1.0 for every policy.
+  - Labels: stack, handover and pour are decision-relevant. Cable, cloth and G1 are competence / generalization.
+- Running on gb10 (left running per lead): queue pid 2078781 (`~/dynagraph_envs_v3/logs/v3_queue3.pid`), log `logs/v3_queue3.log`. Current step: `envs_v3_calibrate.py granular_dose probe 16 1`. Still to run: the granular_dose n=20 ceiling (probe + UR5e), the stability scan (3 runs) and the stills.
+- Remaining before the freeze:
+  - finish those steps and fetch the results;
+  - rebuild the value-of-latent table with granular_dose;
+  - fill in the stability numbers;
+  - tag `envs-v3`, make `~/dynagraph_envs_v3/src` read-only and record the sources sha256;
+  - write the final RESEARCH_LOG entry and report.
