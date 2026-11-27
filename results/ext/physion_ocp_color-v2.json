@@ -453,6 +453,458 @@
      "cohen_kappa_mean": 0.041713560449882336
     }
    }
+  },
+  "Drop": {
+   "n_readout": 50,
+   "readout_pos_frac": 0.58,
+   "n_test": 150,
+   "observed": {
+    "runs": [
+     {
+      "n": 150,
+      "accuracy": 0.5066666666666667,
+      "pearson_r_human_mean": 0.2588970026186395,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.014807938385254562,
+      "best_C": 0.01,
+      "seed": 0
+     },
+     {
+      "n": 150,
+      "accuracy": 0.5,
+      "pearson_r_human_mean": 0.24212691749924667,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.0,
+      "best_C": 1e-08,
+      "seed": 1
+     },
+     {
+      "n": 150,
+      "accuracy": 0.6266666666666667,
+      "pearson_r_human_mean": 0.39114715147352747,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.19999999999999996,
+      "best_C": 0.1,
+      "seed": 2
+     }
+    ],
+    "mean": {
+     "accuracy": 0.5444444444444445,
+     "pearson_r_human_mean": 0.2973903571971379,
+     "cohen_kappa_mean": 0.07160264612841817
+    }
+   },
+   "observed+simulated": {
+    "runs": [
+     {
+      "n": 150,
+      "accuracy": 0.5,
+      "pearson_r_human_mean": 0.07089203889902024,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.0,
+      "best_C": 1e-08,
+      "seed": 0
+     },
+     {
+      "n": 150,
+      "accuracy": 0.6266666666666667,
+      "pearson_r_human_mean": 0.38012607174781027,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.2165779839283623,
+      "best_C": 10.0,
+      "seed": 1
+     },
+     {
+      "n": 150,
+      "accuracy": 0.5,
+      "pearson_r_human_mean": 0.07089203889902024,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.0,
+      "best_C": 1e-08,
+      "seed": 2
+     }
+    ],
+    "mean": {
+     "accuracy": 0.5422222222222223,
+     "pearson_r_human_mean": 0.1739700498486169,
+     "cohen_kappa_mean": 0.0721926613094541
+    }
+   },
+   "full": {
+    "runs": [
+     {
+      "n": 150,
+      "accuracy": 0.74,
+      "pearson_r_human_mean": 0.4930386944810014,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.31190468698053486,
+      "best_C": 0.1,
+      "seed": 0
+     },
+     {
+      "n": 150,
+      "accuracy": 0.74,
+      "pearson_r_human_mean": 0.4930386944810014,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.31190468698053486,
+      "best_C": 0.1,
+      "seed": 1
+     },
+     {
+      "n": 150,
+      "accuracy": 0.74,
+      "pearson_r_human_mean": 0.4930386944810014,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.31190468698053486,
+      "best_C": 0.1,
+      "seed": 2
+     }
+    ],
+    "mean": {
+     "accuracy": 0.7399999999999999,
+     "pearson_r_human_mean": 0.4930386944810014,
+     "cohen_kappa_mean": 0.31190468698053486
+    }
+   }
+  },
+  "Link": {
+   "n_readout": 48,
+   "readout_pos_frac": 0.4166666666666667,
+   "n_test": 150,
+   "observed": {
+    "runs": [
+     {
+      "n": 150,
+      "accuracy": 0.5,
+      "pearson_r_human_mean": 0.1845395766541642,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": -1.9621082214589374e-19,
+      "best_C": 1e-08,
+      "seed": 0
+     },
+     {
+      "n": 150,
+      "accuracy": 0.5,
+      "pearson_r_human_mean": 0.1845395766541642,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": -1.9621082214589374e-19,
+      "best_C": 1e-08,
+      "seed": 1
+     },
+     {
+      "n": 150,
+      "accuracy": 0.5,
+      "pearson_r_human_mean": 0.1845395766541642,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": -1.9621082214589374e-19,
+      "best_C": 1e-08,
+      "seed": 2
+     }
+    ],
+    "mean": {
+     "accuracy": 0.5,
+     "pearson_r_human_mean": 0.1845395766541642,
+     "cohen_kappa_mean": -1.9621082214589374e-19
+    }
+   },
+   "observed+simulated": {
+    "runs": [
+     {
+      "n": 150,
+      "accuracy": 0.5666666666666667,
+      "pearson_r_human_mean": 0.31805264369200653,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.17842121184697154,
+      "best_C": 0.1,
+      "seed": 0
+     },
+     {
+      "n": 150,
+      "accuracy": 0.5866666666666667,
+      "pearson_r_human_mean": 0.3568259293124508,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.18027210884353742,
+      "best_C": 1.0,
+      "seed": 1
+     },
+     {
+      "n": 150,
+      "accuracy": 0.5866666666666667,
+      "pearson_r_human_mean": 0.3568259293124508,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.18027210884353742,
+      "best_C": 1.0,
+      "seed": 2
+     }
+    ],
+    "mean": {
+     "accuracy": 0.58,
+     "pearson_r_human_mean": 0.3439015007723027,
+     "cohen_kappa_mean": 0.17965514317801545
+    }
+   },
+   "full": {
+    "runs": [
+     {
+      "n": 150,
+      "accuracy": 0.5066666666666667,
+      "pearson_r_human_mean": 0.4005625564854406,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.014700288789810207,
+      "best_C": 0.01,
+      "seed": 0
+     },
+     {
+      "n": 150,
+      "accuracy": 0.6666666666666666,
+      "pearson_r_human_mean": 0.413058591357418,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.20650668803891792,
+      "best_C": 10.0,
+      "seed": 1
+     },
+     {
+      "n": 150,
+      "accuracy": 0.6666666666666666,
+      "pearson_r_human_mean": 0.413058591357418,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.20650668803891792,
+      "best_C": 10.0,
+      "seed": 2
+     }
+    ],
+    "mean": {
+     "accuracy": 0.6133333333333333,
+     "pearson_r_human_mean": 0.4088932464000922,
+     "cohen_kappa_mean": 0.14257122162254868
+    }
+   }
+  },
+  "Roll": {
+   "n_readout": 51,
+   "readout_pos_frac": 0.5294117647058824,
+   "n_test": 150,
+   "observed": {
+    "runs": [
+     {
+      "n": 150,
+      "accuracy": 0.54,
+      "pearson_r_human_mean": 0.024029417242439434,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.04426456631761985,
+      "best_C": 1.0,
+      "seed": 0
+     },
+     {
+      "n": 150,
+      "accuracy": 0.54,
+      "pearson_r_human_mean": 0.024029417242439434,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.04426456631761985,
+      "best_C": 1.0,
+      "seed": 1
+     },
+     {
+      "n": 150,
+      "accuracy": 0.47333333333333333,
+      "pearson_r_human_mean": -0.036128092409986524,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": -0.05170060014937532,
+      "best_C": 1000.0,
+      "seed": 2
+     }
+    ],
+    "mean": {
+     "accuracy": 0.5177777777777778,
+     "pearson_r_human_mean": 0.003976914024964115,
+     "cohen_kappa_mean": 0.01227617749528813
+    }
+   },
+   "observed+simulated": {
+    "runs": [
+     {
+      "n": 150,
+      "accuracy": 0.5266666666666666,
+      "pearson_r_human_mean": 0.07420609696122958,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.05956725605170523,
+      "best_C": 100.0,
+      "seed": 0
+     },
+     {
+      "n": 150,
+      "accuracy": 0.5133333333333333,
+      "pearson_r_human_mean": 0.054494627741772446,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.0480595620723977,
+      "best_C": 1000.0,
+      "seed": 1
+     },
+     {
+      "n": 150,
+      "accuracy": 0.5266666666666666,
+      "pearson_r_human_mean": 0.07420609696122958,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.05956725605170523,
+      "best_C": 100.0,
+      "seed": 2
+     }
+    ],
+    "mean": {
+     "accuracy": 0.5222222222222223,
+     "pearson_r_human_mean": 0.06763560722141054,
+     "cohen_kappa_mean": 0.05573135805860272
+    }
+   },
+   "full": {
+    "runs": [
+     {
+      "n": 150,
+      "accuracy": 0.6733333333333333,
+      "pearson_r_human_mean": 0.32817619096184786,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.30501283653183764,
+      "best_C": 10.0,
+      "seed": 0
+     },
+     {
+      "n": 150,
+      "accuracy": 0.6733333333333333,
+      "pearson_r_human_mean": 0.32817619096184786,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.30501283653183764,
+      "best_C": 10.0,
+      "seed": 1
+     },
+     {
+      "n": 150,
+      "accuracy": 0.6733333333333333,
+      "pearson_r_human_mean": 0.32817619096184786,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.30501283653183764,
+      "best_C": 10.0,
+      "seed": 2
+     }
+    ],
+    "mean": {
+     "accuracy": 0.6733333333333333,
+     "pearson_r_human_mean": 0.32817619096184786,
+     "cohen_kappa_mean": 0.30501283653183764
+    }
+   }
+  },
+  "Drape": {
+   "n_readout": 48,
+   "readout_pos_frac": 0.5208333333333334,
+   "n_test": 150,
+   "observed": {
+    "runs": [
+     {
+      "n": 150,
+      "accuracy": 0.54,
+      "pearson_r_human_mean": 0.17824755984041352,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.06110294087482518,
+      "best_C": 0.1,
+      "seed": 0
+     },
+     {
+      "n": 150,
+      "accuracy": 0.5066666666666667,
+      "pearson_r_human_mean": 0.116280920737096,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.029229153601166912,
+      "best_C": 0.01,
+      "seed": 1
+     },
+     {
+      "n": 150,
+      "accuracy": 0.5466666666666666,
+      "pearson_r_human_mean": 0.13496052861223548,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.06056227872284428,
+      "best_C": 1.0,
+      "seed": 2
+     }
+    ],
+    "mean": {
+     "accuracy": 0.5311111111111112,
+     "pearson_r_human_mean": 0.14316300306324833,
+     "cohen_kappa_mean": 0.05029812439961212
+    }
+   },
+   "observed+simulated": {
+    "runs": [
+     {
+      "n": 150,
+      "accuracy": 0.5066666666666667,
+      "pearson_r_human_mean": 0.0880558174121723,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.03472178793847972,
+      "best_C": 0.01,
+      "seed": 0
+     },
+     {
+      "n": 150,
+      "accuracy": 0.5066666666666667,
+      "pearson_r_human_mean": 0.0880558174121723,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.03472178793847972,
+      "best_C": 0.01,
+      "seed": 1
+     },
+     {
+      "n": 150,
+      "accuracy": 0.5533333333333333,
+      "pearson_r_human_mean": 0.13946582792640247,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.0633754256253076,
+      "best_C": 1.0,
+      "seed": 2
+     }
+    ],
+    "mean": {
+     "accuracy": 0.5222222222222223,
+     "pearson_r_human_mean": 0.10519248758358235,
+     "cohen_kappa_mean": 0.04427300050075569
+    }
+   },
+   "full": {
+    "runs": [
+     {
+      "n": 150,
+      "accuracy": 0.5733333333333334,
+      "pearson_r_human_mean": 0.19345354314674643,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.09137289011958155,
+      "best_C": 0.1,
+      "seed": 0
+     },
+     {
+      "n": 150,
+      "accuracy": 0.5733333333333334,
+      "pearson_r_human_mean": 0.19345354314674643,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.09137289011958155,
+      "best_C": 0.1,
+      "seed": 1
+     },
+     {
+      "n": 150,
+      "accuracy": 0.5733333333333334,
+      "pearson_r_human_mean": 0.19345354314674643,
+      "n_human_stimuli": 150,
+      "cohen_kappa_mean": 0.09137289011958155,
+      "best_C": 0.1,
+      "seed": 2
+     }
+    ],
+    "mean": {
+     "accuracy": 0.5733333333333334,
+     "pearson_r_human_mean": 0.19345354314674643,
+     "cohen_kappa_mean": 0.09137289011958155
+    }
+   }
   }
  }
 }

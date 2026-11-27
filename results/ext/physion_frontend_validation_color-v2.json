@@ -1,4 +1,18 @@
 {
+ "Dominoes": {
+  "agent": {
+   "frames_visible": 3508,
+   "recall": 1.0,
+   "median_px": 0.3545350769054308,
+   "p90_px": 11.703179959842117
+  },
+  "patient": {
+   "frames_visible": 3508,
+   "recall": 1.0,
+   "median_px": 5.977234053138767,
+   "p90_px": 40.986463923238944
+  }
+ },
  "Support": {
   "agent": {
    "frames_visible": 6666,
@@ -39,6 +53,62 @@
    "recall": 1.0,
    "median_px": 52.41844243224345,
    "p90_px": 77.64993852355965
+  }
+ },
+ "Drop": {
+  "agent": {
+   "frames_visible": 3661,
+   "recall": 0.941272876263316,
+   "median_px": 0.4668450444573286,
+   "p90_px": 19.003358769195657
+  },
+  "patient": {
+   "frames_visible": 3836,
+   "recall": 1.0,
+   "median_px": 23.338674821065503,
+   "p90_px": 62.87139097975286
+  }
+ },
+ "Link": {
+  "agent": {
+   "frames_visible": 7181,
+   "recall": 0.9986074362902103,
+   "median_px": 0.6446228597253782,
+   "p90_px": 79.76087245944146
+  },
+  "patient": {
+   "frames_visible": 8170,
+   "recall": 1.0,
+   "median_px": 2.6286948723258785,
+   "p90_px": 76.92748762818559
+  }
+ },
+ "Roll": {
+  "agent": {
+   "frames_visible": 2928,
+   "recall": 0.9665300546448088,
+   "median_px": 0.4109546312365805,
+   "p90_px": 33.361625742915834
+  },
+  "patient": {
+   "frames_visible": 3033,
+   "recall": 1.0,
+   "median_px": 0.6021566697891262,
+   "p90_px": 14.968811242733427
+  }
+ },
+ "Drape": {
+  "agent": {
+   "frames_visible": 3020,
+   "recall": 1.0,
+   "median_px": 0.7293224280902888,
+   "p90_px": 2.5929676397597445
+  },
+  "patient": {
+   "frames_visible": 2426,
+   "recall": 0.07089859851607584,
+   "median_px": 8.13634557991923,
+   "p90_px": 8.660186327912436
   }
  }
 }

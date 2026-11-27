@@ -331,9 +331,28 @@ Dominoes 0.692 / Support 0.755 / Collide 0.803 / Contain 0.760 / Drop 0.740 / Li
 Drape 0.677. Each is within 0.008 of Table S1. The paper reports 688 participants kept after exclusions, so the
 released exclusion list looks incomplete.
 
-| scenario | n readout (reduced) | observed | observed+simulated | full (detection) |
-|---|---|---|---|---|
-| Dominoes | 47 | 0.482 | 0.500 | 0.900 |
+Update 2026-11-27: all 8 scenarios. Reduced readout sets of 47–53 stimuli per scenario; 3 seeds; official test
+(150 per scenario). Accuracy:
+
+| scenario | n readout | observed | observed+simulated | full (detection) | published pDEIT-lstm | human |
+|---|---|---|---|---|---|---|
+| Dominoes | 47 | 0.482 | 0.500 | 0.900 | 0.664 | 0.693 |
+| Support | 51 | 0.538 | 0.544 | 0.902 | 0.687 | 0.763 |
+| Collide | 50 | 0.538 | 0.562 | 0.720 | 0.681 | 0.809 |
+| Contain | 53 | 0.518 | 0.516 | 0.549 | 0.669 | 0.767 |
+| Drop | 50 | 0.544 | 0.542 | 0.740 | 0.614 | 0.744 |
+| Link | 48 | 0.500 | 0.580 | 0.613 | 0.592 | 0.643 |
+| Roll | 51 | 0.518 | 0.522 | 0.673 | 0.616 | 0.883 |
+| Drape | 48 | 0.531 | 0.522 | 0.573 | 0.608 | 0.678 |
+
+Colour-tracker check against the simulator masks (20 readout stimuli per scenario,
+`results/ext/physion_frontend_validation_color-v2.json`):
+- the agent's median centroid error is 0.4–0.7 px with recall 0.94–1.00 in every scenario;
+- the patient is good in Support, Collide, Roll and Link (0.4–2.6 px);
+- the patient is poor in Dominoes (6 px), Drop (23 px) and Contain (52 px);
+- the patient is almost never found in Drape (recall 0.07; the zone there is not a saturated yellow).
+
+The weak "full" readouts in Contain, Drape and Roll track those front-end failures.
 
 Reading: with only the agent and patient tracked, nothing in the first 1.5 s predicts Dominoes outcomes, which
 depend on the untracked middle dominoes, so the result is at chance. The full-movie readout detects the contact at
