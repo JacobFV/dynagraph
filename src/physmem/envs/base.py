@@ -154,7 +154,12 @@ class StationEnv:
         before = self.progress()
         self.last_held_before = self.held
         self.last_t0 = self.t
-        res: SkillResult = self.skills.run(self, call)
+        fsk = getattr(self, "fsk_" + call.skill, None)      # envs-v3: env-defined family skills (envs/v3_motion.py)
+        if fsk is not None:
+            from .v3_motion import run_family_skill
+            res: SkillResult = run_family_skill(self, call, fsk)
+        else:
+            res = self.skills.run(self, call)
         # r6: every call takes at least MIN_CALL_S of sim time (a rejected / infeasible call still costs a planning
         # cycle with the robot holding); zero-length steps produced empty sensor windows (NaN segment features)
         el = self.t - self.last_t0

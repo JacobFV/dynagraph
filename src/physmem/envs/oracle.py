@@ -57,6 +57,8 @@ def grip_for(env, e, src, a=2.0, F_max=100.0, extra_mass=0.0):
 
 def rule(env, call, src):
     """return the call with rule-chosen parameters (src = 'true' | 'prior')."""
+    if hasattr(env, "v3_rule"):          # envs-v3 families carry their own physics rules (families_v3_*.py)
+        return env.v3_rule(call, src)
     f, p, t = env.family, dict(call.params), call.target
     if (src in ("probe", "crush_probe") and call.skill == "pick" and t in env.scene.entities and "grip_force" in p
             and f not in ("pouch_transfer",) and env.est_stiffness(t)[1] != "tactile_squeeze"

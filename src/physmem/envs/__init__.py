@@ -17,7 +17,8 @@ import importlib
 # envs-r5 (dev): peg spiral time cost + dent limit, pouch squeeze limit, singulation pick option + cycle limit,
 # shelf_restock (mobile aisle with move_base), generator flushes buffers on SIGTERM.
 # envs-r6: site dressing (params["dressing"] = "site", envs/dressing.py) after the TalOS warehouse.
-ENV_VERSION = "envs-r7.1"
+# envs-v3: new domains (cable, cloth, pour, granular scoop, stacking, G1 terrain, handover); older families unchanged.
+ENV_VERSION = "envs-v3"
 
 _REG = {
     "bin_clearing": ("families_bulk", "BinClearing"),
@@ -41,6 +42,11 @@ _REG = {
     "shelf_restock": ("families_extra", "ShelfRestock"),
     "tight_insert": ("families_fine_motor", "TightInsert"),         # envs-r7 fine motor
     "fastener_pick": ("families_fine_motor", "FastenerPick"),       # envs-r7 fine motor
+    # envs-v3 (agent ENVS-V3): new physical domains for the V3 general model (docs/ENVS.md "envs-v3")
+    "pour": ("families_v3_media", "Pour"),
+    "cloth_fold": ("families_v3_deform", "ClothFold"),
+    "cable_route": ("families_v3_deform", "CableRoute"),
+    "stack_overhang": ("families_v3_rigid", "StackOverhang"),
 }
 
 FAMILIES = tuple(_REG)
