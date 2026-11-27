@@ -310,3 +310,61 @@ The causal test is **passed** if A1–A4 hold. A5–A8 are reported as pass/fail
 
 Nulls and failures are reported as such. A V1 failure on A6 is expected by construction: its typed estimates are
 fixed before the loop. It is reported, not counted as a win.
+
+## §0c. Frozen matrix: first read (seed 0 of LBS-law; the full table goes in §0f when all seeds are evaluated)
+
+LBS-law s0 on TEST (`results/v3/eval/lbs_law_s0_test_*`): **fails the causal test**, while its prediction is decent.
+
+| what | LBS-law s0 | classical (CEM + analytic) | oracle (labelled) |
+|---|---|---|---|
+| final-position error (K = 4) | 16.0 mm (K=1 43.8, K=2 25.8, K=8 18.2) | ≈ 13 mm | 3.7 mm (VAL) |
+| own-box sign agreement (A1) | 0.52 | 0.95 | 0.98 |
+| Spearman (A1) | 0.10 | 0.92 | 0.98 |
+| model Δ / sim Δ | 0.06 | 0.94 | 1.00 |
+| τ = 0.3 / 0.6 s sign agreement (A2) | 0.54 / 0.51 | 0.99 / 0.96 | 0.99 / 0.98 |
+| contact-impulse sign agreement (A2) | 0.88 | – | – |
+| action sign agreement (A3) | 0.10 | 0.80 | 0.83 |
+| counterfactual-outcome Δ (A4) | −0.29 mm [−0.85, +0.22] | −5.8 [−7.6, −3.9] | −8.2 |
+| closed loop | 9.7 mm / 79% | 7.4 mm / 87% | 4.1 mm / 96% |
+| delayed evidence: param error (on-time / late / never) (A6) | 0.511 / 0.534 / 0.534 | – | – |
+| edge blocking: B2 suppressed (A7) | 0 / 82 rows | – | – |
+
+Other measurements for LBS-law s0:
+- Modalities, final error: tracks-only 19.4 mm, force-only 17.5 mm, all 16.0 mm. Anchor removal: 16.2 mm.
+- `test_L4`: 25.0 mm, 1.56× TEST, so A8 narrowly fails.
+
+The edit moves the predicted motion by only 6% of the physical effect. Writing back per pass, the law loss on
+intermediate states and law-only counterfactual rows did not make the named slots causal. The future-motion
+beliefs are carried by the evidence and state paths. This is the same failure as the v1 friction slot. My diagnosis:
+the law gradient of a Δμ = 0.1 edit is ≈ 0.01 per sliding interval (normalised), so laws can be satisfied with
+negligible motion change. Downstream boxes predict motion from their own evidence history, which explains A7.
+
+## §0d. Redirect after the first read (lead, 2026-11-27): two EXPLORATORY arms, each pre-registered separately on fresh seeds
+
+The frozen matrix (§0b) is finished as registered. The exploratory arms use fresh TEST seed sets: `test2` (seeds
+4 000 000+, 600 episodes) and `test2_L4` (5 000 000+, 300 episodes). They share the matched comparators.
+- **Identifiability check first (lead item iii)**, VAL, `scratchpad ident.py`: a well-converged CEM (256 × 20
+  iterations) on the same observations, non-spring episodes.
+  - L = 1: corr(mass) 0.95 and corr(friction) 0.68.
+  - L = 2: individual masses 0.66 / 0.54, total mass 0.90, frictions 0.84 / 0.79.
+
+  Mass is identifiable under the fixed-force excitation. Individual masses of boxes that move together are only
+  partly identifiable, as physics predicts. **The excitation is adequate; the learned model's 0.27 is a model
+  problem.** Note: the pre-registered classical comparator (64 × 8 CEM) is under-converged (VAL mass abs error 0.57
+  normalised). It stays as registered, and a converged variant will be reported separately.
+- **Arm I (tests the PI's thesis: a learned loop).** `belief.LBSI` (`arm_i`):
+  - *Non-bypass bottleneck.* The learned loop over evidence writes only the parameter slots and the τ0 state. Its
+    future fields are reset after every pass. A learned `Rollout` (graph-masked attention over entity and relation
+    tokens, no evidence access) computes all future beliefs from the slots, the τ0 state and known inputs.
+    Positions integrate by construction. A unit check confirms that with the slots fixed, future predictions are
+    invariant to the evidence and respond to slot edits.
+  - *Interventional supervision* (`v3_chain cfgen`). For every training-episode window: one random named edit
+    (box; mass, friction or k; ±0.67 normalised) and the **MuJoCo re-simulation** from the true start state. In 30%
+    of rows the rollout gets the edited true parameters and is trained on the counterfactual trajectory.
+  - *v2 recipe for the rest.* The rollout gets the TRUE parameters with p = 0.5, otherwise the DETACHED loop
+    estimate. The loop is trained only by parameter and τ0-state NLL. The law loss applies to rollout outputs.
+- **Arm P (hybrid; reported as "the loop can host a physics engine", not "attention learned physics").**
+  `kind=proj`: after every write-back, 4 learned-step gradient steps on the law residual move the state beliefs
+  (x, v, contact force) given the current parameter beliefs.
+- The same budget (4000 × 512), VAL-only pilot, then a separate pre-registration commit before any `test2` run.
+  The Inkling port waits until an arm passes A1–A4 on VAL.
