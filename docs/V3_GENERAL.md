@@ -376,7 +376,7 @@ classical, no oracle, no simcf.
 | # | arm / run | config | VAL result | what changed next |
 |---|---|---|---|---|
 | 1 | arm_i_s0 | LBSI, cf-frac 0.3, tf 0.5, law 1, 4000 × 512; clamps applied inside the loop | A1 0.91 / Spearman 0.80 / other 0.88; A2 0.98 / 0.94 / impulse 0.88; A3 0.54 (37% ties); A4 −3.3 mm [−6.0, −0.7]; A6 fail; A7 B2 suppressed 4%; final 16.8 mm | the clamp leaked into the τ0 state (plan changed in 51% of episodes when clamping at the posterior mean) → do() acts only on the rollout's slots (#2) |
-| 2 | arm_i_s0 (same weights) | eval change only: do() at the rollout input | pending | – |
+| 2 | arm_i_s0 (same weights) | eval change only: do() at the rollout input | A1 0.94 / Spearman 0.80 / other 0.92 (pass); A2 0.98 / 0.94 / impulse 0.86 (pass); **A3 0.63 (fail**; ties 31%, wrong sign 6%; the clamp no longer changes the plan: 0%); A4 −4.7 mm [−7.4, −2.2] (pass); A6, A7 still fail. A3 for comparison: classical 0.79, classical_conv 0.73, oracle 0.82 | arm_i2 (#4) |
 | 3 | proj_s0 | LBS + 4 law-projection steps (η init 0.3) | **null**: final error 62.9 mm, parameter corr ≈ 0, own-box sign 0.59, edit effect 0.8% of physics, A3 0.19, A4 +0.7 mm [−5.3, +7.3], closed loop 52 mm | not pursued further now (hybrid; lead priority is arm I); a different projection design would need its own attempt |
 | 4 | arm_i2_s0 | #2 + relation do()-pairs (rel-frac 0.15) + late-evidence augmentation (0.2) | pending (training queued) | – |
 
