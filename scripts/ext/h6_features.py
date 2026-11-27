@@ -29,6 +29,15 @@ from physmem.ext import dexycb as D  # noqa: E402
 from physmem.ext.human_pose import HandTracker, lift_depth  # noqa: E402
 
 FEATURE_VERSION = "h6-feat-v1"
+TEST_SUBJECTS = {"20200928-subject-07", "20201002-subject-08"}
+FREEZE_MSG = "H6 pre-registration, frozen before any test run"
+
+
+def _frozen() -> bool:
+    import subprocess
+    r = subprocess.run(["git", "-C", str(Path(__file__).resolve().parents[2]), "log", "--all", "--fixed-strings",
+                        f"--grep={FREEZE_MSG}", "--format=%H"], capture_output=True, text=True)
+    return bool(r.stdout.strip())
 
 
 def table_normal(depth_m, K, rng, iters=300, tol=0.008):
@@ -92,11 +101,16 @@ def main():
     ap.add_argument("--subjects", default="")
     ap.add_argument("--serial", type=int, default=0)
     ap.add_argument("--out", default=str(D.ROOT.parent / "h6" / FEATURE_VERSION))
+    ap.add_argument("--allow-test", action="store_true", help="only valid after the H6 freeze commit")
     a = ap.parse_args()
+    if a.allow_test and not _frozen():
+        sys.exit(f"refusing --allow-test: no commit '{FREEZE_MSG}' found (docs/EXT.md §6 freeze rule)")
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     subs = [s for s in a.subjects.split(",") if s]
     for q in D.sequences(subjects=subs or None):
+        if q.subject in TEST_SUBJECTS and not a.allow_test:
+            continue                       # TEST subjects are untouched until the pre-registration is frozen
         serial = q.serials[a.serial]
         if not D.view_complete(q, serial):
             continue

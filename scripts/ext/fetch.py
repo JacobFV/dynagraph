@@ -44,6 +44,15 @@ SOURCES = {
         ("models.tar.gz", GD + "1cAzlQBpcTatI5ykYQ8ziQiHLUG_a_UpM", 1455399753),
         ("20200709-subject-01.tar.gz", GD + "1Ehh92wDE3CWAiKG7E9E73HjN2Xk2XfEk", 12412314463),
     ]),
+    "dexycb_s02_08": ("dexycb", "CC BY-NC 4.0 (non-commercial; research use allowed)", "https://dex-ycb.github.io/", [
+        ("20200813-subject-02.tar.gz", GD + "1Uo7MLqTbXEa-8s7YQZ3duugJ1nXFEo62", 12004145048),
+        ("20200820-subject-03.tar.gz", GD + "1FkUxas8sv8UcVGgAzmSZlJw1eI5W5CXq", 12197037343),
+        ("20200903-subject-04.tar.gz", GD + "14up6qsTpvgEyqOQ5hir-QbjMB_dHfdpA", 12792618020),
+        ("20200908-subject-05.tar.gz", GD + "1NBA_FPyGWOQF5-X9ueAat5g8lDMz-EmS", 12815420651),
+        ("20200918-subject-06.tar.gz", GD + "1UWIN2-wOBZX2T0dkAi4ctAAW8KffkXMQ", 12610980973),
+        ("20200928-subject-07.tar.gz", GD + "1oWEYD_o3PVh39pLzMlJcArkDtMj4nzI0", 12818333033),
+        ("20201002-subject-08.tar.gz", GD + "1GTNZwhWbs7Mfez0krTgXwLPndvrw1Ztv", 12418522598),
+    ]),   # lead decision 2026-11-26: H6 needs subjects 01-08 (TRAIN 01-05, VAL 06, TEST 07-08)
     "clevrer_val": ("clevrer", "CC0 (README.txt: 'Our dataset is under the CC0.')",
                     "http://data.csail.mit.edu/clevrer/README.txt", [
         ("README.txt", "http://data.csail.mit.edu/clevrer/README.txt", None),
@@ -67,7 +76,8 @@ def sha256(p: Path) -> str:
 
 
 def total_on_disk() -> int:
-    return sum(f.stat().st_size for f in ROOT.rglob("*") if f.is_file()) if ROOT.exists() else 0
+    """bytes DOWNLOADED (files under */raw/, incl. partial prefixes/chunks); extracted copies are not downloads."""
+    return sum(f.stat().st_size for f in ROOT.glob("*/raw/**/*") if f.is_file()) if ROOT.exists() else 0
 
 
 def record(name, lic, lic_src, fn, url, path):

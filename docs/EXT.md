@@ -196,6 +196,12 @@ Validation on DexYCB (no registration, CC BY-NC 4.0) is in §5a, filled from `re
 
 **Status: DRAFT, not frozen.** Nothing in this section has been run on TEST data.
 
+**Freeze rule (lead decision, 2026-11-26).** EXT freezes this section in its own commit on branch `ext`, with the
+message `H6 pre-registration, frozen before any test run`. That happens after V3-MODEL's human-track model and its
+generic-memory twin have been trained and run on TRAIN/VAL subjects only, and before any inference on TEST subjects
+07–08. **No model, feature extractor or readout is run on subjects 07–08 before that commit.** The download includes
+them, and `h6_features.py` must be called with `--subjects` limited to 01–06 until then.
+
 **Question.** Humans are treated as an embodiment without force sensing. From third-person RGB-D video of a person
 grasping and lifting an object, does the V3 model with typed memory infer the object's **mass** more accurately than
 the same model with generic memory?
@@ -242,6 +248,11 @@ as such.
   - C2: a classical kinematic estimator, as the V3 §0 item 5 comparator. Hand-crafted lift features (time from grasp
     onset to lift-off, peak vertical velocity and acceleration of the wrist, lift duration) with the same ridge
     readout.
+  - C3: object-identity lookup. Map the visual object class to the mean TRAIN mass of that class. This documents
+    the "recognise the object and recall its mass" shortcut. Under leave-objects-out, no TEST object is ever in its
+    lookup table, so it falls back to the TRAIN mean (= C0) by construction. It is reported to make that explicit.
+    The class comes from the dataset's object label, so this control is a diagnostic with privileged input, not an
+    actor-legal arm. (Added at the lead's request, 2026-11-26.)
   - Grasp onset and lift-off are computed from the actor-legal wrist track in `scripts/ext/h6_features.py`
     (`h6-feat-v1`):
     - "up" is the normal of the table plane, RANSAC-fitted to the frame-0 depth cloud (depth and intrinsics only);
