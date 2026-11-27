@@ -1,0 +1,203 @@
+{
+ "source": "Tung et al., 'Physion++: Evaluating Physical Scene Understanding that Requires Online Inference of Different Physical Properties', NeurIPS 2023 Datasets & Benchmarks; arXiv:2306.15668v2 (2 Nov 2023), Table 2",
+ "pdf_sha256": "347d0aafca49713bbf0900b54d88588c5bf805fcf19b0dcc8e950156cd21a8db",
+ "caption": "Table 2: Results of model performance on the Physion++ dataset. For testing videos, 'w/' and 'w/o property' denote if the model makes predictions based on the property inference stage. 'fully observed' - model using the ground truth prediction frames.",
+ "notes": [
+  "Accuracy in percent, transcribed from the PDF text layer. In the PDF layout the 'unified' row's testing condition is 'w/ property' (the label sits between the unified and separate rows); we record it as 'unified w/ property' -- verify against the PDF figure before quoting.",
+  "Readout = logistic regression on observed+predicted representations (\u00a74.1). Readout fitting set and test set: 192 trials (96 matched pairs) per mechanical property.",
+  "DPI-Net takes ground-truth 3D state and latent properties (no visual encoder).",
+  "Human accuracy is reported only graphically (Fig. 4), not in a table; not transcribed."
+ ],
+ "table2": {
+  "Mass": {
+   "unified w/ property": {
+    "MCVD": 52.6,
+    "DeiT-mlp": 50.5,
+    "ResNet-mlp": 48.0,
+    "VGG-mlp": 53.6,
+    "ALOE": 52.1,
+    "SlotFormer": 53.6,
+    "DPI-Net": 52.1
+   },
+   "separate w/ property": {
+    "MCVD": 54.2,
+    "DeiT-mlp": 56.3,
+    "ResNet-mlp": 54.7,
+    "VGG-mlp": 55.2,
+    "ALOE": 53.1,
+    "SlotFormer": 58.9,
+    "DPI-Net": 75.9
+   },
+   "separate w/o property": {
+    "MCVD": 53.1,
+    "DeiT-mlp": 55.0,
+    "ResNet-mlp": 54.2,
+    "VGG-mlp": 56.3,
+    "ALOE": 52.6,
+    "SlotFormer": 57.3,
+    "DPI-Net": 60.1
+   },
+   "separate fully observed": {
+    "MCVD": 67.1,
+    "DeiT-mlp": 69.8,
+    "ResNet-mlp": 67.7,
+    "VGG-mlp": 60.4,
+    "ALOE": 56.3,
+    "SlotFormer": 66.7,
+    "DPI-Net": 96.9
+   }
+  },
+  "Friction": {
+   "unified w/ property": {
+    "MCVD": 52.6,
+    "DeiT-mlp": 54.2,
+    "ResNet-mlp": 50.5,
+    "VGG-mlp": 50.0,
+    "ALOE": 52.1,
+    "SlotFormer": 50.5,
+    "DPI-Net": 53.8
+   },
+   "separate w/ property": {
+    "MCVD": 52.6,
+    "DeiT-mlp": 52.6,
+    "ResNet-mlp": 52.1,
+    "VGG-mlp": 52.6,
+    "ALOE": 56.8,
+    "SlotFormer": 54.2,
+    "DPI-Net": 52.5
+   },
+   "separate w/o property": {
+    "MCVD": 54.2,
+    "DeiT-mlp": 52.6,
+    "ResNet-mlp": 52.1,
+    "VGG-mlp": 51.6,
+    "ALOE": 53.1,
+    "SlotFormer": 54.2,
+    "DPI-Net": 54.7
+   },
+   "separate fully observed": {
+    "MCVD": 56.3,
+    "DeiT-mlp": 53.6,
+    "ResNet-mlp": 53.6,
+    "VGG-mlp": 54.2,
+    "ALOE": 54.2,
+    "SlotFormer": 58.3,
+    "DPI-Net": 84.6
+   }
+  },
+  "Elasticity": {
+   "unified w/ property": {
+    "MCVD": 53.1,
+    "DeiT-mlp": 52.1,
+    "ResNet-mlp": 55.2,
+    "VGG-mlp": 51.6,
+    "ALOE": 51.6,
+    "SlotFormer": 52.6,
+    "DPI-Net": 51.0
+   },
+   "separate w/ property": {
+    "MCVD": 52.6,
+    "DeiT-mlp": 55.2,
+    "ResNet-mlp": 54.2,
+    "VGG-mlp": 52.6,
+    "ALOE": 52.6,
+    "SlotFormer": 58.3,
+    "DPI-Net": 52.1
+   },
+   "separate w/o property": {
+    "MCVD": 51.6,
+    "DeiT-mlp": 55.2,
+    "ResNet-mlp": 54.7,
+    "VGG-mlp": 52.6,
+    "ALOE": 53.1,
+    "SlotFormer": 56.8,
+    "DPI-Net": 52.4
+   },
+   "separate fully observed": {
+    "MCVD": 55.7,
+    "DeiT-mlp": 59.4,
+    "ResNet-mlp": 54.7,
+    "VGG-mlp": 54.2,
+    "ALOE": 53.1,
+    "SlotFormer": 64.6,
+    "DPI-Net": 95.8
+   }
+  },
+  "Deformability": {
+   "unified w/ property": {
+    "MCVD": 58.9,
+    "DeiT-mlp": 56.3,
+    "ResNet-mlp": 55.2,
+    "VGG-mlp": 52.1,
+    "ALOE": 51.6,
+    "SlotFormer": 52.1,
+    "DPI-Net": 55.1
+   },
+   "separate w/ property": {
+    "MCVD": 57.8,
+    "DeiT-mlp": 57.3,
+    "ResNet-mlp": 59.4,
+    "VGG-mlp": 61.5,
+    "ALOE": 51.0,
+    "SlotFormer": 55.2,
+    "DPI-Net": 60.2
+   },
+   "separate w/o property": {
+    "MCVD": 58.3,
+    "DeiT-mlp": 53.6,
+    "ResNet-mlp": 58.3,
+    "VGG-mlp": 59.9,
+    "ALOE": 51.0,
+    "SlotFormer": 56.3,
+    "DPI-Net": 62.6
+   },
+   "separate fully observed": {
+    "MCVD": 60.4,
+    "DeiT-mlp": 72.9,
+    "ResNet-mlp": 68.8,
+    "VGG-mlp": 69.8,
+    "ALOE": 58.3,
+    "SlotFormer": 70.8,
+    "DPI-Net": 91.3
+   }
+  },
+  "Overall": {
+   "unified w/ property": {
+    "MCVD": 54.3,
+    "DeiT-mlp": 53.3,
+    "ResNet-mlp": 52.2,
+    "VGG-mlp": 51.8,
+    "ALOE": 51.9,
+    "SlotFormer": 52.2,
+    "DPI-Net": 53.0
+   },
+   "separate w/ property": {
+    "MCVD": 54.3,
+    "DeiT-mlp": 55.4,
+    "ResNet-mlp": 55.1,
+    "VGG-mlp": 55.5,
+    "ALOE": 53.4,
+    "SlotFormer": 56.7,
+    "DPI-Net": 60.2
+   },
+   "separate w/o property": {
+    "MCVD": 54.3,
+    "DeiT-mlp": 54.1,
+    "ResNet-mlp": 54.8,
+    "VGG-mlp": 55.1,
+    "ALOE": 52.5,
+    "SlotFormer": 56.2,
+    "DPI-Net": 57.5
+   },
+   "separate fully observed": {
+    "MCVD": 59.9,
+    "DeiT-mlp": 63.9,
+    "ResNet-mlp": 61.2,
+    "VGG-mlp": 56.0,
+    "ALOE": 55.5,
+    "SlotFormer": 65.1,
+    "DPI-Net": 92.2
+   }
+  }
+ }
+}
