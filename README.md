@@ -52,8 +52,9 @@ domains are in progress ([`docs/V3_GENERAL.md`](docs/V3_GENERAL.md)).
   - other-agent modelling;
   - multi-rate streams;
   - any real-world (non-simulated) result.
-- **Strongest positive result:** v2 lot memory, a hybrid of an estimator, analytic physics and a planner. It is not
-  yet compared against a classical cached-estimate baseline.
+- **Strongest positive result:** v2 lot memory on the gantry (round 5), a hybrid of an estimator, analytic physics
+  and a planner. In round 6 a classical cached-estimate baseline **matches** learned lot memory: 0.69 vs 0.67 good
+  parts per lot on the gantry bin-clearing lots. No learned planner beat the best scripted baseline in any round-6 cell.
 
 The next increment targets this centerpiece ([`docs/V3_GENERAL.md`](docs/V3_GENERAL.md) §0, branch `v3-model`). First
 results on a small contact-chain family:
@@ -81,10 +82,13 @@ results on a small contact-chain family:
    delay, but the typed friction slot was *not causally used*. No learned model beat a prior stub in the G1
    closed loop ([`docs/findings.md`](docs/findings.md)).
 
-In progress:
-- round 6, which adds an ACT imitation baseline and re-evaluates on the fixed fine-motor skills;
-- the Inkling System I/II closed-loop comparison, with its language-retention check
-  (pre-registered in [`docs/INKLING_SYS12.md`](docs/INKLING_SYS12.md)).
+6. **Round 6 (pre-registered, fixed skills, ACT and classical comparators) is a null against scripted baselines.**
+   Force-ramp, nominal or probe-then-act is at or above every learned planner in all 8 cells, including the held-out
+   Gen3. A classical cached estimator matches learned lot memory ([`docs/MODEL_V2.md` §13b](docs/MODEL_V2.md)).
+
+In progress: the rest of the round-6 lot comparison; Inkling follow-ups
+([`docs/INKLING_SYS12.md`](docs/INKLING_SYS12.md)); V3 fresh-seed causal test, new domains and external benchmarks
+([`docs/STATUS.md`](docs/STATUS.md)).
 
 ## Method overview
 

@@ -24,5 +24,9 @@ Its one pre-registered win over that script is on the gantry under a shared call
 $+0.09$ \ci{+0.03}{+0.16} good parts per lot, attributable to lot memory ($+0.17$ \ci{+0.11}{+0.23} against the
 memory-off ablation).
 Absolute success on the arms is far from industrial levels and is bounded by the scripted skill layer.
-Comparisons against end-to-end imitation (ACT) and the closed-loop \sysI/\sysII{} evaluation are pre-registered
-and pending.
+On repaired fine-motor skills (round 6, pre-registered), no learned planner beats the best scripted policy in any
+cell, and a classical estimator that probes once and caches the lot estimate matches the learned lot memory.
+The closed-loop \sysI/\sysII{} evaluation shows no wins.
+In a first test of an explicit per-pass belief store, editing a named property does not propagate to predicted
+motion (chance-level direction agreement). A variant trained on simulator interventions does propagate it on
+validation data, but it fails the action criterion; its held-out test is pending.

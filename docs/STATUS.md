@@ -33,7 +33,7 @@ decision (§7).
 | v1 sprint (compact models, G1) | `main` | `findings.md`, `G1.md`, `DATA.md` | done |
 | v2 environments (industrial stations) | `main`; frozen trees `envs-r7` (`../dynagraph-envs-r7`) | `ENVS.md` | done (r7.1 frozen) |
 | v2 robots | `main` | `ROBOTS.md` | done |
-| MODEL-V2 (v2 world model + planner, rounds 1–6) | `main` | `MODEL_V2.md` | round 6 TEST running |
+| MODEL-V2 (v2 world model + planner, rounds 1–6) | `main` | `MODEL_V2.md` (§13b results, §14 status) | round 6 main test done; lot secondary running |
 | INKLING System I/II (mode token) | `main` | `INKLING_SYS12.md` | closed loop done; follow-ups running |
 | V3-MODEL (per-pass typed belief store, causal test) | `v3-model` (`../dynagraph-v3`) | `V3_GENERAL.md` §0a–§0f (on that branch) | test2 pipeline queued |
 | ENVS-V3 (cloth, cable, pour, granular, stack, handover, G1 terrain) | `envs-v3` (`../dynagraph-envs-v3`) | `docs/ENVS.md` envs-v3 section (on that branch) | v31 ceilings done; granular_dose + stability scan running; not yet frozen |
@@ -48,9 +48,16 @@ Every track doc has a **"Status at 2026-11-27 (in flight)"** section. It lists e
 - **MODEL-V2, round 5** (pre-registered): typed memory beats generic memory on all 4 robots, including the held-out
   Gen3. Lot memory beats probe-then-act on the gantry under a shared budget, +0.09 [+0.03, +0.16]. There is no win
   over probe-then-act on the arms.
-- **MODEL-V2, round 6** (pre-registered; §13a frozen at c22846d): adds an ACT imitation baseline and a classical
-  cached-estimate comparator. First cell, tight_insert UR5e: typed 0.50, force-ramp 0.70, generic 0.63. The rest is
-  still running.
+- **MODEL-V2, round 6** (pre-registered; envs-r7.1, 8 cells, n = 30; `MODEL_V2.md` §13b) is **a null against the
+  scripted baselines**:
+  - No learned planner beats the best scripted baseline (force-ramp, nominal or PTA) in any cell, including
+    held-out Gen3. Typed is significantly worse on tight_insert UR5e (−0.20).
+  - Typed beats our ACT in 8 of 8 cells (7 of 8 budget-matched), but only because our ACT scores about 0. It is a weak
+    baseline, not evidence against imitation.
+  - Typed vs generic at matched data and compute: one significant win, one significant loss, the rest not significant.
+  - Lot secondary (bin_clearing lots), probe gantry done: typed lot memory 0.67 good parts per lot vs the classical
+    cached estimator 0.69, so no difference. Both are below always-probe PTA at 0.82. UR5e and Panda are running;
+    Gen3 is queued.
 - **INKLING:**
   - The pretrained core is about the same as a random-init core offline.
   - System II logits are bit-identical to the base model. Ungated training would destroy language (perplexity 52.8).
@@ -83,7 +90,7 @@ target `~/dynagraph`.** Worktree branches rsync to their own directory.
 
 | track | gb10 dir | what is running | how to collect |
 |---|---|---|---|
-| MODEL-V2 round 6 | `~/dynagraph` | chain pid 1705445: `r9_test.sh`, then `r9_lot_test.sh` | see `MODEL_V2.md` status section (`scripts/v2/r9_table.py`) |
+| MODEL-V2 round 6 | `~/dynagraph` | chain pid 1705445: `r9_lot_test.sh` (lot secondary; the main test is done) | see `MODEL_V2.md` status section (`scripts/v2/r9_table.py`) |
 | INKLING | `~/dynagraph` (+ `~/dynagraph_sys12`) | `logs/sys12/pipeline2.log`: Gen3 offline, row-gate test, 256-token language eval, aligned MODEL-V2 re-eval, then the exploratory diagnostic (heavy lane, about 22 GB) | see `INKLING_SYS12.md` status section |
 | V3-MODEL | `~/dynagraph_v3` | `scripts/v3/arm_test2.sh` (pid 3468490): arm_i2 VAL, selection, seeds 1–2, test2; `train_all.sh` (3108447) and `eval_gpu.sh` (1970118) for the frozen matrix | `PYTHONPATH=src python -m physmem.v3_chain_report --split test --groups "LBS=lbs_law_s0+lbs_law_s1+lbs_law_s2;V1=v1_s0+v1_s1+v1_s2;nolaw=lbs_nolaw_s0+lbs_nolaw_s1+lbs_nolaw_s2;classical=classical;oracle=oracle"`, then the same with `--split test2` plus the selected arm. Results go to `V3_GENERAL.md` §0f |
 | ENVS-V3 | `~/dynagraph_envs_v3` | queue pid 2078781 (`logs/v3_queue3.log`): granular_dose calibration, then the n=20 ceiling on probe and UR5e, the stability scan, stills | `docs/ENVS.md` status subsection on `envs-v3`; then rebuild the table, tag `envs-v3`, make src read-only, record the sha256 |
@@ -128,8 +135,8 @@ reproducibility. Don't edit them.
 
 ## 9. Next steps by track
 
-- **MODEL-V2:** final round-6 table, including the classical cached-estimate (S-lot) table. Videos only for
-  significant wins, then §13b and the paper results.
+- **MODEL-V2:** finish and tabulate the lot secondary (`MODEL_V2.md` §14). Then the paired videos (the only
+  significant wins are typed vs ACT, and that renderer isn't written yet), the final §13, and the paper results.
 - **INKLING:** finish the follow-ups and the diagnostic, then final `INKLING_SYS12.md` numbers and the paper section.
 - **V3-MODEL:** test2 result → §0f. If an arm passes, the Inkling port (with approval), then H1–H3 unification
   across domains (passive third-person spring and rigid-body scenes are drafted), then H6.

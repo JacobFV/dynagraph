@@ -371,7 +371,7 @@ was measured on the defective arm: success and damage were measured as reported,
 \label{sec:res-pending}
 
 \paragraph{Round 6: outside baselines on repaired skills.}
-The registered design (draft; to be frozen before any test episode) compares, per cell and on the same tasks,
+The registered design (frozen in \texttt{docs/MODEL\_V2.md} \S13a before any test episode) compares, per cell and on the same tasks,
 the typed gated residual planner against the best scripted baseline per family (P1), against ACT imitation with
 the memory model trained on all data (P2), and against ACT with the memory model trained on exactly ACT's
 demonstrations (P3), with generic and no-memory variants compute-matched. Cells: \fm{bin_clearing},
@@ -403,25 +403,38 @@ grid); its numbers are not results and are not reported here.
 
 \begin{table}[!htbp]
   \centering\small
-  \caption{Round 6 test results. \pending{all cells; filled only after the pre-registration is frozen and
-  the test has run}}
+  \caption{Round 6 \textbf{test} results (pre-registered; envs-r7.1; $n = 30$ paired tasks per cell). Success
+  rate within budget. P1: typed (full data) minus the best scripted policy for that cell. P2 / P3: typed (full
+  data) minus ACT and typed (budget-matched) minus ACT. Bold: 95\% bootstrap CI excludes zero. Source:
+  \texttt{results/v2/closed\_loop/robot\_table\_r9.md}, \texttt{docs/MODEL\_V2.md} \S13b.}
   \label{tab:r9}
   \resizebox{\linewidth}{!}{%
   \begin{tabular}{@{}l l c c c c c c@{}}
     \toprule
     robot & family & best script & typed (full) & typed (matched) & ACT & P1 & P2 / P3 \\
     \midrule
-    UR5e  & \fm{bin_clearing}  & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    UR5e  & \fm{fixture_place} & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    UR5e  & \fm{tight_insert}  & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    Panda & \fm{bin_clearing}  & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    Panda & \fm{fixture_place} & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    Panda & \fm{tight_insert}  & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    Gen3 (held out) & \fm{bin_clearing} & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
-    Gen3 (held out) & \fm{tight_insert} & \tbd & \tbd & \tbd & \tbd & \tbd & \tbd \\
+    UR5e & \fm{bin_clearing} & 0.23 (\pta) & 0.20 & 0.17 & 0.00 & $-0.03$\,\ci{-0.20}{+0.13} & \textbf{$+0.20$\,\ci{+0.07}{+0.33}} / \textbf{$+0.17$\,\ci{+0.03}{+0.30}} \\
+    UR5e & \fm{fixture_place} & 0.67 (nom.) & 0.63 & 0.60 & 0.07 & $-0.03$\,\ci{-0.20}{+0.13} & \textbf{$+0.57$\,\ci{+0.37}{+0.77}} / \textbf{$+0.53$\,\ci{+0.33}{+0.73}} \\
+    UR5e & \fm{tight_insert} & 0.70 (force-ramp) & 0.50 & 0.40 & 0.00 & \textbf{$-0.20$\,\ci{-0.37}{-0.07}} & \textbf{$+0.50$\,\ci{+0.33}{+0.67}} / \textbf{$+0.40$\,\ci{+0.23}{+0.57}} \\
+    Panda & \fm{bin_clearing} & 0.13 (\pta) & 0.17 & 0.10 & 0.00 & $+0.03$\,\ci{-0.10}{+0.17} & \textbf{$+0.17$\,\ci{+0.03}{+0.30}} / $+0.10$\,\ci{+0.00}{+0.20} \\
+    Panda & \fm{fixture_place} & 0.67 (nom.) & 0.70 & 0.53 & 0.07 & $+0.03$\,\ci{+0.00}{+0.10} & \textbf{$+0.63$\,\ci{+0.43}{+0.80}} / \textbf{$+0.47$\,\ci{+0.23}{+0.67}} \\
+    Panda & \fm{tight_insert} & 0.47 (force-ramp) & 0.47 & 0.50 & 0.00 & $+0.00$\,\ci{+0.00}{+0.00} & \textbf{$+0.47$\,\ci{+0.30}{+0.63}} / \textbf{$+0.50$\,\ci{+0.33}{+0.70}} \\
+    Gen3 (held out) & \fm{bin_clearing} & 0.10 (\pta) & 0.13 & 0.23 & 0.00 & $+0.03$\,\ci{-0.07}{+0.13} & \textbf{$+0.13$\,\ci{+0.03}{+0.27}} / \textbf{$+0.23$\,\ci{+0.10}{+0.40}} \\
+    Gen3 (held out) & \fm{tight_insert} & 0.77 (force-ramp) & 0.67 & 0.43 & 0.00 & $-0.10$\,\ci{-0.23}{+0.03} & \textbf{$+0.67$\,\ci{+0.50}{+0.83}} / \textbf{$+0.43$\,\ci{+0.27}{+0.60}} \\
     \bottomrule
   \end{tabular}}
 \end{table}
+
+\paragraph{Round 6 outcome.} The pre-registered test is a null for the learned planners against scripted control.
+No learned planner beats the best scripted policy in any cell (P1), including the held-out Gen3, and typed memory
+is significantly worse than force ramping on UR5e \fm{tight_insert} ($-0.20$). The typed planner beats ACT in
+every cell (P2), and in seven of eight at matched data (P3), but our ACT scores about zero. We read this as a weak
+imitation baseline that fails millimetre-level placement, not as evidence against imitation. At matched data and
+compute, typed versus generic memory gives one significant win (budget-matched \fm{fixture_place} UR5e, $+0.20$)
+and one significant loss (full-data \fm{bin_clearing} UR5e, $-0.13$). In the lot secondary on the gantry, the
+learned lot memory (0.67 good parts per lot) is matched by a classical estimator that probes once and caches the
+lot estimate (0.69), and both fall below always-probe \pta{} (0.82). \pending{lot secondary on UR5e, Panda and
+Gen3; still running.}
 
 \pending{Round 6: ACT validation-grid selection (chunk length, vision, KL weight, steps, ensembling weight).}
 
