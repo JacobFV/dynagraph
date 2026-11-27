@@ -32,7 +32,7 @@ OUT = Path(__file__).resolve().parents[2] / "results" / "ext"
 
 
 def run(a):
-    seqs = D.sequences()
+    seqs = [q for q in D.sequences() if q.subject not in ("20200928-subject-07", "20201002-subject-08")]  # H6 TEST
     if a.subjects:
         seqs = [q for q in seqs if q.subject in a.subjects]
     # deterministic spread over objects: every k-th sequence
