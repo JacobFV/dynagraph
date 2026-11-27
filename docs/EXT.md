@@ -390,3 +390,36 @@ follows the label to about 1 cm through the whole lift (§6).
 Tier-B compute note. In the first gb10 smoke run, SAM 2.1-small ran at stride 1 at ~2 frames/s and took 7.2 GB of
 GPU, over the 6 GB rule. We killed it within 2 minutes. It now runs with frames and state offloaded to the CPU, a
 4.5 GB allocator cap and stride 3 (10 fps).
+
+## 7. Status and running jobs (2026-11-26, 21:00 CST)
+
+**Running unattended.**
+- Local download chain `scripts/ext/fetch_chain.sh` (PID in `/home/brandonin/datasets/logs/chain.pid`, log `chain.log`):
+  1. CLEVRER val;
+  2. DexYCB s01, then extract + prune;
+  3. Physion v1 readout prefixes (5%);
+  4. DexYCB s02–08, each extracted + pruned.
+- gb10 SAM2 drivers, one `gpu_small.sh` chunk of 40 videos at a time:
+  - Physion++ mass readout (200), then mass official test (192);
+  - logs at `~/dynagraph_ext/logs/sam2_pp_*.log`;
+  - PIDs in `/home/brandonin/datasets/logs/gb10_pids.txt`.
+- Current gb10 footprint: ~0.7 GB.
+
+**Next steps, in order.**
+1. Collect the Physion++ results:
+   ```
+   rsync -a gb10-direct:dynagraph_ext/tracks_pp/ /home/brandonin/datasets/physionpp/tracks/sam2-v1/
+   python -I scripts/ext/physionpp_ocp.py readout
+   ```
+   Then queue friction, elasticity and deformability: `pp_readout_jobs.txt` / `pp_test_jobs.txt` are already on gb10.
+2. As the Physion v1 prefixes land:
+   ```
+   python -I scripts/ext/physion_ocp.py track
+   python -I scripts/ext/physion_ocp.py readout
+   python -I scripts/ext/physion_table.py
+   ```
+   Run tier B on Physion v1 Dominoes, where the untracked middle dominoes are the bottleneck.
+3. DexYCB: re-run `dexycb_pose_validate.py` on subjects 01–06 when they are extracted. Run `h6_features.py` on
+   01–06 only. TEST subjects 07–08 stay untouched until the H6 freeze commit (§6).
+4. CLEVRER: track validation videos with tier B, and use `clevrer.py` annotations as evaluator labels for a derived,
+   non-official collision-prediction check.
