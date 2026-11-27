@@ -667,3 +667,20 @@ entries that point back to the entry they correct.
 - Arm P is a VAL null (63 mm, parameters at chance, edit effect 0.8% of physics) and is dropped.
 - Caveat noted: the A3 bar (≥0.80) is above both classical estimators on VAL (0.73 converged CEM, 0.79 registered) and near the oracle (0.82). An arm-I A3 failure on test2 should be read in that light. The bar stays as registered.
 - The Inkling port waits for an arm that passes A1–A4 on VAL, plus lead approval.
+
+## 2026-11-27 ~07:40 UTC, V3-MODEL: hand-off state (all queued work runs autonomously on gb10)
+- Done and committed on `v3-model`:
+  - §0 build; the §0b pre-registration (0b8b189);
+  - the §0c first read (LBS-law s0 fails the causal test);
+  - the §0d arms and identifiability check; the VAL attempt log; the §0e pre-registration (39d4306);
+  - the §1 contract, including the human modality for EXT H6; the generic twin; the passive and sim human-lift
+    scenes.
+- Pending, queued:
+  - the arm_i s0 re-pilot (VAL);
+  - arm_i2_s0 training → its VAL pilot → selection → seeds 1–2 → test2 evals (`logs/arm_test2.log`);
+  - the frozen matrix: 5 more training runs (`logs/train_all2.log`) and their TEST evals (`logs/eval_gpu.log`).
+- To summarise when finished:
+  `PYTHONPATH=src python -m physmem.v3_chain_report --split test --groups "LBS=lbs_law_s0+lbs_law_s1+lbs_law_s2;V1=v1_s0+v1_s1+v1_s2;nolaw=lbs_nolaw_s0+lbs_nolaw_s1+lbs_nolaw_s2;classical=classical;oracle=oracle"`.
+  Use the same groups with `--split test2` plus the chosen arm.
+- When reporting A3, put classical (0.73 / 0.79 VAL) and oracle (0.82) next to arm I. Results go in
+  `V3_GENERAL.md` §0f. Only a `\pending{}` block goes to paper/results.tex (lead's call).
