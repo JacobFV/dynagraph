@@ -1,6 +1,6 @@
 """envs-v3 particle-media families (agent ENVS-V3): pouring and granular scooping.
 
-LIQUID APPROXIMATION (pour) - read before using the data. MuJoCo has no fluid solver. The "liquid" is 45-100 small
+LIQUID APPROXIMATION (pour) - read before using the data. MuJoCo has no fluid solver. The "liquid" is 40-80 small
 rigid spheres (r = 6.5 mm) in an opaque vessel with a spout lid. Hidden per-lot "viscosity proxy" = a linear drag on
 every sphere (free-joint damping 0.001-0.05 N s/m, i.e. drag against the WORLD frame, not shear between neighbours) with
 near-frictionless spheres (0-0.05; frictional spheres arch and clog the spout like a granular medium - tried and
@@ -38,7 +38,7 @@ class Pour(V3Base):
     success_doc = ("pour the stated target mass (40-90 g, goal 'target_kg') from the opaque vessel into the receiving "
                    "container on the scale: |poured - target| <= 15 g, spilled <= 10 g, vessel set back upright in its "
                    "home area and released")
-    hidden_doc = ("fill: 45-100 spheres x 1.6-2.8 g (fill mass 0.08-0.27 kg, opaque vessel: not visible; weighable "
+    hidden_doc = ("fill: 40-80 spheres x 1.6-2.8 g (fill mass 0.06-0.22 kg, opaque vessel: not visible; weighable "
                   "with the wrist F/T once lifted); viscosity proxy: per-sphere linear drag 0.001-0.05 N s/m "
                   "(flow onset angle / rate / lag after tilt-back). A fuller vessel starts pouring at a lower tilt; a "
                   "'thicker' medium starts late and then avalanches -> the tilt rate and the stop lead depend on both")
@@ -51,9 +51,10 @@ class Pour(V3Base):
         top = bench_station(scene)
         self.surface_z = top
         self.safe_z = top + 0.30
-        n = int(params.get("fill_n", rng.integers(45, 101)))
+        n = int(params.get("fill_n", rng.integers(40, 81)))         # <= 80: more overfills the lidded vessel
         dens = float(params.get("density", rng.uniform(0.8, 1.4)))
-        mu_p = float(params.get("mu_p", rng.uniform(0.0, 0.05)))
+        mu_p = 0.0          # frictionless (condim 1) spheres: a liquid has no Coulomb friction, and frictional spheres were
+        # 3-5x slower (elliptic cones) and arch / clog the spout like a granular medium (tried; that is granular_dose)
         visc = float(params.get("visc", math.exp(rng.uniform(math.log(0.001), math.log(0.05)))))
         damp = float(params.get("p_damp", rng.uniform(0.6, 1.0)))
         m_p = 2.0e-3 * dens
@@ -66,7 +67,7 @@ class Pour(V3Base):
         c, s = math.cos(vyaw), math.sin(vyaw)
         pts = hex_fill(rng, (0.0, 0.0), self.R_IN, 0.0, self.R_P, n)
         world = [(vx + c * x - s * y, vy + s * x + c * y, top + 0.004 + z) for x, y, z in pts]
-        self.add_particles(scene, "liq", world, self.R_P, m_p, mu_p, solref=(0.004, damp), damping=visc)
+        self.add_particles(scene, "liq", world, self.R_P, m_p, mu_p, solref=(0.004, damp), damping=visc, condim=1)
         rx, ry = 0.13, 0.10
         self.recv_floor = self.add_scale(scene, "receiver", (rx, ry, top + 0.02), (0.06, 0.06), 0.06, k=8000.0)
         scene.region("home", (vx, vy, top + 0.04), (0.05, 0.05, 0.05), support_z=top)
@@ -182,16 +183,31 @@ class Pour(V3Base):
         self.weighed_kg = float(abs(w[2]) / G)
         return "done", dict(weighed_kg=self.weighed_kg)
 
-    def _pour_pose(self, M, tilt_hint=1.5):
+    def _pour_pose(self, M, tilt_hint=1.2):
+        """TCP pose for pouring (CAD geometry + the grasp height): the lip lands over the receiver centre at tilt
+        `tilt_hint`, and no part of the vessel that is over the receiver dips below its rim + 1.5 cm at any tilt up to
+        2.0 rad. Coordinates: s = distance along -u (pour direction) from the TCP, z = height above the TCP; a tilt t
+        maps (s, z) -> (s cos t + z sin t, -s sin t + z cos t)."""
         reg = self.scene.regions["receiver"]
         cx, cy, _ = reg["center"]
         tcp, yaw = M.tcp()
         u = self._pour_sign * np.array([-math.sin(yaw), math.cos(yaw)])     # hand y = towards the post
         meta = self.scene.entities["vessel"].meta
         rim = reg["support_z"] + reg["half"][2] * 2
-        z = rim + 0.03 + meta["post_r"] + self.R_IN + 0.02
-        xy = np.array([cx, cy]) + u * 0.035
-        return np.array([xy[0], xy[1], z]), yaw
+        zg = getattr(self, "_grip_z_off", meta["post_top"] - 0.018) - meta.get("rest_h", 0.004)   # TCP above floor
+        pr, r_in, h = meta["post_r"], meta["r_in"], meta["h"]
+        pts = [(pr + r_in, h - zg), (pr + r_in, -zg), (pr - r_in, -zg), (pr, -zg), (pr - r_in, h - zg)]
+        rot = lambda q, t: (q[0] * math.cos(t) + q[1] * math.sin(t), -q[0] * math.sin(t) + q[1] * math.cos(t))
+        s_lip = rot(pts[0], tilt_hint)[0]
+        half = max(reg["half"][0], reg["half"][1]) + 0.012
+        need = 0.0
+        for t in np.linspace(0.0, 2.0, 21):
+            for q in pts:
+                sq, zq = rot(q, t)
+                if abs(sq - s_lip) <= half:            # this point is over the receiver footprint
+                    need = max(need, rim + 0.015 - zq)
+        xy = np.array([cx, cy]) + u * s_lip
+        return np.array([xy[0], xy[1], need]), yaw
 
     def fsk_pour(self, M, call):
         """tilt the held vessel over the receiver. params: tilt_max (rad), tilt_rate (rad/s), hold_s (max time at
@@ -230,9 +246,29 @@ class Pour(V3Base):
                 log["unreach_tilt"] = cur
                 break
             stopped = hit()
+        amp = float(np.clip(p.get("shake_amp", 0.0), 0.0, 0.3))
         if not stopped:
             hold = float(np.clip(p.get("hold_s", 2.0), 0.0, 8.0))
-            M.wait(hold, until=hit if stop is not None else None)
+            if amp <= 0:
+                M.wait(hold, until=hit if stop is not None else None)
+            else:
+                # tapping: oscillate the tilt by +-amp at shake_hz (granular: breaks arches over the spout); with
+                # shake_if_stalled only while the scale has not risen by 2 g in the last second
+                hz = float(np.clip(p.get("shake_hz", 3.0), 0.5, 6.0))
+                t_end = self.t + hold
+                hist = []
+                while self.t < t_end and not hit():
+                    w = self.scale_reading("receiver") or 0.0
+                    hist.append((self.t, w))
+                    hist = [(a, b) for a, b in hist if a >= self.t - 1.0]
+                    stalled = len(hist) > 3 and hist[-1][1] - hist[0][1] < 0.002 and hist[-1][0] - hist[0][0] > 0.9
+                    if p.get("shake_if_stalled", 0) and not stalled:
+                        M.wait(0.1, until=hit)
+                        continue
+                    half = 0.5 / hz
+                    M.move(pos, yaw, sgn * max(0.0, cur - amp), 0.25, min_T=half, until=hit)
+                    M.move(pos, yaw, sgn * cur, 0.25, min_T=half, until=hit)
+                log["shook"] = True
         log["trace"] = trace
         log["t_stop"] = self.t - t0
         log["tilt_at_stop"] = cur
@@ -332,209 +368,72 @@ class Pour(V3Base):
         return []
 
 
-class GranularScoop(Pour):
-    """GRANULAR SCOOPING: transfer a stated mass of grains (rigid spheres; this one IS a granular medium) from a
-    shallow bin to the receiving container on the scale with a hand scoop (a small open cup with a handle post, held
-    like the pour vessel), in at most `max_scoops` scoops. Hidden per lot: grain friction 0.15-0.9 (angle of repose ->
-    how much stays heaped on the scoop when it is levelled / lifted) and grain radius 8-11 mm (COST: 6-9 mm grains ran
-    ~20x slower than real time while the scoop dragged through ~180 of them - too slow for ceilings; larger pellets) (count adjusts to fill
-    the bin; per-grain mass ~ density x volume): the scoop depth / drag length that gives the right yield depends on
-    both. Probe-then-act: weigh the first scoop on the scale, then scale the dig depth for the rest."""
-    family = "granular_scoop"
-    station = "scoop_bench"
-    budget = 14
-    R_IN, H = 0.03, 0.035
-    FILL_H = 0.04
-    success_doc = ("scoop the stated target mass (goal 'target_kg', 50-90 g) into the container on the scale within "
-                   "4 scoops: |delivered - target| <= 15 g, spilled outside bin / receiver <= 10 g, scoop set back in "
-                   "its home area, released")
-    hidden_doc = ("grain friction 0.15-0.9 and radius 8-11 mm (pellets / gravel) (per-lot), grain density 1.2-2.6 g/cm3: the scoop yield "
-                  "per dig depth / drag (heap angle, grains rolling off when levelled) changes with friction and size")
-    TOL, SPILL_TOL = 0.015, 0.010
-    MAX_SCOOPS = 4
+class GranularDose(Pour):
+    """GRANULAR DOSING (envs-v3 replacement of the planned dustpan scoop - see docs/ENVS.md 'envs-v3' task changes):
+    dose a stated mass of grains (frictional rigid spheres: this one IS a granular medium) from a spouted scoop into the
+    container on the scale by tilting it. Hidden per lot: grain friction 0.1-0.8 and radius 4.5-6.5 mm (spout 4 cm =
+    3-4.5 grain diameters): frictional grains ARCH over the spout and stop flowing (granular clogging; Beverloo-type
+    flow), so they need TAPPING (a tilt oscillation) to flow - and tapping free-flowing grains overshoots. Probe-then-act:
+    the reactive policy taps only when the scale shows no flow for 1 s.
+    Same vessel / spout / scale / skills as `pour` (the tilt skill takes shake_amp / shake_hz)."""
+    family = "granular_dose"
+    station = "dose_bench"
+    success_doc = ("dose the stated target mass (goal 'target_kg', 40-90 g) of grains into the container on the scale: "
+                   "|dosed - target| <= 15 g, spilled <= 10 g, scoop set back upright in its home area, released")
+    hidden_doc = ("grain friction 0.1-0.8 (arching over the spout: no flow without tapping above ~0.3), grain radius "
+                  "4.5-6.5 mm, grain density 1.2-2.6 g/cm3, fill 40-100 grains (opaque scoop, weighable once lifted)")
 
     def build(self, scene, rng, params):
-        from .stations import bench_station
         top = bench_station(scene)
         self.surface_z = top
         self.safe_z = top + 0.30
-        scene.spec.option.iterations = 30          # cost: many grain contacts (50 -> 30 solver iterations)
-        mu = float(params.get("mu_g", rng.uniform(0.15, 0.9)))
-        r = float(params.get("grain_r", rng.uniform(0.008, 0.011)))
+        mu_g = float(params.get("mu_g", rng.uniform(0.1, 0.8)))
+        r = float(params.get("grain_r", rng.uniform(0.0045, 0.0065)))
         dens = float(params.get("grain_density", rng.uniform(1200.0, 2600.0)))
         m_p = dens * 4.0 / 3.0 * math.pi * r ** 3
-        # grain bin (static): 10 x 15 cm inner (long along y, the drag direction), 5 cm walls; filled to ~4 cm
-        bx, by = -0.10 + rng.uniform(-0.02, 0.02), 0.06 + rng.uniform(-0.02, 0.02)
-        bh = (0.05, 0.075)
-        bf = scene.open_box((bx, by, top), bh, 0.05, rgba=(0.45, 0.42, 0.38, 1), prefix="gbin", mu=0.5)
-        scene.region("grain_bin", (bx, by, bf + 0.025), (bh[0], bh[1], 0.025), support_z=bf, fill_h=self.FILL_H)
-        fill_h = self.FILL_H
-        nx, ny = int(2 * bh[0] / (2.05 * r)), int(2 * bh[1] / (2.05 * r))
-        nz = max(1, int(round(fill_h / (1.75 * r))))           # layers settle at ~1.75 r spacing (staggered)
-        pts = []
-        for iz in range(nz):
-            for ix in range(nx):
-                for iy in range(ny):
-                    x = bx - bh[0] + r * 1.05 + ix * 2.05 * r + (r * 0.5 if iz % 2 else 0.0)
-                    y = by - bh[1] + r * 1.05 + iy * 2.05 * r + (r * 0.5 if iz % 2 else 0.0)
-                    if abs(x - bx) <= bh[0] - r and abs(y - by) <= bh[1] - r:
-                        pts.append((x + rng.uniform(-0.1, 0.1) * r, y + rng.uniform(-0.1, 0.1) * r,
-                                    bf + r * 1.05 + iz * 1.95 * r))
-        self.add_particles(scene, "grn", pts, r, m_p, mu, solref=(0.004, 1.0), rgba=(0.78, 0.68, 0.45, 1))
-        # scoop (open cup + handle post) beside the bin
-        sx, sy = 0.06 + rng.uniform(-0.02, 0.02), -0.10 + rng.uniform(-0.02, 0.02)
-        syaw = -math.pi / 2 + float(rng.uniform(-0.3, 0.3))
-        from .families_v3_common import dustpan
-        dustpan(scene, "vessel", (sx, sy, top + 0.0016), syaw, extra_hidden=dict(mu_g=mu, grain_r=r, grain_density=dens))
-        rx, ry = 0.16, 0.10
-        self.add_scale(scene, "receiver", (rx, ry, top + 0.02), (0.06, 0.06), 0.06, k=8000.0)
-        scene.region("home", (sx, sy, top + 0.04), (0.05, 0.05, 0.05), support_z=top)
-        self.target_kg = float(params.get("target_kg", rng.uniform(0.05, 0.09)))
-        self.hidden_task = dict(mu_g=mu, grain_r=r, grain_density=dens, m_p=m_p, n_grains=len(pts),
-                                total_kg=len(pts) * m_p)
+        vol_cap = 0.55 * math.pi * self.R_IN ** 2 * self.H * 0.85
+        n = int(params.get("fill_n", min(int(rng.integers(40, 101)), int(vol_cap / (4.0 / 3.0 * math.pi * r ** 3)))))
+        vx, vy = -0.14 + rng.uniform(-0.02, 0.02), 0.02 + rng.uniform(-0.02, 0.02)
+        vyaw = -math.pi / 2 + float(rng.uniform(-0.35, 0.35))
+        vessel(scene, "vessel", (vx, vy, top + 0.004), vyaw, self.R_IN, self.H, mass=0.12, mu=0.5, mu_grip=0.9,
+               spout=(self.SPOUT_W, 0.016), rgba=(0.55, 0.58, 0.62, 1),
+               extra_hidden=dict(fill_n=n, fill_kg=n * m_p, mu_g=mu_g, grain_r=r, grain_density=dens))
+        c, s_ = math.cos(vyaw), math.sin(vyaw)
+        pts = hex_fill(rng, (0.0, 0.0), self.R_IN, 0.0, r, n)
+        world = [(vx + c * x - s_ * y, vy + s_ * x + c * y, top + 0.004 + z) for x, y, z in pts]
+        self.add_particles(scene, "grn", world, r, m_p, mu_g, solref=(0.004, 1.0), rgba=(0.78, 0.68, 0.45, 1))
+        rx, ry = 0.13, 0.10
+        self.recv_floor = self.add_scale(scene, "receiver", (rx, ry, top + 0.02), (0.06, 0.06), 0.06, k=8000.0)
+        scene.region("home", (vx, vy, top + 0.04), (0.05, 0.05, 0.05), support_z=top)
+        self.target_kg = float(params.get("target_kg", min(rng.uniform(0.04, 0.09), 0.6 * n * m_p)))
+        self.hidden_task = dict(fill_n=n, fill_kg=n * m_p, mu_g=mu_g, grain_r=r, grain_density=dens, m_p=m_p, visc=0.0)
+        self.budget = int(params.get("budget", 6))
         self._pour_sign = 1.0
         self.pour_log = []
-        self.n_scoops = 0
-        self.scoop_log = []
-        self.budget = int(params.get("budget", 14))
 
-    def media_split(self):
-        """(in receiver, in bin or scoop, spilled) grain counts (evaluator only)."""
-        P = self.particle_pos()
-        s = self._scales["receiver"]
-        bp = self.d.xpos[self.m.body("receiver_body").id]
-        hx, hy = s["half"]
-        rel = P - bp
-        in_r = (np.abs(rel[:, 0]) <= hx + 0.002) & (np.abs(rel[:, 1]) <= hy + 0.002) & (rel[:, 2] >= -0.005) & \
-               (rel[:, 2] <= s["t"] + s["wall_h"] + 0.02)
-        reg = self.scene.regions["grain_bin"]
-        c, h = np.asarray(reg["center"]), np.asarray(reg["half"])
-        in_b = np.all(np.abs(P - c) <= h + np.array([0.003, 0.003, 0.03]), axis=1)
-        L = self._vessel_frame(P)
-        mt = self.scene.entities["vessel"].meta
-        in_v = (np.abs(L[:, 0]) <= mt["L"] / 2 + 0.01) & (np.abs(L[:, 1]) <= mt["W"] / 2 + 0.005) & (L[:, 2] >= -0.005) & \
-               (L[:, 2] <= 0.05)
-        keep = (in_b | in_v) & ~in_r
-        return int(in_r.sum()), int(keep.sum()), int(len(P) - in_r.sum() - keep.sum())
-
-    def success(self):
-        nr, nv, ns = self.media_split()
-        m = self.hidden_task["m_p"]
-        return (abs(nr * m - self.target_kg) <= self.TOL and ns * m <= self.SPILL_TOL and self.held is None
-                and self.vessel_upright_home())
-
-    def goal_extra(self):
-        return dict(target_kg=self.target_kg, tol_kg=self.TOL, spill_tol_kg=self.SPILL_TOL, receiver="receiver",
-                    max_scoops=self.MAX_SCOOPS)
-
-    def labels_extra(self):
-        return dict(task_hidden=dict(self.hidden_task), scoop_log=list(self.scoop_log))
-
-    # ------------------------------------------------------------------ skills
-    def fsk_scoop(self, M, call):
-        """dustpan scoop: lower the held scoop flat onto the bin floor at the +u end, drag it front-first (-u) through
-        the bed, tilt its front up by back_tilt and lift. params: drag (m), speed (m/s), clear (m: plate underside
-        above the bin floor), back_tilt (rad: front edge up while lifting - keeps the heap on), lift_speed (m/s)."""
-        p = call.params
-        if self.held != "vessel":
-            return "empty", {}
-        reg = self.scene.regions["grain_bin"]
-        bx, by, _ = reg["center"]
-        hx, hy, _ = reg["half"]
-        tcp, yaw = M.tcp()
-        sgn = self._pour_sign
-        u = sgn * np.array([-math.sin(yaw), math.cos(yaw)])          # towards the handle post (back of the scoop)
-        mt = self.scene.entities["vessel"].meta
-        drag = float(np.clip(p.get("drag", 0.05), 0.0, 2 * hy - mt["L"] - 0.01))
-        sp = float(np.clip(p.get("speed", 0.04), 0.01, 0.2))
-        clr = float(np.clip(p.get("clear", 0.003), 0.0, 0.02))
-        # plate centre path: starts with the back wall near the +u bin wall, ends drag further along -u
-        along = abs(u[0]) * hx + abs(u[1]) * hy                      # bin half extent along u
-        c0 = np.array([bx, by]) + u * (along - mt["L"] / 2 - mt["t"] - 0.006)
-        c1 = c0 - u * drag
-        zg = getattr(self, "_grip_z_off", mt["post_top"] - 0.018)   # TCP height above the plate underside
-        z = reg["support_z"] + clr + zg
-        off = u * mt["post_r"]
-        surf = reg["support_z"] + reg["fill_h"]
-        for q, v in (((c0[0] + off[0], c0[1] + off[1], max(tcp[2], surf + zg + 0.04)), 0.3),
-                     ((c0[0] + off[0], c0[1] + off[1], z), 0.05), ((c1[0] + off[0], c1[1] + off[1], z), sp)):
-            if M.move(q, yaw, 0.0, v) == "unreachable":
-                return "unreachable", {}
-        bt = float(np.clip(p.get("back_tilt", 0.25), 0.0, 0.7))
-        here, _ = M.tcp()
-        if bt > 0:
-            M.move(here + np.array([0, 0, 0.005]), yaw, -sgn * bt, 0.05, min_T=0.5)
-        M.move(here + np.array([0, 0, 0.12]), yaw, -sgn * bt, float(np.clip(p.get("lift_speed", 0.08), 0.02, 0.3)))
-        M.move(here + np.array([0, 0, 0.12]), yaw, 0.0, 0.05, min_T=0.6)
-        M.wait(0.3)
-        self.n_scoops += 1
-        if not M.holding():
-            self.held = None
-            return "dropped", {}
-        return "done", {}
-
-    def fsk_dump(self, M, call):
-        """empty the held scoop into the receiver (tilt the front down to 1.4 rad, hold, back)."""
-        r = self.fsk_pour(M, SkillCall("pour", dict(tilt_max=1.4, tilt_rate=1.5, hold_s=1.0, stop_kg=-1, back_rate=3.0),
-                                       target="receiver"))
-        st, log = r
-        log["scale"] = self.scale_reading("receiver", window=0.3)
-        self.scoop_log.append(dict(n=self.n_scoops, scale=log["scale"]))
-        return st, log
-
-    # ------------------------------------------------------------------ policies
-    NOMINAL = dict(drag=0.05, speed=0.04, clear=0.003, back_tilt=0.25, lift_speed=0.08)
-    CAL_GRID = [dict(drag=dr, back_tilt=bt, lift_speed=ls) for dr in (0.03, 0.05, 0.07) for bt in (0.0, 0.25, 0.5)
-                for ls in (0.04, 0.12)]
+    NOMINAL = dict(tilt_max=2.0, tilt_rate=0.35, hold_s=4.0, lead_kg=0.010, pre_tilt=0.0, back_rate=3.0, shake_amp=0.0,
+                   shake_hz=3.0, shake_if_stalled=0)
+    CAL_GRID = [dict(lead_kg=l, shake_amp=a, shake_if_stalled=si) for l in (0.01, 0.025)
+                for a, si in ((0.0, 0), (0.08, 0), (0.15, 0), (0.08, 1), (0.15, 1))]
 
     @staticmethod
     def bin_of(h):
-        return f"mu{'H' if h['mu_g'] >= 0.5 else 'L'}_r{'H' if h['grain_r'] >= 0.0095 else 'L'}"
+        return f"mu{'H' if h['mu_g'] >= 0.35 else 'L'}_r{'H' if h['grain_r'] >= 0.0055 else 'L'}"
 
     def pta_bin(self):
         return None
 
-    def _stage(self):
-        if self.held is None:
-            if self.n_scoops == 0 and not self.scoop_log:
-                return "grasp"
-            return "done"
-        last = self.scoop_log[-1]["scale"] if self.scoop_log else 0.0
-        if self.n_scoops > len(self.scoop_log):
-            return "dump"
-        if self.n_scoops >= self.MAX_SCOOPS or (last or 0.0) >= self.target_kg - self.TOL * 0.5:
-            return "set_down"
-        return "scoop"
-
     def calls_from(self, prm, call):
-        if call is None or call.skill != "scoop":
+        if call.skill != "pour":
             return call
-        p = {k: prm[k] for k in ("drag", "speed", "clear", "back_tilt", "lift_speed")}
-        # later scoops: scale the drag length by (remaining mass / first-scoop yield) - the same rule for every policy;
-        # the yield is read from the scale (actor-legal)
-        last = (self.scoop_log[-1]["scale"] if self.scoop_log else 0.0) or 0.0
-        y = getattr(self, "_yield", None)
-        if y is not None and y > 1e-3:
-            rem = self.target_kg - last
-            p["drag"] = float(np.clip(prm["drag"] * rem / y, 0.01, 0.09))
-        return SkillCall("scoop", p, target="grain_bin")
+        return SkillCall("pour", dict(tilt_max=prm["tilt_max"], tilt_rate=prm["tilt_rate"], hold_s=prm["hold_s"],
+                                      stop_kg=self.target_kg - prm["lead_kg"], pre_tilt=prm["pre_tilt"],
+                                      back_rate=prm["back_rate"], shake_amp=prm["shake_amp"], shake_hz=prm["shake_hz"],
+                                      shake_if_stalled=prm["shake_if_stalled"]), target="receiver")
 
-    def scripted(self):
-        st = self._stage()
-        if st == "grasp":
-            if self.fail_count.get("vessel", 0) >= 3:
-                return None
-            return SkillCall("grasp_vessel", dict(grip_force=30.0, lift=0.10, lift_speed=0.15), target="vessel")
-        if st == "dump":
-            return SkillCall("dump", {}, target="receiver")
-        if st == "scoop":
-            if len(self.scoop_log) == 1:
-                self._yield = (self.scoop_log[0]["scale"] or 0.0)
-            return self.calls_from(self.NOMINAL, SkillCall("scoop", {}, target="grain_bin"))
-        if st == "set_down":
-            return SkillCall("set_down", dict(speed=0.25, lower_speed=0.05), target="home")
-        return None
-
-    def candidates(self, n, rng):
-        c = self.scripted()
-        return [] if c is None else [c]
+    def probe_then_act(self, call):
+        """reactive tapping (no hidden knowledge): tap (0.1 rad, 3 Hz) only while the scale shows no flow for 1 s."""
+        if call is None or call.skill != "pour":
+            return call
+        from dataclasses import replace as _rep
+        return _rep(call, params=dict(call.params, shake_amp=0.1, shake_if_stalled=1))

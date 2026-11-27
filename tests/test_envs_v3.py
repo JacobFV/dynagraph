@@ -10,7 +10,7 @@ from physmem.envs import FAMILIES, family_class, make_env
 from physmem.schema import Provenance
 from physmem.v2.api import TaskSpec
 
-V3 = ["pour", "granular_scoop", "cloth_fold", "cable_route", "stack_overhang", "handover"]
+V3 = ["pour", "granular_dose", "cloth_fold", "cable_route", "stack_overhang", "handover"]
 
 
 def _task(fam, seed=11, **params):
