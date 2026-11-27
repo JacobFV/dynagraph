@@ -383,7 +383,7 @@ class LBS(nn.Module):
         for layer in self.core:
             s = layer(s, evtok, mask)
         E = se.shape[1]
-        de, dg = self.dec_ent(s[:, :E]), self.dec_edge(s[:, E:])
+        de, dg = self.dec_ent(s[:, :E]).float(), self.dec_edge(s[:, E:]).float()
         nf = NP + 2 * NT
         pmean, plv, gate = de[..., :nf], de[..., nf:2 * nf].clamp(-10, 4), de[..., 2 * nf:]
         w = torch.sigmoid(gate)
@@ -454,7 +454,7 @@ class V1(nn.Module):
         s = torch.cat([se, sg], 1)
         for layer in self.enc:                                   # encoder (pre-loop): typed estimates read here
             s = layer(s, evtok, mask0)
-        pp = self.dec_param(s[:, :E])
+        pp = self.dec_param(s[:, :E]).float()
         pm, plv = pp[..., :NP], pp[..., NP:].clamp(-10, 4)
         # interventions act on the typed estimates (as in v1)
         full = torch.cat([pm, torch.zeros(B, E, 2 * NT, device=pm.device)], -1)
@@ -463,19 +463,20 @@ class V1(nn.Module):
             full = torch.where(mm, val, full)
             full_lv = torch.where(mm, torch.full_like(full_lv, TF_LV), full_lv)
         pm, plv = full[..., :NP], full_lv[..., :NP]
-        s = s + torch.cat([self.wr(torch.cat([pm, plv], -1)), torch.zeros_like(s[:, E:])], 1)
+        w_ = self.wr(torch.cat([pm, plv], -1))
+        s = s + torch.cat([w_, torch.zeros_like(w_[:, :1]).expand(-1, s.shape[1] - E, -1)], 1)
         out = []
         for k in range(passes):
             mask = mask1 if (late_ev is not None and k >= late_from) else mask0
             s = s + self.pass_emb.weight[min(k, self.pass_emb.num_embeddings - 1)]
             for layer in self.core:
                 s = layer(s, evtok, mask)
-        r = self.read_ent(torch.cat([s[:, :E], pm, plv], -1))
+        r = self.read_ent(torch.cat([s[:, :E], pm, plv], -1)).float()
         xm, xlv, vm, vlv = r[..., :NT], r[..., NT:2 * NT].clamp(-10, 4), r[..., 2 * NT:3 * NT], \
             r[..., 3 * NT:].clamp(-10, 4)
         xm = xm + (b.xhat / X_SC)[..., None]                    # residual on the current estimate (as LBS init)
         mean = torch.cat([pm, xm, vm], -1); lv = torch.cat([plv, xlv, vlv], -1)
-        g = self.read_edge(s[:, E:])
+        g = self.read_edge(s[:, E:]).float()
         st = Store.from_parts(mean, lv, torch.cat([g[..., :NT], F.softplus(g[..., NT:])], -1))
         st = apply_clamps(st, [am] + list(clamps))
         return [st]

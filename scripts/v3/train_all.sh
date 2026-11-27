@@ -2,7 +2,7 @@
 # V3 §0 matched training runs, ONE gpu_small job at a time (the driver itself only waits). Run on gb10 from
 # ~/dynagraph_v3:  nohup scripts/v3/train_all.sh > logs/train_all.log 2>&1 &
 cd ~/dynagraph_v3
-STEPS=${STEPS:-4000}; BS=${BS:-1024}
+STEPS=${STEPS:-4000}; BS=${BS:-512}
 runs=(
   "lbs_law_s0 --kind lbs --seed 0"
   "v1_s0 --kind v1 --seed 0"

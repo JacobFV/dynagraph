@@ -103,6 +103,9 @@ def train(args):
     from physmem.models.v3 import belief as B
     torch.manual_seed(args.seed)
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if dev.type == "cuda":     # hard cap: shared host rule (< 6 GB per small GPU job)
+        tot = torch.cuda.get_device_properties(0).total_memory
+        torch.cuda.set_per_process_memory_fraction(min(1.0, args.gpu_cap_gb * 2 ** 30 / tot))
     tr = B.ChainStore(os.path.join(args.data, "train.npz"), dev, args.max_episodes)
     va = B.ChainStore(os.path.join(args.data, "val.npz"), dev)
     model = B.build(args.kind, args.d).to(dev)
@@ -131,14 +134,16 @@ def train(args):
             drop = {"no_anchor": True}
         b, lab = tr.gather(rows[idx], drop)
         passes = int(torch.randint(args.pmin, args.pmax + 1, (), generator=gen, device=dev))
-        loss, logs = B.total_loss(model, b, lab, passes, law_w=law_w, cf_frac=0.0 if args.nolaw else args.cf_frac,
-                                  ds_w=args.ds_w, gen=gen)
+        with torch.autocast("cuda", dtype=torch.bfloat16, enabled=(dev.type == "cuda" and not args.no_amp)):
+            loss, logs = B.total_loss(model, b, lab, passes, law_w=law_w,
+                                      cf_frac=0.0 if args.nolaw else args.cf_frac, ds_w=args.ds_w, gen=gen)
         opt.zero_grad(set_to_none=True)
         loss.backward()
         gn = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         opt.step(); sched.step()
         if step % args.log_every == 0:
-            logs.update(step=step, passes=passes, gnorm=float(gn), elapsed=round(time.time() - t0, 1))
+            logs.update(step=step, passes=passes, gnorm=float(gn), elapsed=round(time.time() - t0, 1),
+                        peak_gb=round(torch.cuda.max_memory_allocated() / 2 ** 30, 2) if dev.type == "cuda" else 0)
             curve.append(logs)
             print(json.dumps({k: (round(v, 4) if isinstance(v, float) else v) for k, v in logs.items()}), flush=True)
         if step > 0 and (step % args.eval_every == 0 or step == args.steps):
@@ -190,9 +195,11 @@ def main(argv=None):
     t.add_argument("--bs", type=int, default=256)
     t.add_argument("--lr", type=float, default=1e-3)
     t.add_argument("--pmin", type=int, default=2)
-    t.add_argument("--pmax", type=int, default=6)
+    t.add_argument("--pmax", type=int, default=5)
     t.add_argument("--seed", type=int, default=0)
     t.add_argument("--max-episodes", type=int, default=None)
+    t.add_argument("--gpu-cap-gb", type=float, default=5.0)
+    t.add_argument("--no-amp", action="store_true")
     t.add_argument("--log-every", type=int, default=250)
     t.add_argument("--eval-every", type=int, default=2500)
     a = ap.parse_args(argv)
