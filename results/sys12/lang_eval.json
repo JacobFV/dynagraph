@@ -1,0 +1,254 @@
+{
+ "text": {
+  "source": "Salesforce/wikitext wikitext-2-raw-v1 test (public)",
+  "sha256": "5f1bea067869d04849c0f975a2b29c4ff47d867f484f5010ea5e861eab246d91",
+  "windows": 48,
+  "win": 512,
+  "tokens": 24576
+ },
+ "conditions": {
+  "base": {
+   "ppl": 8.336528778076172,
+   "nll": 2.1206469535827637,
+   "kl_to_base_top64": 0.0,
+   "mode": "no adapters",
+   "parse": {
+    "n": 60,
+    "format_valid": 0.03333333333333333,
+    "skill_acc": 0.03333333333333333,
+    "target_acc": 0.03333333333333333,
+    "exact": 0.03333333333333333,
+    "constrained_acc": 0.8333333333333334,
+    "samples": [
+     {
+      "answer": [
+       "handover",
+       "carton3"
+      ],
+      "out": "<|content_thinking|>The user wants exactly one line. Need decide between handover and pick. Task: lift cartons off"
+     },
+     {
+      "answer": [
+       "pick",
+       "part01"
+      ],
+      "out": "We need answer exactly one line. Need choose next skill. Task move every part from source bin into tote without damag"
+     },
+     {
+      "answer": [
+       "open",
+       "drawer"
+      ],
+      "out": "<sys1> skill=open target=drawer"
+     },
+     {
+      "answer": [
+       "open",
+       "drawer"
+      ],
+      "out": "<|content_thinking|>The user wants exactly one line: `<sys1> skill=<skill> target=<entity>"
+     },
+     {
+      "answer": [
+       "handover",
+       "carton3"
+      ],
+      "out": "<|content_thinking|>The user wants exactly one line. Need decide between handover and pick. Task: lift cartons off"
+     },
+     {
+      "answer": [
+       "open",
+       "drawer"
+      ],
+      "out": "<|content_thinking|>The user wants exactly one line: `<sys1> skill=<skill> target=<entity>"
+     }
+    ]
+   },
+   "instr": {
+    "n": 16,
+    "acc": 0.0625,
+    "outputs": [
+     "17 + 26 = ?\n<|content_thinking|>The user wants only the number. Compute 17+26 = 43. Need final only number. Ensure no extra",
+     "9 \u00d7 7 = ?\n<|content_thinking|>The user asks for 9 times 7, reply with only the number. Need answer only number. Compute 9",
+     "The user's request is a simple instruction to output a specific word. There's no harmful content. Need final exactly ROBOT uppercase nothing else. Ensure",
+     "\u0c38\u0c41\u0c30\u0c15\u0c4d\u0c37\u0c3f\u0c24\u0c2e\u0c48\u0c28 \u0ba8\u0bbf\u0bb1\u0bae\u0bcd \u0b8e\u0ba9\u0bcd\u0bb1\u0bbe\u0bb2\u0bcd \u0b8e\u0ba9\u0bcd\u0ba9?\n\nThe user asks in English: \"List exactly three primary colors, one per line, no other text.\" Then includes",
+     "The user's request is a direct instruction to return a JSON object with a single key \"skill\" whose value is \"pick\". This is a benign",
+     "The user asks a gripper part of a robot arm? Answer yes or no only. Need answer yes/no only. Determine: gripper is end effect",
+     "Hello, how are you?\nHello, how are you?\nHello, how are you?\nHello, how are you?\nHello, how are",
+     "<|content_thinking|>The user wants the word 'tote' backwards. 'tote' letters: t o t e. Reversed: e t o t = 'e",
+     "The user asks for the capital of Japan, one word. Need answer only one word. Capital of Japan is Tokyo. Ensure final exactly one word. No extra",
+     "We need answer only number. Count letters in 'gripper'. Let's spell: g r i p p e r. That's 7",
+     "The user asks for a comma-separated list of the numbers 1 to 5 and nothing else. This is a benign request. Need answer exactly comma-",
+     "Yes",
+     "<|content_thinking|>The user asks: \"Name the robot skill used to lift an object off a table. One word, lowercase.\" Need answer one word lowercase",
+     "Respond with exactly two words: the first is 'safe', the second is 'stop'.",
+     "100 / 4 = 25\n100 / 4 = 25\n100 / 4 = 25\n100 / 4 = 25",
+     "The user's request is a simple factual question. Need answer lowercase letter after q in alphabet. Alphabet: ... p q r s ..."
+    ]
+   },
+   "seconds": 2344.7
+  },
+  "gated_system2": {
+   "ppl": 8.336528778076172,
+   "nll": 2.1206469535827637,
+   "kl_to_base_top64": 0.0,
+   "mode": "off",
+   "parse": {
+    "n": 60,
+    "format_valid": 0.03333333333333333,
+    "skill_acc": 0.03333333333333333,
+    "target_acc": 0.03333333333333333,
+    "exact": 0.03333333333333333,
+    "constrained_acc": 0.8333333333333334,
+    "samples": [
+     {
+      "answer": [
+       "handover",
+       "carton3"
+      ],
+      "out": "<|content_thinking|>The user wants exactly one line. Need decide between handover and pick. Task: lift cartons off"
+     },
+     {
+      "answer": [
+       "pick",
+       "part01"
+      ],
+      "out": "We need answer exactly one line. Need choose next skill. Task move every part from source bin into tote without damag"
+     },
+     {
+      "answer": [
+       "open",
+       "drawer"
+      ],
+      "out": "<sys1> skill=open target=drawer"
+     },
+     {
+      "answer": [
+       "open",
+       "drawer"
+      ],
+      "out": "<|content_thinking|>The user wants exactly one line: `<sys1> skill=<skill> target=<entity>"
+     },
+     {
+      "answer": [
+       "handover",
+       "carton3"
+      ],
+      "out": "<|content_thinking|>The user wants exactly one line. Need decide between handover and pick. Task: lift cartons off"
+     },
+     {
+      "answer": [
+       "open",
+       "drawer"
+      ],
+      "out": "<|content_thinking|>The user wants exactly one line: `<sys1> skill=<skill> target=<entity>"
+     }
+    ]
+   },
+   "instr": {
+    "n": 16,
+    "acc": 0.0625,
+    "outputs": [
+     "17 + 26 = ?\n<|content_thinking|>The user wants only the number. Compute 17+26 = 43. Need final only number. Ensure no extra",
+     "9 \u00d7 7 = ?\n<|content_thinking|>The user asks for 9 times 7, reply with only the number. Need answer only number. Compute 9",
+     "The user's request is a simple instruction to output a specific word. There's no harmful content. Need final exactly ROBOT uppercase nothing else. Ensure",
+     "\u0c38\u0c41\u0c30\u0c15\u0c4d\u0c37\u0c3f\u0c24\u0c2e\u0c48\u0c28 \u0ba8\u0bbf\u0bb1\u0bae\u0bcd \u0b8e\u0ba9\u0bcd\u0bb1\u0bbe\u0bb2\u0bcd \u0b8e\u0ba9\u0bcd\u0ba9?\n\nThe user asks in English: \"List exactly three primary colors, one per line, no other text.\" Then includes",
+     "The user's request is a direct instruction to return a JSON object with a single key \"skill\" whose value is \"pick\". This is a benign",
+     "The user asks a gripper part of a robot arm? Answer yes or no only. Need answer yes/no only. Determine: gripper is end effect",
+     "Hello, how are you?\nHello, how are you?\nHello, how are you?\nHello, how are you?\nHello, how are",
+     "<|content_thinking|>The user wants the word 'tote' backwards. 'tote' letters: t o t e. Reversed: e t o t = 'e",
+     "The user asks for the capital of Japan, one word. Need answer only one word. Capital of Japan is Tokyo. Ensure final exactly one word. No extra",
+     "We need answer only number. Count letters in 'gripper'. Let's spell: g r i p p e r. That's 7",
+     "The user asks for a comma-separated list of the numbers 1 to 5 and nothing else. This is a benign request. Need answer exactly comma-",
+     "Yes",
+     "<|content_thinking|>The user asks: \"Name the robot skill used to lift an object off a table. One word, lowercase.\" Need answer one word lowercase",
+     "Respond with exactly two words: the first is 'safe', the second is 'stop'.",
+     "100 / 4 = 25\n100 / 4 = 25\n100 / 4 = 25\n100 / 4 = 25",
+     "The user's request is a simple factual question. Need answer lowercase letter after q in alphabet. Alphabet: ... p q r s ..."
+    ]
+   },
+   "seconds": 3004.1
+  },
+  "ungated": {
+   "ppl": 52.80466079711914,
+   "nll": 3.966599464416504,
+   "kl_to_base_top64": 1.3846639692783356,
+   "mode": "always",
+   "parse": {
+    "n": 60,
+    "format_valid": 0.0,
+    "skill_acc": 0.0,
+    "target_acc": 0.0,
+    "exact": 0.0,
+    "constrained_acc": 0.45,
+    "samples": [
+     {
+      "answer": [
+       "handover",
+       "carton3"
+      ],
+      "out": "**System:** carton3 carton3 carton3 carton3 carton3 carton3 carton"
+     },
+     {
+      "answer": [
+       "pick",
+       "part01"
+      ],
+      "out": "**Systematically**:**\n**Systematically**:**\n- 1.1.1."
+     },
+     {
+      "answer": [
+       "open",
+       "drawer"
+      ],
+      "out": "**System:** Drawer drawer drawer drawer drawer drawer drawer drawer drawer drawer"
+     },
+     {
+      "answer": [
+       "open",
+       "drawer"
+      ],
+      "out": "**System:** Drawer 1: Drawer 1: Drawer 1: Drawer 1:"
+     },
+     {
+      "answer": [
+       "handover",
+       "carton3"
+      ],
+      "out": "**System:** carton3 carton3 carton3 carton3 carton3 carton3 carton"
+     },
+     {
+      "answer": [
+       "open",
+       "drawer"
+      ],
+      "out": "The user's question is ambiguous, but the user's question is the drawer's 0.5"
+     }
+    ]
+   },
+   "instr": {
+    "n": 16,
+    "acc": 0.0,
+    "outputs": [
+     "The user's question is ambiguous, but the user's question is not clear. The user's question is not clear. The user's question",
+     "The user's question is ambiguous, but the user's question is not clear. The user's question is in English.\n\nThe user's",
+     "Reply with the word ROBOT in the word ROBOT in the word ROBOT in the word ROBOT in the word ROBOT in the word ROBOT in",
+     "List the colors of the rainbows, rainbows, rainbows, rainbows, rainbows, rainbows, rainbows",
+     "The user's request is ambiguous, but the user's request is ambiguous. The user's request is ambiguous. The user's request is ambiguous",
+     "The user's question is ambiguous, but the user's question is not clear. The user's question is not clear. The user's question",
+     "Translate the French text: \"Translate the text: 'Translate the text: 'Translate the text: 'Translate the text: 'Trans",
+     "The user's prompt is ambiguous, but the user's prompt is the prompt's prompt. The user's prompt is the prompt's prompt",
+     "The capital of Japan is the capital of Japan.\n\nThe capital of Japan is the capital of Japan.\n\nThe capital of Japan is the capital of Japan.",
+     "Counting the letters in the word gripper's gripper gripper gripper gripper gripper gripper gripper gripper gripper gripper grip",
+     "Reply with the numbers 1 to 5, 1 to 5, 1 to 5, 1 to 5, 1 to",
+     "Is 0.3? 0.3? 0.3? 0.3? 0.3? 0.3?",
+     "The user's question is ambiguous, but the user's question is not clear. The user's question is not clear. The user's question",
+     "The user's question is ambiguous, but the user's question is not clear. The user's question is the first word of the user's",
+     "The user's question is ambiguous, but the user's question is not clear. The user's question is not clear. The user's question",
+     "The user's request is ambiguous, but the user's request is not clear. The user's request is to reply in English.\n\nThe user"
+    ]
+   },
+   "seconds": 3374.9
+  }
+ }
+}

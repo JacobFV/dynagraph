@@ -1,0 +1,26 @@
+{
+ "ckpt": "results/sys12/checkpoints/s1r1_inkling_gated_s0.pt",
+ "method": "row-wise expert GEMMs (M=1), exact dequant, LoRA mode gated",
+ "checks": {
+  "bin_clearing_p1_sys1_prefix_bit_identical_to_base_same_seq": true,
+  "bin_clearing_p1_sys1_prefix_max_abs_diff": 0.0,
+  "bin_clearing_p1_sys1_positions_changed": true,
+  "bin_clearing_p1_base_full_vs_prefix_only_bit_identical": false,
+  "bin_clearing_p1_base_full_vs_prefix_only_max_abs_diff": 3.0,
+  "bin_clearing_p3_sys1_prefix_bit_identical_to_base_same_seq": true,
+  "bin_clearing_p3_sys1_prefix_max_abs_diff": 0.0,
+  "bin_clearing_p3_sys1_positions_changed": true,
+  "bin_clearing_p3_base_full_vs_prefix_only_bit_identical": false,
+  "bin_clearing_p3_base_full_vs_prefix_only_max_abs_diff": 4.25,
+  "pouch_transfer_p1_sys1_prefix_bit_identical_to_base_same_seq": true,
+  "pouch_transfer_p1_sys1_prefix_max_abs_diff": 0.0,
+  "pouch_transfer_p1_sys1_positions_changed": true,
+  "pouch_transfer_p1_base_full_vs_prefix_only_bit_identical": false,
+  "pouch_transfer_p1_base_full_vs_prefix_only_max_abs_diff": 4.5,
+  "pouch_transfer_p3_sys1_prefix_bit_identical_to_base_same_seq": true,
+  "pouch_transfer_p3_sys1_prefix_max_abs_diff": 0.0,
+  "pouch_transfer_p3_sys1_positions_changed": true,
+  "pouch_transfer_p3_base_full_vs_prefix_only_bit_identical": false,
+  "pouch_transfer_p3_base_full_vs_prefix_only_max_abs_diff": 12.3046875
+ }
+}

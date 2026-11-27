@@ -1,0 +1,1 @@
+{"run_id": "v2_sys12_matched_typed_s0", "experiment": "v2_train", "model": "physmem_v2", "variant": "typed", "seed": 0, "metric": "throughput_samples_per_s", "value": 2013.2984272197305, "status": "observed", "config_hash": "a6daf7f5c551", "time_utc": "2026-11-26T19:59:16Z", "params": 2353125, "train_seconds": 63.577261209487915, "amp": true}

@@ -1,0 +1,64 @@
+{
+ "load": {
+  "mem_before": {
+   "MemAvailable_GB": 110.22,
+   "SwapUsed_GB": 2.67,
+   "VmHWM_GB": 0.67,
+   "VmRSS_GB": 0.67,
+   "cuda_alloc_GB": 0.0,
+   "cuda_peak_GB": 0.0,
+   "cuda_reserved_GB": 0.0
+  },
+  "load_s": 39.2,
+  "packed_expert_GB": 17.33,
+  "cache_layers": [],
+  "dense_params": 1146041856,
+  "mem_ready": {
+   "MemAvailable_GB": 85.43,
+   "SwapUsed_GB": 2.67,
+   "VmHWM_GB": 20.09,
+   "VmRSS_GB": 1.03,
+   "cuda_alloc_GB": 20.6,
+   "cuda_peak_GB": 22.18,
+   "cuda_reserved_GB": 22.43
+  }
+ },
+ "checks": {
+  "a_instrumented_equals_native": true,
+  "b_system2_logits_bit_identical": true,
+  "b_system2_max_abs_logit_diff": 0.0,
+  "b_system2_greedy_identical": true,
+  "c_ungated_changes_logits": true,
+  "c_ungated_max_abs_logit_diff": 32.10914993286133,
+  "c_ungated_mean_KL_base_to_ungated": 0.9885401030381521,
+  "d_sys1_prefix_states_bit_identical_to_base_same_seq_p1": false,
+  "d_sys1_prefix_max_abs_diff_same_seq_p1": 5.0,
+  "d_sys1_readout_changed_by_adapters_p1": true,
+  "d_base_full_vs_prefix_only_rel_diff_p1": 0.029329191893339157,
+  "d_sys1_prefix_states_bit_identical_to_base_same_seq_p3": false,
+  "d_sys1_prefix_max_abs_diff_same_seq_p3": 10.0,
+  "d_sys1_readout_changed_by_adapters_p3": true,
+  "d_base_full_vs_prefix_only_rel_diff_p3": 0.060432933270931244
+ },
+ "adapters": "trained adapters from results/sys12/checkpoints/s1r1_inkling_gated_s0.pt",
+ "lora_delta_norm_sum": 59.04736679792404,
+ "latency": {
+  "sys1_bs1_passes1_fast_ms": 607.7,
+  "sys1_bs1_passes2_fast_ms": 1013.7,
+  "sys1_bs1_passes3_fast_ms": 1341.9,
+  "sys1_bs1_passes1_exact_ms": 1844.0,
+  "sys1_bs1_passes2_exact_ms": 2917.7,
+  "sys1_bs1_passes3_exact_ms": 4075.2,
+  "sys2_menu_forward_bs3_ms": 3390.6
+ },
+ "mem_end": {
+  "MemAvailable_GB": 81.06,
+  "SwapUsed_GB": 2.67,
+  "VmHWM_GB": 20.09,
+  "VmRSS_GB": 2.29,
+  "cuda_alloc_GB": 20.76,
+  "cuda_peak_GB": 22.51,
+  "cuda_reserved_GB": 25.82
+ },
+ "seq_len_sys1": 46
+}
