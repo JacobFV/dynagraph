@@ -358,3 +358,23 @@ Known biases:
 
 For H6 the depth-lifted **wrist** is what matters. On the debug sequence, its height above the RANSAC table plane
 follows the label to about 1 cm through the whole lift (§6).
+
+### 3b. Physion++ (complete official sets local; MIT)
+- **Readout-fitting set:** 800 trials, 200 per property: mass, friction, elasticity (bouncy), deformability.
+  The paper says 192 per property; the archive holds 200.
+- **Test set:** `official_test_ids()` reconstructs the official 192 stimuli per property from the official human
+  data (`human_data.zip`, the "run2" files: 50 participants × 192 stimuli per property, paper §4.2). This is needed
+  because the per-property test CSVs the paper mentions are not linked from the project page.
+- **Labels:** `static/does_target_contact_zone`. The observed window is `[0, start_frame_for_prediction)`.
+- **Videos are not red/yellow painted.** Agent and patient are given by the official cue map (`*_map.png`). We
+  checked that the map is aligned with frame `start_frame_for_prediction`: IoU with the `_id` segmentation of the
+  cued object peaks at that frame in 3 of 5 sampled trials and within 3 frames in a fourth.
+- **Tracking:** the colour front end cannot be used here. Tracks come from tier B: SAM 2.1 seeded with the cue-map
+  masks at the cue frame, propagated both ways, plus automatic masks for the other objects.
+- **Pipeline:** `scripts/ext/physionpp_ocp.py` uses the same official readout (`ocp.py`), per property.
+- **Hidden properties** (`star_mass`, `star_deform`, friction, bounciness) are in the pkl. They are evaluator-only
+  and make Physion++ the natural real-benchmark check for H3.
+
+Tier-B compute note. In the first gb10 smoke run, SAM 2.1-small ran at stride 1 at ~2 frames/s and took 7.2 GB of
+GPU, over the 6 GB rule. We killed it within 2 minutes. It now runs with frames and state offloaded to the CPU, a
+4.5 GB allocator cap and stride 3 (10 fps).
