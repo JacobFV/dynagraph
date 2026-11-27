@@ -54,3 +54,30 @@ def test_official_readout_shapes():
     r = ocp.fit_eval(X[:80], y[:80], X[80:], y[80:], seeds=(0,))
     assert r["mean"]["accuracy"] > 0.8
     assert ocp.cohen_kappa([1, 0, 1, 0], [1, 0, 1, 0]) == pytest.approx(1.0)
+
+
+def test_h6_lift_detection_synthetic():
+    import importlib.util
+    import pathlib
+    spec = importlib.util.spec_from_file_location(
+        "h6f", pathlib.Path(__file__).resolve().parents[1] / "scripts" / "ext" / "h6_features.py")
+    H = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(H)
+    T, fps = 75, 30.0
+    t = np.arange(T)
+    # camera-frame: table plane y = 0.5 (camera looks along +z, y down); up = -y
+    h = np.where(t < 30, 0.20 - 0.004 * t, np.where(t < 40, 0.08, 0.08 + 0.006 * (t - 40)))
+    xyz = np.zeros((T, 21, 3))
+    xyz[:, :, 1] = 0.5 - h[:, None]
+    xyz[:, :, 2] = 0.8
+    xyz[:, 8, 0] = 0.05                                 # index tip 5 cm from thumb tip
+    n, p0 = np.array([0.0, -1.0, 0.0]), np.array([0.0, 0.5, 0.8])
+    f = H.features(xyz, fps, n, p0)
+    assert f["lift_detected"] and 40 <= f["t_lift"] <= 46 and 25 <= f["t_grasp"] <= f["t_lift"]
+    assert abs(f["c1_aperture"] - 0.05) < 1e-6 and f["c2_peak_vz"] > 0.15
+    # plane fit on a synthetic depth image of a tilted table
+    K = np.array([[300.0, 0, 64], [0, 300.0, 48], [0, 0, 1]])
+    v, u = np.mgrid[0:96, 0:128]
+    z = 0.8 + 0.002 * (v - 48)
+    nn, pp, inl = H.table_normal(z, K, np.random.default_rng(0))
+    assert inl > 0.9 and nn @ (-pp) > 0
