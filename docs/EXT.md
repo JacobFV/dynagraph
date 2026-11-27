@@ -181,9 +181,21 @@ corners and the area of the largest connected component.
   - on 4 Collide readout stimuli, the median centroid error was 0.1–3.7 px (256 px frames) and recall was 100%;
   - the per-scenario table is in `results/ext/physion_frontend_validation_color-v1.json`.
 
-**Tier B (planned).** SAM 2.1 (Apache-2.0 code and checkpoints, facebookresearch/sam2) for all objects:
-automatic masks on frame 0, then video propagation, then per-object centroid/bbox tracks. Colour picks out agent
-and patient among the SAM objects. It runs on gb10 through `gpu_small.sh` with the hiera-small checkpoint (< 6 GB).
+**Tier B (`scripts/ext/sam2_tracks.py`, `sam2-v1`).**
+- Model: SAM 2.1 hiera-small, code and checkpoint Apache-2.0, checkpoint sha256 `6d1aa6f3…`.
+- Prompts: automatic masks on the prompt frame (frame 0, or the Physion++ cue frame). For Physion++, the official
+  cue map supplies the agent and patient masks.
+- Propagation: forward and backward over every 3rd frame (10 fps), up to 6 objects.
+- Runs on gb10 under `gpu_small.sh` with peak allocator memory of 2.5 GB.
+- Throughput on the shared GPU: ~0.6 s per sampled frame, so ~35–100 s per video.
+
+Check against the simulator segmentation (`_id.mp4`, evaluator-only) on 5 Physion++ readout trials:
+- agent: median centroid error 0.3–0.7 px, recall 99–100%;
+- patient: median centroid error 0.3–0.8 px; recall 100% in 4 trials and 46% in 1 (lost after an occlusion).
+
+Because throughput is limited, the Physion++ order is mass first (readout 200, then the official test 192). The
+other properties follow as gb10 time allows (`scripts/ext/gb10_sam2_driver.sh`, one chunk of 40 videos per lock
+acquisition).
 
 ## 5. Human hand/body pose front end
 

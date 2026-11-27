@@ -71,6 +71,9 @@ def main():
     from physmem.ext.tracks import KIND_OBJECT, TrackSet
 
     dev = "cuda"
+    # shared-host rule: < 6 GB GPU per job. Hard cap the caching allocator and offload frames/state to CPU.
+    total = torch.cuda.get_device_properties(0).total_memory
+    torch.cuda.set_per_process_memory_fraction(min(1.0, 4.5e9 / total))
     tag = f"sam2.1-small ckpt_sha256={_sha(a.ckpt)} | frontend=sam2-v1"
     gen = SAM2AutomaticMaskGenerator(build_sam2(a.cfg, a.ckpt, device=dev), points_per_side=16,
                                      pred_iou_thresh=0.8, stability_score_thresh=0.9)
@@ -109,7 +112,7 @@ def main():
                 with tempfile.TemporaryDirectory() as td:
                     for t in range(T):
                         iio.imwrite(f"{td}/{t:05d}.jpg", rgb[t], quality=95)
-                    st = vp.init_state(video_path=td)
+                    st = vp.init_state(video_path=td, offload_video_to_cpu=True, offload_state_to_cpu=True)
                     for k, m in enumerate(sel):
                         vp.add_new_mask(st, frame_idx=f0, obj_id=k, mask=m)
                         col0[k] = rgb[f0][m].mean(0)
@@ -128,7 +131,8 @@ def main():
                       ["centroid", "bbox_min", "bbox_max"], (H, W), f"{mp4} | {tag} | prompt_frame={f0}",
                       extra=dict(area=area, color0=col0, prompt_frame=np.array(f0)))
         ts.save(dst)
-        print(f"[sam2] {i + 1}/{len(jobs)} {mp4.name} objs={len(sel)} {time.time() - t0:.0f}s", flush=True)
+        print(f"[sam2] {i + 1}/{len(jobs)} {mp4.name} objs={len(sel)} T={T} "
+              f"peak_gpu={torch.cuda.max_memory_allocated() / 1e9:.2f}GB {time.time() - t0:.0f}s", flush=True)
 
 
 if __name__ == "__main__":
