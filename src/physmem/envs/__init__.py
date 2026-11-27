@@ -47,6 +47,7 @@ _REG = {
     "cloth_fold": ("families_v3_deform", "ClothFold"),
     "cable_route": ("families_v3_deform", "CableRoute"),
     "stack_overhang": ("families_v3_rigid", "StackOverhang"),
+    "handover": ("families_v3_rigid", "Handover"),
 }
 
 FAMILIES = tuple(_REG)
