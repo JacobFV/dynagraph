@@ -971,3 +971,285 @@ same seed numbers, including bin_clearing on these robots, but with a different 
 ENVS budget. Those episodes were evaluation only. No model was trained or tuned on them (on-policy rollouts use the
 train split, and tau and the VAL budget choice used VAL seeds), so this is not train/test leakage. The lots and
 part counts here differ from round 3.
+
+## 13. Round 6: outside baselines and re-evaluation on fixed skills (envs-r7)
+
+### 13.0 Plan and dry run (NOT pre-registered; §13a will be committed on its own before any envs-r7 test run)
+**Outside baseline (a): end-to-end imitation, ACT-style** (`src/physmem/models/v2/imitation/{data,act}.py`).
+- *Demo/action format il-v0*, agreed with ENVS:
+  - Control tick: 0.1 s of sim time.
+  - Observation (actor-legal only): proprio (tcp pose, reference − tcp, 6D rotation, gripper closure, pad contacts,
+    tared wrist wrench, controller mode, gripper command, grip-force setpoint, time). Up to 8 tracker object estimates
+    from the sensor stream (pos rel. tcp, size, vision / tactile stiffness). Up to 4 region estimates. Embodiment
+    vector and family one-hot.
+  - Action: the controller-reference delta (pos, rotvec), gripper command, grip-force setpoint, and controller mode
+    (track / impedance / guarded / force) with its threshold / axis / stiffness. envs-r7 adds
+    `env.control_state()` (mode_id, f_target, stiffness) for the reactive fine-motor skills, executed through
+    `env.set_control`, plus a 64x64 wrist camera at 10 Hz.
+  - The recorder wraps `env.post_physics`, reads the controller reference and NEW sensor events through a cursor (the
+    env's own per-call flush is untouched). The executor drives the same controller API the skills use, so object
+    estimates come from the same stream in training and at test.
+- *Executor fidelity*: replaying a recorded scripted demo's actions open-loop on the same seed reproduces it
+  (fixture_place / ur5e: 3/3 solved, sim time within 0.4 s of the demo).
+- *Policy*: ACT, trained from scratch.
+  - Encoder: context, proprio(t, t−1), CVAE latent, masked object / region tokens.
+  - Decoder: H learned chunk queries.
+  - Loss: L1 on standardized continuous dims + CE on the controller mode + β·KL.
+  - Execution: temporal ensembling (exp weights) and the same sim-time cap as everyone (`env.time_budget()` in r7).
+  - VAL tuning grid (same effort as ours): H ∈ {10, 20}, β ∈ {1, 10}, d ∈ {128, 256}, ensemble m ∈ {0.01, 0.1}.
+- *Data budget*: ENVS's oracle-param scripted demos (`env.demo_call`), train split, base seed 3_000_000,
+  ≤ 200 per family × robot. The memory models get the same episodes (they are converted into the model's
+  interaction format), so both sides see the same data.
+
+**Outside baseline (b): compute-matched fine-tuning control.** typed, generic and nomem (no interaction history)
+variants of the same network:
+- Same training data, steps, batch, optimizer and seeds; reported with parameter counts and GPU-hours.
+- Each variant gets the same VAL grid (lr x d).
+- Each is evaluated inside the same planner wrapper.
+
+**System I interface for INKLING** (`src/physmem/models/v2/system1.py`, `physmem-v2-system1-v0`, draft).
+`System1Head.propose(request SkillCall, history, frame, embodiment, target_pos)` returns:
+- the chosen call (same skill / target);
+- predicted event probabilities and duration;
+- uncertainty (ensemble + posterior sd);
+- the typed memory readout (latents with physical-unit intervals);
+- top-k alternatives.
+
+It runs in about 250-300 ms on CPU for 3 models x about 60 candidates. The episode-level route
+(LotPlanner / ResidualPlanner `decide`) stays available.
+
+**Dry run (r6 tasks, debugging only).**
+- Demos: 3 families (fixture_place, twist_lock, door_open) x 2 arms (ur5e_2f85, panda), 60 scripted episodes
+  each, plus scripted VAL baselines (20 per cell, seeds 2950000+i).
+- Training: ACT d=128, H=20, β=10, 8k steps, on CPU while the GPU lock is held.
+- Version mix-up (fixed): the first attempt (243 demos) ran on uncommitted envs-r7-dev code that sat in the shared
+  tree. It was stopped and set aside (`data/_r7dev_dryrun/`, unused) and rerun on envs-r6. Every round-6 script now
+  asserts `EXPECT_ENV == physmem.envs.ENV_VERSION` and stores the version in its outputs
+  (`imitation.data.env_version`).
+- Results (envs-r6, VAL seeds 2950000+i, 20 per cell; success within 1.5x the median demo duration):
+
+  | cell | scripted (VAL) | ACT, delta actions (4k steps, CPU) | ACT, absolute targets (8k steps, GPU) |
+  |---|---|---|---|
+  | fixture_place ur5e / panda | 0.70 / 0.70 | 0.00 / 0.00 | 0.00 / 0.00 |
+  | twist_lock ur5e / panda | 0.60 / 0.50 | 0.00 / 0.00 | 0.00 / 0.00 |
+  | door_open ur5e / panda | 0.55 / 0.60 | 0.00 / 0.00 | 0.50 / 0.00 |
+
+- Diagnosis: closed loop, side by side with the demo of the same seed.
+  - Delta actions integrate error: a 5 cm transit error is never corrected.
+  - Absolute chunk targets fix the transit (xy within about 7 mm). The remaining misses are precision: guarded descent
+    stops 1-1.5 cm short, so the grasp is shallow and the part slips in transit.
+  - The temporal-ensembling weight matters: m = 0.1 reached the part at 7 mm.
+  - Conclusion: the pipeline works end to end; precision is what the r7 VAL tuning (more demos, vision, H, m) has
+    to buy. Dry-run numbers are debugging only and are not used anywhere else.
+
+### 13a. Pre-registration (FROZEN; committed on its own before any envs-r7.1 TEST episode)
+Status: frozen 2026-11-27 02:16Z. VAL tuning is complete. No test-split episode of any policy has been run. A VAL sanity run of the memory-model planners is in progress; it is not used for any selection and is reported in 13b.
+
+**Environment.** envs-r7.1 (envs-r7 commit 7d04021 + the robot-model fix: Gen3 base/shoulder contact exclude and the robot audit; commit 3bc2379 on branch envs-r7, frozen 2026-11-26 10:08Z in gb10:~/dynagraph_r7_1, ENV_VERSION "envs-r7.1", sha256 of envs+skills+embodiments e71354cb...cff6b; ur5e / panda / probe byte-identical to r7, so r7 demos and VAL baselines on them stand). Runtime overlay `~/dynagraph_m6run71/src` is the frozen
+`~/dynagraph_r7_1/src` plus only MODEL-V2 files: models/v2/**, planner.py, v2_train.py. envs/, skills/ and embodiments/
+are diff-checked before every run, and every run asserts the r7.1 ENV_VERSION.
+
+**Cells** (from the ENVS ceiling_r7 audit; only cells where the oracle is usable and above nominal):
+- fixed-skill: bin_clearing (6 cm bin) on ur5e_2f85 and panda; fixture_place on ur5e_2f85 and panda;
+- fine-motor (reactive, F/T): tight_insert on ur5e_2f85 and panda;
+- held-out robot: gen3_2f85 on bin_clearing and tight_insert (`heldout_robot` split; no Gen3 data in any training
+  set, no tuning on Gen3);
+- reported as limited, outside the main table: tool_return, fastener_pick, pouch_transfer and conveyor_sort (oracle ≤ 0.5).
+
+**Policies** (all on the same seeded tasks):
+1. nominal scripted (`env.scripted()`);
+2. PTA (`env.probe_then_act`);
+3. force-ramp (`env.force_ramp`, tight_insert only);
+4. oracle-parameter scripted (`env.demo_call`, the demonstrator; labelled, an upper reference, not a competitor);
+5. **typed**: gated residual planner, MODEL-V2 typed memory, 3-seed ensemble, LCB. Anchored on the best scripted
+   baseline of each family (from VAL): nominal for fixture_place, PTA for bin_clearing, force-ramp for tight_insert.
+   Trust gate from VAL;
+6. **generic**: the same planner with the generic-memory model;
+7. **nomem**: the same planner with the no-memory model;
+8. **ACT**: end-to-end imitation, il-v1 low-level actions at 10 Hz, real arms only, trained from scratch on the demos
+   and tuned on VAL as described below.
+
+The memory models come in two data regimes:
+- (i) **budget-matched**: trained only on the memory-model view of exactly the demonstration episodes ACT sees;
+- (ii) **full**: plus ENVS tranche9_r7 (about 5k episodes) and the r2-r6 data, labelled as using more data.
+
+typed, generic and nomem within a regime are compute-matched: same data, steps, batch, optimizer and seeds. Parameter
+counts and GPU-hours are reported.
+
+**Data budget.** Demos are `env.demo_call` episodes on the train split, make_tasks(base_seed=3_000_000), 200 per
+family x robot cell (successful ones are used for ACT). VAL episodes are make_tasks(split='val', base_seed=3_000_000),
+30 per cell.
+
+**Tuning on VAL** (same effort for both sides; the test split is never used for tuning):
+- ACT grid:
+  - action mode abs (chosen in the dry run, 13.0);
+  - chunk H ∈ {10, 20, 50};
+  - vision (wrist camera 64x64) ∈ {off, on};
+  - KL β ∈ {1, 10};
+  - training steps ∈ {20k, 50k};
+  - temporal-ensembling m ∈ {0.01, 0.1} (eval-only);
+  - staged: H x vision at 20k → best + β → best at 50k → m. Selection = mean VAL success within the time budget over
+    the 6 cells.
+- Memory models (each of typed / generic / nomem, each regime): lr ∈ {3e-4, 1e-3} x d ∈ {128, 192} on seed 0,
+  4k steps (budget-matched: ~3k rows) / 8k steps (full), bs 256, robot-balanced. Selection = lowest mean VAL (success Brier + progress RMSE) over the three
+  families, then seeds 1 and 2 with the selected (lr, d). Planner
+  settings frozen from round 3 except the per-family anchor; trust gate (VAL AUC ≥ 0.8) as before.
+
+**VAL scripted baselines** (envs-r7.1, 30 VAL tasks per cell, success within `env.time_budget()`):
+
+| cell | nominal | PTA | force-ramp | oracle-param (labelled) |
+|---|---|---|---|---|
+| tight_insert ur5e / panda | 0.63 / 0.47 | 0.47 / 0.33 | 0.83 / 0.57 | 0.60 / 0.60 |
+| fixture_place ur5e / panda | 0.57 / 0.57 | 0.40 / 0.33 | – | 0.67 / 0.67 |
+| bin_clearing ur5e / panda | 0.10 / 0.03 | 0.23 / 0.20 | – | 0.50 / 0.43 |
+
+Because PTA is below nominal on fixture_place, "best scripted" for P1 is defined per family as the better of
+nominal and PTA on VAL: nominal for fixture_place, PTA for bin_clearing, force-ramp for tight_insert. The residual
+planner's anchor uses the same per-family choice.
+
+**ACT baseline engineering before the grid.** Each change is a bug fix or a standard ACT practice, diagnosed on
+TRAIN demos and never on test:
+1. Absolute chunk targets (13.0).
+2. Controller-command dims dropped from the observation. With reference − tcp, controller mode, gripper command and
+   grip-force setpoint as inputs, the policy learned to start each motion only when the scripted controller's
+   reference was already ahead: a copycat / causal-confusion failure.
+   - Teacher-forced on the demos it matched the transit exactly.
+   - In closed loop it hovered after the grasp, its chunks predicting "wait, then move" forever.
+   - Without those inputs it performs the transit. (r9s1_h10, with the inputs: 0/120 on VAL.)
+3. Binarized gripper command at execution (demos are open/closed).
+4. Leading idle ticks trimmed from each demo, and the episode-time feature restarted at 0. Many demos start with
+   about 1 s of a stationary reference. With the command inputs gone, the policy copied that and never left the
+   start pose on tight_insert (r9g_h10: 0/20 there).
+   - With trimming, a CPU check model (3k steps) runs the whole tight_insert sequence on train seeds: start, grasp,
+     transit, force-mode press. It stalls in the press, with seating short by about 2 cm.
+   - The grid configs are named r9t_* (r9g_* and r9s1_* were superseded and are not used).
+5. Vision runs at 5 Hz (every second wrist frame), so the image job fits the lead's < 6 GB small-GPU-job cap.
+
+Remaining failure mode on a CPU check model (3k steps): grasp xy error of 2-3 cm. That is what the GPU grid (20k
+steps, d = 192, vision) has to fix.
+
+**ACT VAL grid, stage 1** (r9t_*, 20k steps, β = 10, m = 0.1, 20 VAL tasks per cell, success within the budget):
+every config (H ∈ {10, 20, 50} x vision off/on) scores 0.00 on all six cells except a single success:
+fixture_place ur5e 0.05 for h10 and h20, fixture_place panda 0.05 for h10v and h50v.
+
+Checks, so this is not read as a pipeline bug:
+- (a) Replaying a demo's own actions through the executor while comparing live and recorded observations every tick:
+  observations agree to about 1e-4 (apart from a 1.5 cm tracker update during transit), and the episode is solved.
+- (b) The best config on TRAIN seeds: fixture_place ur5e 0/10.
+- (c) A model overfit to 5 demos, run on those same seeds, completes the whole sequence (grasp within 1 mm of
+  height, lift, transit, descend, release) but releases about 1.3 cm off in y, and the fixture is not seated (0/6).
+
+So the pipeline works; the low-level imitation policy is limited by placement precision (~1 cm) on tasks whose
+scripted skills seat to millimetres.
+
+**ACT VAL grid, stages 2-3** (selection = mean VAL success over the 6 cells; ties -> lower offline val L1, then the
+current setting):
+- Stage-1 winner: h10v (H = 10, vision), tied at 0.008 with three others, lowest val L1 0.103.
+- Stage 2: β = 1 (20k) 0.000; 50k steps (β = 10) 0.017.
+- Stage 3 (50k model): m = 0.01 0.017, m = 0.1 0.017, open-loop chunks 0.000.
+- **Frozen ACT: r9t_h10v_50k, m = 0.1** (tie kept at the current setting). VAL per cell (tight ur5e / panda,
+  fixture ur5e / panda, bin ur5e / panda): 0 / 0 / 0 / .05 / .05 / 0.
+
+**Limitation (named before the test).** This is our ACT implementation, and it fails at mm-level placement:
+- It learns the task structure (13a checks above) but releases or seats about 1 cm off, which the fixed skills
+  achieve to millimetres.
+- So it is a weak imitation baseline. A near-zero ACT row means "this baseline fails", not "imitation cannot do
+  these tasks".
+- Future work: diffusion policy, 50 Hz control, joint-space targets.
+
+**Memory models selected on VAL** (seed-0 grid, lowest mean VAL success Brier + progress RMSE; seeds 1-2 then
+trained with the selected setting; canonical links `results/v2/checkpoints/v2_robots_r9_<regime>_<variant>_s{0,1,2}.pt`):
+
+| regime | typed | generic | nomem |
+|---|---|---|---|
+| budget-matched (4k steps) | lr 3e-4, d 192 (0.222) | lr 1e-3, d 192 (0.216) | lr 3e-4, d 192 (0.225) |
+| full (8k steps) | lr 3e-4, d 192 (0.279) | lr 3e-4, d 192 (0.262) | lr 3e-4, d 192 (0.261) |
+
+Trust gates (3-seed mean VAL success AUC >= 0.8): bin_clearing, fixture_place and tight_insert are trusted for every
+model in both regimes (AUC 0.87-1.00), so the residual planner is active in every main cell.
+
+Gen3 cells use the same models; there is no Gen3 data in any training set. The held-out-robot rows of the full data
+were converted from the r7.1 Gen3 episodes, are used for nothing, and are not used for selection.
+
+**Frozen for the test:**
+- ACT: r9t_h10v_50k with m = 0.1.
+- Memory models: the 18 canonical checkpoints above.
+- Planner: ResidualPlanner, round-3 settings, anchors as above, trust gates as above.
+- Lot secondary: LotPlanner(crush_gate) with tau 0.15, models r9 full.
+- Launchers: `scripts/v2/r9_test.sh` (IL_RUN=r9t_h10v_50k, ENS_M=0.1) and `scripts/v2/r9_lot_test.sh`.
+- Table: `scripts/v2/r9_table.py r9t_h10v_50k 0.1`.
+
+**Test.** n = 30 tasks per cell, make_tasks(split='test', base_seed=3_000_000) (gen3: split 'heldout_robot'), every
+policy on the same tasks. Same sim-time cap for every policy: `env.time_budget()`. Skill-level policies also keep the
+ENVS call budget.
+
+**Metrics.**
+- Success within the time budget is the primary metric. ABSOLUTE rates are reported for every policy.
+- Cycle time: median sim time to success among successes, plus the mean with failures counted at the cap.
+- Damage rate and effort.
+
+**Primary comparisons** (per cell, paired Δ success with 95% bootstrap CI, 4000 resamples, seed 0; a cell counts as
+a win when the CI lower bound is > 0):
+- (P1) typed(full) − best scripted baseline (per family, from VAL: nominal for fixture_place, PTA for bin_clearing,
+  force-ramp for tight_insert);
+- (P2) typed(full) − ACT;
+- (P3) typed(budget-matched) − ACT.
+
+**Secondary comparisons:**
+- typed − generic and typed − nomem in both regimes;
+- cycle-time differences (paired over episodes where both succeed);
+- everything against the oracle (labelled).
+
+No pooling across cells, no multiple-comparison correction; all cells reported.
+
+**What "typed vs generic" measures.** It compares the whole typed package against the generic one, not one ingredient.
+The typed package has:
+- property supervision of the slots;
+- latent estimates feeding the physics-structured head / analytic features;
+- (on lots) the explicit crush-risk gate.
+
+A typed win is a win of that package; it does not identify which part matters. The cached-estimator baseline below
+separates "learned lot memory" from "any cached analytic estimate + the same gate".
+
+**Secondary S-lot (external-audit request): bin_clearing LOTS with a classical cached estimator.**
+- Regime: the r8 lot regime (12f) on envs-r7.1: 5 parts per lot, one shared budget of 12 calls, lot override as in 11a.
+- Cells: ur5e_2f85, panda, probe gantry (test split) and gen3_2f85 (heldout_robot); n = 30 lots per robot.
+- Seeds: test base + 950000 + i, never used before.
+- Policies:
+  - never-probe (`heuristic`);
+  - PTA (`heuristic_probe`);
+  - **typed v2** (crush-gated LotPlanner, 11e, models r9 full);
+  - typed v2 with lot memory OFF;
+  - **classical cached estimator** (`LotPlanner.cached_estimator`):
+    - probes once per lot;
+    - fits the crush limit analytically from the actor-legal tactile squeeze (`env.est_crush = k / STIFF_PER_N`, no
+      learned estimate) and caches it for the lot;
+    - otherwise the same crush gate, candidate grid, risk head, tau = 0.15 and time cost as typed v2, with prior means
+      in every non-crush slot;
+  - generic (risk-UCB rule);
+  - oracle v2 (labelled).
+- Primary of this secondary: good parts per lot, **typed v2 − cached estimator** and typed v2 − PTA, paired, 95%
+  bootstrap CI per robot.
+- Labelled SECONDARY: it does not change P1-P3.
+- Outputs: `results/v2/closed_loop/v2_r9lot_<robot>.json` and `robot_table_r9lot.md`.
+
+**Videos.** Same-seed paired videos only for cells with a significant P1 or P2 win.
+
+**Outputs.**
+- `results/v2/closed_loop/v2_r9_<family>_<robot>.json` (skill-level policies);
+- `results/v2_il/il_<run>__<family>__<robot>__test.json` (ACT);
+- table `results/v2/closed_loop/robot_table_r9.md` / `.json`.
+
+### 13e. Erratum (found by INKLING, fixed)
+`v2_train.sanitize` dropped every Gen3 `heldout_robot` row of `data/v2_r7_final`. Gen3's max robot-contact force
+(continuous outcome aux1 = F/150) reaches ~1.8 MN, a contact blow-up on that arm, and exceeds the sanity limit. So
+`--eval-splits heldout_robot` in the r7 trainings evaluated an empty store. No reported number used it: Gen3 results
+in §11-§12 are closed-loop, and the offline numbers quoted are test-split. Fix: absurd or non-finite continuous outcome
+VALUES are now masked (`cont_mask = 0`) instead of dropping the row (e.g. pouch_transfer_heldout_robot keeps 351/351
+rows, 351 aux1 values masked). Applies from r9 on.
+- Erratum (Gen3): every earlier Gen3 number (r6-r8, §10-§12) was measured with a Gen3 model defect: a persistent
+  base_link vs shoulder_link self-collision (~1.8 MN). Success and damage were measured as reported and are
+  unchanged, but the arm may have been handicapped. Fixed in envs-r7.1 (robot models only), and §13a is pinned to it.
+  The ENVS re-audit (ceiling_r7_1) shows the defect WAS the main Gen3 handicap. Oracle success r7 -> r7.1:
+  tight_insert 0.10 -> 0.80, bin_clearing 0.67 -> 0.83, fastener_pick 0.00 -> 0.67, fixture_place unchanged at 0.67.
+  So every Gen3 / held-out-robot number in §10-§12 understates Gen3. Treat them as measured on a defective arm.
