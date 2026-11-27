@@ -80,7 +80,7 @@ def main():
     jobs = [ln.split() for ln in Path(a.list).read_text().splitlines() if ln.strip()]
     t0 = time.time()
     for i, job in enumerate(jobs):
-        mp4 = Path(job[0])
+        mp4 = Path(job[0]).expanduser()
         dst = out / (mp4.parent.parent.name + "__" + mp4.parent.name + "__" + mp4.stem + ".npz")
         if dst.exists():
             continue
@@ -88,7 +88,7 @@ def main():
         T, H, W, _ = rgb.shape
         f0, names, cue = 0, [], []
         if len(job) == 3:
-            cm = iio.imread(job[1])
+            cm = iio.imread(str(Path(job[1]).expanduser()))
             f0 = min(int(job[2]) // a.stride, T - 1)
             red = (cm[..., 0] > 200) & (cm[..., 1] < 60) & (cm[..., 3] > 0)
             yel = (cm[..., 0] > 200) & (cm[..., 1] > 200) & (cm[..., 3] > 0)
