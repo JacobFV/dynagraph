@@ -1,0 +1,20 @@
+{
+ "regime": "budget",
+ "variant": "typed",
+ "lr": "3e-4",
+ "d": "192",
+ "families": {
+  "bin_clearing": {
+   "auc": 0.9956666666666667,
+   "trusted": true
+  },
+  "fixture_place": {
+   "auc": 0.903,
+   "trusted": true
+  },
+  "tight_insert": {
+   "auc": 0.8673333333333333,
+   "trusted": true
+  }
+ }
+}

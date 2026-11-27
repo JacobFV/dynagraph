@@ -413,3 +413,32 @@ def test_r7_lot_sampler_feasible_and_tactile_feature():
     f0, f1 = S.analytic_features(x), S.analytic_features(x, 8000.0)
     assert f0[S.AN_NAMES.index("has_tactile")] == 0 and f1[S.AN_NAMES.index("has_tactile")] == 1
     assert f1[S.AN_NAMES.index("log_tactile_k")] < 0          # 8 kN/m (fragile) is below the 20 kN/m reference
+
+
+def test_r9_il_v0_rotations_and_act_policy():
+    """round 6: il-v0 rotation helpers round-trip; the ACT policy trains on a tiny batch and its chunk decodes to a
+    one-hot controller mode; temporal ensembling returns an action of the right width."""
+    import torch
+    from physmem.models.v2.imitation import data as D
+    from physmem.models.v2.imitation.act import ACTPolicy, TemporalEnsembler
+    rng = np.random.default_rng(0)
+    for _ in range(20):
+        r = rng.normal(0, 0.8, 3)
+        assert np.allclose(D.q2rotvec(D.rotvec2q(r)), r, atol=1e-6)
+    q = D.rotvec2q([0.1, -0.2, 0.3])
+    assert np.allclose(D._qmul(q, D._qinv(q)), [1, 0, 0, 0], atol=1e-9)
+    m = ACTPolicy(20, d=32, H=5, enc_layers=1, dec_layers=1)
+    B = 3
+    b = dict(ctx=torch.randn(B, 20), p2=torch.randn(B, 2 * D.P_DIM), obj=torch.randn(B, D.K_OBJ, D.O_DIM),
+             reg=torch.randn(B, D.K_REG, D.R_DIM), act=torch.randn(B, 5, D.A_DIM), apad=torch.zeros(B, 5, dtype=torch.bool))
+    b["obj"][..., -1] = 1
+    b["reg"][..., -1] = 1
+    loss, info = m.loss(b)
+    loss.backward()
+    assert np.isfinite(float(loss))
+    a = m.act_chunk(b["ctx"][:1], b["p2"][:1], b["obj"][:1], b["reg"][:1])[0].numpy()
+    assert a.shape == (5, D.A_DIM) and np.allclose(a[:, 8:12].sum(1), 1)
+    e = TemporalEnsembler(5)
+    e.push(0, a)
+    e.push(1, a)
+    assert e.get(1).shape == (D.A_DIM,)

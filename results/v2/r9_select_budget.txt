@@ -1,0 +1,15 @@
+generic lr 1e-3 d 128 step 4000 score 0.2360 bin_clearing=0.123 fixture_place=0.155 tight_insert=0.430
+generic lr 1e-3 d 192 step 4000 score 0.2160 bin_clearing=0.079 fixture_place=0.146 tight_insert=0.423
+generic lr 3e-4 d 128 step 4000 score 0.2257 bin_clearing=0.098 fixture_place=0.151 tight_insert=0.428
+generic lr 3e-4 d 192 step 4000 score 0.2273 bin_clearing=0.094 fixture_place=0.161 tight_insert=0.427
+nomem lr 1e-3 d 128 step 4000 score 0.2303 bin_clearing=0.108 fixture_place=0.150 tight_insert=0.433
+nomem lr 1e-3 d 192 step 4000 score 0.2427 bin_clearing=0.157 fixture_place=0.142 tight_insert=0.429
+nomem lr 3e-4 d 128 step 4000 score 0.2263 bin_clearing=0.088 fixture_place=0.156 tight_insert=0.435
+nomem lr 3e-4 d 192 step 4000 score 0.2253 bin_clearing=0.092 fixture_place=0.153 tight_insert=0.431
+typed lr 1e-3 d 128 step 4000 score 0.2503 bin_clearing=0.176 fixture_place=0.148 tight_insert=0.427
+typed lr 1e-3 d 192 step 4000 score 0.2470 bin_clearing=0.164 fixture_place=0.149 tight_insert=0.428
+typed lr 3e-4 d 128 step 4000 score 0.2253 bin_clearing=0.101 fixture_place=0.155 tight_insert=0.420
+typed lr 3e-4 d 192 step 4000 score 0.2217 bin_clearing=0.091 fixture_place=0.151 tight_insert=0.423
+SELECT generic 1e-3 192 0.2160
+SELECT nomem 3e-4 192 0.2253
+SELECT typed 3e-4 192 0.2217

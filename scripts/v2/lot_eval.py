@@ -6,6 +6,8 @@ typed (memory-conditioned probing, 3-seed typed ensemble x lot posterior), typed
 import json, os, sys, time
 import numpy as np
 from physmem.envs import make_env
+from physmem.models.v2.imitation.data import env_version as _env_version
+ENV_V = _env_version()
 from physmem.v2 import api
 from physmem.models.v2 import harness as H
 from physmem.models.v2.lot import LotEnvAdapter, LotPlanner
@@ -30,6 +32,9 @@ if any(k.endswith("_v2") for k in only):      # round-4 EXPLORATORY v2 (crush-ga
     pols["typed_nolot_v2"] = ("planner", LotPlanner(T, tau=tau, nolot=True, name="typed_nolot_v2", crush_gate=True))
     pols["oracle_v2(labelled)"] = ("planner", LotPlanner([CEMPlanner(T[0].model, "oracle", cfg)], tau=tau,
                                                           name="oracle_v2", crush_gate=True))
+if "cached_estimator" in only:           # classical cached estimator (13a secondary, audit request)
+    T = T if "T" in dir() else [CEMPlanner(load_model(f"{C}/v2_robots_{tag}_typed_s{s}.pt")[0], "typed", cfg) for s in (0, 1, 2)]
+    pols["cached_estimator"] = ("planner", LotPlanner.cached_estimator(T, tau=tau))
 if "generic" in only:
     Gm = [CEMPlanner(load_model(f"{C}/v2_robots_{tag}_generic_s{s}.pt")[0], "generic", cfg) for s in (0, 1, 2)]
     pols["generic"] = ("planner", LotPlanner(Gm, tau=tau, name="generic"))

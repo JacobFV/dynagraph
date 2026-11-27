@@ -1,0 +1,311 @@
+{
+ "env_version": "envs-r7.1",
+ "run": "r9t_h10v_50k",
+ "family": "bin_clearing",
+ "robot": "panda",
+ "split": "test",
+ "episodes": [
+  {
+   "seed": 3000003,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000055,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000059,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000079,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000083,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000103,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000106,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000110,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000145,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000157,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000191,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000202,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000225,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000234,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000240,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000254,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000257,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000279,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000292,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000304,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000307,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000310,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000328,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000336,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000337,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000346,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 1,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000369,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000385,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000388,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  },
+  {
+   "seed": 3000399,
+   "success": false,
+   "cycle_t": null,
+   "sim_t": 114.4999999999142,
+   "budget": 114.4,
+   "damage": 0,
+   "unstable": false,
+   "err": null
+  }
+ ],
+ "cap": 108.96000000001817,
+ "success": 0.0
+}

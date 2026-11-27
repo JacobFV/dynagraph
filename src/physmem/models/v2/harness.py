@@ -124,8 +124,13 @@ class ResidualPlanner:
     def decide(self, ad, hist, emb, rng):
         from .env_adapter import rel_params
         sc = ad.env.scripted() if hasattr(ad.env, "scripted") else None
-        if sc is not None and getattr(self, "anchor_probe", False) and hasattr(ad.env, "probe_then_act"):
+        anchor = getattr(self, "anchor", None) or ("probe" if getattr(self, "anchor_probe", False) else None)
+        if isinstance(anchor, dict):              # r9: per-family anchor, e.g. {"tight_insert": "force_ramp"}
+            anchor = anchor.get(ad.task.family, anchor.get("*"))
+        if sc is not None and anchor == "probe" and hasattr(ad.env, "probe_then_act"):
             sc = ad.env.probe_then_act(sc)          # anchor on the probe-then-act scripted variant
+        elif sc is not None and anchor == "force_ramp" and hasattr(ad.env, "force_ramp"):
+            sc = ad.env.force_ramp(sc)              # envs-r7 tight_insert: press-until-click scripted variant
         if sc is not None and self.trust is not None and not self.trust.get(ad.task.family, False):
             return sc, dict(deviated=False, gated=True)
         if sc is None:
@@ -316,8 +321,12 @@ def _run_env_episode(ad, task, policy, planner=None, rng_seed=0, max_steps=None,
     if planner is not None:
         planner.reset()
     for k in range(max_steps or getattr(ad.env, "budget", 20)):
-        if policy in ("heuristic", "heuristic_probe"):
+        if policy in ("heuristic", "heuristic_probe", "demo", "force_ramp"):
             call = ad.env.scripted()
+            if call is not None and policy == "demo":           # envs-r7 demonstration policy (ORACLE params)
+                call = ad.env.demo_call(call)
+            if call is not None and policy == "force_ramp":     # envs-r7 tight_insert baseline (press-until-click)
+                call = ad.env.force_ramp(call)
             if call is not None and policy == "heuristic_probe":
                 c0 = call
                 call = ad.env.probe_then_act(call)     # r6 fragility-aware probe-then-act scripted variant (actor-legal)
@@ -326,6 +335,7 @@ def _run_env_episode(ad, task, policy, planner=None, rng_seed=0, max_steps=None,
                     rec["probes"] += 1
             if call is None:
                 break
+            frame0 = ad.frame(call.target) if record is not None else None
             out = ad.execute(call, relative=False)
         elif getattr(planner, "search", "cem") == "lot":
             call, info = planner.decide(ad, hist, emb, rng)
@@ -370,7 +380,7 @@ def _run_env_episode(ad, task, policy, planner=None, rng_seed=0, max_steps=None,
                 if tm.any():
                     rec["latent_err"].append(float(np.abs(d.info["z_mu"][tm] - tz[tm]).mean()))
         hist.append(out.result.log["interaction"])
-        if record is not None and policy != "heuristic":
+        if record is not None:      # r9: scripted episodes too (il-v0 data-budget control)
             it = copy.copy(hist[-1])
             it.labels = dict(out.result.log.get("latents", {}))
             record.append(dict(frame=frame0 if policy != "random" else ad.frame(None), inter=it))

@@ -28,6 +28,7 @@ from physmem.v2 import api
 from . import spec as S
 from .env_adapter import EnvAdapter, map_labels, rel_params
 from .model import TF_LOGVAR
+from .env_adapter import NOT_FRAGILE_N as S_NOT_FRAGILE
 
 G = 9.81
 GRIPS = (3.0, 5.0, 7.0, 10.0, 14.0, 20.0, 28.0, 40.0)
@@ -114,10 +115,38 @@ class LotPlanner:
         self.search = "lot"
         self.crush_gate = crush_gate and self.mode in ("typed", "oracle")
         self.sigma_probe = sigma_probe
+        self.cached = False         # set by cached_estimator(): classical analytic lot estimate (audit baseline, 13a)
+
+    @classmethod
+    def cached_estimator(cls, planners, tau=0.15, name="cached_estimator"):
+        """CLASSICAL CACHED ESTIMATOR (13a secondary, external-audit request). Probe once per lot; the crush limit is
+        fitted ANALYTICALLY from the actor-legal tactile squeeze reading (env.est_crush = k / STIFF_PER_N, no learned
+        model) and cached for the whole lot. Then the same planner as typed v2: the same crush gate (probe while
+        uncertain, grips <= 0.7 x the 10th percentile), the same candidate grid, risk head, tau and time cost. The risk
+        head gets the cached crush in the crush slot and PRIOR means in every other slot, so there is no learned
+        memory."""
+        p = cls(planners, tau=tau, name=name, crush_gate=True)
+        p.crush_gate, p.cached = True, True
+        return p
+
+    def _cached_z(self, ad):
+        """(z mean, z sd) of the lot's crush limit from the cached analytic estimate; no reading -> prior, very wide.
+        Tactile reading noise is lognormal sigma 0.15 (ENVS r6), i.e. z sd = 0.15 / 0.8 on the crush latent scale."""
+        env = ad.env
+        for e in sorted(getattr(ad, "lot_ids", ())):
+            if _probed(env, e):
+                c = env.est_crush(e, margin=1.0)
+                if c is None:
+                    continue
+                c = min(float(c), S_NOT_FRAGILE)
+                return float(S.latent_to_z("crush", c)), 0.15 / 0.8
+        return 0.0, 9.0
 
     def _crush_posterior(self, ad, hist, emb, target, query):
         """ensemble-averaged typed crush posterior (z mean, z sd) for the query (lot or part); oracle: truth, sd 0."""
         ci = S.LATENT_INDEX["crush"]
+        if self.cached:
+            return self._cached_z(ad)
         if self.mode == "oracle":
             lab = ad.oracle_latents(target)
             c = lab.get("crush")
@@ -145,6 +174,12 @@ class LotPlanner:
             mu = mem["z_mu"][0].clone()
             tzt = torch.as_tensor(tz, device=pl.dev)
             mu = torch.where(torch.as_tensor(tm, device=pl.dev), tzt, mu)
+            zin = torch.cat([mu, torch.full_like(mu, 0.5 * TF_LOGVAR)])[None]
+        elif self.cached:          # prior means everywhere, the cached analytic crush estimate in the crush slot
+            mu = mem["prior_mu"][0].clone()
+            zc, _ = self._cached_z(ad)
+            if zc != 0.0:
+                mu[S.LATENT_INDEX["crush"]] = zc
             zin = torch.cat([mu, torch.full_like(mu, 0.5 * TF_LOGVAR)])[None]
         else:
             zin, _ = pl._latent_inputs(mem)

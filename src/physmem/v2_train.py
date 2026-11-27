@@ -138,7 +138,21 @@ def sanitize(arr, name=""):
     """drop WHOLE episodes containing non-finite or physically absurd values (simulator blow-ups); re-index."""
     n = len(arr["k"])
     bad_row = np.zeros(n, bool)
+    if "cont" in arr and "cont_mask" in arr:
+        # r9 fix (reported by INKLING): an absurd CONTINUOUS OUTCOME value (e.g. gen3 max robot-contact force,
+        # aux1 = F/150 up to ~1.2e4) used to drop every Gen3 row. It is now masked per value (cont_mask = 0)
+        # instead of dropping the episode; the other arrays keep the drop rule.
+        c = arr["cont"].astype(np.float32)
+        badc = ~np.isfinite(c) | (np.abs(np.nan_to_num(c)) > SANITY_LIMITS["cont"])
+        if badc.any():
+            arr = dict(arr)
+            arr["cont"] = np.where(badc, 0.0, c).astype(arr["cont"].dtype)
+            arr["cont_mask"] = (arr["cont_mask"].astype(bool) & ~badc)
+            print(f"[sanitize] {name}: masked {int(badc.sum())} absurd continuous outcome values "
+                  f"(per column {badc.sum(0).tolist()})", flush=True)
     for k, lim in SANITY_LIMITS.items():
+        if k == "cont" and "cont_mask" in arr:
+            continue
         a = arr[k].reshape(n, -1).astype(np.float32)
         bad_row |= ~np.isfinite(a).all(1) | (np.abs(np.nan_to_num(a)) > lim).any(1)
     if not bad_row.any():

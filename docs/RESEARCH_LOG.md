@@ -781,3 +781,26 @@ entries that point back to the entry they correct.
   - fill in the stability numbers;
   - tag `envs-v3`, make `~/dynagraph_envs_v3/src` read-only and record the sources sha256;
   - write the final RESEARCH_LOG entry and report.
+
+### 2026-11-27 ~09:40Z — MODEL-V2 round 6: main test complete; wrap-up commit (PI onboarding)
+**Finding (pre-registered §13a, envs-r7.1, n = 30 per cell, 8 cells):**
+- P1 (typed full − best scripted) is a win in NO cell; it is significantly worse on tight_insert ur5e (−0.20).
+- P2/P3 (typed − ACT) are significant almost everywhere because our ACT is ~0 (a weak-baseline limitation,
+  documented in §13a).
+- Typed vs generic / nomem with matched data and compute: one significant win (budget fixture_place ur5e +0.20) and
+  one significant loss (full bin_clearing ur5e −0.13); the rest n.s.
+- The best scripted baselines (force-ramp, nominal, PTA) are at or above every learned planner.
+- Held-out Gen3 (r7.1): no learned planner beats force-ramp or PTA.
+- Files: table `results/v2/closed_loop/robot_table_r9.md/json`, write-up docs/MODEL_V2.md §13b.
+
+**S-lot secondary (audit cached estimator), probe gantry done:** typed v2 .67 ≈ cached estimator .69 (Δ −0.01, n.s.),
+both below PTA .82. ur5e and panda are partial and Gen3 is queued.
+
+**Still running:** gb10 pid 1705445 `scripts/v2/r9_lot_test.sh`. Logs `~/dynagraph/logs/v2_r9lot_*.log`; results
+`results/v2/closed_loop/v2_r9lot_*.json` (`*.partial.json` while running).
+
+**Wrap-up commit:** all round-6 code, scripts, results so far, §13b and §14 status/handover in docs/MODEL_V2.md.
+Partial lot files are committed and labelled partial. INKLING's files are left out. pytest: 29 passed, 1 skipped.
+
+**Next:** finish S-lot (tabulate with r7_table.py, commands in §14); typed-vs-ACT paired videos (the renderer still
+has to be written); a final MODEL_V2 §13 update.

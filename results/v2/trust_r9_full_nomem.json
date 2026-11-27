@@ -1,0 +1,80 @@
+{
+ "regime": "full",
+ "variant": "nomem",
+ "lr": "3e-4",
+ "d": "192",
+ "families": {
+  "bin_clearing": {
+   "auc": 0.9499999999999998,
+   "trusted": true
+  },
+  "bulk_sweep": {
+   "auc": 0.3956666666666666,
+   "trusted": false
+  },
+  "conveyor_sort": {
+   "auc": 0.9366666666666665,
+   "trusted": true
+  },
+  "depalletize": {
+   "auc": 0.876,
+   "trusted": true
+  },
+  "door_open": {
+   "auc": 0.86,
+   "trusted": true
+  },
+  "fastener_pick": {
+   "auc": 0.8673333333333334,
+   "trusted": true
+  },
+  "fixture_place": {
+   "auc": 0.9476666666666667,
+   "trusted": true
+  },
+  "kitting_pocket": {
+   "auc": 0.8433333333333333,
+   "trusted": true
+  },
+  "machine_tending": {
+   "auc": 0.8649999999999999,
+   "trusted": true
+  },
+  "peg_insert": {
+   "auc": 0.9129999999999999,
+   "trusted": true
+  },
+  "pouch_transfer": {
+   "auc": 0.9493333333333333,
+   "trusted": true
+  },
+  "shelf_restock": {
+   "auc": 0.9426666666666667,
+   "trusted": true
+  },
+  "singulation": {
+   "auc": 0.5636666666666666,
+   "trusted": false
+  },
+  "small_parts_pick": {
+   "auc": 0.9526666666666667,
+   "trusted": true
+  },
+  "small_peg_insert": {
+   "auc": 0.9296666666666668,
+   "trusted": true
+  },
+  "tight_insert": {
+   "auc": 0.9256666666666667,
+   "trusted": true
+  },
+  "tool_return": {
+   "auc": 0.9170000000000001,
+   "trusted": true
+  },
+  "twist_lock": {
+   "auc": 0.669,
+   "trusted": false
+  }
+ }
+}

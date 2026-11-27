@@ -8,11 +8,12 @@ out = sys.argv[1] if len(sys.argv) > 1 else "results/v2/closed_loop/robot_table_
 prefix = sys.argv[2] if len(sys.argv) > 2 else "v2_r7_lot_"
 rng = np.random.default_rng(0)
 ORDER = ["heuristic", "heuristic_probe", "generic", "typed_nolot", "typed", "oracle(labelled)",
-         "typed_nolot_v2", "typed_v2", "oracle_v2(labelled)"]
+         "typed_nolot_v2", "cached_estimator", "typed_v2", "oracle_v2(labelled)"]
 NAMES = {"heuristic": "never-probe (plain scripted)", "heuristic_probe": "always-probe (PTA)", "generic": "generic memory",
          "typed_nolot": "typed, lot memory OFF", "typed": "typed lot memory", "oracle(labelled)": "oracle (labelled)",
          "typed_nolot_v2": "v2 crush-gated, lot memory OFF", "typed_v2": "v2 crush-gated typed lot memory",
-         "oracle_v2(labelled)": "v2 crush-gated oracle (labelled)"}
+         "oracle_v2(labelled)": "v2 crush-gated oracle (labelled)",
+         "cached_estimator": "classical cached estimator (analytic crush, same planner)"}
 
 
 def boot(d):
@@ -46,6 +47,7 @@ for f in sorted(x for x in glob.glob(f"results/v2/closed_loop/{prefix}*.json") i
         dG = boot(g - G["generic"]) if "generic" in G and k != "generic" else None
         dH = boot(g - G["heuristic"]) if k != "heuristic" else None
         off = {"typed": "typed_nolot", "typed_v2": "typed_nolot_v2"}.get(k)
+        dCE = boot(g - G["cached_estimator"]) if "cached_estimator" in G and k == "typed_v2" else None
         dM = boot(g - G[off]) if off in G else None
         D = {k2: np.array([e.get("damage", 0) > 0 for e in v2], float) for k2, v2 in ep.items()}
         Pr = {k2: np.array([e.get("probes", 0) for e in v2], float) for k2, v2 in ep.items()}
@@ -56,7 +58,7 @@ for f in sorted(x for x in glob.glob(f"results/v2/closed_loop/{prefix}*.json") i
         row = dict(good=float(np.nanmean(g)), d_pta=dP, d_generic=dG, d_never=dH, d_memory_off=dM,
                    success=float(np.mean([e["success"] for e in v])), damage=float(np.mean([e.get("damage", 0) > 0 for e in v])),
                    probes=float(np.mean([e.get("probes", 0) for e in v])), sim_t=float(np.median([e.get("sim_t", 0) for e in v])),
-                   effort_ratio_vs_pta=er, d_damage_pta=dD, d_probes_pta=dPr, timeouts=int(sum(e.get("timeout", 0) for e in v)))
+                   effort_ratio_vs_pta=er, d_cached=dCE, d_damage_pta=dD, d_probes_pta=dPr, timeouts=int(sum(e.get("timeout", 0) for e in v)))
         summary[f"{robot}|{k}"] = row
         rows.append(f"| {NAMES[k]} | {row['good']:.2f} | {fmt(dP) if dP else '–'} | {fmt(dG) if dG else '–'} | {fmt(dM) if dM else '–'} | "
                     f"{fmt(dH) if dH else '–'} | {row['success']:.2f} | {row['damage']:.2f} | {fmt(dD) if dD else '–'} | {row['probes']:.1f} | "

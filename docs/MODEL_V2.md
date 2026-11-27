@@ -1253,3 +1253,77 @@ rows, 351 aux1 values masked). Applies from r9 on.
   The ENVS re-audit (ceiling_r7_1) shows the defect WAS the main Gen3 handicap. Oracle success r7 -> r7.1:
   tight_insert 0.10 -> 0.80, bin_clearing 0.67 -> 0.83, fastener_pick 0.00 -> 0.67, fixture_place unchanged at 0.67.
   So every Gen3 / held-out-robot number in §10-§12 understates Gen3. Treat them as measured on a defective arm.
+
+### 13b. Results: main pre-registered test (complete), envs-r7.1, n = 30 per cell
+Full table with CIs, cycle times and damage: `results/v2/closed_loop/robot_table_r9.md` / `.json`. Raw episodes:
+`results/v2/closed_loop/v2_r9_<family>_<robot>.json` and `results/v2_il/test/il_r9t_h10v_50k_m0.1__*__test.json`.
+Absolute success within `env.time_budget()`; **bold** = 95% CI above 0, _italic_ = below 0.
+
+| cell | best scripted | oracle (lab.) | ACT | typed full | generic full | nomem full | typed budget | P1 typed full − best | P3 typed budget − ACT |
+|---|---|---|---|---|---|---|---|---|---|
+| tight_insert ur5e | force-ramp .70 | .67 | .00 | .50 | .63 | .60 | .40 | _−.20 [−.37,−.07]_ | **+.40** |
+| tight_insert panda | force-ramp .47 | .43 | .00 | .47 | .47 | .47 | .50 | +.00 [.00,.00] | **+.50** |
+| fixture_place ur5e | nominal .67 | .63 | .07 | .63 | .57 | .57 | .60 | −.03 [−.20,+.13] | **+.53** |
+| fixture_place panda | nominal .67 | .73 | .07 | .70 | .60 | .57 | .53 | +.03 [.00,+.10] | **+.47** |
+| bin_clearing ur5e | PTA 0.23 | 0.57 | 0.00 | 0.20 | 0.33 | 0.10 | 0.17 | -0.03 [-0.20,+0.13] | +0.17 [+0.03,+0.30] |
+| bin_clearing panda | PTA .13 | .43 | .00 | .17 | .20 | .07 | .10 | +.03 [−.10,+.17] | +.10 [.00,+.20] |
+| gen3 tight_insert (held out) | force-ramp .77 | .67 | .00 | .67 | .77 | .73 | .43 | −.10 [−.23,+.03] | **+.43** |
+| gen3 bin_clearing (held out) | PTA .10 | .37 | .00 | .13 | .23 | .17 | .23 | +.03 [−.07,+.13] | **+.23** |
+
+Verdicts as pre-registered:
+- **P1 (typed full − best scripted): no win in any cell.** It is significantly worse on tight_insert ur5e (−0.20).
+- **P2 (typed full − ACT): significant in all 8 cells**, because our ACT is ~0 (see the 13a limitation: a weak
+  baseline that fails mm-level placement, not evidence that imitation cannot do these tasks).
+- **P3 (typed budget − ACT):** significant in 7 of 8 cells; bin_clearing panda is +0.10 [0.00, +0.20].
+- **Typed vs generic** (secondary):
+  - one significant typed win, budget-matched fixture_place ur5e (+0.20 [+0.07, +0.33]);
+  - one significant typed loss, full bin_clearing ur5e (−0.13 [−0.27, −0.03]);
+  - everything else n.s.
+- With the same data and compute, typed memory does not beat generic memory or no memory on these fixed-skill and
+  fine-motor cells. The best scripted baseline (often force-ramp or nominal) is at or above every learned planner.
+- Gen3 (held out, r7.1): no learned planner beats force-ramp or PTA.
+- Paired videos: the only significant wins are vs ACT (P2/P3). Videos of typed vs ACT are not rendered yet (see Status).
+
+## 14. Status at 2026-11-27 (in flight) — handover
+**Done:**
+- envs-r7.1 demos and data.
+- ACT pipeline and VAL grid (frozen r9t_h10v_50k, m = 0.1).
+- 18 memory-model checkpoints and their VAL selection.
+- §13a pre-registration committed as c22846d.
+- The main test, all 8 cells complete, in §13b.
+- System I head for INKLING: `src/physmem/models/v2/system1.py`.
+
+**Running on gb10-direct (~/dynagraph), at most 2 niced CPU procs:**
+- `scripts/v2/r9_lot_test.sh`, pid **1705445** (it replaced the finished r9_test.sh in the same chain), is the
+  13a S-lot secondary: bin_clearing lots with typed v2 vs the classical cached estimator vs PTA ...
+- Done: probe. Partial: ur5e, panda. Gen3 is queued.
+- First S-lot result (probe gantry, n = 30 lots, good parts per lot): PTA .82, cached estimator .69, typed v2 .67,
+  typed v2 memory-off .57, never-probe .49, generic .47, oracle v2 .52.
+  - typed v2 − cached estimator: −0.01 [−0.04, +0.01] (n.s.).
+  - typed v2 − PTA: −0.15 [−0.24, −0.07].
+  - So on this robot in r7.1 the learned lot memory adds nothing over a classical cached analytic estimate, and both
+    trail always-probe PTA.
+- Logs: `~/dynagraph/logs/v2_r9lot_<robot>.log`, chain log `logs/v2_r9_test_chain.log`.
+- Results: `results/v2/closed_loop/v2_r9lot_<robot>.json`; `*.partial.json` while running (resumable).
+- A local watcher exits when the chain ends or a Traceback appears.
+
+**To collect and tabulate when it ends** (on gb10, in ~/dynagraph, `source .venv/bin/activate`):
+```
+grep -q R9LOT_DONE logs/v2_r9lot.log && echo lot done
+PYTHONPATH=src python scripts/v2/r9_table.py r9t_h10v_50k 0.1 results/v2/closed_loop/robot_table_r9.md   # main (done)
+PYTHONPATH=src python scripts/v2/r7_table.py results/v2/closed_loop/robot_table_r9lot.md v2_r9lot_          # S-lot
+# S-lot primary: typed v2 - cached estimator and typed v2 - PTA (good parts). The cached estimator is a row of the
+# table; the paired typed v2 - cached CI is in robot_table_r9lot.json (key d_cached on the typed_v2 rows)
+scp 'gb10-direct:dynagraph/results/v2/closed_loop/{robot_table_r9*,v2_r9lot_*}' results/v2/closed_loop/
+```
+- Videos (pre-registered: only significant wins; here P2/P3 vs ACT): `scripts/v2/paired_videos.py` supports
+  `lot_v2`. A typed-vs-ACT renderer still has to be written; the ACT side is `il_eval.py` with a recorder.
+- If the box restarts, re-run `scripts/v2/r9_lot_test.sh` (it skips finished robots and resumes partial json).
+  Always keep `EXPECT_ENV=envs-r7.1` and the overlay (`scripts/v2/m6_overlay.sh`).
+
+**Key paths:**
+- data: `data/v2_il_r7{,s,_val}`, `data/v2_r9_{budget,full}`;
+- checkpoints: `results/v2/checkpoints/v2_robots_r9_{budget,full}_{typed,generic,nomem}_s{0,1,2}.pt` and
+  `il_r9t_*.pt`;
+- VAL: `results/v2_val_r9/`, `results/v2_il/val/`;
+- selection and trust: `results/v2/r9_select_*.txt`, `results/v2/trust_r9_*.json`.
