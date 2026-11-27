@@ -78,8 +78,9 @@ def cmd_readout(a):
                     continue
                 m = t.meta()
                 ts = _two(TrackSet.load(p))
-                cue = int(m["start_frame_for_prediction"])
-                o, s = FC.ocp_track_features(ts, cue)
+                cue = int(m["start_frame_for_prediction"])          # in video frames (30 fps)
+                n_obs = int(np.sum(ts.t < cue / 30.0))                  # tracks may be frame-subsampled
+                o, s = FC.ocp_track_features(ts, n_obs)
                 f, _ = FC.ocp_track_features(ts, len(ts.t))
                 X["observed"].append(o); X["observed+simulated"].append(np.concatenate([o, s])); X["full"].append(f)
                 y.append(m["label"]); names.append(PP.stim_id(t))

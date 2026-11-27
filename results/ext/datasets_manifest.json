@@ -1,4 +1,30 @@
 {
+ "clevrer": {
+  "README.txt": {
+   "bytes": 4425,
+   "fetched_utc": "2026-11-27T02:50:15Z",
+   "file": "README.txt",
+   "license": "CC0 (README.txt: 'Our dataset is under the CC0.')",
+   "license_source": "http://data.csail.mit.edu/clevrer/README.txt",
+   "local_path": "/home/brandonin/datasets/clevrer/raw/README.txt",
+   "sha256": "a4838cc68b79ba049b54f95def1714cdbbd1380193d7d2a5d1a85440ac862e7b",
+   "url": "http://data.csail.mit.edu/clevrer/README.txt"
+  },
+  "annotation_validation.zip": {
+   "bytes": 78386966,
+   "deleted_after_extraction": true,
+   "deleted_utc": "2026-11-27T02:52:36Z",
+   "extracted_to": "/home/brandonin/datasets/clevrer/extracted",
+   "fetched_utc": "2026-11-27T02:51:30Z",
+   "file": "annotation_validation.zip",
+   "license": "CC0 (README.txt: 'Our dataset is under the CC0.')",
+   "license_source": "http://data.csail.mit.edu/clevrer/README.txt",
+   "local_path": "/home/brandonin/datasets/clevrer/raw/annotation_validation.zip",
+   "n_members": 5000,
+   "sha256": "d89e74714dff7a1117fd113b54af99fbbc51583ebd742c788c484d708eb426d2",
+   "url": "http://data.csail.mit.edu/clevrer/annotations/validation/annotation_validation.zip"
+  }
+ },
  "dexycb": {
   "calibration.tar.gz": {
    "bytes": 14464,
@@ -53,6 +79,34 @@
    "local_path": "/home/brandonin/datasets/physionpp/raw/human_data.zip",
    "sha256": "2441787cec4771d92d869957259c4bd4b5e999dda9e8fd7577d89229b708e3dc",
    "url": "https://physion-v2.s3.amazonaws.com/human_data.zip"
+  },
+  "readout_data.zip": {
+   "bytes": 2971891321,
+   "deleted_after_extraction": true,
+   "deleted_utc": "2026-11-27T02:04:44Z",
+   "extracted_to": "/home/brandonin/datasets/physionpp/extracted",
+   "fetched_utc": "2026-11-27T02:03:58Z",
+   "file": "readout_data.zip",
+   "license": "MIT (NeurIPS 2023 D&B supplement: 'All products ... shared under the MIT license')",
+   "license_source": "https://proceedings.nips.cc/paper_files/paper/2023/file/d3e8011c912e651ab2a76e7935a1e464-Supplemental-Datasets_and_Benchmarks.pdf",
+   "local_path": "/home/brandonin/datasets/physionpp/raw/readout_data.zip",
+   "n_members": 4896,
+   "sha256": "1bf291c742c29728919d55393d1132a7c039b714d0d1b6e406e601f626a2a137",
+   "url": "https://physion-v2.s3.amazonaws.com/readout_data.zip"
+  },
+  "test_data.zip": {
+   "bytes": 3892107787,
+   "deleted_after_extraction": true,
+   "deleted_utc": "2026-11-27T02:50:49Z",
+   "extracted_to": "/home/brandonin/datasets/physionpp/extracted",
+   "fetched_utc": "2026-11-27T02:50:13Z",
+   "file": "test_data.zip",
+   "license": "MIT (NeurIPS 2023 D&B supplement: 'All products ... shared under the MIT license')",
+   "license_source": "https://proceedings.nips.cc/paper_files/paper/2023/file/d3e8011c912e651ab2a76e7935a1e464-Supplemental-Datasets_and_Benchmarks.pdf",
+   "local_path": "/home/brandonin/datasets/physionpp/raw/test_data.zip",
+   "n_members": 5955,
+   "sha256": "166627f988739cf37b6b4673a5a63727c4dfd68501bee64d802086e5fa5c4f5c",
+   "url": "https://physion-v2.s3.amazonaws.com/test_data.zip"
   }
  }
 }
