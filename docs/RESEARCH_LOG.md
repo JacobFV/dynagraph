@@ -623,3 +623,47 @@ entries that point back to the entry they correct.
   - pid 3098462 (`sam2_tracks.py`, 3.1 GB GPU) is at 100% CPU, and 3 new track files were written in the last 5 min. It is progressing, not hung.
   - Likely cause of the slowdown: the box is contended. Another tenant has 4 × `points.py` processes at 100% CPU, plus the INKLING `lang_eval` (about 24 GB, heavy lane).
 - No action taken. Queued behind it, all small: V3 arm_i_s0 re-pilot, proj_s0, lbs_law_s1, arm_i2_s0.
+
+- **2026-11-27 01:20 CST — EXT: gb10 small-lane etiquette (after the lead's FYI on chunk c_003 taking ~80 min).**
+  - `flock` is not FIFO, so back-to-back chunks could starve the queued V3 jobs. Changes:
+    - `scripts/ext/gb10_sam2_driver.sh` now uses 20-video chunks and pauses 5 min after each chunk, releasing the
+      lock. The file was swapped by atomic rename; the running readout driver (PID 2067874) keeps its old copy for its
+      last chunk.
+    - The test-set waiter was relaunched: PID 3346796 replaces 2100095. It starts the mass-test driver 5 min after
+      the readout driver exits.
+  - Interim reduced-readout reference results (Physion v1, colour tracks, our features; NOT official, NOT a model):
+    - observed: Dominoes 0.48, Support 0.54, Collide 0.54, Contain 0.52;
+    - full: 0.90 / 0.90 / 0.72 / 0.55;
+    - readout sets: n = 47–53 per scenario.
+  - Tracker check (colour tracker vs simulator masks): the Contain patient is weak, median error 52 px.
+
+## 2026-11-27 ~07:10 UTC, V3-MODEL: finding, arm P is a VAL null; converged classical reference
+- proj_s0 (law-projection hybrid) on VAL: 62.9 mm, parameter corr ≈ 0, edit effect 0.8% of physics, A3 0.19.
+  Null; not pursued further now. Files: `results/v3/eval/proj_s0_val_*`.
+- The converged CEM classical (`classical_conv`) on VAL: own-box 0.94, action sign 0.73, closed loop 9.6 mm. It is
+  no better than the registered classical, so A3 ≥ 0.80 sits above both classical estimators (0.79 / 0.73) and near
+  the oracle (0.82). Recorded in V3_GENERAL §0d.1.
+- Lane: an EXT sam2 job held it for about 90 min (lead checked: not hung, the host is CPU-contended). The queue order
+  is unchanged.
+
+## 2026-11-27 ~07:30 UTC, V3-MODEL: §0e pre-registration committed alone (39d4306); autonomous test2 pipeline
+- Exploratory arm I on the fresh seeds test2/test2_L4 (never evaluated by anything). 4 VAL attempts are disclosed,
+  and a deterministic VAL selection rule (`scripts/v3/select_arm.py`) picks arm_i (rollout clamp) or arm_i2
+  (relation pairs + late evidence); a tie goes to arm_i2. Criteria are A1–A8 as in §0b, in each of 3 seeds.
+- Matched comparators on test2: LBS-law, V1, nolaw (3 seeds each), classical and oracle.
+- Drivers on gb10 (`~/dynagraph_v3`; PIDs in `logs/*.pid`):
+  - `scripts/v3/arm_test2.sh` (`logs/arm_test2.log`): pilot of arm_i2 → selection → seeds 1–2 → test2 evals.
+    Its CPU part logs to `logs/arm_test2_cpu.log`.
+  - `scripts/v3/train_all.sh` (`logs/train_all2.log`) and `scripts/v3/eval_gpu.sh` (`logs/eval_gpu.log`): the
+    frozen matrix.
+  - `logs/explore2_gpu.sh`: the arm_i s0 re-pilot and arm_i2_s0 training.
+- Results go to `results/v3/eval/*`. Report: `python -m physmem.v3_chain_report --split test2 --groups ...`.
+- Arm P is a VAL null and is not carried to test2.
+
+### 2026-11-27T07:20Z — lead: V3 §0e pre-registration verified
+- Lead confirmed that 39d4306 on `v3-model` is a docs-only commit (docs/V3_GENERAL.md, +42 lines).
+- It pre-registers exploratory arm I on fresh seeds test2/test2_L4. It discloses 4 VAL attempts, and the deterministic VAL selection rule `scripts/v3/select_arm.py` chooses between arm_i and arm_i2.
+- The chosen arm runs ×3 seeds and is evaluated on test2 whatever its VAL result. Matched comparators: LBS-law, V1, nolaw (×3), classical and oracle.
+- Arm P is a VAL null (63 mm, parameters at chance, edit effect 0.8% of physics) and is dropped.
+- Caveat noted: the A3 bar (≥0.80) is above both classical estimators on VAL (0.73 converged CEM, 0.79 registered) and near the oracle (0.82). An arm-I A3 failure on test2 should be read in that light. The bar stays as registered.
+- The Inkling port waits for an arm that passes A1–A4 on VAL, plus lead approval.
