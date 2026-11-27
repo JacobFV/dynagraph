@@ -1,0 +1,21 @@
+{
+ "split": "readout",
+ "prop": "mass",
+ "n_trials": 200,
+ "agent": {
+  "frames_visible": 24854,
+  "recall": 0.93296853625171,
+  "recall_observed_window": 0.8948497854077253,
+  "median_px": 0.6809950375755515,
+  "p90_px": 3.6598086616906054,
+  "frac_within_5px": 0.9315163015352769
+ },
+ "patient": {
+  "frames_visible": 23941,
+  "recall": 0.7356835554070423,
+  "recall_observed_window": 0.5939717466310787,
+  "median_px": 0.4998315020769831,
+  "p90_px": 3.8880754813214655,
+  "frac_within_5px": 0.9276102878555612
+ }
+}
