@@ -313,10 +313,17 @@ def simcf(args):
         q = perturb(p, pl["box"], pl["prop"], pl["sign"])
         Xs0, Fs0 = sim_window(p, z, e, k, F0, T0)
         Xs1, Fs1 = sim_window(q, z, e, k, F0, T0)
-        goal_abs = float(z["eval_start_x"][e, k, L]) + pl["goal"]
-        _, errs0 = oracle_best_F(p, z, e, k, goal_abs, L)
-        _, errs1 = oracle_best_F(q, z, e, k, goal_abs, L)
-        r = dict(pl, L=L, goal_abs=goal_abs, errs0=errs0.tolist(), errs1=errs1.tolist(),
+        # goal: a displacement the TRUE world can reach with one grid action (>= 1 cm when possible), drawn
+        # model-independently (VAL pilot: uniform goals were often infeasible, oracle error 23 mm)
+        XL0 = np.array([sim_window(p, z, e, k, F, PLAN_T)[0][-1, L] for F in F_GRID])
+        XL1 = np.array([sim_window(q, z, e, k, F, PLAN_T)[0][-1, L] for F in F_GRID])
+        x0L = float(z["eval_start_x"][e, k, L])
+        cand = np.nonzero(XL0 - x0L >= 0.01)[0]
+        cand = cand if len(cand) else np.arange(len(F_GRID))
+        gj = int(np.random.default_rng(54321 + e).choice(cand))
+        goal_abs = float(XL0[gj])
+        errs0, errs1 = np.abs(XL0 - goal_abs), np.abs(XL1 - goal_abs)
+        r = dict(pl, L=L, goal_abs=goal_abs, goal_F=float(F_GRID[gj]), errs0=errs0.tolist(), errs1=errs1.tolist(),
                  sim_dx_final=(Xs1[-1, 1:] - Xs0[-1, 1:]).tolist(), sim_dx_t06=(Xs1[6, 1:] - Xs0[6, 1:]).tolist(),
                  sim_dx_t03=(Xs1[3, 1:] - Xs0[3, 1:]).tolist(), sim_dimp=((Fs1 - Fs0).sum(1) * 0.1).tolist(),
                  sim_d=(Xs0[-1, 1:] - Xs0[0, 1:]).tolist())
@@ -461,7 +468,8 @@ def summarize_causal(recs):
         out[f"sign_other_{key}"], out[f"n_other_{key}"] = _sign_agree(oth_m, oth_s)
         ok = np.abs(np.array(own_s)) > 0.002
         if ok.sum() > 3:
-            out[f"corr_own_{key}"] = float(np.corrcoef(np.array(own_m)[ok], np.array(own_s)[ok])[0, 1])
+            rk = lambda a: np.argsort(np.argsort(a))
+            out[f"corr_own_{key}"] = float(np.corrcoef(rk(np.array(own_m)[ok]), rk(np.array(own_s)[ok]))[0, 1])
             out[f"ratio_own_{key}"] = float(np.median(np.abs(np.array(own_m)[ok]) / np.abs(np.array(own_s)[ok])))
     if "mod_dimp" in recs[0]:
         m = [r["mod_dimp"][r["box"]] for r in recs]; s = [r["sim_dimp"][r["box"]] for r in recs]
